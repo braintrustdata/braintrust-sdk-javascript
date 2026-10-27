@@ -1,3 +1,4 @@
+import { configureInstrumentation } from "../registry";
 import {
   afterEach,
   beforeAll,
@@ -6,11 +7,10 @@ import {
   expect,
   it,
 } from "vite-plus/test";
-import { configureNode } from "../../node/config";
 import { _exportsForTestingOnly } from "../../logger/testing";
 import { initLogger } from "../../logger/core";
-import { configureInstrumentation } from "../registry";
-import { openAIAgentsCoreChannels } from "./openai-agents-channels";
+import { configureNode } from "../../node/config";
+import { openAIAgentsCoreChannels } from "./openai-agents-interceptors";
 import { registerOpenAIAgentsInstrumentation } from "./openai-agents-instrumentation";
 
 try {
@@ -73,21 +73,29 @@ describe("registerOpenAIAgentsInstrumentation", () => {
       },
     };
 
-    await openAIAgentsCoreChannels.onTraceStart.tracePromise(
+    await openAIAgentsCoreChannels.onTraceStart.invoke(
       async () => undefined,
-      { arguments: [trace as any] },
+      undefined,
+      [trace as any],
+      {},
     );
-    await openAIAgentsCoreChannels.onSpanStart.tracePromise(
+    await openAIAgentsCoreChannels.onSpanStart.invoke(
       async () => undefined,
-      { arguments: [span as any] },
+      undefined,
+      [span as any],
+      {},
     );
-    await openAIAgentsCoreChannels.onSpanEnd.tracePromise(
+    await openAIAgentsCoreChannels.onSpanEnd.invoke(
       async () => undefined,
-      { arguments: [span as any] },
+      undefined,
+      [span as any],
+      {},
     );
-    await openAIAgentsCoreChannels.onTraceEnd.tracePromise(
+    await openAIAgentsCoreChannels.onTraceEnd.invoke(
       async () => undefined,
-      { arguments: [trace as any] },
+      undefined,
+      [trace as any],
+      {},
     );
 
     const spans = (await backgroundLogger.drain()) as any[];

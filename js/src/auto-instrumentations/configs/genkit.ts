@@ -2,7 +2,7 @@ import type { InstrumentationConfig } from "../orchestrion-js";
 import {
   genkitChannels,
   genkitCoreChannels,
-} from "../../instrumentation/providers/genkit-channels";
+} from "../../instrumentation/providers/genkit-interceptors";
 
 const genkitVersionRange = ">=1.0.0 <2.0.0";
 
@@ -24,7 +24,6 @@ export const genkitConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "GenkitAI",
       methodName: "generate",
-      kind: "Async",
     },
   },
   {
@@ -37,7 +36,6 @@ export const genkitConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "GenkitAI",
       methodName: "generate",
-      kind: "Async",
     },
   },
   {
@@ -50,7 +48,6 @@ export const genkitConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "GenkitAI",
       methodName: "generateStream",
-      kind: "Sync",
     },
   },
   {
@@ -63,7 +60,6 @@ export const genkitConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "GenkitAI",
       methodName: "generateStream",
-      kind: "Sync",
     },
   },
   {
@@ -76,7 +72,6 @@ export const genkitConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "GenkitAI",
       methodName: "embed",
-      kind: "Async",
     },
   },
   {
@@ -89,7 +84,6 @@ export const genkitConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "GenkitAI",
       methodName: "embed",
-      kind: "Async",
     },
   },
   {
@@ -102,7 +96,6 @@ export const genkitConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "GenkitAI",
       methodName: "embedMany",
-      kind: "Async",
     },
   },
   {
@@ -115,7 +108,6 @@ export const genkitConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "GenkitAI",
       methodName: "embedMany",
-      kind: "Async",
     },
   },
   {
@@ -128,7 +120,6 @@ export const genkitConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "GenkitAI",
       methodName: "run",
-      kind: "Async",
     },
   },
   {
@@ -141,7 +132,6 @@ export const genkitConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "GenkitAI",
       methodName: "run",
-      kind: "Async",
     },
   },
   {
@@ -153,7 +143,6 @@ export const genkitConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       functionName: "runInNewSpan",
-      kind: "Async",
     },
   },
   {
@@ -165,7 +154,6 @@ export const genkitConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       functionName: "runInNewSpan",
-      kind: "Async",
     },
   },
 ];

@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { ollamaChannels } from "../../instrumentation/providers/ollama-channels";
+import { ollamaChannels } from "../../instrumentation/providers/ollama-interceptors";
 
 const methods = [
   ["chat", ollamaChannels.chat.channelName],
@@ -24,7 +24,6 @@ export const ollamaConfigs: InstrumentationConfig[] = [
       functionQuery: {
         className: "Ollama",
         methodName,
-        kind: "Async" as const,
       },
     })),
   ),

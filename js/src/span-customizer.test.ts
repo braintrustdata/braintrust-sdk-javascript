@@ -28,8 +28,10 @@ import vm from "node:vm";
 import type { SpanCustomizer, SpanExportData } from "./instrumentation";
 import {
   customizeSpanExport,
+  mergeCustomizedSpanRecords,
   resetSpanCustomizerFailureLoggingForTests,
 } from "./span-customizer";
+import { processInputAttachments } from "./wrappers/attachment-utils";
 import { SpanCache } from "./span-cache";
 import { LazyValue } from "./util";
 import { SpanObjectTypeV3 } from "../util";
@@ -46,6 +48,7 @@ describe("onSpanExport", () => {
   let memoryLogger: TestBackgroundLogger;
 
   beforeEach(async () => {
+    vi.stubEnv("BRAINTRUST_DEBUG_LOG_LEVEL", "error");
     await _exportsForTestingOnly.simulateLoginForTests();
     memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();
   });
@@ -387,9 +390,9 @@ describe("onSpanExport", () => {
       const attachmentUpload = vi.spyOn(attachment, "upload");
       const enqueue = vi.spyOn(memoryLogger, "log");
       update({ output: "private", input: attachment });
-      const droppedRecords = enqueue.mock.calls.flatMap(([items]) => items);
+      const strippedRecords = enqueue.mock.calls.flatMap(([items]) => items);
 
-      // A rejected update cannot overwrite the preceding safe update.
+      // A failure stays separate from preceding and subsequent safe updates.
       const events = await memoryLogger.drain();
       expect(events).toEqual([
         {
@@ -404,20 +407,28 @@ describe("onSpanExport", () => {
           output: "[redacted]",
           metadata: { safe: true },
         },
+        {
+          id: span.id,
+          ...(entrypoint === "experiment"
+            ? { experiment_id: "customizer-experiment" }
+            : {
+                project_id: "customizer-project",
+                log_id: "g",
+                span_id: span.spanId,
+                root_span_id: span.rootSpanId,
+              }),
+          _is_merge: true,
+          context: { customizer_error: true },
+        },
       ]);
       expect(onSpanExport).toHaveBeenCalledTimes(2);
       expect(errorLog).toHaveBeenCalledTimes(1);
       expect(JSON.stringify(errorLog.mock.calls)).not.toContain("private");
 
-      const fetch = vi.fn<typeof globalThis.fetch>();
-      const state = new BraintrustState({ noExitFlush: true, fetch });
-      const httpLogger = state.httpLogger();
-      httpLogger.syncFlush = true;
-      httpLogger.log(droppedRecords);
-      await httpLogger.flush();
-      httpLogger.log(droppedRecords);
-      await httpLogger.flush();
-      expect(fetch).not.toHaveBeenCalled();
+      for (const record of strippedRecords) {
+        expect(await record.get()).toEqual(events[1]);
+        expect(await record.get()).toEqual(events[1]);
+      }
       expect(attachmentUpload).not.toHaveBeenCalled();
       expect(onSpanExport).toHaveBeenCalledTimes(2);
       expect(errorLog).toHaveBeenCalledTimes(1);
@@ -461,8 +472,11 @@ describe("onSpanExport", () => {
     ["non-record object", () => new Date(0)],
     ["class instance", () => new (class Replacement {})()],
     ["inherited object", () => Object.create({ output: "inherited" })],
+    ["custom null-root prototype", () => Object.create(Object.create(null))],
+    ["resolved promise", () => Promise.resolve({ output: "private" })],
+    ["rejected promise", () => Promise.reject(new Error("private rejection"))],
   ])(
-    "drops the failing record on %s and stops its callback chain",
+    "strips the failing record on %s and stops its callback chain",
     async (_name, invalidResult) => {
       const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
       const laterHook = vi.fn((data: SpanExportData) => data);
@@ -483,10 +497,16 @@ describe("onSpanExport", () => {
       manual.end();
 
       const events = await memoryLogger.drain();
-      expect(events).toHaveLength(2);
-      expect(events.find((event) => event.id === span.id)).not.toHaveProperty(
-        "output",
-      );
+      expect(events).toHaveLength(3);
+      expect(events[1]).toEqual({
+        id: span.id,
+        span_id: span.spanId,
+        root_span_id: span.rootSpanId,
+        project_id: "customizer-project",
+        log_id: "g",
+        _is_merge: true,
+        context: { customizer_error: true },
+      });
       expect(events.find((event) => event.id === manual.id)).toMatchObject({
         output: "unrelated",
         metrics: { end: expect.any(Number) },
@@ -500,13 +520,93 @@ describe("onSpanExport", () => {
         errorLog.mock.calls[0].every((value) => typeof value === "string"),
       ).toBe(true);
 
-      // Dropping one incremental record does not disable its logical span.
+      // Stripping one incremental record does not disable its logical span.
       span.log({ output: "recovered" });
       span.end();
       expect(await memoryLogger.drain()).toEqual([
         expect.objectContaining({ id: span.id, output: "recovered" }),
       ]);
       expect(errorLog).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  test.each([{}, { start: 10 }, { end: 20 }, { start: 10, end: 20 }])(
+    "retains only original protocol fields and duration %j after earlier mutations",
+    (duration) => {
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      const laterHook = vi.fn((data: SpanExportData) => data);
+      const original = {
+        id: "row",
+        span_id: "span",
+        root_span_id: "root",
+        span_parents: ["parent"],
+        org_id: "org",
+        project_id: "project",
+        log_id: "g",
+        _is_merge: true,
+        _merge_paths: [["metadata"]],
+        _parent_id: "parent-row",
+        _xact_id: "transaction",
+        _object_delete: false,
+        _array_delete: [],
+        created: "private",
+        name: "private",
+        span_attributes: { name: "private" },
+        input: "private",
+        output: "private",
+        expected: "private",
+        metadata: { secret: "private" },
+        context: { secret: "private" },
+        attributes: { secret: "private" },
+        events: ["private"],
+        links: ["private"],
+        error: "private",
+        tags: ["private"],
+        scores: { secret: 1 },
+        attachments: ["private"],
+        unknown: "private",
+        metrics: { ...duration, tokens: 99, custom: 42 },
+      };
+      const result = customizeSpanExport(original, [
+        {
+          onSpanExport(data) {
+            data.id = "wrong";
+            (data.span_parents as string[]).push("wrong");
+            (data._merge_paths as string[][])[0].push("wrong");
+            data.metrics = { start: 999, end: 999, tokens: 999 };
+            data.context = { secret: "earlier hook" };
+            data.output = "earlier hook";
+            return data;
+          },
+        },
+        {
+          onSpanExport(data) {
+            delete data.root_span_id;
+            (data.metrics as SpanExportData).end = 1234;
+            throw new Error("private failure");
+          },
+        },
+        { onSpanExport: laterHook },
+      ]);
+      expect(result).toEqual({
+        id: "row",
+        span_id: "span",
+        root_span_id: "root",
+        span_parents: ["parent"],
+        org_id: "org",
+        project_id: "project",
+        log_id: "g",
+        _is_merge: true,
+        _merge_paths: [["metadata"]],
+        _parent_id: "parent-row",
+        _xact_id: "transaction",
+        _object_delete: false,
+        _array_delete: [],
+        ...(Object.keys(duration).length ? { metrics: duration } : {}),
+        context: { customizer_error: true },
+      });
+      expect(original.metrics).toEqual({ ...duration, tokens: 99, custom: 42 });
+      expect(laterHook).not.toHaveBeenCalled();
     },
   );
 
@@ -566,7 +666,7 @@ describe("onSpanExport", () => {
     });
   });
 
-  test("memoizes dropped records across repeated flushes without uploading empty batches", async () => {
+  test("memoizes stripped records across repeated evaluations", async () => {
     const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
     const onSpanExport = vi.fn(() => {
       throw new Error("private failure");
@@ -574,24 +674,26 @@ describe("onSpanExport", () => {
     const laterHook = vi.fn((data: SpanExportData) => data);
     setSpanCustomizers([{ onSpanExport }, { onSpanExport: laterHook }]);
     const enqueue = vi.spyOn(memoryLogger, "log");
-    startInstrumentedSpan();
+    const span = startInstrumentedSpan();
     const records = enqueue.mock.calls.flatMap(([items]) => items);
-    expect(await memoryLogger.drain()).toEqual([]);
-    const failureCount = onSpanExport.mock.calls.length;
-    expect(failureCount).toBeGreaterThan(0);
-    expect(errorLog).toHaveBeenCalledTimes(1);
-
-    const fetch = vi.fn<typeof globalThis.fetch>();
-    const state = new BraintrustState({ noExitFlush: true, fetch });
-    const httpLogger = state.httpLogger();
-    httpLogger.syncFlush = true;
-    httpLogger.log(records);
-    await httpLogger.flush();
-    httpLogger.log(records);
-    await httpLogger.flush();
-
-    expect(fetch).not.toHaveBeenCalled();
-    expect(onSpanExport).toHaveBeenCalledTimes(failureCount);
+    const events = await memoryLogger.drain();
+    expect(events).toEqual([
+      {
+        id: span.id,
+        span_id: span.spanId,
+        root_span_id: span.rootSpanId,
+        project_id: "customizer-project",
+        log_id: "g",
+        _is_merge: false,
+        metrics: { start: expect.any(Number) },
+        context: { customizer_error: true },
+      },
+    ]);
+    for (const record of records) {
+      expect(await record.get()).toBe(events[0]);
+      expect(await record.get()).toBe(events[0]);
+    }
+    expect(onSpanExport).toHaveBeenCalledTimes(1);
     expect(errorLog).toHaveBeenCalledTimes(1);
     expect(laterHook).not.toHaveBeenCalled();
   });
@@ -711,7 +813,33 @@ describe("onSpanExport", () => {
     }
   });
 
-  test("throttles failure logs without exception or payload details", () => {
+  test("logs the failure once logging is enabled after a silenced failure", () => {
+    const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
+    const state = _internalGetGlobalState();
+    setSpanCustomizers([
+      {
+        onSpanExport(): SpanExportData {
+          throw new Error("private exception detail");
+        },
+      },
+    ]);
+
+    state.setDebugLogLevel(false);
+    customizeSpanExport({ id: "silenced" });
+    expect(errorLog).not.toHaveBeenCalled();
+
+    state.setDebugLogLevel("error");
+    customizeSpanExport({ id: "visible" });
+    customizeSpanExport({ id: "deduplicated" });
+    expect(errorLog.mock.calls).toEqual([
+      [
+        "[braintrust]",
+        "Span export customizer failed; exporting only span identity and duration.",
+      ],
+    ]);
+  });
+
+  test("logs safely once across time, registrations, and SDK module copies", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
     const customizers = [
@@ -721,23 +849,30 @@ describe("onSpanExport", () => {
         },
       },
     ];
-    const fail = () =>
-      expect(
-        customizeSpanExport({ id: "row", output: "private" }, customizers),
-      ).toBeNull();
-
-    fail();
-    fail();
-    fail();
+    for (let i = 0; i < 3; i++) {
+      setSpanCustomizers(customizers);
+      expect(customizeSpanExport({ id: "row", output: "private" })).toEqual({
+        id: "row",
+        context: { customizer_error: true },
+      });
+      vi.advanceTimersByTime(86_400_000);
+    }
+    // Reload intentionally models separately bundled SDK module state.
+    vi.resetModules();
+    const otherBundle = await import("./span-customizer");
+    expect(
+      otherBundle.customizeSpanExport({ id: "other", input: "private" }),
+    ).toEqual({
+      id: "other",
+      context: { customizer_error: true },
+    });
     expect(errorLog).toHaveBeenCalledTimes(1);
-    vi.advanceTimersByTime(59_000);
-    fail();
-    expect(errorLog).toHaveBeenCalledTimes(1);
-    vi.advanceTimersByTime(1_000);
-    fail();
-    expect(errorLog).toHaveBeenCalledTimes(2);
-    expect(errorLog.mock.calls[1][0]).toContain("3 additional records");
-    expect(JSON.stringify(errorLog.mock.calls)).not.toContain("private");
+    expect(errorLog.mock.calls).toEqual([
+      [
+        "[braintrust]",
+        "Span export customizer failed; exporting only span identity and duration.",
+      ],
+    ]);
   });
 
   test.each([false, true])(
@@ -768,7 +903,7 @@ describe("onSpanExport", () => {
     },
   );
 
-  test("drops async failures before attachments while exporting the rest of an HTTP batch", async () => {
+  test("strips async failures before attachments and sends ordered HTTP batches through retries", async () => {
     const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
     const failedAttachment = new Attachment({
       data: new ArrayBuffer(1),
@@ -792,12 +927,16 @@ describe("onSpanExport", () => {
       );
       return Object.freeze(payload);
     });
+    let hookCalls = 0;
     setSpanCustomizers([
       {
         // @ts-expect-error Async customizers are unsupported, but must be contained.
         onSpanExport(data) {
+          hookCalls++;
           if (data.output === "private") {
             delete data.id;
+            data.metrics = { start: 999, end: 999, tokens: 999 };
+            data.context = { secret: "private mutated context" };
             return Promise.reject(new Error("private async exception detail"));
           }
           return data;
@@ -810,6 +949,8 @@ describe("onSpanExport", () => {
     // manual span's initial row before the instrumented child is created.
     vi.stubEnv("BRAINTRUST_SYNC_FLUSH", "1");
     const rows: Record<string, unknown>[] = [];
+    const requests: Record<string, unknown>[][] = [];
+    let retried = false;
     const state = new BraintrustState({ noExitFlush: true });
     const logger = initLogger({
       state,
@@ -833,12 +974,34 @@ describe("onSpanExport", () => {
         }
         if (pathname === "/version") return Response.json({});
         if (pathname === "/logs3") {
-          rows.push(...JSON.parse(String(options?.body)).rows);
+          const batch = JSON.parse(String(options?.body)).rows;
+          requests.push(batch);
+          if (
+            !retried &&
+            batch.some(
+              (row: SpanExportData) =>
+                (row.context as SpanExportData)?.customizer_error,
+            )
+          ) {
+            retried = true;
+            return Response.json({}, { status: 503 });
+          }
+          rows.push(...batch);
           return Response.json({});
         }
         throw new Error(`Unexpected test request: ${pathname}`);
       },
     });
+    const mask = vi.fn((value: unknown) => {
+      if (value && typeof value === "object" && "customizer_error" in value) {
+        return { injected: "must not replace diagnostics" };
+      }
+      if (value && typeof value === "object" && "start" in value) {
+        return { start: 999 };
+      }
+      return value;
+    });
+    state.setMaskingFunction(mask);
     const manual = logger.startSpan({
       name: "manual",
       event: { input: "manual input" },
@@ -849,30 +1012,55 @@ describe("onSpanExport", () => {
         INSTRUMENTATION_NAMES.OPENAI,
       ),
     );
-    span.log({ input: failedAttachment, output: "private" });
+    span.log({
+      input: failedAttachment,
+      output: "private",
+      metrics: { start: 10, tokens: 99 },
+    });
     span.end();
     manual.log({ input: successfulAttachment, output: "manual output" });
     manual.end();
     await logger.flush();
 
-    expect(rows).toHaveLength(2);
-    expect(rows.find((row) => row.id === span.id)).toMatchObject({
+    expect(rows).toHaveLength(5);
+    const stripped = rows.find(
+      (row) => (row.context as SpanExportData)?.customizer_error,
+    );
+    expect(stripped).toEqual({
+      id: span.id,
       span_id: span.spanId,
       root_span_id: manual.rootSpanId,
       span_parents: [manual.spanId],
       project_id: "customizer-project",
       log_id: "g",
-      input: "provider input",
-      metrics: { start: expect.any(Number), end: expect.any(Number) },
+      _is_merge: true,
+      context: { customizer_error: true },
+      metrics: { start: 10 },
     });
-    expect(rows.find((row) => row.id === manual.id)).toMatchObject({
+    const failedRequests = requests.filter((batch) =>
+      batch.some((row) => (row.context as SpanExportData)?.customizer_error),
+    );
+    expect(failedRequests).toEqual([[stripped], [stripped]]);
+    expect(
+      requests.map((batch) =>
+        batch.map(
+          (row) => (row.context as SpanExportData)?.customizer_error === true,
+        ),
+      ),
+    ).toEqual([[false, false], [true], [true], [false, false]]);
+    expect(
+      requests.every(
+        (batch) => new Set(batch.map((row) => row.id)).size === batch.length,
+      ),
+    ).toBe(true);
+    expect(rows.find((row) => row.output === "manual output")).toMatchObject({
       input: successfulAttachment.reference,
       span_id: manual.spanId,
       root_span_id: manual.rootSpanId,
       project_id: "customizer-project",
       log_id: "g",
       output: "manual output",
-      metrics: { start: expect.any(Number), end: expect.any(Number) },
+      metrics: { end: expect.any(Number) },
     });
     expect(rows.find((row) => row.id === span.id)).not.toHaveProperty("output");
     expect(attachmentUpload).not.toHaveBeenCalled();
@@ -882,11 +1070,454 @@ describe("onSpanExport", () => {
     ).toBe(false);
     expect(errorLog).toHaveBeenCalledTimes(1);
     expect(JSON.stringify(errorLog.mock.calls)).not.toContain("private");
+    expect(hookCalls).toBe(6);
+    expect(laterHook).toHaveBeenCalledTimes(5);
+    expect(JSON.stringify(mask.mock.calls)).not.toContain("customizer_error");
+  });
+
+  test("only splits merge groups where a stripped record shares an ID", () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const failing = [
+      {
+        onSpanExport(): SpanExportData {
+          throw new Error("private failure");
+        },
+      },
+    ];
+    const strip = (id: string) =>
+      customizeSpanExport(
+        { id, _is_merge: true, output: "private" },
+        failing,
+      ) as {
+        id: string;
+      };
+    const a = strip("a");
+    const b = strip("b");
+    const a2 = strip("a");
+    const y = { id: "y", _is_merge: true, output: 3 };
+
+    const groups = mergeCustomizedSpanRecords([
+      { id: "x", input: 1 },
+      a,
+      b,
+      { id: "x", _is_merge: true, output: 2 },
+      a2,
+      y,
+    ]);
+
+    expect(groups).toEqual([
+      [{ id: "x", input: 1, output: 2 }, a, b],
+      [a2, y],
+    ]);
+    expect(groups[0][1]).toBe(a);
+    expect(groups[1][0]).toBe(a2);
+  });
+
+  function initHttpLogger(
+    onLogs: (rows: SpanExportData[]) => Response,
+    autoCaptureAttachments?: boolean,
+  ) {
+    // Keep all records in one flush chunk.
+    vi.stubEnv("BRAINTRUST_SYNC_FLUSH", "1");
+    vi.stubEnv("BRAINTRUST_NUM_RETRIES", "0");
+    const state = new BraintrustState({ noExitFlush: true });
+    const logger = initLogger({
+      state,
+      autoCaptureAttachments,
+      projectName: "customizer-project",
+      projectId: "customizer-project",
+      appUrl: "https://customizer.test",
+      apiKey: "test-key",
+      orgName: "test-org",
+      fetch: async (url, options) => {
+        const pathname = new URL(String(url)).pathname;
+        if (pathname === "/api/apikey/login") {
+          return Response.json({
+            org_info: [
+              {
+                id: "test-org",
+                name: "test-org",
+                api_url: "https://customizer.test",
+              },
+            ],
+          });
+        }
+        if (pathname === "/version") return Response.json({});
+        if (pathname === "/logs3") {
+          return onLogs(JSON.parse(String(options?.body)).rows);
+        }
+        throw new Error(`Unexpected test request: ${pathname}`);
+      },
+    });
+    return { state, logger };
+  }
+
+  test("stops sending later ordered groups after a group fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    setSpanCustomizers([
+      {
+        onSpanExport(data) {
+          if (data.output === "private") throw new Error("private failure");
+          return data;
+        },
+      },
+    ]);
+    const requests: SpanExportData[][] = [];
+    const { logger } = initHttpLogger((rows) => {
+      requests.push(rows);
+      return rows.some(
+        (row) => (row.context as SpanExportData)?.customizer_error,
+      )
+        ? Response.json({}, { status: 500 })
+        : Response.json({});
+    });
+    const span = logger.startSpan({ name: "manual" });
+    span.log({ output: "private" });
+    span.end();
+    await logger.flush();
+
+    expect(
+      requests.map((rows) =>
+        rows.map((row) => (row.context as SpanExportData)?.customizer_error),
+      ),
+    ).toEqual([[undefined], [true]]);
+  });
+
+  test("decision customizer removal uploads only surviving media", async () => {
+    vi.stubEnv("BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS", "true");
+    const upload = vi
+      .spyOn(Attachment.prototype, "upload")
+      .mockResolvedValue({ upload_status: "done" });
+    const rows: SpanExportData[] = [];
+    const { logger } = initHttpLogger((batch) => {
+      rows.push(...batch);
+      return Response.json({});
+    });
+    setSpanCustomizers([
+      {
+        onSpanExport(data) {
+          if (
+            data.input &&
+            typeof data.input === "object" &&
+            "state" in data.input &&
+            Array.isArray(data.input.state)
+          ) {
+            data.input.state.splice(0, 1);
+          }
+          return data;
+        },
+      },
+    ]);
+    const input = {
+      state: [
+        {
+          type: "file",
+          mediaType: "text/plain",
+          filename: "private.txt",
+          data: "cHJpdmF0ZQ==",
+        },
+        {
+          type: "file",
+          mediaType: "text/plain",
+          filename: "kept.txt",
+          data: "a2VwdA==",
+        },
+      ],
+      questions: [],
+    };
+    const span = logger.startSpan({
+      name: "evaluate",
+      spanAttributes: { type: "question" },
+      event: { input },
+    });
+    span.end();
+    await logger.flush();
+    expect(upload).toHaveBeenCalledTimes(1);
+    expect(upload.mock.instances[0]).toMatchObject({
+      reference: { filename: "kept.txt" },
+    });
+    expect(rows.find((row) => row.id === span.id)).toMatchObject({
+      input: {
+        state: [
+          {
+            ...input.state[1],
+            data: { type: "braintrust_attachment", filename: "kept.txt" },
+          },
+        ],
+        questions: [],
+      },
+    });
+    expect(input.state).toHaveLength(2);
+  });
+
+  for (const type of ["question", "extraction"] as const) {
+    test.each(["customizer", "masking", "upload failure"])(
+      `${type} media survives export with %s and never uploads redacted media`,
+      async (mode) => {
+        vi.stubEnv("BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS", "true");
+        const media =
+          "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKElEQVR4nO3NsQ0AAAzCMP5/un0CNkuZ41wybXsHAAAAAAAAAAAAxR4yw/wuPL6QkAAAAABJRU5ErkJggg==";
+        const upload = vi
+          .spyOn(Attachment.prototype, "upload")
+          .mockRejectedValue(new Error("injected upload failure"));
+        const rows: SpanExportData[] = [];
+        const { state, logger } = initHttpLogger((batch) => {
+          rows.push(...batch);
+          return Response.json({});
+        });
+        const redact = (value: unknown) =>
+          JSON.parse(JSON.stringify(value).replaceAll(media, "[redacted]"));
+        if (mode === "customizer") {
+          setSpanCustomizers([
+            {
+              onSpanExport(data) {
+                if (data.input) data.input = redact(data.input);
+                return data;
+              },
+            },
+          ]);
+        } else if (mode === "masking") {
+          state.setMaskingFunction(redact);
+        }
+        const input = {
+          state: [{ type: "file", data: media, mediaType: "image/png" }],
+          ...(type === "extraction"
+            ? { fields: [{ id: "q", type: "number" }], images: [media] }
+            : {
+                questions: [
+                  { id: "q", type: "boolean", instructions: "Inspect" },
+                ],
+              }),
+        };
+        const output = {
+          answers: [
+            type === "extraction"
+              ? { id: "q", type: "number", value: 0 }
+              : { id: "q", type: "boolean", probability: 0.9 },
+          ],
+        };
+        const span = logger.startSpan({
+          name: "evaluate",
+          spanAttributes: { type },
+        });
+        span.log({
+          input,
+          output,
+        });
+        span.end();
+        await logger.flush();
+        expect(rows.find((row) => row.id === span.id)).toMatchObject({
+          input: mode === "upload failure" ? input : redact(input),
+          output,
+        });
+        expect(upload).toHaveBeenCalledTimes(mode === "upload failure" ? 1 : 0);
+        expect(input.state[0].data).toBe(media);
+      },
+    );
+  }
+
+  test.each(["done", "error", "throw"])(
+    "automatic decision attachments export safely on %s",
+    async (result) => {
+      const image =
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==";
+      const input = {
+        state: [
+          {
+            role: "user",
+            content: [
+              { type: "input_text", text: "inspect" },
+              { type: "input_image", image_url: image },
+              { type: "input_image", image_url: image },
+              { type: "input_image", image_url: image },
+            ],
+          },
+        ],
+        questions: [
+          { id: "visible", type: "boolean", instructions: "Visible?" },
+        ],
+      };
+      const processed = processInputAttachments(input, true);
+      const uploads = processed.state[0].content
+        .slice(1)
+        .map((part: { image_url: Attachment }, index: number) =>
+          vi.spyOn(part.image_url, "upload").mockImplementation(async () => {
+            if (index === 2 && result === "throw")
+              throw new Error("upload failed");
+            return {
+              upload_status:
+                index === 2 && result === "error" ? "error" : "done",
+            };
+          }),
+        );
+      setSpanCustomizers([
+        {
+          onSpanExport(data) {
+            if (data.input) {
+              const value = data.input as typeof input;
+              value.state[0].content[1].image_url = "[redacted]";
+            }
+            return data;
+          },
+        },
+      ]);
+      const rows: SpanExportData[] = [];
+      const { logger } = initHttpLogger((batch) => {
+        rows.push(...batch);
+        return Response.json({});
+      });
+      const span = logger.startSpan({
+        name: "openai.decisions.create",
+        spanAttributes: { type: "question" },
+      });
+      span.log({
+        input: processed,
+        output: {
+          answers: [{ id: "visible", type: "boolean", probability: 1 }],
+        },
+      });
+      span.end();
+      await logger.flush();
+      const exported = rows.find((row) => row.id === span.id)!;
+      const expected = structuredClone(input);
+      expected.state[0].content[1].image_url = "[redacted]";
+      if (result === "done") {
+        expect(exported.input).toMatchObject({
+          state: [
+            {
+              content: [
+                { type: "input_text", text: "inspect" },
+                { type: "input_image", image_url: "[redacted]" },
+                {
+                  type: "input_image",
+                  image_url: {
+                    type: "braintrust_attachment",
+                    content_type: "image/png",
+                  },
+                },
+                {
+                  type: "input_image",
+                  image_url: {
+                    type: "braintrust_attachment",
+                    content_type: "image/png",
+                  },
+                },
+              ],
+            },
+          ],
+        });
+      } else {
+        expect(exported.input).toEqual(expected);
+        // A failed pipeline skips uploads for subsequent spans and keeps inline data.
+        const later = processInputAttachments(input, true);
+        const laterUpload = vi.spyOn(
+          later.state[0].content[2].image_url,
+          "upload",
+        );
+        const next = logger.startSpan({ name: "next" });
+        next.log({ input: later });
+        next.end();
+        await logger.flush();
+        expect(laterUpload).not.toHaveBeenCalled();
+        expect(rows.find((row) => row.id === next.id)?.input).toEqual(expected);
+      }
+      expect(uploads[0]).not.toHaveBeenCalled();
+      expect(uploads[1]).toHaveBeenCalledOnce();
+      expect(uploads[2]).toHaveBeenCalledOnce();
+      expect(exported.output).toEqual({
+        answers: [{ id: "visible", type: "boolean", probability: 1 }],
+      });
+      expect(input.state[0].content[1].image_url).toBe(image);
+    },
+  );
+
+  test.each([true, false])(
+    "keeps scoped typed attachment capture=%s through background export and masking",
+    async (capture) => {
+      vi.stubEnv("BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS", String(!capture));
+      const upload = vi
+        .spyOn(Attachment.prototype, "upload")
+        .mockResolvedValue({ upload_status: "done" });
+      setSpanCustomizers([{ onSpanExport: (data) => ({ ...data }) }]);
+      const rows: SpanExportData[] = [];
+      const { state, logger } = initHttpLogger((batch) => {
+        rows.push(...batch);
+        return Response.json({});
+      }, capture);
+      state.setMaskingFunction((value) => structuredClone(value));
+      const input = {
+        state: [{ type: "file", data: "data:text/plain;base64,aGVsbG8=" }],
+        questions: [{ id: "visible", type: "boolean" }],
+      };
+      const span = logger.startSpan({ name: "typed.call" });
+      span.log({ input });
+      span.end();
+      await logger.flush();
+      const exported = rows.find((row) => row.id === span.id)!;
+      if (capture) {
+        expect(exported.input).toMatchObject({
+          state: [
+            {
+              data: {
+                type: "braintrust_attachment",
+                content_type: "text/plain",
+              },
+            },
+          ],
+        });
+        expect(upload).toHaveBeenCalledOnce();
+      } else {
+        expect(exported.input).toEqual(input);
+        expect(upload).not.toHaveBeenCalled();
+      }
+    },
+  );
+
+  test("does not upload attachments whose references were masked away", async () => {
+    const masked = new Attachment({
+      data: new ArrayBuffer(1),
+      filename: "private.txt",
+      contentType: "text/plain",
+    });
+    const maskedUpload = vi.spyOn(masked, "upload");
+    const kept = new Attachment({
+      data: new ArrayBuffer(1),
+      filename: "safe.txt",
+      contentType: "text/plain",
+    });
+    const keptUpload = vi
+      .spyOn(kept, "upload")
+      .mockResolvedValue({ upload_status: "done" });
+    const rows: SpanExportData[] = [];
+    const { state, logger } = initHttpLogger((batch) => {
+      rows.push(...batch);
+      return Response.json({});
+    });
+    state.setMaskingFunction((value) => {
+      if (JSON.stringify(value)?.includes("private.txt")) {
+        throw new Error("private failure");
+      }
+      return value;
+    });
+    const span = logger.startSpan({ name: "manual" });
+    span.log({ input: masked, output: kept });
+    span.end();
+    await logger.flush();
+
+    expect(rows.find((row) => row.id === span.id)).toMatchObject({
+      input: "ERROR: Failed to mask field 'input' - Error",
+      output: kept.reference,
+    });
+    expect(maskedUpload).not.toHaveBeenCalled();
+    expect(keptUpload).toHaveBeenCalledTimes(1);
   });
 });
 
 describe("OpenTelemetry compat mode", () => {
-  const customizer = { onSpanExport: (data: SpanExportData) => data };
+  const customizer = {
+    onSpanExport: (data: SpanExportData) => ({ ...data, output: "redacted" }),
+  };
 
   afterEach(() => {
     globalThis.BRAINTRUST_CONTEXT_MANAGER = undefined;
@@ -903,45 +1534,24 @@ describe("OpenTelemetry compat mode", () => {
         globalThis.BRAINTRUST_CONTEXT_MANAGER = class {} as never;
       },
     ],
-  ])("rejects registering customizers under %s", (_name, enableCompat) => {
+  ])("registers and clears customizers under %s", (_name, enableCompat) => {
     const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
     enableCompat();
     setSpanCustomizers([customizer]);
-    expect(errorLog).toHaveBeenCalledTimes(1);
-    const record = { id: "row", output: "original" };
-    expect(customizeSpanExport(record)).toBe(record);
-    expect(customizeSpanExport({ ...record, id: "row-2" })).toEqual({
-      ...record,
-      id: "row-2",
+    expect(customizeSpanExport({ id: "row", output: "private" })).toEqual({
+      id: "row",
+      output: "redacted",
     });
-    expect(errorLog).toHaveBeenCalledTimes(1);
-
-    setSpanCustomizers([customizer]);
-    expect(errorLog).toHaveBeenCalledTimes(2);
-
-    setSpanCustomizers([]);
-    setSpanCustomizers(undefined);
-    expect(errorLog).toHaveBeenCalledTimes(2);
-  });
-
-  test("keeps the previous registration after rejecting a replacement", () => {
-    const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
     setSpanCustomizers([
-      {
-        onSpanExport: (data) => ({ ...data, output: "previous customizer" }),
-      },
+      { onSpanExport: (data) => ({ ...data, output: "replacement" }) },
     ]);
-    vi.stubEnv("BRAINTRUST_OTEL_COMPAT", "1");
-
-    setSpanCustomizers([customizer]);
-    expect(errorLog).toHaveBeenCalledTimes(1);
-    expect(customizeSpanExport({ output: "original" })).toEqual({
-      output: "previous customizer",
+    expect(customizeSpanExport({ output: "private" })).toEqual({
+      output: "replacement",
     });
-
-    setSpanCustomizers(undefined);
+    setSpanCustomizers([]);
     const record = { output: "original" };
     expect(customizeSpanExport(record)).toBe(record);
-    expect(errorLog).toHaveBeenCalledTimes(1);
+    setSpanCustomizers(undefined);
+    expect(errorLog).not.toHaveBeenCalled();
   });
 });

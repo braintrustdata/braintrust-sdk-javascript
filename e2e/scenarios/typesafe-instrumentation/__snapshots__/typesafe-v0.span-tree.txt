@@ -9,7 +9,7 @@ span_tree:
     │     "operation": "mixed",
     │     "testRunId": "<run:1>"
     │   }
-    │   └── typesafe.systemOne [question]
+    │   └── typesafe.systemOne [decision]
     │       input: {
     │         "questions": [
     │           {
@@ -94,7 +94,7 @@ span_tree:
           "operation": "raw",
           "testRunId": "<run:1>"
         }
-        └── typesafe.systemOne [question]
+        └── typesafe.systemOne [decision]
             input: {
               "questions": [
                 {

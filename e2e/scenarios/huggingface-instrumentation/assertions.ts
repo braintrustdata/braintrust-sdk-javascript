@@ -378,7 +378,9 @@ export function defineHuggingFaceInstrumentationAssertions(options: {
       "matches the span contract snapshot",
       { timeout: options.timeoutMs },
       async ({ expect }) => {
-        await matchSpanTreeSnapshot(events, spanSnapshotPath);
+        await matchSpanTreeSnapshot(events, spanSnapshotPath, {
+          snapshotExpect: expect,
+        });
       },
     );
 

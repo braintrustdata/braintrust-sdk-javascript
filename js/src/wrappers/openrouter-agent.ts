@@ -1,8 +1,9 @@
 import { registerInstrumentation } from "../instrumentation/registrations/openrouterAgent";
-import { openRouterAgentChannels } from "../instrumentation/providers/openrouter-agent-channels";
+import { debugLogger } from "../debug-logger";
+import { openRouterAgentChannels } from "../instrumentation/providers/openrouter-agent-interceptors";
 import type {
-  OpenRouterAgentClient,
   OpenRouterAgentCallModelRequest,
+  OpenRouterAgentClient,
 } from "../vendor-sdk-types/openrouter-agent";
 
 /**
@@ -21,8 +22,9 @@ export function wrapOpenRouterAgent<T extends object>(agent: T): T {
     return openRouterAgentProxy(candidate as OpenRouterAgentClient) as T;
   }
 
-  // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-  console.warn("Unsupported OpenRouter Agent library. Not wrapping.");
+  debugLogger.notice.warn(
+    "Unsupported OpenRouter Agent library. Not wrapping.",
+  );
   return agent;
 }
 
@@ -72,11 +74,11 @@ function wrapCallModel(
       const invocationTarget =
         thisArg === undefined ? (defaultThis ?? thisArg) : thisArg;
 
-      return openRouterAgentChannels.callModel.traceSync(
-        () => Reflect.apply(target, invocationTarget, [request, options]),
-        {
-          arguments: [request],
-        } as Parameters<typeof openRouterAgentChannels.callModel.traceSync>[1],
+      return openRouterAgentChannels.callModel.invoke(
+        target,
+        invocationTarget,
+        [request, options],
+        {},
       );
     },
   });

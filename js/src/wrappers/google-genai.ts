@@ -1,16 +1,17 @@
 import { registerInstrumentation } from "../instrumentation/registrations/googleGenAI";
-import { googleGenAIChannels } from "../instrumentation/providers/google-genai-channels";
+import { debugLogger } from "../debug-logger";
+import { googleGenAIChannels } from "../instrumentation/providers/google-genai-interceptors";
 import { isObject } from "../util";
 import type {
   GoogleGenAIClient,
   GoogleGenAIConstructor,
-  GoogleGenAIEmbedContentParams,
   GoogleGenAIEditImageParams,
+  GoogleGenAIEmbedContentParams,
   GoogleGenAIGenerateContentParams,
   GoogleGenAIGenerateImagesParams,
   GoogleGenAIGenerateVideosParams,
-  GoogleGenAIInteractionCreateParams,
   GoogleGenAIHttpResponse,
+  GoogleGenAIInteractionCreateParams,
   GoogleGenAIInteractions,
   GoogleGenAIModels,
 } from "../vendor-sdk-types/google-genai";
@@ -39,14 +40,12 @@ export function wrapGoogleGenAI<T extends Record<string, any>>(
 ): T {
   registerInstrumentation();
   if (!googleGenAI || typeof googleGenAI !== "object") {
-    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    console.warn("Invalid Google GenAI module. Not wrapping.");
+    debugLogger.notice.warn("Invalid Google GenAI module. Not wrapping.");
     return googleGenAI;
   }
 
   if (!("GoogleGenAI" in googleGenAI)) {
-    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    console.warn(
+    debugLogger.notice.warn(
       "GoogleGenAI class not found in module. Not wrapping. Make sure you're passing the module itself (import * as googleGenAI from '@google/genai').",
     );
     return googleGenAI;
@@ -227,11 +226,11 @@ function wrapGenerateContent(
   original: GoogleGenAIModels["generateContent"],
 ): GoogleGenAIModels["generateContent"] {
   return function (params: GoogleGenAIGenerateContentParams) {
-    return googleGenAIChannels.generateContent.tracePromise(
-      () => original(params),
-      { arguments: [params] } as Parameters<
-        typeof googleGenAIChannels.generateContent.tracePromise
-      >[1],
+    return googleGenAIChannels.generateContent.invoke(
+      original,
+      undefined,
+      [params],
+      {},
     );
   };
 }
@@ -240,9 +239,11 @@ function wrapGenerateContentStream(
   original: GoogleGenAIModels["generateContentStream"],
 ): GoogleGenAIModels["generateContentStream"] {
   return function (params: GoogleGenAIGenerateContentParams) {
-    return googleGenAIChannels.generateContentStream.tracePromise(
-      () => original(params),
-      { arguments: [params] },
+    return googleGenAIChannels.generateContentStream.invoke(
+      original,
+      undefined,
+      [params],
+      {},
     );
   };
 }
@@ -251,11 +252,11 @@ function wrapEmbedContent(
   original: GoogleGenAIModels["embedContent"],
 ): GoogleGenAIModels["embedContent"] {
   return function (params: GoogleGenAIEmbedContentParams) {
-    return googleGenAIChannels.embedContent.tracePromise(
-      () => original(params),
-      { arguments: [params] } as Parameters<
-        typeof googleGenAIChannels.embedContent.tracePromise
-      >[1],
+    return googleGenAIChannels.embedContent.invoke(
+      original,
+      undefined,
+      [params],
+      {},
     );
   };
 }
@@ -267,22 +268,11 @@ function wrapInteractionCreate(
     params: GoogleGenAIInteractionCreateParams,
     options?: Record<string, unknown>,
   ) {
-    if (params.background === true) {
-      return options === undefined
-        ? original(params)
-        : original(params, options);
-    }
-
-    const traceContext =
-      options === undefined
-        ? { arguments: [params] }
-        : { arguments: [params, options] };
-    return googleGenAIChannels.interactionsCreate.tracePromise(
-      () =>
-        options === undefined ? original(params) : original(params, options),
-      traceContext as Parameters<
-        typeof googleGenAIChannels.interactionsCreate.tracePromise
-      >[1],
+    return googleGenAIChannels.interactionsCreate.invoke(
+      original,
+      undefined,
+      options === undefined ? [params] : [params, options],
+      {},
     );
   };
 }

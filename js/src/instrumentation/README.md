@@ -1,191 +1,94 @@
 # Braintrust Instrumentation Consumers
 
-Braintrust instrumentation consumers wrap provider calls through typed
-invocation hooks or consume tracing-compatible events from the internal global
-registry.
-Auto-instrumented provider code and manual wrappers use the same typed channels,
-so extraction, stream handling, and span behavior stay aligned.
+API wrapping and span instrumentation are separate layers.
+Invocation hooks work independently of the SDK; provider plugins explicitly connect them to tracing functions.
 
-## Architecture
-
-An instrumentation has four parts:
-
-1. An Orchestrion config identifies the provider function for automatic
-   transformation.
-2. A typed channel defines its arguments, result, extra event fields, and stable
-   `orchestrion:<package>:<operation>` identifier.
-3. An internal consumer intercepts that channel, or subscribes to its legacy
-   tracing lifecycle, and maps the call into Braintrust spans.
-4. A manual wrapper invokes the same typed channel when transformation is not
-   available.
-
-The global hook transport and its consumers are internal. New and migrated
-consumers should prefer the typed channel's `intercept` API. Existing consumers
-can continue using `traceAsyncChannel`, `traceStreamingChannel`, or
-`traceSyncStreamChannel` during the gradual migration.
-
-## Invocation Hooks
-
-Invocation hooks expose the complete target call and are designed for wrappers
-that need to scope the target with `AsyncLocalStorage.run()` or patch arguments,
-the receiver, or the returned value:
+## Define wrapping hooks
 
 ```ts
-const removeInterceptor = providerChannels.create.intercept(
-  (target, thisArg, args, additional) =>
-    store.run(additional.context, () => target.apply(thisArg, args)),
+const providerHooks = defineInterceptor("provider-package", {
+  create: channel<[CreateParams], PromiseLike<CreateResult>>({
+    channelName: "messages.create",
+  }),
+});
+```
+
+The identifier must match the Orchestrion config: `orchestrion:<package>:<operation>`.
+Definitions describe arguments, return values, and opaque additional data.
+They do not contain span names, instrumentation provenance, or tracing methods.
+
+Interceptors compose in registration order and may replace arguments, receivers, results, or the entire call.
+Removing an interceptor is idempotent.
+Wrapping can scope a call without creating spans:
+
+```ts
+const remove = providerHooks.create.intercept((target, receiver, args) =>
+  store.run(context, () => Reflect.apply(target, receiver, args)),
 );
 ```
 
-Interceptors compose as nested middleware in registration order. Each receives
-the next target and may invoke it with different arguments or receiver, replace
-its result, call it more than once, or not call it at all. Removing an
-interceptor is idempotent. Calling a typed channel through `invoke` only uses
-the invocation hook and does not dispatch the legacy tracing lifecycle.
-Generated auto-instrumentation wrappers separately retain dual emission during
-the migration, with legacy tracing outside the effective intercepted call.
+## Trace independently
 
-## Lifecycle
-
-The event lifecycle is compatible with Node tracing channels:
-
-- `start`: before the synchronous portion of the target function
-- `end`: after the synchronous portion completes
-- `asyncStart`: when an asynchronous result begins settling
-- `asyncEnd`: after that result settles and before user continuation
-- `error`: when the target throws, rejects, or reports a callback error
-
-Every phase receives the same mutable context object:
+Tracing helpers receive a callable and tracing data; they never receive a hook or register interceptors.
+Provider plugins explicitly connect the layers:
 
 ```ts
-interface InstrumentationContext {
-  arguments: ArrayLike<unknown>;
-  self?: unknown;
-  moduleVersion?: string;
-  result?: unknown;
-  error?: unknown;
-}
-```
-
-The generated wrapper passes the target invocation and `moduleVersion` to the
-global hook runtime. That runtime creates `arguments` and `self`; tracing
-operators add `result` or `error`.
-
-## Defining Typed Channels
-
-Define the smallest types needed by instrumentation:
-
-```ts
-const providerChannels = defineChannels(
-  "provider-package",
-  {
-    create: channel<
-      [CreateParams],
-      CreateResult,
-      { providerRequestId?: string }
-    >({
-      channelName: "messages.create",
-      kind: "async",
-    }),
-  },
-  { instrumentationName: "provider" },
+this.unsubscribers.push(
+  providerHooks.create.intercept((target, receiver, args, additional) =>
+    traceAsyncCall<typeof providerHooks.create>(
+      () => Reflect.apply(target, receiver, args),
+      { ...additional, arguments: args, self: receiver },
+      {
+        name: "provider.messages.create",
+        instrumentationName: INSTRUMENTATION_NAMES.PROVIDER,
+        type: "llm",
+        extractInput: ([params]) => ({
+          input: params.messages,
+          metadata: { model: params.model },
+        }),
+        extractOutput: (result) => result.content,
+        extractMetrics: (result) => ({ tokens: result.usage.totalTokens }),
+      },
+    ),
+  ),
 );
 ```
 
-Channel names must match the Orchestrion config exactly. Do not include the
-`orchestrion:` prefix in the transform config; `defineChannels` and Orchestrion
-construct it from the package and operation.
+The tracing function owns span creation, context propagation, response observation, and finalization.
+It preserves the original return value, including Promise subclasses and stream identity.
+Do not introduce combined registration APIs such as `interceptAndTrace` or `traceInvocation`.
 
-## Subscribing
+## Manual wrappers
 
-Prefer the shared tracing helpers:
-
-```ts
-traceAsyncChannel(providerChannels.create, {
-  name: "provider.messages.create",
-  type: "llm",
-  extractInput(args) {
-    return {
-      input: args[0].messages,
-      metadata: { model: args[0].model },
-    };
-  },
-  extractOutput(result) {
-    return result.content;
-  },
-  extractMetrics(result) {
-    return {
-      prompt_tokens: result.usage.input_tokens,
-      completion_tokens: result.usage.output_tokens,
-    };
-  },
-});
-```
-
-The helpers:
-
-- create and correlate spans with a `WeakMap` keyed by event context
-- bind the current span store to `start` for async-context propagation
-- contain extraction failures and log them through `debugLogger`
-- patch streams without replacing their public semantics
-- install process-lifetime subscriptions and span-store bindings
-
-Use raw `IsoChannelHandlers` only when a provider requires lifecycle behavior
-that the shared helpers cannot express.
-
-## Manual Wrappers
-
-New and migrated manual wrappers pass the original target, receiver, arguments,
-and any channel-specific fields to the same typed channel:
+Manual and generated wrappers invoke the same hook:
 
 ```ts
-return providerChannels.create.invoke(originalCreate, this, [params], {
-  providerRequestId,
-});
+return providerHooks.create.invoke(originalCreate, client, [params], {});
 ```
 
-Legacy wrappers can continue calling the tracing-compatible operators until
-their consumer is migrated:
+Without an interceptor the original function runs directly.
+With a tracing plugin enabled the registered tracing function creates spans.
+Manual wrappers must not create spans themselves.
 
-```ts
-return providerChannels.create.tracePromise(() => originalCreate(params), {
-  arguments: [params],
-});
-```
+## Runtime and safety requirements
 
-Do not create spans directly inside wrappers. Keeping span creation in the
-internal consumer prevents auto and manual instrumentation from drifting.
-
-## Promise and Stream Requirements
-
-Instrumentation is non-invasive:
-
-- Native promises retain normal resolution and rejection behavior.
-- Promise subclasses and other thenables are returned unchanged so helper
-  methods such as `withResponse()` remain available.
-- A non-Promise value returned from an `Async` transform remains that value.
-- Async iterables and event-emitter streams retain identity and public methods.
-- Subscriber or extraction bugs must not alter provider calls.
-
-Stream patches must be idempotent and preserve cancellation, errors, early
-termination, and async context.
-
-## Event and Span Safety
-
-- Treat arguments, results, metadata, and headers as untrusted.
-- Avoid prototype-sensitive merges and unnecessary mutation of provider data.
-- Capture only fields permitted by the instrumentation specification.
+- Preserve receivers, arguments, errors, async context, Promise helper methods, and stream cancellation.
+- Treat provider inputs and outputs as untrusted and capture only specification-permitted data.
+- Keep registration, removal, and stream patching idempotent.
+- Contain extraction failures with `debugLogger` without retrying the provider call.
 - Pass `Error` objects directly to `span.log({ error })`.
-- Use narrow vendored provider interfaces shared by wrappers and consumers.
-- Keep enable, subscription, and patching behavior idempotent.
+- Treat `span.log()` and `span.end()` as non-throwing.
+
+Invocation protocol version 2 uses an independent global registry.
+Rebuild bundles transformed with the previous SDK when upgrading; the old combined tracing protocol is not supported.
 
 ## Export Customizers
 
 Configure `spanCustomizers` through the standalone instrumentation entrypoint
-before importing the main SDK, which enables instrumentation during platform
-initialization. Use a bootstrap module before any auto-instrumentation preload
-that initializes the SDK. Static imports of the main SDK are hoisted; use a
-dynamic import after configuration:
+before importing `braintrust` or `@braintrust/otel`. The main SDK enables
+instrumentation during platform initialization. Use a bootstrap module before
+any auto-instrumentation preload that initializes the SDK. Static imports are
+hoisted; use a dynamic import after configuration:
 
 ```ts
 import { configureInstrumentation } from "braintrust/instrumentation";
@@ -218,17 +121,18 @@ Dataset rows and feedback records are not customized.
 Callbacks run synchronously in registration order. Mutate and return the record,
 or return a replacement plain object for the next callback. If a callback throws
 or returns an invalid value (including a promise), the SDK logs a safe error,
-stops the callback chain, and drops that outgoing record. Diagnostics do not
-include the exception message, stack, or span payload, and are throttled to
-the first failure plus at most one report per minute with a suppressed count. Promise rejections are
-consumed without awaiting the result. Handle recovery inside the callback if
-export should continue, and do not mutate the record after returning.
-Export retries reuse the transformed record or drop result without invoking
-callbacks or logging the failure again. Unrelated records and future records
-from the same span are evaluated independently; previously exported records
-cannot be retracted. Dropping a span's first record, which carries
-`span_attributes` and `created`, while later merge records succeed can leave a
-partial row without a name or type. Configuration is shared across SDK bundles.
+stops the callback chain, and exports only original identity, routing, and
+duration timestamps plus `context: { customizer_error: true }`. No attachments
+from that record upload. Diagnostics do not include the exception message,
+stack, or span payload, and are logged at most once per JavaScript global
+environment. Promise rejections are consumed without awaiting the result.
+Handle recovery inside the callback to retain span content, and do not mutate
+the record after returning. Export retries reuse the transformed or stripped
+record without invoking callbacks or logging the failure again. Stripped
+records bypass downstream masking and remain separate from other updates
+with the same ID in ordered export requests. Unrelated records and future
+records from the same span are evaluated independently; previously exported
+records cannot be retracted. Configuration is shared across SDK bundles.
 
 The SDK restores these fields after every callback, including removing injected
 fields that were absent from the original record:
@@ -255,20 +159,86 @@ that guarantee.
 Customizers receive only the outgoing record, not a live span or provider
 instrumentation context.
 
-Span customizers are not yet supported with OpenTelemetry compat mode
-(`BRAINTRUST_OTEL_COMPAT` or `setupOtelCompat()`). Registering a non-empty list
-while compat mode is active logs an error and leaves the previous registration
-unchanged. Calling `setupOtelCompat()` after registering customizers logs an error
-and continues enabling compat mode without clearing the registered list. Each
-explicit registration or setup attempt logs once, not once per span or export.
-Clearing customizers is always allowed and silent.
+### OpenTelemetry spans
+
+The same registration applies to spans exported through `@braintrust/otel`'s
+`BraintrustSpanProcessor` or `BraintrustExporter`, including compatibility mode
+(`BRAINTRUST_OTEL_COMPAT` or `setupOtelCompat()`). Compatibility mode is not
+required to customize OTel exports. Native spans still use the native record
+shape above; OTel hooks receive an isolated plain snapshot, not a live
+`ReadableSpan` or a converted native record:
+
+- `name`, `kind`, `attributes`, `status: { code, message? }`, `events`, `links`.
+- `spanContext: { traceId, spanId, traceFlags, traceState?, isRemote? }`,
+  `parentSpanId`, `parentSpanContext`, `startTime`, `endTime`, `duration`.
+  `spanContext` is an object, not a method. Times are OTel
+  `[seconds, nanoseconds]` arrays; trace state is a string.
+- `resource: { attributes, schemaUrl? }`, `instrumentationScope:
+  { name, version?, schemaUrl?, attributes? }`, and dropped attribute/event/link
+  counts. OTel 1.x's instrumentation library is exposed as `instrumentationScope`.
+- Events contain `name`, `time`, optional attributes and dropped count; links
+  contain a plain `context` (the same shape as `spanContext`), optional attributes
+  and dropped count.
+
+Hooks run after AI filtering and SDK origin enrichment, before OTLP
+serialization. Pending resource attributes are awaited before taking the
+snapshot. Plain nested containers are copied, so hook mutations do not affect
+the original span or another exporter. Replacement objects are not merged with
+the original: omitted content is removed, with empty OTLP defaults where
+required. Original identity, parent relationships, timestamps and
+`braintrust.parent` routing are restored after each callback.
+
+For example, register one synchronous hook that handles both payload shapes:
+
+```ts
+import { configureInstrumentation } from "braintrust/instrumentation";
+
+configureInstrumentation({
+  spanCustomizers: [
+    {
+      onSpanExport(data) {
+        if ("attributes" in data) {
+          const attributes = data.attributes as Record<string, unknown>;
+          delete attributes["braintrust.input_json"];
+          delete attributes["braintrust.output_json"];
+          delete attributes["gen_ai.prompt"];
+          delete attributes["gen_ai.completion"];
+          data.events = [];
+        } else {
+          delete data.input;
+          delete data.output;
+        }
+        return data;
+      },
+    },
+  ],
+});
+
+// Import the application and its tracing setup only after registration.
+await import("./app.js");
+```
+
+This example removes common prompt/output attributes and events, not every
+possible sensitive field. Adjust redaction to the instrumentation you use,
+including resource/scope metadata, links and status descriptions as needed.
+
+Thrown exceptions, promises, non-plain returns and invalid OTel serialization
+shapes stop the callback chain and fail closed. The failed span keeps only
+original identity, timestamps, routing and `braintrust.context_json` exactly
+`{"customizer_error":true}`. Names, status descriptions, events, links,
+resource/scope metadata and original context/origin are removed. Malformed spans
+that cannot be safely adapted are dropped instead. The safe once-only diagnostic
+is shared with the native pipeline across ESM/CJS bundles. Composing the
+Braintrust processor and exporter does not invoke hooks twice; retries of the
+prepared transport data do not rerun hooks. Submitting the original span again
+is a new export.
 
 ## Testing
 
 Test at the narrowest useful layers:
 
-1. Consumer unit tests for extraction and span handling.
-2. Global hook/runtime tests for lifecycle and context behavior.
+1. Plugin unit tests for extraction and span handling.
+2. Invocation runtime tests for wrapping and context behavior.
 3. Orchestrion transformation tests for generated wrappers.
 4. Bundler and loader tests for real transformed execution.
 5. Provider e2e tests for wrapped and auto-hook parity.

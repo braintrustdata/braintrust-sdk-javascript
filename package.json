@@ -31,7 +31,8 @@
     "pretest:e2e:update": "pnpm run build",
     "pretest": "pnpm run build",
     "precheck:typings": "pnpm run build",
-    "check": "vp check"
+    "check": "vp check",
+    "test:e2e:cassettes": "pnpm run test:e2e -- --check-cassettes"
   },
   "engines": {
     "pnpm": ">=10.27.0",

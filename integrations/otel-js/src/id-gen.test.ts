@@ -4,7 +4,7 @@ import {
   UUIDGenerator,
   getIdGenerator,
 } from "../../../js/src/id-gen";
-import { setupOtelCompat, resetOtelCompat } from ".";
+import { setupOtelCompat, resetOtelCompat } from "./";
 
 describe("ID Generation", () => {
   beforeEach(() => {

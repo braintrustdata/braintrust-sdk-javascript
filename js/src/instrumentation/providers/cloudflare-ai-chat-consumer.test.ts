@@ -6,9 +6,18 @@ import {
   it,
   vi,
 } from "vite-plus/test";
+import { newGlobalInvocationHook } from "../../global-instrumentation-hooks";
+import { invocationController } from "../test-utils/invocation";
+vi.mock("../../global-instrumentation-hooks", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("../../global-instrumentation-hooks")
+  >()),
+  newGlobalInvocationHook: vi.fn(),
+}));
 
 const { mockInternalGetGlobalState, mockStartSpan, mockWithCurrent } =
   vi.hoisted(() => ({
+    mockCurrentSpanStoreSymbol: Symbol.for("braintrust.currentSpanStore"),
     mockInternalGetGlobalState: vi.fn(() => undefined),
     mockStartSpan: vi.fn(),
     mockWithCurrent: vi.fn((_span: unknown, callback: () => unknown) =>
@@ -17,7 +26,7 @@ const { mockInternalGetGlobalState, mockStartSpan, mockWithCurrent } =
   }));
 
 vi.mock("#braintrust-platform", () => ({
-  default: { newTracingChannel: vi.fn() },
+  default: {},
 }));
 
 vi.mock("../../logger/core", () => ({
@@ -26,21 +35,22 @@ vi.mock("../../logger/core", () => ({
   withCurrent: (...args: unknown[]) => (mockWithCurrent as any)(...args),
 }));
 
-import iso from "#braintrust-platform";
 import {
   INSTRUMENTATION_NAMES,
   INTERNAL_SPAN_INSTRUMENTATION_NAME,
 } from "../../span-origin";
 import { registerCloudflareAIChatInstrumentation } from "./cloudflare-ai-chat-consumer";
 
-const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
+const mockNewInvocationHook = newGlobalInvocationHook as ReturnType<
+  typeof vi.fn
+>;
 
 describe("registerCloudflareAIChatInstrumentation", () => {
   let channels: Map<string, ReturnType<typeof createMockChannel>>;
 
   beforeEach(() => {
     channels = new Map();
-    mockNewTracingChannel.mockImplementation((name: string) => {
+    mockNewInvocationHook.mockImplementation((name: string) => {
       const existing = channels.get(name);
       if (existing) {
         return existing;
@@ -80,7 +90,7 @@ describe("registerCloudflareAIChatInstrumentation", () => {
       self: agent,
     } as any;
 
-    turnHandlers.start?.(event, "start");
+    turnHandlers.begin?.(event);
     await event.arguments[1]();
     agent.onChatResponse({
       message: {
@@ -92,7 +102,7 @@ describe("registerCloudflareAIChatInstrumentation", () => {
       requestId: "request-1",
       status: "completed",
     });
-    turnHandlers.asyncEnd?.(event, "asyncEnd");
+    turnHandlers.resolve?.(event);
 
     const span = mockStartSpan.mock.results[0].value;
     expect(mockStartSpan).toHaveBeenCalledWith({
@@ -138,24 +148,21 @@ describe("registerCloudflareAIChatInstrumentation", () => {
       arguments: ["request-error", async () => undefined, undefined],
       self: agent,
     } as any;
-    turnHandlers.start?.(event, "start");
+    turnHandlers.begin?.(event);
     await event.arguments[1]();
 
-    responseHandlers.start?.(
-      {
-        arguments: [
-          {
-            error: "stream failed",
-            message: { parts: [{ text: "partial" }], role: "assistant" },
-            requestId: "request-error",
-            status: "error",
-          },
-        ],
-        self: agent,
-      } as any,
-      "start",
-    );
-    turnHandlers.asyncEnd?.(event, "asyncEnd");
+    responseHandlers.begin?.({
+      arguments: [
+        {
+          error: "stream failed",
+          message: { parts: [{ text: "partial" }], role: "assistant" },
+          requestId: "request-error",
+          status: "error",
+        },
+      ],
+      self: agent,
+    } as any);
+    turnHandlers.resolve?.(event);
 
     const span = mockStartSpan.mock.results[0].value;
     expect(span.log).toHaveBeenCalledWith({
@@ -184,9 +191,9 @@ describe("registerCloudflareAIChatInstrumentation", () => {
       self: agent,
     } as any;
 
-    handlers.start?.(event, "start");
+    handlers.begin?.(event);
     await event.arguments[1]();
-    handlers.asyncEnd?.(event, "asyncEnd");
+    handlers.resolve?.(event);
 
     const span = mockStartSpan.mock.results[0].value;
     expect(span.end).toHaveBeenCalledTimes(1);
@@ -238,8 +245,8 @@ describe("registerCloudflareAIChatInstrumentation", () => {
         self: agent,
       } as any;
 
-      handlers.start?.(event, "start");
-      handlers.asyncEnd?.(event, "asyncEnd");
+      handlers.begin?.(event);
+      handlers.resolve?.(event);
 
       const span = mockStartSpan.mock.results[0].value;
       expect(span.end).toHaveBeenCalledTimes(1);
@@ -283,7 +290,7 @@ describe("registerCloudflareAIChatInstrumentation", () => {
       self: agent,
     } as any;
 
-    handlers.start?.(event, "start");
+    handlers.begin?.(event);
     await event.arguments[1]();
     agent.messages[1] = {
       id: "assistant-1",
@@ -296,7 +303,7 @@ describe("registerCloudflareAIChatInstrumentation", () => {
       requestId: "request-continuation",
       status: "completed",
     });
-    handlers.asyncEnd?.(event, "asyncEnd");
+    handlers.resolve?.(event);
 
     const span = mockStartSpan.mock.results[0].value;
     expect(span.log).toHaveBeenCalledWith({
@@ -334,15 +341,15 @@ describe("registerCloudflareAIChatInstrumentation", () => {
       self: agent,
     } as any;
 
-    handlers.start?.(outer, "start");
-    handlers.start?.(inner, "start");
-    handlers.asyncEnd?.(inner, "asyncEnd");
+    handlers.begin?.(outer);
+    handlers.begin?.(inner);
+    handlers.resolve?.(inner);
 
     const span = mockStartSpan.mock.results[0].value;
     expect(mockStartSpan).toHaveBeenCalledTimes(1);
     expect(span.end).not.toHaveBeenCalled();
 
-    handlers.asyncEnd?.(outer, "asyncEnd");
+    handlers.resolve?.(outer);
     expect(span.end).toHaveBeenCalledTimes(1);
   });
 
@@ -354,9 +361,9 @@ describe("registerCloudflareAIChatInstrumentation", () => {
       arguments: ["request-1", async () => undefined, undefined],
       self: { messages: [], onChatResponse() {} },
     } as any;
-    handlers.start?.(failedEvent, "start");
+    handlers.begin?.(failedEvent);
     failedEvent.error = failure;
-    handlers.error?.(failedEvent, "error");
+    handlers.reject?.(failedEvent);
 
     const failedSpan = mockStartSpan.mock.results[0].value;
     expect(failedSpan.log).toHaveBeenCalledWith({ error: failure });
@@ -366,7 +373,7 @@ describe("registerCloudflareAIChatInstrumentation", () => {
       arguments: ["request-2", async () => undefined, undefined],
       self: { messages: [], onChatResponse() {} },
     } as any;
-    handlers.start?.(pendingEvent, "start");
+    handlers.begin?.(pendingEvent);
     const pendingSpan = mockStartSpan.mock.results[1].value;
     expect(pendingSpan.end).not.toHaveBeenCalled();
   });
@@ -385,26 +392,20 @@ describe("registerCloudflareAIChatInstrumentation", () => {
 });
 
 function createMockChannel() {
-  const subscribed: any[] = [];
+  let interceptor: any;
+  let controller: ReturnType<typeof invocationController>;
   return {
-    handlers: () => subscribed[0],
-    hasSubscribers: false,
-    start: {
-      bindStore: vi.fn(),
-    },
-    subscribe: vi.fn((handlers) => subscribed.push(handlers)),
-    traceSync: vi.fn((callback, event) => {
-      subscribed[0]?.start?.(event, "start");
-      try {
-        const result = callback();
-        event.result = result;
-        subscribed[0]?.end?.(event, "end");
-        return result;
-      } catch (error) {
-        event.error = error;
-        subscribed[0]?.error?.(event, "error");
-        throw error;
-      }
+    handlers: () => controller,
+    intercept: vi.fn((next) => {
+      interceptor = next;
+      controller = invocationController(next);
+      return vi.fn();
     }),
+    invoke: (
+      target: any,
+      receiver: unknown,
+      args: unknown[],
+      additional: object,
+    ) => interceptor(target, receiver, args, additional),
   };
 }

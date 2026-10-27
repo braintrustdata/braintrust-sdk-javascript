@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    "rewriteRelativeImportExtensions": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true
+  }
+}

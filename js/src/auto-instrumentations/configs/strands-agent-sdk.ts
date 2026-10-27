@@ -1,5 +1,5 @@
-import type { InstrumentationConfig } from "@apm-js-collab/code-transformer";
-import { strandsAgentSDKChannels } from "../../instrumentation/providers/strands-agent-sdk-channels";
+import type { InstrumentationConfig } from "../orchestrion-js";
+import { strandsAgentSDKChannels } from "../../instrumentation/providers/strands-agent-sdk-interceptors";
 
 const strandsAgentSDKVersionRange = ">=1.0.0 <2.0.0";
 
@@ -14,7 +14,6 @@ export const strandsAgentSDKConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Agent",
       methodName: "stream",
-      kind: "Sync",
     },
   },
   {
@@ -27,7 +26,6 @@ export const strandsAgentSDKConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Graph",
       methodName: "stream",
-      kind: "Sync",
     },
   },
   {
@@ -40,7 +38,6 @@ export const strandsAgentSDKConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Swarm",
       methodName: "stream",
-      kind: "Sync",
     },
   },
 ];

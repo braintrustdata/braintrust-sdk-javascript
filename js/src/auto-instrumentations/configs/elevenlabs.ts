@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { elevenLabsChannels } from "../../instrumentation/providers/elevenlabs-channels";
+import { elevenLabsChannels } from "../../instrumentation/providers/elevenlabs-interceptors";
 
 export const elevenLabsConfigs: InstrumentationConfig[] = [
   ...(
@@ -19,7 +19,6 @@ export const elevenLabsConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "TextToSpeechClient",
       methodName,
-      kind: "Async" as const,
     },
   })),
   {
@@ -32,7 +31,6 @@ export const elevenLabsConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "SpeechToTextClient",
       methodName: "convert",
-      kind: "Async",
     },
   },
 ];

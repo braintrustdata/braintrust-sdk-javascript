@@ -1,4 +1,9 @@
 import { registerOtelFlush } from "braintrust/instrumentation";
+import {
+  customizeOtelSpans,
+  isCustomizedOtelSpan,
+  otelCompatFields,
+} from "./span-customizer";
 
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import {
@@ -417,32 +422,19 @@ class LazyBraintrustOTLPTraceExporter implements SpanExporter {
     resultCallback: (result: ExportResult) => void,
   ): void {
     void this.getExporter()
-      .then((exporter) => {
-        const compatibleSpans = spans.map((span) => {
-          const spanWithCompatFields = span as ReadableSpan & {
-            instrumentationLibrary?: unknown;
-            instrumentationScope?: unknown;
-            parentSpanContext?: { spanId?: string; isRemote?: boolean };
-            parentSpanId?: string;
-          };
-          const instrumentationScope =
-            spanWithCompatFields.instrumentationScope ??
-            spanWithCompatFields.instrumentationLibrary;
-          const instrumentationLibrary =
-            spanWithCompatFields.instrumentationLibrary ??
-            spanWithCompatFields.instrumentationScope;
-          const parentSpanContext =
-            spanWithCompatFields.parentSpanContext ??
-            (spanWithCompatFields.parentSpanId
-              ? {
-                  ...span.spanContext(),
-                  spanId: spanWithCompatFields.parentSpanId,
-                  isRemote: false,
-                }
-              : undefined);
-          const parentSpanId =
-            spanWithCompatFields.parentSpanId ??
-            spanWithCompatFields.parentSpanContext?.spanId;
+      .then(async (exporter) => {
+        // Customize at the export boundary: upstream processors have already
+        // filtered, enriched and dropped unsampled spans.
+        const customizedSpans = await customizeOtelSpans(spans);
+        const compatibleSpans = customizedSpans.map((span) => {
+          // Customized snapshots already carry both OTel 1.x and 2.x fields.
+          if (isCustomizedOtelSpan(span)) return span;
+          const {
+            instrumentationScope,
+            instrumentationLibrary,
+            parentSpanContext,
+            parentSpanId,
+          } = otelCompatFields(span);
 
           return new Proxy(span, {
             get(target, prop) {

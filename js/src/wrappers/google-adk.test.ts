@@ -1,20 +1,20 @@
+import { debugLogger } from "../debug-logger";
 import { describe, it, expect, vi, afterEach } from "vite-plus/test";
 
-// Mock iso's newTracingChannel
-vi.mock("#braintrust-platform", () => {
-  const mockTraceSync = vi.fn((fn: () => any) => fn());
-  const mockTracePromise = vi.fn((fn: () => any) => fn());
-  return {
-    default: {
-      newTracingChannel: vi.fn(() => ({
-        subscribe: vi.fn(),
-        unsubscribe: vi.fn(),
-        traceSync: mockTraceSync,
-        tracePromise: mockTracePromise,
-      })),
-    },
-  };
-});
+const { invoke } = vi.hoisted(() => ({
+  invoke: vi.fn(
+    (
+      target: (...args: any[]) => any,
+      receiver: unknown,
+      args: unknown[],
+      _additional?: unknown,
+    ) => Reflect.apply(target, receiver, args),
+  ),
+}));
+vi.mock("../global-instrumentation-hooks", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../global-instrumentation-hooks")>()),
+  newGlobalInvocationHook: vi.fn(() => ({ invoke })),
+}));
 
 import { wrapGoogleADK } from "./google-adk";
 
@@ -24,7 +24,9 @@ describe("wrapGoogleADK", () => {
   });
 
   it("should return the module unchanged if invalid", () => {
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const warnSpy = vi
+      .spyOn(debugLogger.notice, "warn")
+      .mockImplementation(() => true);
 
     const result = wrapGoogleADK(null as any);
     expect(result).toBeNull();
@@ -36,7 +38,9 @@ describe("wrapGoogleADK", () => {
   });
 
   it("should return module unchanged if no Runner or LlmAgent found", () => {
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const warnSpy = vi
+      .spyOn(debugLogger.notice, "warn")
+      .mockImplementation(() => true);
 
     const fakeModule = { SomeOtherClass: class {} };
     const result = wrapGoogleADK(fakeModule as any);
@@ -188,7 +192,7 @@ describe("wrapGoogleADK", () => {
     expect(events[0].id).toBe("1");
   });
 
-  it("should wrap FunctionTool.runAsync to call tracePromise channel", async () => {
+  it("should wrap FunctionTool.runAsync to call invoke channel", async () => {
     class FakeFunctionTool {
       name: string;
       constructor(config: any) {

@@ -14,7 +14,7 @@ import {
   toNumericMetrics,
   type AnthropicTokenMetrics,
 } from "../../wrappers/anthropic-tokens-util";
-import { claudeAgentSDKChannels } from "./claude-agent-sdk-channels";
+import { claudeAgentSDKChannels } from "./claude-agent-sdk-interceptors";
 import { CLAUDE_AGENT_SDK_SKIP_LOCAL_TOOL_HOOKS_OPTION } from "./claude-agent-sdk-instrumentation-constants";
 import {
   collectLocalMcpServerToolHookNames,
@@ -1837,8 +1837,10 @@ class ClaudeAgentSDKInstrumentationConsumer {
           metadata: filterSerializableOptions(options),
         });
       } catch (error) {
-        // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-        console.error("Error extracting input for Claude Agent SDK:", error);
+        debugLogger.error(
+          "Error extracting input for Claude Agent SDK:",
+          error,
+        );
       }
 
       const activeToolSpans = new Map<string, Span>();
@@ -1974,8 +1976,7 @@ class ClaudeAgentSDKInstrumentationConsumer {
             state.processing = state.processing
               .then(() => handleStreamMessage(state, message))
               .catch((error) => {
-                // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-                console.error(
+                debugLogger.error(
                   "Error processing Claude Agent SDK stream chunk:",
                   error,
                 );
@@ -1997,8 +1998,10 @@ class ClaudeAgentSDKInstrumentationConsumer {
       try {
         state.span.log({ output: result });
       } catch (error) {
-        // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-        console.error("Error extracting output for Claude Agent SDK:", error);
+        debugLogger.error(
+          "Error extracting output for Claude Agent SDK:",
+          error,
+        );
       } finally {
         state.span.end();
       }

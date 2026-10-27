@@ -1,12 +1,13 @@
 import { registerInstrumentation } from "../instrumentation/registrations/googleADK";
-import { googleADKChannels } from "../instrumentation/providers/google-adk-channels";
+import { debugLogger } from "../debug-logger";
+import { googleADKChannels } from "../instrumentation/providers/google-adk-interceptors";
 import type {
-  GoogleADKRunner,
-  GoogleADKRunnerConstructor,
-  GoogleADKInMemoryRunnerConstructor,
   GoogleADKBaseAgent,
   GoogleADKBaseTool,
+  GoogleADKInMemoryRunnerConstructor,
   GoogleADKRunAsyncParams,
+  GoogleADKRunner,
+  GoogleADKRunnerConstructor,
   GoogleADKToolRunRequest,
 } from "../vendor-sdk-types/google-adk";
 
@@ -43,14 +44,12 @@ import type {
 export function wrapGoogleADK<T extends Record<string, any>>(adkModule: T): T {
   registerInstrumentation();
   if (!adkModule || typeof adkModule !== "object") {
-    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    console.warn("Invalid Google ADK module. Not wrapping.");
+    debugLogger.notice.warn("Invalid Google ADK module. Not wrapping.");
     return adkModule;
   }
 
   if (!("Runner" in adkModule) && !("LlmAgent" in adkModule)) {
-    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    console.warn(
+    debugLogger.notice.warn(
       "Runner or LlmAgent class not found in module. Not wrapping. Make sure you're passing the module itself (import * as adk from '@google/adk').",
     );
     return adkModule;
@@ -121,10 +120,12 @@ function wrapRunnerRunAsync(
 ): (params: GoogleADKRunAsyncParams) => AsyncGenerator<unknown> {
   const original = runner.runAsync.bind(runner);
   return function (params: GoogleADKRunAsyncParams) {
-    return googleADKChannels.runnerRunAsync.traceSync(() => original(params), {
-      arguments: [params],
-      self: runner,
-    } as Parameters<typeof googleADKChannels.runnerRunAsync.traceSync>[1]);
+    return googleADKChannels.runnerRunAsync.invoke(
+      original,
+      runner,
+      [params],
+      {},
+    );
   };
 }
 
@@ -157,11 +158,11 @@ function wrapAgentRunAsync(
 ): (parentContext: unknown) => AsyncGenerator<unknown> {
   const original = agent.runAsync.bind(agent);
   return function (parentContext: unknown) {
-    return googleADKChannels.agentRunAsync.traceSync(
-      () => original(parentContext),
-      { arguments: [parentContext], self: agent } as Parameters<
-        typeof googleADKChannels.agentRunAsync.traceSync
-      >[1],
+    return googleADKChannels.agentRunAsync.invoke(
+      original,
+      agent,
+      [parentContext],
+      {},
     );
   };
 }
@@ -193,9 +194,6 @@ function wrapToolRunAsync(
 ): (req: GoogleADKToolRunRequest) => Promise<unknown> {
   const original = tool.runAsync.bind(tool);
   return function (req: GoogleADKToolRunRequest) {
-    return googleADKChannels.toolRunAsync.tracePromise(() => original(req), {
-      arguments: [req],
-      self: tool,
-    } as Parameters<typeof googleADKChannels.toolRunAsync.tracePromise>[1]);
+    return googleADKChannels.toolRunAsync.invoke(original, tool, [req], {});
   };
 }

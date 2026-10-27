@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { langGraphSDKChannels } from "../../instrumentation/providers/langgraph-sdk-channels";
+import { langGraphSDKChannels } from "../../instrumentation/providers/langgraph-sdk-interceptors";
 
 // These public methods live in shared subclients for both package entrypoints.
 export const langGraphSDKConfigs: InstrumentationConfig[] = [
@@ -16,7 +16,6 @@ export const langGraphSDKConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "RunsClient",
       methodName,
-      kind: methodName === "stream" ? ("Sync" as const) : ("Async" as const),
     },
   })),
 );

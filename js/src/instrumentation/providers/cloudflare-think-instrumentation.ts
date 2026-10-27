@@ -1,37 +1,43 @@
-import type { ChannelMessage } from "../core/channel-definitions";
-import type { IsoChannelHandlers } from "#braintrust-platform";
-import { _internalGetGlobalState, startSpan } from "../../logger/core";
+import { withCurrent } from "../../logger/core";
+
+import { observeResult, runInstrumentation } from "../core/observe-result";
+
+import { SpanTypeAttribute, isObject } from "../../../util/index";
+import { debugLogger } from "../../debug-logger";
 import type { Span } from "../../logger/core";
+import { _internalGetGlobalState, startSpan } from "../../logger/core";
 import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
 } from "../../span-origin";
-import { debugLogger } from "../../debug-logger";
 import { getCurrentUnixTimestamp } from "../../util";
-import { SpanTypeAttribute, isObject } from "../../../util/index";
 import { isAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
+import type { ChannelMessage } from "../core/tracing-types";
 
 // Think delegates inference and tool execution to AI SDK's streamText. Its
 // events keep the task open through stream consumption and provide the model,
 // tool, output, and usage data that the outer Think call does not expose.
-import { aiSDKChannels } from "./ai-sdk-channels";
+import type { AISDKResult } from "../../vendor-sdk-types/ai-sdk";
+import type { CloudflareThinkMessage } from "../../vendor-sdk-types/cloudflare-think";
+import { braintrustAISDKTelemetry } from "../../wrappers/ai-sdk/telemetry";
+import { aiSDKChannels } from "./ai-sdk-interceptors";
 import {
   DEFAULT_DENY_OUTPUT_PATHS,
   finalizeAISDKChildTracing,
   patchAISDKStreamingResult,
+  patchAISDKV7TelemetryDispatcher,
   prepareAISDKAgentCallInput,
 } from "./ai-sdk-instrumentation";
-import { cloudflareThinkChannels } from "./cloudflare-think-channels";
+import { cloudflareThinkChannels } from "./cloudflare-think-interceptors";
 import {
   registerCloudflareThinkSpan,
   unregisterCloudflareThinkSpan,
 } from "./cloudflare-think-context";
-import type { AISDKResult } from "../../vendor-sdk-types/ai-sdk";
-import type { CloudflareThinkMessage } from "../../vendor-sdk-types/cloudflare-think";
 
 type ThinkRunState = {
   aiEvent?: Record<string, unknown>;
   aiResultPatched: boolean;
+  telemetryClaimed: boolean;
   fallbackInput?: unknown;
   finalized: boolean;
   inputLogged: boolean;
@@ -39,7 +45,9 @@ type ThinkRunState = {
   startTime: number;
 };
 
-type AISDKStreamEvent = ChannelMessage<typeof aiSDKChannels.streamTextSync>;
+type AISDKStreamEvent = ChannelMessage<
+  typeof aiSDKChannels.streamTextSync | typeof aiSDKChannels.streamText
+>;
 
 const THINK_STATE_ID = Symbol.for("braintrust.cloudflare-think.state-id");
 
@@ -47,17 +55,41 @@ class CloudflareThinkInstrumentationConsumer {
   private readonly statesBySpanId = new Map<string, ThinkRunState>();
 
   public register(): void {
+    const telemetry = braintrustAISDKTelemetry();
     this.subscribeToThinkRuns();
     this.subscribeToAISDKStreamTextSync();
+    this.subscribeToAISDKStreamTextAsync();
+    aiSDKChannels.v7CreateTelemetryDispatcher.intercept(
+      (target, receiver, args) => {
+        const dispatcher = Reflect.apply(target, receiver, args);
+        if (this.currentState() && args[0]?.telemetry?.isEnabled !== false) {
+          // Think must also work when the standalone AI SDK integration is
+          // disabled. Dispatcher patching is shared and idempotent.
+          runInstrumentation(() =>
+            patchAISDKV7TelemetryDispatcher(
+              dispatcher,
+              telemetry,
+              args[0]?.telemetry,
+            ),
+          );
+        }
+        return dispatcher;
+      },
+    );
+    aiSDKChannels.streamTextV7.intercept((target, receiver, args) => {
+      const state = this.currentState();
+      const result = Reflect.apply(target, receiver, args);
+      const telemetry = args[0]?.telemetry ?? args[0]?.experimental_telemetry;
+      if (state && telemetry?.isEnabled !== false) {
+        state.aiResultPatched = true;
+      }
+      return result;
+    });
   }
 
   private subscribeToThinkRuns(): void {
-    const channel = cloudflareThinkChannels.runInferenceLoop.tracingChannel();
+    const channel = cloudflareThinkChannels.runInferenceLoop;
     const states = new WeakMap<object, ThinkRunState>();
-    const state = _internalGetGlobalState();
-    const contextManager = state?.contextManager;
-    const currentSpanStore = contextManager?.getCurrentSpanStore();
-
     const ensureState = (
       event: ChannelMessage<typeof cloudflareThinkChannels.runInferenceLoop>,
     ): ThinkRunState | undefined => {
@@ -80,6 +112,7 @@ class CloudflareThinkInstrumentationConsumer {
       );
       const runState: ThinkRunState = {
         aiResultPatched: false,
+        telemetryClaimed: false,
         fallbackInput: extractFallbackInput(event.self?.messages),
         finalized: false,
         inputLogged: false,
@@ -100,64 +133,184 @@ class CloudflareThinkInstrumentationConsumer {
       if (span.spanId) {
         this.statesBySpanId.set(span.spanId, runState);
       }
-      registerCloudflareThinkSpan(span);
+      registerCloudflareThinkSpan({
+        span,
+        startTelemetry: (input, metadata) => {
+          // Only the outer inference stream owns this task. A stream started
+          // inside a tool must retain its own AI SDK operation span.
+          if (runState.finalized || runState.telemetryClaimed) {
+            return false;
+          }
+          runState.telemetryClaimed = true;
+          runState.aiResultPatched = true;
+          runState.inputLogged = true;
+          span.log({
+            ...(input !== undefined
+              ? { input: extractThinkTaskInput(input) }
+              : {}),
+            metadata: {
+              ...metadata,
+              braintrust: {
+                integration_name: "cloudflare-think",
+                sdk_language: "typescript",
+              },
+            },
+          });
+          return true;
+        },
+        finishTelemetry: (output, metrics, error) => {
+          if (runState.finalized) {
+            return;
+          }
+          span.log({ metrics });
+          this.finishState(runState, error, output);
+        },
+      });
       return runState;
     };
 
-    if (contextManager && currentSpanStore && channel.start) {
-      channel.start.bindStore(currentSpanStore, (event) => {
-        const runState = ensureState(event);
-        return runState
-          ? contextManager.wrapSpanForStore(runState.span)
-          : currentSpanStore.getStore();
-      });
-    }
-
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<typeof cloudflareThinkChannels.runInferenceLoop>
-    > = {
-      start: (event) => {
+    channel.intercept((target, receiver, args, additional) => {
+      const event = {
+        ...additional,
+        arguments: args,
+        self: receiver,
+      } as ChannelMessage<typeof cloudflareThinkChannels.runInferenceLoop>;
+      const prepare = (
+        event: ChannelMessage<typeof cloudflareThinkChannels.runInferenceLoop>,
+      ) => {
         ensureState(event);
-      },
-      asyncEnd: (event) => {
+      };
+      const resolved = (
+        event: ChannelMessage<typeof cloudflareThinkChannels.runInferenceLoop>,
+      ) => {
         const runState = states.get(event);
         states.delete(event);
         if (!runState || runState.finalized || runState.aiResultPatched) {
           return;
         }
         this.finishState(runState, undefined, event.result);
-      },
-      error: (event) => {
+      };
+      const failed = (
+        event: ChannelMessage<typeof cloudflareThinkChannels.runInferenceLoop>,
+      ) => {
         const runState = states.get(event);
         states.delete(event);
         if (runState) {
           this.finishState(runState, event.error);
         }
-      },
-    };
+      };
+      const invoke = () => {
+        runInstrumentation(() => prepare(event));
+        let result;
+        try {
+          result = Reflect.apply(target, receiver, args);
+        } catch (error) {
+          Object.assign(event, { error });
+          runInstrumentation(() => failed(event));
+          throw error;
+        }
 
-    channel.subscribe(handlers);
+        return observeResult(
+          result,
+          (value) => {
+            Object.assign(event, { result: value });
+            resolved(event);
+          },
+          (error) => {
+            Object.assign(event, { error });
+            failed(event);
+          },
+        );
+      };
+      const spanState = runInstrumentation(() => ensureState(event));
+      return spanState ? withCurrent(spanState.span, invoke) : invoke();
+    });
   }
 
   private subscribeToAISDKStreamTextSync(): void {
-    const channel = aiSDKChannels.streamTextSync.tracingChannel();
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<typeof aiSDKChannels.streamTextSync>
-    > = {
-      start: (event) => {
+    const channel = aiSDKChannels.streamTextSync;
+
+    channel.intercept((target, receiver, args, additional) => {
+      const event = {
+        ...additional,
+        arguments: args,
+        self: receiver,
+      } as ChannelMessage<typeof aiSDKChannels.streamTextSync>;
+      const prepare = (
+        event: ChannelMessage<typeof aiSDKChannels.streamTextSync>,
+      ) => {
         this.startAISDKStream(event);
-      },
-      end: (event) => {
+      };
+      const returned = (
+        event: ChannelMessage<typeof aiSDKChannels.streamTextSync>,
+      ) => {
         this.endAISDKStream(event);
-      },
-      error: (event) => {
+      };
+      const failed = (
+        event: ChannelMessage<typeof aiSDKChannels.streamTextSync>,
+      ) => {
         this.errorAISDKStream(event);
-      },
-    };
-
-    channel.subscribe(handlers);
+      };
+      runInstrumentation(() => prepare(event));
+      let result;
+      try {
+        result = Reflect.apply(target, receiver, args);
+      } catch (error) {
+        Object.assign(event, { error });
+        runInstrumentation(() => failed(event));
+        throw error;
+      }
+      Object.assign(event, { result });
+      runInstrumentation(() => returned(event));
+      return result;
+    });
   }
+  private subscribeToAISDKStreamTextAsync(): void {
+    const channel = aiSDKChannels.streamText;
 
+    channel.intercept((target, receiver, args, additional) => {
+      const event = {
+        ...additional,
+        arguments: args,
+        self: receiver,
+      } as ChannelMessage<typeof aiSDKChannels.streamText>;
+      const prepare = (
+        event: ChannelMessage<typeof aiSDKChannels.streamText>,
+      ) => {
+        this.startAISDKStream(event);
+      };
+      const resolved = (
+        event: ChannelMessage<typeof aiSDKChannels.streamText>,
+      ) => {
+        this.endAISDKStream(event);
+      };
+      const failed = (
+        event: ChannelMessage<typeof aiSDKChannels.streamText>,
+      ) => {
+        this.errorAISDKStream(event);
+      };
+      runInstrumentation(() => prepare(event));
+      let result;
+      try {
+        result = Reflect.apply(target, receiver, args);
+      } catch (error) {
+        Object.assign(event, { error });
+        runInstrumentation(() => failed(event));
+        throw error;
+      }
+      return observeResult(
+        result,
+        (value) => {
+          Object.assign(event, { result: value });
+          resolved(event);
+        },
+        (error) => {
+          Object.assign(event, { error });
+          failed(event);
+        },
+      );
+    });
+  }
   private startAISDKStream(event: AISDKStreamEvent): void {
     const runState = this.currentState();
     if (!runState || runState.finalized) {

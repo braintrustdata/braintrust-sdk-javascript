@@ -1,4 +1,5 @@
 import { describe } from "vite-plus/test";
+import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -33,7 +34,7 @@ const baseEnv = {
 
 describe.concurrent("variants", () => {
   for (const scenario of scenarios) {
-    describe(`langsmith sdk ${scenario.version}`, { concurrent: false }, () => {
+    describeVariant(`langsmith sdk ${scenario.version}`, () => {
       defineLangSmithInstrumentationAssertions({
         name: "wrapped instrumentation",
         runScenario: async ({ runScenarioDir }) => {

@@ -3,7 +3,6 @@ import { describe, it, expect, vi } from "vite-plus/test";
 // Mock iso's newTracingChannel - must be before any imports that use it
 vi.mock("#braintrust-platform", () => ({
   default: {
-    newTracingChannel: vi.fn(),
     getEnv: vi.fn((name: string) =>
       name === "BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS" ? "true" : undefined,
     ),

@@ -10,6 +10,7 @@ overrides:
   postcss@<8.5.18: ^8.5.18
   nanoid@<3.3.18: ^3.3.18
   '@opentelemetry/core@2': ^2.8.0
+  source-map-js@>=1.0.0 <1.2.2: 1.2.2
 
 importers:
 
@@ -357,8 +358,8 @@ packages:
   scheduler@0.23.2:
     resolution: {integrity: sha512-UOShsPwz7NrMUqhR6t0hWjFduvOzbtv7toDH1/hIrfRNIDBnnBWd0CwJTGvTpngVlmwGCdP9/Zl/tVrDqcuYzQ==}
 
-  source-map-js@1.2.1:
-    resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
+  source-map-js@1.2.2:
+    resolution: {integrity: sha512-KGj/8Y43x35aZVDtt+J4mK1hoLGHULMYfSkODJNQjNDC3oW1PqPoxMwo0pLUsWM/UEGzON/NxeHywEfNXNP3Vw==}
     engines: {node: '>=0.10.0'}
 
   streamsearch@1.1.0:
@@ -629,7 +630,7 @@ snapshots:
     dependencies:
       nanoid: 3.3.18
       picocolors: 1.1.1
-      source-map-js: 1.2.1
+      source-map-js: 1.2.2
 
   protobufjs@7.6.1:
     dependencies:
@@ -667,7 +668,7 @@ snapshots:
     dependencies:
       loose-envify: 1.4.0
 
-  source-map-js@1.2.1: {}
+  source-map-js@1.2.2: {}
 
   streamsearch@1.1.0: {}
 

@@ -1,9 +1,11 @@
 import { describe, it, expect, beforeAll, afterAll } from "vite-plus/test";
 import { Worker } from "node:worker_threads";
 import * as fs from "node:fs";
+import { createRequire } from "node:module";
 import * as os from "node:os";
 import * as path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { supportsSyncHooks } from "../../src/node/apply-auto-instrumentation";
 import { buildTestGlobalHookRuntime } from "./test-global-hook-runtime";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -51,6 +53,19 @@ describe("Unified Loader Hook Integration Tests", () => {
     );
     globalHookRuntimePath =
       await buildTestGlobalHookRuntime(testRuntimeDirectory);
+    // Separate copies ensure both import() and require() load fresh CJS modules.
+    for (const alias of ["ai-imported", "ai-required"]) {
+      const packageDir = path.join(testRuntimeDirectory, "node_modules", alias);
+      fs.mkdirSync(path.join(packageDir, "dist"), { recursive: true });
+      fs.writeFileSync(
+        path.join(packageDir, "package.json"),
+        JSON.stringify({ name: "ai", version: "5.0.0", type: "commonjs" }),
+      );
+      fs.copyFileSync(
+        path.join(fixturesDir, "ai-sdk-cjs.cjs"),
+        path.join(packageDir, "dist", "index.js"),
+      );
+    }
   });
 
   afterAll(() => {
@@ -58,6 +73,38 @@ describe("Unified Loader Hook Integration Tests", () => {
   });
 
   describe("Unified hook (--import) handles both ESM and CJS", () => {
+    for (const [mode, preload] of [
+      ["sync", undefined],
+      ["async fallback", path.join(fixturesDir, "disable-sync-hooks.mjs")],
+      [
+        "alongside another async loader",
+        path.join(fixturesDir, "register-async-loader.mjs"),
+      ],
+      // tsx compiles CommonJS through Module._extensions, bypassing sync hooks.
+      ["alongside tsx", createRequire(import.meta.url).resolve("tsx")],
+    ] as const) {
+      it.skipIf(mode === "sync" && !supportsSyncHooks())(
+        `instruments mixed ESM, imported CJS, and createRequire calls exactly once (${mode})`,
+        async () => {
+          const result = await runWithWorker({
+            execArgv: [
+              ...(preload ? ["--import", preload] : []),
+              "--import",
+              listenerPath,
+              "--import",
+              hookPath,
+            ],
+            script: path.join(fixturesDir, "test-app-mixed.mjs"),
+            env: { TEST_CJS_PROVIDER_DIR: testRuntimeDirectory },
+          });
+
+          expect(result.events.start).toHaveLength(3);
+          expect(result.events.end).toHaveLength(3);
+          expect(result.events.error).toHaveLength(0);
+        },
+      );
+    }
+
     it("should invoke global hooks for ESM OpenAI calls", async () => {
       const result = await runWithWorker({
         execArgv: ["--import", listenerPath, "--import", hookPath],
@@ -153,7 +200,7 @@ describe("Unified Loader Hook Integration Tests", () => {
     });
 
     expect(result).toEqual({
-      hasSubscribers: false,
+      hasInterceptors: false,
       providerCalls: 1,
       result: "result",
       subscriberCalls: 0,

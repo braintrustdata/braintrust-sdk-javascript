@@ -1,5 +1,6 @@
 import { registerInstrumentation } from "../instrumentation/registrations/groq";
-import { groqChannels } from "../instrumentation/providers/groq-channels";
+import { debugLogger } from "../debug-logger";
+import { groqChannels } from "../instrumentation/providers/groq-interceptors";
 import type {
   GroqAudio,
   GroqAudioSpeech,
@@ -24,8 +25,7 @@ export function wrapGroq<T extends object>(groq: T): T {
     return groqProxy(groq) as T;
   }
 
-  // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-  console.warn("Unsupported Groq library. Not wrapping.");
+  debugLogger.notice.warn("Unsupported Groq library. Not wrapping.");
   return groq;
 }
 
@@ -213,9 +213,11 @@ function wrapChatCompletionsCreate(
   ) => Promise<GroqChatCompletion | GroqChatStream>,
 ): GroqChat["completions"]["create"] {
   return (request, options) =>
-    groqChannels.chatCompletionsCreate.tracePromise(
-      () => create(request, options),
-      { arguments: [request, options] },
+    groqChannels.chatCompletionsCreate.invoke(
+      create,
+      undefined,
+      [request, options],
+      {},
     ) as ReturnType<GroqChat["completions"]["create"]>;
 }
 
@@ -226,18 +228,23 @@ function wrapEmbeddingsCreate(
   ) => Promise<GroqEmbeddingResponse>,
 ): GroqEmbeddings["create"] {
   return (request, options) =>
-    groqChannels.embeddingsCreate.tracePromise(() => create(request, options), {
-      arguments: [request, options],
-    }) as ReturnType<GroqEmbeddings["create"]>;
+    groqChannels.embeddingsCreate.invoke(
+      create,
+      undefined,
+      [request, options],
+      {},
+    ) as ReturnType<GroqEmbeddings["create"]>;
 }
 
 function wrapAudioSpeechCreate(
   create: GroqAudioSpeech["create"],
 ): GroqAudioSpeech["create"] {
   return (request, options) =>
-    groqChannels.audioSpeechCreate.tracePromise(
-      () => create(request, options),
-      { arguments: [request, options] },
+    groqChannels.audioSpeechCreate.invoke(
+      create,
+      undefined,
+      [request, options],
+      {},
     ) as ReturnType<GroqAudioSpeech["create"]>;
 }
 
@@ -245,9 +252,11 @@ function wrapAudioTranscriptionsCreate(
   create: GroqAudioTranscriptions["create"],
 ): GroqAudioTranscriptions["create"] {
   return (request, options) =>
-    groqChannels.audioTranscriptionsCreate.tracePromise(
-      () => create(request, options),
-      { arguments: [request, options] },
+    groqChannels.audioTranscriptionsCreate.invoke(
+      create,
+      undefined,
+      [request, options],
+      {},
     ) as ReturnType<GroqAudioTranscriptions["create"]>;
 }
 
@@ -255,8 +264,10 @@ function wrapAudioTranslationsCreate(
   create: GroqAudioTranslations["create"],
 ): GroqAudioTranslations["create"] {
   return (request, options) =>
-    groqChannels.audioTranslationsCreate.tracePromise(
-      () => create(request, options),
-      { arguments: [request, options] },
+    groqChannels.audioTranslationsCreate.invoke(
+      create,
+      undefined,
+      [request, options],
+      {},
     ) as ReturnType<GroqAudioTranslations["create"]>;
 }

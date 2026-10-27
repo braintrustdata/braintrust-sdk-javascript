@@ -70,6 +70,6 @@ for (const file of touchedPublishableFiles) {
   console.error(`- ${file}`);
 }
 console.error(
-  "Add a .changeset/*.md file with `pnpm changeset`, or apply the skip-changeset label or add #skip-changeset to the PR title/body when no release is intended.",
+  "Add a .changeset/*.md file (see PUBLISHING.md), or apply the skip-changeset label or add #skip-changeset to the PR title/body when no release is intended.",
 );
 process.exit(1);

@@ -9,7 +9,7 @@ import {
 import BraintrustVitestEvalsReporter from "./reporter";
 import { _exportsForTestingOnly } from "../../logger/testing";
 import { type TestBackgroundLogger } from "../../logger/core";
-import * as logger from "../../logger";
+import * as logger from "../../logger/experiments";
 import { configureNode } from "../../node/config";
 
 configureNode();

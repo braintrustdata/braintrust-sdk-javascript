@@ -247,6 +247,171 @@ function validateEmbeddingBatchSpans(spans: CapturedLogEvent[]): void {
 }
 
 const OPERATION_SPECS: readonly OperationSpec[] = [
+  ...["images", "images-redacted", "images-disabled"].map(
+    (mode): OperationSpec => ({
+      childNames: ["openai.decisions.create"],
+      expectsOutput: true,
+      expectsTimeToFirstToken: false,
+      minOpenAIMajorVersion: 7,
+      name: `openai-decisions-${mode}-operation`,
+      operation: `decisions-${mode}`,
+      testName: `captures decision ${mode} with stable structure and associations`,
+      validate: (span) => {
+        const image =
+          mode === "images"
+            ? {
+                type: "braintrust_attachment",
+                filename: "attachment.png",
+                content_type: "image/png",
+                key: expect.any(String),
+              }
+            : mode === "images-disabled"
+              ? undefined
+              : "[redacted]";
+        expect(span?.span.type).toBe("question");
+        expect(span?.input).toEqual({
+          state: [
+            {
+              role: "user",
+              content: [
+                { type: "input_text", text: "Compare these two images." },
+                ...(image === undefined
+                  ? []
+                  : [{ type: "input_image", image_url: image }]),
+                { type: "input_text", text: "Here is the second image." },
+                ...(mode === "images-redacted" || image === undefined
+                  ? []
+                  : [
+                      {
+                        type: "input_image",
+                        image_url: image,
+                      },
+                    ]),
+              ],
+            },
+          ],
+          questions: [
+            {
+              id: "same",
+              type: "boolean",
+              instructions: "Do the two images look the same?",
+            },
+          ],
+        });
+        expect(span?.output).toEqual({
+          answers: [
+            { id: "same", type: "boolean", probability: expect.any(Number) },
+          ],
+        });
+        expect(span?.metrics).toMatchObject({
+          prompt_tokens: expect.any(Number),
+          completion_tokens: 0,
+        });
+        expect(JSON.stringify(span?.input)).not.toContain("base64");
+      },
+    }),
+  ),
+  {
+    childNames: ["openai.decisions.create"],
+    expectsOutput: true,
+    expectsTimeToFirstToken: false,
+    minOpenAIMajorVersion: 7,
+    name: "openai-decisions-operation",
+    operation: "decisions",
+    testName:
+      "captures typed questions, answers, and usage for decisions.create()",
+    validate: (span) => {
+      expect(span?.span.type).toBe("question");
+      expect(span?.input).toMatchObject({
+        state: "I was charged twice. Please refund the duplicate charge today.",
+        questions: [
+          { id: "duplicate", type: "boolean" },
+          {
+            id: "category",
+            type: "choice",
+            criteria: {
+              billing: "Payments and refunds",
+              technical: "Technical issues",
+            },
+          },
+          {
+            id: "urgency",
+            type: "score",
+            criteria: ["routine: Can wait", "urgent: Needs attention today"],
+          },
+        ],
+      });
+      expect(span?.output).toMatchObject({
+        answers: [
+          { id: "duplicate", type: "boolean", probability: expect.any(Number) },
+          {
+            id: "category",
+            type: "choice",
+            choice: expect.any(String),
+            confidence: expect.any(Number),
+            probabilities: expect.any(Object),
+          },
+          {
+            id: "urgency",
+            type: "score",
+            score: expect.any(Number),
+            confidence: expect.any(Number),
+            probabilities: expect.any(Object),
+            legend: { 0: "routine", 1: "urgent" },
+          },
+        ],
+      });
+      expect(span?.row.metadata).toMatchObject({ model: "gpt-6-luna" });
+      expect(span?.metrics).toMatchObject({
+        prompt_tokens: expect.any(Number),
+        completion_tokens: expect.any(Number),
+        tokens: expect.any(Number),
+      });
+    },
+  },
+  {
+    childNames: ["openai.decisions.create"],
+    expectsOutput: true,
+    expectsTimeToFirstToken: false,
+    minOpenAIMajorVersion: 7,
+    name: "openai-decisions-raw-operation",
+    operation: "decisions-raw",
+    testName: "captures unnamed decisions while preserving raw response access",
+    validate: (span) => {
+      expect(span?.span.type).toBe("question");
+      expect(span?.input).toMatchObject({
+        state: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "input_text",
+                text: "The package arrived intact and on time.",
+              },
+            ],
+          },
+        ],
+        questions: [
+          {
+            id: "0",
+            type: "boolean",
+            instructions: "Is this feedback positive?",
+          },
+        ],
+      });
+      expect(span?.output).toMatchObject({
+        answers: [
+          { id: "0", type: "boolean", probability: expect.any(Number) },
+        ],
+      });
+      expect(span?.row.metadata).toMatchObject({ model: "gpt-6-luna" });
+      expect(span?.metrics).toMatchObject({
+        prompt_tokens: expect.any(Number),
+        completion_tokens: expect.any(Number),
+        tokens: expect.any(Number),
+      });
+    },
+  },
   {
     childNames: ["Chat Completion"],
     expectsOutput: true,
@@ -1081,7 +1246,7 @@ export function defineOpenAIInstrumentationAssertions(options: {
 
     if (options.assertPrivateFieldMethodsOperation) {
       test(
-        "keeps wrapped v6 client private-field methods callable",
+        "keeps wrapped client private-field methods callable",
         testConfig,
         () => {
           const root = findLatestSpan(events, ROOT_NAME);
@@ -1228,14 +1393,19 @@ export function defineOpenAIInstrumentationAssertions(options: {
       });
     }
 
-    test("matches the shared span tree snapshot", testConfig, async () => {
-      await matchSpanTreeSnapshot(
-        buildSpanTree(events, operationSpecs),
-        spanSnapshotPath,
-        {
-          normalize: { omittedKeys: ["prompt_cache_key"] },
-        },
-      );
-    });
+    test(
+      "matches the shared span tree snapshot",
+      testConfig,
+      async ({ expect }) => {
+        await matchSpanTreeSnapshot(
+          buildSpanTree(events, operationSpecs),
+          spanSnapshotPath,
+          {
+            snapshotExpect: expect,
+            normalize: { omittedKeys: ["prompt_cache_key"] },
+          },
+        );
+      },
+    );
   });
 }

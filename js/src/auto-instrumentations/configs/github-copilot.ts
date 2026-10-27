@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { gitHubCopilotChannels } from "../../instrumentation/providers/github-copilot-channels";
+import { gitHubCopilotChannels } from "../../instrumentation/providers/github-copilot-interceptors";
 
 export const gitHubCopilotConfigs: InstrumentationConfig[] = [
   // ESM: CopilotClient.createSession
@@ -13,7 +13,6 @@ export const gitHubCopilotConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "CopilotClient",
       methodName: "createSession",
-      kind: "Async",
     },
   },
   // CJS: CopilotClient.createSession
@@ -27,7 +26,6 @@ export const gitHubCopilotConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "CopilotClient",
       methodName: "createSession",
-      kind: "Async",
     },
   },
   // ESM: CopilotClient.resumeSession
@@ -41,7 +39,6 @@ export const gitHubCopilotConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "CopilotClient",
       methodName: "resumeSession",
-      kind: "Async",
     },
   },
   // CJS: CopilotClient.resumeSession
@@ -55,7 +52,6 @@ export const gitHubCopilotConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "CopilotClient",
       methodName: "resumeSession",
-      kind: "Async",
     },
   },
   // ESM: CopilotSession.sendAndWait
@@ -69,7 +65,6 @@ export const gitHubCopilotConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "CopilotSession",
       methodName: "sendAndWait",
-      kind: "Async",
     },
   },
   // CJS: CopilotSession.sendAndWait
@@ -83,7 +78,6 @@ export const gitHubCopilotConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "CopilotSession",
       methodName: "sendAndWait",
-      kind: "Async",
     },
   },
 ];

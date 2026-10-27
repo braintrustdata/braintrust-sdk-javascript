@@ -25,6 +25,20 @@ export function omitMediaData(
   }
   return hasContent ? result : undefined;
 }
+import iso from "#braintrust-platform";
+import { automaticAttachmentOriginals } from "../automatic-attachments";
+
+export function isAutoCaptureAttachmentsEnabled(): boolean {
+  return _internalCaptureAttachmentsEnabled();
+}
+
+/** Whether a capture environment variable is set to `1` or `true`. */
+export function isEnvFlagEnabled(name: string): boolean {
+  const value = iso.getEnv(name);
+  return (
+    value !== undefined && ["1", "true"].includes(value.trim().toLowerCase())
+  );
+}
 
 /**
  * Get file extension from IANA media type
@@ -146,14 +160,26 @@ export function processInputAttachments(
     });
   };
 
-  const processNode = (node: any): any => {
+  const processNode = (node: any, depth = 0): any => {
+    if (depth >= 128) return captureAttachments ? node : "<omitted>";
     if (Array.isArray(node)) {
-      return node.map(processNode).filter((item) => item !== undefined);
+      return node
+        .map((item) => processNode(item, depth + 1))
+        .filter((item) => item !== undefined);
     }
 
     if (!node || typeof node !== "object") {
       return node;
     }
+    if (
+      node instanceof Attachment ||
+      [
+        "braintrust_attachment",
+        "external_attachment",
+        "inline_attachment",
+      ].includes(node.type)
+    )
+      return node;
 
     if (node instanceof BaseAttachment || node instanceof Date) return node;
     // Tool arguments and JSON results are application data, not content parts.
@@ -180,6 +206,36 @@ export function processInputAttachments(
           `file.${getExtensionFromMediaType(mediaType)}`,
         ) ?? node
       );
+    }
+
+    // OpenAI Responses and Decisions image content format.
+    if (
+      node.type === "input_image" &&
+      typeof node.image_url === "string" &&
+      node.image_url.startsWith("data:")
+    ) {
+      if (!captureAttachments) return omitMediaData(node, "image_url");
+      // Decisions accepts inline images only. Do not guess a MIME type or
+      // reinterpret an unsupported format as PNG.
+      const mediaType = node.image_url
+        .match(/^data:(image\/(?:png|jpeg|gif|webp));base64,/i)?.[1]
+        .toLowerCase();
+      if (!mediaType) return node;
+      let binary: string;
+      try {
+        binary = atob(node.image_url.slice(node.image_url.indexOf(",") + 1));
+      } catch {
+        return node; // Malformed media is not an attachment.
+      }
+      if (!binary.length) return node;
+      const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+      const attachment = new Attachment({
+        data: new Blob([bytes], { type: mediaType }),
+        contentType: mediaType,
+        filename: `attachment.${getExtensionFromMediaType(mediaType)}`,
+      });
+      automaticAttachmentOriginals.set(attachment, node.image_url);
+      return { ...node, image_url: attachment };
     }
 
     // Responses API and Agents SDK image/file content parts.
@@ -460,15 +516,18 @@ export function processInputAttachments(
 
     const processed: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(node)) {
-      const result = processNode(value);
+      const result = processNode(value, depth + 1);
       if (result !== undefined) processed[key] = result;
     }
     return processed;
   };
 
-  if (Array.isArray(input)) {
-    return input.map(processNode).filter((item) => item !== undefined);
+  try {
+    return processNode(input);
+  } catch (error) {
+    // Conversion is an optimization. Abort the entire rewrite on failure.
+    // Capture-disabled redaction must never fall back to exporting inline bytes.
+    if (!captureAttachments) throw error;
+    return input;
   }
-
-  return processNode(input);
 }

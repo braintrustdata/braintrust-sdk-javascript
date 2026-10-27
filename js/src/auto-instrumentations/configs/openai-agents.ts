@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { openAIAgentsCoreChannels } from "../../instrumentation/providers/openai-agents-channels";
+import { openAIAgentsCoreChannels } from "../../instrumentation/providers/openai-agents-interceptors";
 
 const lifecycleMethods = [
   ["onTraceStart", openAIAgentsCoreChannels.onTraceStart.channelName],
@@ -21,7 +21,6 @@ export const openAIAgentsCoreConfigs: InstrumentationConfig[] =
         functionQuery: {
           className: "MultiTracingProcessor",
           methodName,
-          kind: "Async",
         },
       }),
     ),

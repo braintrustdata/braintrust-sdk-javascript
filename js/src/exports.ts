@@ -12,6 +12,8 @@ export type {
   Span,
   StartSpanArgs,
 } from "./logger/core";
+
+export { wrapConsole } from "./logs";
 export {
   Attachment,
   BaseAttachment,
@@ -53,6 +55,8 @@ export {
 } from "./logger/prompts";
 
 export { registerSandbox } from "./sandbox";
+
+export { startAISDKBatchTrace, completeAISDKBatchTrace } from "./ai-sdk-batch";
 
 export {
   completeOpenAIBatchTrace,
@@ -100,6 +104,7 @@ export { wrapGoogleADK } from "./wrappers/google-adk";
 export { wrapGenkit } from "./wrappers/genkit";
 export { wrapHuggingFace } from "./wrappers/huggingface";
 export { wrapHuggingFaceTransformers } from "./wrappers/huggingface-transformers";
+export { wrapLiveKit } from "./wrappers/livekit";
 export { wrapOpenRouterAgent } from "./wrappers/openrouter-agent";
 export { wrapOpenRouter } from "./wrappers/openrouter";
 export { wrapMistral } from "./wrappers/mistral";
@@ -107,6 +112,7 @@ export { wrapLangGraphSDK } from "./wrappers/langgraph-sdk";
 export { wrapOllama } from "./wrappers/ollama";
 export { wrapCohere } from "./wrappers/cohere";
 export { wrapVoyageAI } from "./wrappers/voyageai";
+export { wrapWorkersAI } from "./wrappers/workers-ai";
 export { wrapTypeSafe } from "./wrappers/typesafe";
 export { wrapGroq } from "./wrappers/groq";
 export { wrapBedrockRuntime } from "./wrappers/bedrock-runtime";

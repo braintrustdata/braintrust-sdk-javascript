@@ -1,3 +1,8 @@
+import type {
+  AISDKEvaluateParams,
+  AISDKEvaluationResult,
+} from "./ai-sdk-common";
+
 /**
  * Narrow AI SDK v7 telemetry types used by Braintrust.
  *
@@ -10,6 +15,15 @@ export interface AISDKV7TelemetryOptions {
   recordInputs?: boolean;
   recordOutputs?: boolean;
   functionId?: string;
+}
+
+export const BRAINTRUST_AI_SDK_V7_TELEMETRY = Symbol.for(
+  "braintrust.ai-sdk.v7.telemetry",
+);
+
+/** The registry read by AI SDK's getGlobalTelemetryIntegrations(). */
+export interface AISDKV7TelemetryGlobal {
+  AI_SDK_TELEMETRY_INTEGRATIONS?: unknown[];
 }
 
 export const BRAINTRUST_AI_SDK_V7_OPERATION_KEY = Symbol.for(
@@ -164,7 +178,27 @@ export interface AISDKV7ChunkEvent {
   };
 }
 
+export interface AISDKV7DecisionStartEvent extends AISDKV7OperationEvent {
+  state: AISDKEvaluateParams["state"];
+  questions: AISDKEvaluateParams["questions"];
+}
+
+export interface AISDKV7DecisionEndEvent
+  extends AISDKV7DecisionStartEvent, AISDKEvaluationResult {}
+
 export interface AISDKV7Telemetry {
+  experimental_onEvaluateStart?: (
+    event: AISDKV7DecisionStartEvent,
+  ) => void | PromiseLike<void>;
+  experimental_onEvaluateEnd?: (
+    event: AISDKV7DecisionEndEvent,
+  ) => void | PromiseLike<void>;
+  experimental_onDecideStart?: (
+    event: AISDKV7DecisionStartEvent,
+  ) => void | PromiseLike<void>;
+  experimental_onDecideEnd?: (
+    event: AISDKV7DecisionEndEvent,
+  ) => void | PromiseLike<void>;
   onStart?: (event: AISDKV7OperationEvent) => void | PromiseLike<void>;
   onStepStart?: (event: unknown) => void | PromiseLike<void>;
   onLanguageModelCallStart?: (

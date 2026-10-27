@@ -3,16 +3,5 @@
  * licensed under Apache-2.0. Modified by Braintrust.
  */
 
-import { InstrumentationMatcher } from "./matcher";
-import type { InstrumentationConfig } from "./types";
-
-/**
- * Creates a new InstrumentationMatcher from the given instrumentation configs.
- */
-export function create(
-  configs: InstrumentationConfig[],
-): InstrumentationMatcher {
-  return new InstrumentationMatcher(configs);
-}
-
+export { InstrumentationMatcher } from "./matcher";
 export type { InstrumentationConfig, ModuleType } from "./types";

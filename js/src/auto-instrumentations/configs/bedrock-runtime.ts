@@ -1,8 +1,8 @@
-import type { InstrumentationConfig } from "@apm-js-collab/code-transformer";
+import type { InstrumentationConfig } from "../orchestrion-js";
 import {
   smithyClientChannels,
   smithyCoreChannels,
-} from "../../instrumentation/providers/bedrock-runtime-channels";
+} from "../../instrumentation/providers/bedrock-runtime-interceptors";
 
 export const bedrockRuntimeConfigs: InstrumentationConfig[] = [
   {
@@ -15,7 +15,6 @@ export const bedrockRuntimeConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Client",
       methodName: "send",
-      kind: "Async",
     },
   },
   {
@@ -28,7 +27,6 @@ export const bedrockRuntimeConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Client",
       methodName: "send",
-      kind: "Async",
     },
   },
   {
@@ -41,7 +39,6 @@ export const bedrockRuntimeConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Client",
       methodName: "send",
-      kind: "Async",
     },
   },
   {
@@ -54,7 +51,6 @@ export const bedrockRuntimeConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Client",
       methodName: "send",
-      kind: "Async",
     },
   },
 ];

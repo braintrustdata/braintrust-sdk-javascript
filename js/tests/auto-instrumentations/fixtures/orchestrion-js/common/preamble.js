@@ -6,25 +6,31 @@ const assert = require("node:assert");
 
 const runtimePath = process.env.BRAINTRUST_TEST_GLOBAL_HOOK_RUNTIME;
 assert(runtimePath, "BRAINTRUST_TEST_GLOBAL_HOOK_RUNTIME must be set");
-const { newGlobalTracingChannel } = require(runtimePath);
+const { newGlobalInvocationHook } = require(runtimePath);
 
 function getContext(channelName) {
-  const channel = newGlobalTracingChannel(channelName);
   const context = {};
-  channel.subscribe({
-    start(message) {
-      message.context = context;
-      context.start = true;
-    },
-    end(message) {
-      message.context.end = message.result ?? true;
-    },
-    asyncStart(message) {
-      message.context.asyncStart = message.result;
-    },
-    asyncEnd(message) {
-      message.context.asyncEnd = message.result;
-    },
+  newGlobalInvocationHook(channelName).intercept((target, receiver, args) => {
+    context.called = true;
+    const callbackIndex = args.findLastIndex(
+      (arg) => typeof arg === "function",
+    );
+    if (callbackIndex !== -1) {
+      const callback = args[callbackIndex];
+      args[callbackIndex] = function (...callbackArgs) {
+        context.result = callbackArgs[1];
+        return Reflect.apply(callback, this, callbackArgs);
+      };
+    }
+    const result = Reflect.apply(target, receiver, args);
+    if (result && typeof result.then === "function") {
+      result.then((value) => {
+        context.result = value;
+      });
+    } else if (callbackIndex === -1) {
+      context.result = result;
+    }
+    return result;
   });
   return context;
 }
@@ -32,5 +38,5 @@ function getContext(channelName) {
 module.exports = {
   assert,
   getContext,
-  getTracingHook: newGlobalTracingChannel,
+  getInvocationHook: newGlobalInvocationHook,
 };

@@ -1,5 +1,6 @@
 import { registerInstrumentation } from "../../instrumentation/registrations/claudeAgentSDK";
-import { claudeAgentSDKChannels } from "../../instrumentation/providers/claude-agent-sdk-channels";
+import { debugLogger } from "../../debug-logger";
+import { claudeAgentSDKChannels } from "../../instrumentation/providers/claude-agent-sdk-interceptors";
 import { CLAUDE_AGENT_SDK_SKIP_LOCAL_TOOL_HOOKS_OPTION } from "../../instrumentation/providers/claude-agent-sdk-instrumentation-constants";
 import { wrapLocalClaudeToolHandler } from "../../instrumentation/providers/claude-agent-sdk-local-tool-spans";
 import type {
@@ -14,7 +15,7 @@ type LocalToolMetadata = {
 
 /**
  * Wraps the Claude Agent SDK with Braintrust tracing. Query calls only publish
- * tracing-channel events; the Claude Agent SDK plugin owns all span lifecycle
+ * invocation hooks; the Claude Agent SDK plugin owns all span lifecycle
  * work, including root/task spans, LLM spans, tool spans, and sub-agent spans.
  *
  * @param sdk - The Claude Agent SDK module
@@ -33,8 +34,7 @@ export function wrapClaudeAgentSDK<T extends object>(sdk: T): T {
     return claudeAgentSDKProxy(s as ClaudeAgentSDKModule) as unknown as T;
   }
 
-  // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-  console.warn("Unsupported Claude Agent SDK. Not wrapping.");
+  debugLogger.notice.warn("Unsupported Claude Agent SDK. Not wrapping.");
   return sdk;
 }
 

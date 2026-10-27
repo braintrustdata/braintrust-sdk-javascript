@@ -1,6 +1,20 @@
-import { JSONAttachment, BaseAttachment } from "./logger/core";
+import {
+  JSONAttachment,
+  Attachment,
+  BraintrustState,
+  BaseAttachment,
+} from "./logger/core";
 import { _exportsForTestingOnly } from "./logger/testing";
-import { describe, expect, it } from "vite-plus/test";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
+
+import { automaticAttachmentOriginals } from "./automatic-attachments";
+import { configureNode } from "./node/config";
+
+configureNode();
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.useRealTimers();
+});
 
 const { extractAttachments } = _exportsForTestingOnly;
 
@@ -281,4 +295,91 @@ describe("JSONAttachment", () => {
 
     expect(parsed).toEqual(testData);
   });
+});
+
+describe("automatic attachment transport", () => {
+  it.each(["transient", "client-error", "exhausted"])(
+    "handles %s uploads through the shared uploader",
+    async (mode) => {
+      vi.useFakeTimers();
+      let uploads = 0;
+      const requests: { path: string; body: unknown }[] = [];
+      const fetch = vi.fn(
+        async (url: string | URL | Request, options?: RequestInit) => {
+          const path = new URL(String(url)).pathname;
+          if (options?.method !== "PUT")
+            requests.push({
+              path,
+              body: options?.body
+                ? JSON.parse(String(options.body))
+                : undefined,
+            });
+          if (path === "/api/apikey/login")
+            return Response.json({
+              org_info: [
+                { id: "org", name: "org", api_url: "https://attachments.test" },
+              ],
+            });
+          if (path === "/attachment")
+            return Response.json({
+              signedUrl: "https://storage.test/image",
+              headers: {},
+            });
+          if (path === "/image") {
+            uploads++;
+            return new Response(null, {
+              status:
+                mode === "client-error"
+                  ? 400
+                  : mode === "exhausted" || uploads === 1
+                    ? 503
+                    : 200,
+            });
+          }
+          if (path === "/attachment/status") return Response.json({});
+          throw new Error(`Unexpected request ${path}`);
+        },
+      );
+      vi.stubGlobal("fetch", fetch);
+      const state = new BraintrustState({ noExitFlush: true });
+      await state.login({
+        apiKey: "test-key",
+        appUrl: "https://attachments.test",
+        orgName: "org",
+        fetch,
+      });
+      const attachment = new Attachment({
+        state,
+        data: new Blob(["image"], { type: "image/png" }),
+        filename: "attachment.png",
+        contentType: "image/png",
+      });
+      automaticAttachmentOriginals.set(
+        attachment,
+        "data:image/png;base64,aW1hZ2U=",
+      );
+      const pending = attachment.upload();
+      await vi.runAllTimersAsync();
+      const result = await pending;
+      expect(uploads).toBe(
+        mode === "transient" ? 2 : mode === "client-error" ? 1 : 9,
+      );
+      expect(result.upload_status).toBe(
+        mode === "transient" ? "done" : "error",
+      );
+      expect(
+        requests.find((r) => r.path === "/attachment")?.body,
+      ).toMatchObject({
+        key: attachment.reference.key,
+        content_type: "image/png",
+        filename: "attachment.png",
+      });
+      expect(
+        requests.find((r) => r.path === "/attachment/status")?.body,
+      ).toMatchObject({
+        key: attachment.reference.key,
+        status: { upload_status: result.upload_status },
+      });
+    },
+  );
 });

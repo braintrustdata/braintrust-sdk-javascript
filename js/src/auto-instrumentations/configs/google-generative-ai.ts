@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { googleGenerativeAIChannels } from "../../instrumentation/providers/google-generative-ai-channels";
+import { googleGenerativeAIChannels } from "../../instrumentation/providers/google-generative-ai-interceptors";
 
 export const googleGenerativeAIConfigs: InstrumentationConfig[] = [
   "dist/index.js",
@@ -17,7 +17,6 @@ export const googleGenerativeAIConfigs: InstrumentationConfig[] = [
         ? "ChatSession"
         : "GenerativeModel",
       methodName,
-      kind: "Async" as const,
     },
   })),
 );

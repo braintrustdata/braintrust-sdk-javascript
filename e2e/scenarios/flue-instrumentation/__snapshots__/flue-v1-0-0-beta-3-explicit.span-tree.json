@@ -64,7 +64,7 @@
                 "estimated_cost": 0.0018054,
                 "prompt_cache_creation_tokens": 0,
                 "prompt_cached_tokens": 1988,
-                "prompt_tokens": 3,
+                "prompt_tokens": 1991,
                 "tokens": 2071
               }
             },
@@ -154,7 +154,7 @@
                 "estimated_cost": 0.0008094,
                 "prompt_cache_creation_tokens": 0,
                 "prompt_cached_tokens": 2248,
-                "prompt_tokens": 5,
+                "prompt_tokens": 2253,
                 "tokens": 2261
               }
             }
@@ -414,7 +414,7 @@
             "estimated_cost": 0.0037323,
             "prompt_cache_creation_tokens": 0,
             "prompt_cached_tokens": 2441,
-            "prompt_tokens": 10,
+            "prompt_tokens": 2451,
             "tokens": 2649
           }
         },
@@ -529,7 +529,7 @@
             "estimated_cost": 0.0041125499999999995,
             "prompt_cache_creation_tokens": 247,
             "prompt_cached_tokens": 2441,
-            "prompt_tokens": 13,
+            "prompt_tokens": 2701,
             "tokens": 2862
           }
         },
@@ -641,7 +641,7 @@
             "estimated_cost": 0.00378165,
             "prompt_cache_creation_tokens": 251,
             "prompt_cached_tokens": 2688,
-            "prompt_tokens": 13,
+            "prompt_tokens": 2952,
             "tokens": 3085
           }
         },
@@ -737,7 +737,7 @@
             "estimated_cost": 0.0024132,
             "prompt_cache_creation_tokens": 194,
             "prompt_cached_tokens": 2939,
-            "prompt_tokens": 13,
+            "prompt_tokens": 3146,
             "tokens": 3197
           }
         }

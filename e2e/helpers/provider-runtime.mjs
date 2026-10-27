@@ -1,4 +1,10 @@
-import { initLogger, startSpan, withCurrent } from "braintrust";
+import {
+  initLogger,
+  currentLogger,
+  injectTraceContext,
+  startSpan,
+  withCurrent,
+} from "braintrust";
 import { promises as fs } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
@@ -27,8 +33,17 @@ export function scopedName(base, testRunId = getTestRunId()) {
   return `${base}-${suffix}`;
 }
 
-export async function runOperation(name, operation, callback) {
-  const span = startSpan({
+export async function runOperation(name, operation, callback, options = {}) {
+  const logger =
+    options.autoCaptureAttachments === undefined
+      ? undefined
+      : initLogger({
+          projectId: await currentLogger().id,
+          projectName: (await currentLogger().project).name,
+          setCurrent: false,
+          autoCaptureAttachments: options.autoCaptureAttachments,
+        });
+  const args = {
     name,
     event: {
       metadata: {
@@ -36,7 +51,10 @@ export async function runOperation(name, operation, callback) {
         testRunId: getTestRunId(),
       },
     },
-  });
+  };
+  const span = logger
+    ? logger.startSpan({ ...args, parent: injectTraceContext() })
+    : startSpan(args);
 
   await withCurrent(span, callback);
   span.end();

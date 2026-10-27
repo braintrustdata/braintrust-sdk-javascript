@@ -1,27 +1,39 @@
 import {
-  describe,
-  it,
-  expect,
-  vi,
-  beforeEach,
   afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
 } from "vite-plus/test";
+import { newGlobalInvocationHook } from "../../global-instrumentation-hooks";
+import { invocationController } from "../test-utils/invocation";
+vi.mock("../../global-instrumentation-hooks", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("../../global-instrumentation-hooks")
+  >()),
+  newGlobalInvocationHook: vi.fn(),
+}));
 
-const { mockInternalGetGlobalState } = vi.hoisted(() => ({
+const {
+  mockCurrentSpanStoreSymbol: MOCK_CURRENT_SPAN_STORE_SYMBOL,
+  mockInternalGetGlobalState,
+  mockWithCurrent,
+} = vi.hoisted(() => ({
+  mockWithCurrent: vi.fn((_span: any, callback: () => unknown) => callback()),
+  mockCurrentSpanStoreSymbol: Symbol.for("braintrust.currentSpanStore"),
   mockInternalGetGlobalState: vi.fn(() => undefined),
 }));
 
-// Mock iso's newTracingChannel — must be before any imports that use it
 vi.mock("#braintrust-platform", () => ({
-  default: {
-    newTracingChannel: vi.fn(),
-  },
+  default: {},
 }));
 
 import { registerGoogleADKInstrumentation } from "./google-adk-instrumentation";
-import iso from "#braintrust-platform";
 
-const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
+const mockNewInvocationHook = newGlobalInvocationHook as ReturnType<
+  typeof vi.fn
+>;
 
 // Mock logger
 const mockStartSpan = vi.fn(() => ({
@@ -34,7 +46,8 @@ vi.mock("../../logger/core", () => ({
   startSpan: (...args: any[]) => (mockStartSpan as any)(...args),
   _internalGetGlobalState: (...args: any[]) =>
     (mockInternalGetGlobalState as any)(...args),
-  withCurrent: (_span: any, callback: () => unknown) => callback(),
+  BRAINTRUST_CURRENT_SPAN_STORE: MOCK_CURRENT_SPAN_STORE_SYMBOL,
+  withCurrent: (...args: any[]) => (mockWithCurrent as any)(...args),
   Attachment: class MockAttachment {
     reference: any;
     constructor(params: any) {
@@ -55,14 +68,18 @@ describe("registerGoogleADKInstrumentation", () => {
     subscribeSpy = vi.fn();
     bindStoreSpy = vi.fn();
     mockChannel = {
-      subscribe: subscribeSpy,
+      intercept: (interceptor: any) => {
+        subscribeSpy(invocationController(interceptor));
+        return vi.fn();
+      },
+
       hasSubscribers: false,
       start: {
         bindStore: bindStoreSpy,
       },
     };
 
-    mockNewTracingChannel.mockReturnValue(mockChannel);
+    mockNewInvocationHook.mockReturnValue(mockChannel);
     mockStartSpan.mockClear();
     mockInternalGetGlobalState.mockReset();
     mockInternalGetGlobalState.mockReturnValue(undefined);
@@ -77,13 +94,13 @@ describe("registerGoogleADKInstrumentation", () => {
       registerGoogleADKInstrumentation();
 
       // Should subscribe to 3 channels: runner.runAsync, agent.runAsync, tool.runAsync
-      expect(mockNewTracingChannel).toHaveBeenCalledWith(
+      expect(mockNewInvocationHook).toHaveBeenCalledWith(
         "orchestrion:@google/adk:runner.runAsync",
       );
-      expect(mockNewTracingChannel).toHaveBeenCalledWith(
+      expect(mockNewInvocationHook).toHaveBeenCalledWith(
         "orchestrion:@google/adk:agent.runAsync",
       );
-      expect(mockNewTracingChannel).toHaveBeenCalledWith(
+      expect(mockNewInvocationHook).toHaveBeenCalledWith(
         "orchestrion:@google/adk:tool.runAsync",
       );
       expect(subscribeSpy).toHaveBeenCalledTimes(3);
@@ -96,9 +113,9 @@ describe("registerGoogleADKInstrumentation", () => {
 
       // Find the first subscribe call (runner channel)
       const handlers = subscribeSpy.mock.calls[0][0];
-      expect(handlers).toHaveProperty("start");
-      expect(handlers).toHaveProperty("end");
-      expect(handlers).toHaveProperty("error");
+      expect(handlers).toHaveProperty("begin");
+      expect(handlers).toHaveProperty("call");
+      expect(handlers).toHaveProperty("reject");
 
       // Simulate a start event
       const event = {
@@ -114,7 +131,7 @@ describe("registerGoogleADKInstrumentation", () => {
         ],
       };
 
-      handlers.start(event);
+      handlers.call(event);
 
       expect(mockStartSpan).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -139,8 +156,6 @@ describe("registerGoogleADKInstrumentation", () => {
         result: undefined,
       };
 
-      handlers.start(event);
-
       // Simulate async iterable result
       const mockAsyncIterable = {
         [Symbol.asyncIterator]: () => ({
@@ -151,7 +166,7 @@ describe("registerGoogleADKInstrumentation", () => {
       };
 
       event.result = mockAsyncIterable;
-      handlers.end(event);
+      handlers.call(event);
 
       // The stream should be patched — the span shouldn't end immediately
       // (it will end when the stream completes)
@@ -171,34 +186,16 @@ describe("registerGoogleADKInstrumentation", () => {
         error: new Error("Runner failed"),
       };
 
-      handlers.start(event);
-
+      handlers.throw(event);
       const span = mockStartSpan.mock.results[0].value;
-      handlers.error(event);
 
       expect(span.log).toHaveBeenCalledWith({ error: "Runner failed" });
       expect(span.end).toHaveBeenCalled();
     });
 
-    it("binds the current span store for runner events without creating duplicate spans", () => {
-      const currentSpanStore = {};
-      const wrapSpanForStore = vi.fn(() => "wrapped-runner-store");
-      mockInternalGetGlobalState.mockReturnValue({
-        contextManager: {
-          getCurrentSpanStore: () => currentSpanStore,
-          wrapSpanForStore,
-        },
-      } as any);
-
+    it("runs runner calls with the current span without creating duplicate spans", () => {
       registerGoogleADKInstrumentation();
 
-      expect(bindStoreSpy).toHaveBeenNthCalledWith(
-        1,
-        currentSpanStore,
-        expect.any(Function),
-      );
-
-      const bindTransform = bindStoreSpy.mock.calls[0][1];
       const handlers = subscribeSpy.mock.calls[0][0];
       const event = {
         arguments: [
@@ -213,12 +210,11 @@ describe("registerGoogleADKInstrumentation", () => {
         ],
       };
 
-      expect(bindTransform(event)).toBe("wrapped-runner-store");
-      expect(wrapSpanForStore).toHaveBeenCalledWith(
+      handlers.call(event);
+      expect(mockWithCurrent).toHaveBeenCalledWith(
         mockStartSpan.mock.results[0].value,
+        expect.any(Function),
       );
-
-      handlers.start(event);
 
       expect(mockStartSpan).toHaveBeenCalledTimes(1);
     });
@@ -336,16 +332,16 @@ describe("registerGoogleADKInstrumentation", () => {
           arguments: [{ userId: "user-123", sessionId: "session-456" }],
         };
 
-        handlers.start(event);
-        const span = mockStartSpan.mock.results.at(-1)?.value as {
-          log: ReturnType<typeof vi.fn>;
-        };
         event.result = (async function* () {
           for (const usage of usageMetadata) {
             yield { usageMetadata: usage };
           }
         })();
-        handlers.end(event);
+        handlers.call(event);
+
+        const span = mockStartSpan.mock.results.at(-1)?.value as {
+          log: ReturnType<typeof vi.fn>;
+        };
 
         for await (const _event of event.result) {
           // Consume the runner stream so the span is finalized.
@@ -367,10 +363,6 @@ describe("registerGoogleADKInstrumentation", () => {
         arguments: [{ userId: "user-123", sessionId: "session-456" }],
       };
 
-      handlers.start(event);
-      const span = mockStartSpan.mock.results.at(-1)?.value as {
-        log: ReturnType<typeof vi.fn>;
-      };
       event.result = (async function* () {
         yield {
           usageMetadata: {
@@ -388,7 +380,11 @@ describe("registerGoogleADKInstrumentation", () => {
           },
         };
       })();
-      handlers.end(event);
+      handlers.call(event);
+
+      const span = mockStartSpan.mock.results.at(-1)?.value as {
+        log: ReturnType<typeof vi.fn>;
+      };
 
       for await (const _event of event.result) {
         // Consume the runner stream so the span is finalized.
@@ -425,7 +421,7 @@ describe("registerGoogleADKInstrumentation", () => {
         ],
       };
 
-      handlers.start(event);
+      handlers.call(event);
 
       expect(mockStartSpan).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -454,7 +450,7 @@ describe("registerGoogleADKInstrumentation", () => {
         },
       };
 
-      handlers.start(event);
+      handlers.call(event);
 
       const span = mockStartSpan.mock.results[0].value;
       expect(mockStartSpan).toHaveBeenCalledWith(
@@ -480,7 +476,7 @@ describe("registerGoogleADKInstrumentation", () => {
         arguments: [undefined],
       };
 
-      handlers.start(event);
+      handlers.call(event);
 
       expect(mockStartSpan).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -489,25 +485,9 @@ describe("registerGoogleADKInstrumentation", () => {
       );
     });
 
-    it("binds the current span store for agent events without creating duplicate spans", () => {
-      const currentSpanStore = {};
-      const wrapSpanForStore = vi.fn(() => "wrapped-agent-store");
-      mockInternalGetGlobalState.mockReturnValue({
-        contextManager: {
-          getCurrentSpanStore: () => currentSpanStore,
-          wrapSpanForStore,
-        },
-      } as any);
-
+    it("runs agent calls with the current span without creating duplicate spans", () => {
       registerGoogleADKInstrumentation();
 
-      expect(bindStoreSpy).toHaveBeenNthCalledWith(
-        2,
-        currentSpanStore,
-        expect.any(Function),
-      );
-
-      const bindTransform = bindStoreSpy.mock.calls[1][1];
       const handlers = subscribeSpy.mock.calls[1][0];
       const event = {
         arguments: [
@@ -520,12 +500,11 @@ describe("registerGoogleADKInstrumentation", () => {
         ],
       };
 
-      expect(bindTransform(event)).toBe("wrapped-agent-store");
-      expect(wrapSpanForStore).toHaveBeenCalledWith(
+      handlers.call(event);
+      expect(mockWithCurrent).toHaveBeenCalledWith(
         mockStartSpan.mock.results[0].value,
+        expect.any(Function),
       );
-
-      handlers.start(event);
 
       expect(mockStartSpan).toHaveBeenCalledTimes(1);
     });
@@ -555,35 +534,37 @@ describe("registerGoogleADKInstrumentation", () => {
       const runnerHandlers = subscribeSpy.mock.calls[0][0];
       const agentHandlers = subscribeSpy.mock.calls[1][0];
 
-      runnerHandlers.start({
-        arguments: [
-          {
-            session: {
-              id: "session-456",
-              userId: "user-123",
+      runnerHandlers.call(
+        {
+          arguments: [
+            {
+              session: {
+                id: "session-456",
+                userId: "user-123",
+              },
+              userContent: {
+                role: "user",
+                parts: [{ text: "What is the weather?" }],
+              },
             },
-            userContent: {
-              role: "user",
-              parts: [{ text: "What is the weather?" }],
-            },
-          },
-        ],
-      });
-
-      agentHandlers.start({
-        arguments: [
-          {
-            session: {
-              id: "session-456",
-              userId: "user-123",
-            },
-            agent: {
-              name: "weather_agent",
-              model: "gemini-2.5-flash",
-            },
-          },
-        ],
-      });
+          ],
+        },
+        () =>
+          agentHandlers.call({
+            arguments: [
+              {
+                session: {
+                  id: "session-456",
+                  userId: "user-123",
+                },
+                agent: {
+                  name: "weather_agent",
+                  model: "gemini-2.5-flash",
+                },
+              },
+            ],
+          }),
+      );
 
       expect(mockStartSpan).toHaveBeenNthCalledWith(
         2,
@@ -619,7 +600,7 @@ describe("registerGoogleADKInstrumentation", () => {
         },
       };
 
-      handlers.start(event);
+      handlers.begin(event);
 
       expect(mockStartSpan).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -649,10 +630,10 @@ describe("registerGoogleADKInstrumentation", () => {
         result: { temperature: 72, condition: "sunny" },
       };
 
-      handlers.start(event);
+      handlers.begin(event);
       const span = mockStartSpan.mock.results[0].value;
 
-      handlers.asyncEnd(event);
+      handlers.resolve(event);
 
       expect(span.log).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -676,10 +657,10 @@ describe("registerGoogleADKInstrumentation", () => {
         error: new Error("Tool failed"),
       };
 
-      handlers.start(event);
+      handlers.begin(event);
       const span = mockStartSpan.mock.results[0].value;
 
-      handlers.error(event);
+      handlers.reject(event);
 
       expect(span.log).toHaveBeenCalledWith({ error: "Tool failed" });
       expect(span.end).toHaveBeenCalled();

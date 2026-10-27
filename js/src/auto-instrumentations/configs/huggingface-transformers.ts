@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { huggingFaceTransformersChannels } from "../../instrumentation/providers/huggingface-transformers-channels";
+import { huggingFaceTransformersChannels } from "../../instrumentation/providers/huggingface-transformers-interceptors";
 
 const moduleFiles = [
   {
@@ -45,7 +45,6 @@ export const huggingFaceTransformersConfigs: InstrumentationConfig[] =
       },
       functionQuery: {
         functionName: "pipeline",
-        kind: "Async",
       },
     },
     ...pipelineClasses.map((className) => ({
@@ -58,7 +57,6 @@ export const huggingFaceTransformersConfigs: InstrumentationConfig[] =
       functionQuery: {
         className,
         methodName: "_call",
-        kind: "Async" as const,
       },
     })),
   ]);

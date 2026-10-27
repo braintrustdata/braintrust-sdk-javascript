@@ -1,5 +1,6 @@
 import { registerInstrumentation } from "../instrumentation/registrations/openaiCodexSDK";
-import { openAICodexChannels } from "../instrumentation/providers/openai-codex-channels";
+import { debugLogger } from "../debug-logger";
+import { openAICodexChannels } from "../instrumentation/providers/openai-codex-interceptors";
 import type {
   OpenAICodexClass,
   OpenAICodexClient,
@@ -30,8 +31,7 @@ export function wrapOpenAICodexSDK<T>(sdk: T): T {
   }
 
   if (!maybeSDK.Codex || typeof maybeSDK.Codex !== "function") {
-    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    console.warn("Unsupported OpenAI Codex SDK. Not wrapping.");
+    debugLogger.notice.warn("Unsupported OpenAI Codex SDK. Not wrapping.");
     return sdk;
   }
 
@@ -147,14 +147,10 @@ function wrapCodexThread(thread: OpenAICodexThread): OpenAICodexThread {
             OpenAICodexInput,
             OpenAICodexTurnOptions | undefined,
           ];
-          return openAICodexChannels.run.tracePromise(
-            () => Reflect.apply(value, target, args),
-            {
-              arguments: args,
-              operation: "run",
-              thread: target,
-            },
-          );
+          return openAICodexChannels.run.invoke(value, target, args, {
+            operation: "run",
+            thread: target,
+          });
         };
       }
       if (prop === "runStreamed" && typeof value === "function") {
@@ -166,14 +162,10 @@ function wrapCodexThread(thread: OpenAICodexThread): OpenAICodexThread {
             OpenAICodexInput,
             OpenAICodexTurnOptions | undefined,
           ];
-          return openAICodexChannels.runStreamed.tracePromise(
-            () => Reflect.apply(value, target, args),
-            {
-              arguments: args,
-              operation: "runStreamed",
-              thread: target,
-            },
-          );
+          return openAICodexChannels.runStreamed.invoke(value, target, args, {
+            operation: "runStreamed",
+            thread: target,
+          });
         };
       }
       if (typeof value === "function") {

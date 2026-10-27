@@ -2,6 +2,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { spawn } from "node:child_process";
 import * as path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { supportsSyncHooks } from "../../src/node/apply-auto-instrumentation";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixturesDir = path.join(__dirname, "fixtures", "vendor-hooks");
@@ -18,12 +19,15 @@ describe("vendored import-in-the-middle and require-in-the-middle", () => {
     });
   });
 
-  it("only wraps explicitly hooked ESM imports through sync registerHooks", async () => {
-    await runNode({
-      args: [path.join(fixturesDir, "iitm-sync-app.mjs")],
-      cwd: fixturesDir,
-    });
-  });
+  it.skipIf(!supportsSyncHooks())(
+    "only wraps explicitly hooked ESM imports through sync registerHooks",
+    async () => {
+      await runNode({
+        args: [path.join(fixturesDir, "iitm-sync-app.mjs")],
+        cwd: fixturesDir,
+      });
+    },
+  );
 
   it("only wraps explicitly hooked CommonJS requires", async () => {
     await runNode({

@@ -1,0 +1,12 @@
+{
+  "name": "@braintrust/e2e-livekit-instrumentation-v1",
+  "private": true,
+  "dependencies": {
+    "@livekit/agents": "1.9.1",
+    "@livekit/agents-plugin-openai": "1.9.1",
+    "@livekit/rtc-node": "1.1.0",
+    "@opentelemetry/sdk-trace-node": "2.0.1",
+    "ws": "8.18.3",
+    "zod": "3.25.76"
+  }
+}

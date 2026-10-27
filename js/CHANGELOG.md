@@ -1,5 +1,53 @@
 # braintrust
 
+## 3.40.0
+
+### Minor Changes
+
+- feat(workers-ai): Add Clef and Clairic tracing (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2654)
+- feat(logger): batch log rows with a short flush delay Batch nearby log rows into fewer HTTP requests in long-lived Node processes. Rows wait up to 1s before flushing, so call `flush()` before shutting down on signals or `process.exit()`. Configure the delay with `BRAINTRUST_FLUSH_DELAY_MS`; serverless and other runtimes continue to flush immediately by default. (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2653)
+
+### Patch Changes
+
+- fix(ai-sdk): Log toModelOutput results for tools that define it When an AI SDK tool defines `toModelOutput`, its tool span and the parent span's tool results now log the value the model saw instead of the raw `execute` result. (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2652)
+- fix(pi-coding-agent): preserve system prompts and tool declarations Capture system instructions and declared tool schemas from Pi 1.4 transcript messages, including section updates and tool additions and removals. Wrap refreshed tool executors from agent state and enable auto-instrumentation for Pi 1.x while preserving legacy context support. (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2673)
+- fix(pi-coding-agent): avoid double-counting token usage and cost Keep token usage on child LLM spans instead of repeating it on AgentSession.prompt task spans, so trace rollups count each provider call once. (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2672)
+- fix(instrumentation): Support TypeScript loaders (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2647)
+- fix(livekit): Preserve native lifecycle spans (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2649)
+
+## 3.39.0
+
+### Minor Changes
+
+- feat(ai-sdk): Add batch tracing (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2642)
+- feat(logs): add application logging and console capture (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2639)
+- feat(cloudflare-think): Support versions 0.13 through 0.20 (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2640)
+- feat: Add instrumentation for LiveKit cascade mode Thanks @delner! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2633)
+- feat(ai-sdk): Trace code mode (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2637)
+
+### Patch Changes
+
+- fix(bedrock): Log text and usage for streamed InvokeModel calls to OpenAI models Thanks @pcbeingused333! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2632)
+- fix(pi-coding-agent,flue): Count cache reads and writes in prompt_tokens Thanks @theanecdote! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2646)
+- fix(openai,openrouter,huggingface): keep streamed tool calls apart when the provider omits index Thanks @pcbeingused333! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2641)
+
+## 3.38.0
+
+### Minor Changes
+
+- feat(typesafe): Capture image inputs (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2625)
+- feat(ai-sdk): Trace decision calls and media (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2621)
+- feat: support OpenTelemetry span customizers Thanks @realark! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2615)
+- feat(openai): Trace Decisions API calls (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2620)
+
+### Patch Changes
+
+- fix: Prevent conflicting queued logins from replacing active credentials (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2623)
+- refactor(instrumentation): Separate API wrapping from tracing (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2575)
+- fix: Ignore empty `BRAINTRUST_API_URL` and `BRAINTRUST_PROXY_URL` environment variables and use the organization URLs instead Thanks @raphaelfakhri! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2600)
+- fix: fail closed on span customizer errors without dropping records Thanks @realark! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2614)
+- fix(sdk): Restore tree shaking for browser and edge builds (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2622)
+
 ## 3.37.2
 
 ### Patch Changes

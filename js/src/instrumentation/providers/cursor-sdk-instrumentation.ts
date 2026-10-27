@@ -1,16 +1,15 @@
 import { toLoggedError } from "../core";
-import type { ChannelMessage } from "../core/channel-definitions";
-import type { IsoChannelHandlers } from "#braintrust-platform";
+import { observeResult, runInstrumentation } from "../core/observe-result";
+
+import { SpanTypeAttribute } from "../../../util/index";
 import { debugLogger } from "../../debug-logger";
-import { _internalStartSpan as startBaseSpan } from "../../logger/core";
 import type { Span } from "../../logger/core";
+import { _internalStartSpan as startBaseSpan } from "../../logger/core";
 import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
 } from "../../span-origin";
 import { getCurrentUnixTimestamp } from "../../util";
-import { SpanTypeAttribute } from "../../../util/index";
-import { cursorSDKChannels } from "./cursor-sdk-channels";
 import type {
   CursorSDKAgent,
   CursorSDKAgentOptions,
@@ -28,6 +27,8 @@ import type {
   CursorSDKUsage,
   CursorSDKUserMessage,
 } from "../../vendor-sdk-types/cursor-sdk";
+import type { ChannelMessage } from "../core/tracing-types";
+import { cursorSDKChannels } from "./cursor-sdk-interceptors";
 
 const PATCHED_AGENT = Symbol.for("braintrust.cursor-sdk.auto-patched-agent");
 const PATCHED_RUN = Symbol.for("braintrust.cursor-sdk.patched-run");
@@ -81,25 +82,28 @@ class CursorSDKInstrumentationConsumer {
   private subscribeToAgentFactory(
     channel: typeof cursorSDKChannels.create | typeof cursorSDKChannels.resume,
   ): void {
-    const tracingChannel = channel.tracingChannel();
-    const handlers: IsoChannelHandlers<ChannelMessage<typeof channel>> = {
-      asyncEnd: (event) => {
-        patchCursorAgentInPlace(event.result);
-      },
-      error: () => {},
-    };
-
-    tracingChannel.subscribe(handlers);
+    channel.intercept((target, receiver, args) =>
+      observeResult(
+        Reflect.apply(target, receiver, args),
+        patchCursorAgentInPlace,
+        () => {},
+      ),
+    );
   }
 
   private subscribeToPrompt(): void {
-    const channel = cursorSDKChannels.prompt.tracingChannel();
+    const channel = cursorSDKChannels.prompt;
     const states = new WeakMap<object, PromptState>();
 
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<typeof cursorSDKChannels.prompt>
-    > = {
-      start: (event) => {
+    channel.intercept((target, receiver, args, additional) => {
+      const event = {
+        ...additional,
+        arguments: args,
+        self: receiver,
+      } as ChannelMessage<typeof cursorSDKChannels.prompt>;
+      const prepare = (
+        event: ChannelMessage<typeof cursorSDKChannels.prompt>,
+      ) => {
         this.promptDepth += 1;
         const message = event.arguments[0];
         const options = event.arguments[1];
@@ -126,8 +130,10 @@ class CursorSDKInstrumentationConsumer {
           metadata,
         });
         states.set(event, { metadata, span, startTime });
-      },
-      asyncEnd: (event) => {
+      };
+      const resolved = (
+        event: ChannelMessage<typeof cursorSDKChannels.prompt>,
+      ) => {
         this.promptDepth = Math.max(0, this.promptDepth - 1);
         const state = states.get(event);
         if (!state) {
@@ -146,8 +152,10 @@ class CursorSDKInstrumentationConsumer {
           state.span.end();
           states.delete(event);
         }
-      },
-      error: (event) => {
+      };
+      const failed = (
+        event: ChannelMessage<typeof cursorSDKChannels.prompt>,
+      ) => {
         this.promptDepth = Math.max(0, this.promptDepth - 1);
         const state = states.get(event);
         if (!state || !event.error) {
@@ -156,20 +164,43 @@ class CursorSDKInstrumentationConsumer {
         safeLog(state.span, { error: event.error.message });
         state.span.end();
         states.delete(event);
-      },
-    };
-
-    channel.subscribe(handlers);
+      };
+      runInstrumentation(() => prepare(event));
+      let result;
+      try {
+        result = Reflect.apply(target, receiver, args);
+      } catch (error) {
+        Object.assign(event, { error });
+        runInstrumentation(() => failed(event));
+        throw error;
+      }
+      return observeResult(
+        result,
+        (value) => {
+          Object.assign(event, { result: value });
+          resolved(event);
+        },
+        (error) => {
+          Object.assign(event, { error });
+          failed(event);
+        },
+      );
+    });
   }
 
   private subscribeToSend(): void {
-    const channel = cursorSDKChannels.send.tracingChannel();
+    const channel = cursorSDKChannels.send;
     const states = new WeakMap<object, CursorRunState>();
 
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<typeof cursorSDKChannels.send>
-    > = {
-      start: (event) => {
+    channel.intercept((target, receiver, args, additional) => {
+      const event = {
+        ...additional,
+        arguments: args,
+        self: receiver,
+      } as ChannelMessage<typeof cursorSDKChannels.send>;
+      const prepare = (
+        event: ChannelMessage<typeof cursorSDKChannels.send>,
+      ) => {
         if (this.promptDepth > 0) {
           return;
         }
@@ -222,8 +253,10 @@ class CursorSDKInstrumentationConsumer {
           event.arguments[1] = wrapSendOptionsCallbacks(sendOptions, state);
         }
         states.set(event, state);
-      },
-      asyncEnd: (event) => {
+      };
+      const resolved = (
+        event: ChannelMessage<typeof cursorSDKChannels.send>,
+      ) => {
         const state = states.get(event);
         if (!state) {
           return;
@@ -238,8 +271,8 @@ class CursorSDKInstrumentationConsumer {
           ...extractRunMetadata(event.result),
         };
         patchCursorRun(event.result, state);
-      },
-      error: (event) => {
+      };
+      const failed = (event: ChannelMessage<typeof cursorSDKChannels.send>) => {
         const state = states.get(event);
         if (!state || !event.error) {
           return;
@@ -249,10 +282,28 @@ class CursorSDKInstrumentationConsumer {
         state.span.end();
         state.finalized = true;
         states.delete(event);
-      },
-    };
-
-    channel.subscribe(handlers);
+      };
+      runInstrumentation(() => prepare(event));
+      let result;
+      try {
+        result = Reflect.apply(target, receiver, args);
+      } catch (error) {
+        Object.assign(event, { error });
+        runInstrumentation(() => failed(event));
+        throw error;
+      }
+      return observeResult(
+        result,
+        (value) => {
+          Object.assign(event, { result: value });
+          resolved(event);
+        },
+        (error) => {
+          Object.assign(event, { error });
+          failed(event);
+        },
+      );
+    });
   }
 }
 
@@ -286,13 +337,11 @@ function patchCursorAgentInPlace(agent: unknown): void {
           string | CursorSDKUserMessage,
           CursorSDKSendOptions | undefined,
         ];
-        return cursorSDKChannels.send.tracePromise(
-          () => originalSend(...args),
-          {
-            agent: agentRecord,
-            arguments: args,
-            operation: "send",
-          } as never,
+        return cursorSDKChannels.send.invoke(
+          originalSend,
+          undefined,
+          [...args],
+          { agent: agentRecord, operation: "send" },
         );
       },
       writable: true,

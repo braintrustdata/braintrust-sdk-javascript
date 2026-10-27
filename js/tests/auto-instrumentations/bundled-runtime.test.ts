@@ -4,7 +4,7 @@
  * These tests execute bundler output built against the mock packages in
  * fixtures/node_modules and verify that transformed methods:
  * - Preserve arguments, receivers, return values, errors, and stream objects
- * - Emit the expected global hook lifecycle on the configured channel
+ * - Invoke interceptors registered on the configured global hook
  *
  * Hook lifecycle semantics themselves are covered by
  * src/global-instrumentation-hooks.test.ts; transformed output shape is covered
@@ -23,10 +23,7 @@ import { EventEmitter } from "node:events";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
-import {
-  newGlobalTracingChannel,
-  type GlobalHookHandlers,
-} from "../../src/global-instrumentation-hooks";
+import { newGlobalInvocationHook } from "../../src/global-instrumentation-hooks";
 import type { BundlerPluginOptions } from "../../src/auto-instrumentations/bundler/plugin";
 import { bundleFixture, fixturesDir, type Bundler } from "./test-bundle";
 
@@ -35,9 +32,9 @@ const outputDir = fileURLToPath(
 );
 const openAIApp = path.join(fixturesDir, "openai-app.mjs");
 
-const PROMISE_LIFECYCLE = ["start", "end", "asyncStart", "asyncEnd"];
-const REJECTION_LIFECYCLE = ["start", "end", "error", "asyncStart", "asyncEnd"];
-const SYNC_LIFECYCLE = ["start", "end"];
+const PROMISE_LIFECYCLE = ["call", "return", "resolve"];
+const REJECTION_LIFECYCLE = ["call", "return", "reject"];
+const SYNC_LIFECYCLE = ["call", "return"];
 
 async function bundle(
   bundler: Bundler,
@@ -49,22 +46,39 @@ async function bundle(
   return import(outfile);
 }
 
-type HookEvent = { type: keyof GlobalHookHandlers; context: any };
+type HookEvent = {
+  type: "call" | "return" | "resolve" | "reject";
+  context: any;
+};
 
 const unsubscribers: Array<() => void> = [];
 
+// Records each invocation as a shared context object, mirroring how tracing
+// interceptors observe calls: `result` holds the resolved value for promises.
 function recordChannel(channelName: string): HookEvent[] {
   const events: HookEvent[] = [];
-  const channel = newGlobalTracingChannel(channelName);
-  const handlers: GlobalHookHandlers = {
-    start: (context) => events.push({ type: "start", context }),
-    end: (context) => events.push({ type: "end", context }),
-    asyncStart: (context) => events.push({ type: "asyncStart", context }),
-    asyncEnd: (context) => events.push({ type: "asyncEnd", context }),
-    error: (context) => events.push({ type: "error", context }),
-  };
-  channel.subscribe(handlers);
-  unsubscribers.push(() => channel.unsubscribe(handlers));
+  unsubscribers.push(
+    newGlobalInvocationHook(channelName).intercept((target, self, args) => {
+      const context: any = { arguments: args, self };
+      events.push({ type: "call", context });
+      const result = Reflect.apply(target, self, args);
+      context.result = result;
+      events.push({ type: "return", context });
+      if (result && typeof result.then === "function") {
+        result.then(
+          (value: unknown) => {
+            context.result = value;
+            events.push({ type: "resolve", context });
+          },
+          (error: unknown) => {
+            context.error = error;
+            events.push({ type: "reject", context });
+          },
+        );
+      }
+      return result;
+    }),
+  );
   return events;
 }
 
@@ -72,9 +86,9 @@ function eventTypes(events: HookEvent[]): string[] {
   return events.map((event) => event.type);
 }
 
-function startContexts(events: HookEvent[]): any[] {
+function callContexts(events: HookEvent[]): any[] {
   return events
-    .filter((event) => event.type === "start")
+    .filter((event) => event.type === "call")
     .map((event) => event.context);
 }
 
@@ -150,7 +164,7 @@ describe("Bundled Runtime", () => {
     expect(context.result).toBe(response);
   });
 
-  it("propagates rejections unchanged and reports them on the error event", async () => {
+  it("propagates rejections unchanged to interceptors and callers", async () => {
     const events = recordChannel("orchestrion:openai:chat.completions.create");
     const error = new Error("Invalid API key");
     const completions = new app.Completions({
@@ -202,13 +216,13 @@ describe("Bundled Runtime", () => {
       { client: "client2", path: "/chat/completions", model: "gpt-4o-mini" },
     ]);
 
-    const chatContexts = startContexts(chatEvents);
+    const chatContexts = callContexts(chatEvents);
     expect(chatContexts.map((context) => context.self)).toEqual([chat1, chat2]);
     expect(chatContexts.map((context) => context.result)).toEqual([
       results[0],
       results[2],
     ]);
-    expect(startContexts(embeddingEvents).map((c) => c.result)).toEqual([
+    expect(callContexts(embeddingEvents).map((c) => c.result)).toEqual([
       results[1],
     ]);
     expect(unrelatedEvents).toEqual([]);
@@ -293,28 +307,11 @@ describe("Bundled Runtime", () => {
     },
   );
 
-  it("applies custom instrumentation configs passed to the plugin", async () => {
+  it("leaves unconfigured dependencies uninstrumented", async () => {
     const events = recordChannel("orchestrion:custom-sdk:process");
     const bundled = await bundle(
       "esbuild",
       path.join(fixturesDir, "custom-sdk-app.mjs"),
-      {
-        instrumentations: [
-          {
-            channelName: "process",
-            module: {
-              name: "custom-sdk",
-              versionRange: ">=1.0.0",
-              filePath: "index.mjs",
-            },
-            functionQuery: {
-              className: "CustomAPI",
-              methodName: "process",
-              kind: "Async",
-            },
-          },
-        ],
-      },
     );
     const api = new bundled.CustomAPI(async (params: { data: string }) => ({
       processed: params.data,
@@ -323,7 +320,6 @@ describe("Bundled Runtime", () => {
     await expect(api.process({ data: "test" })).resolves.toEqual({
       processed: "test",
     });
-    expect(eventTypes(events)).toEqual(PROMISE_LIFECYCLE);
-    expect(events[0].context.arguments[0]).toEqual({ data: "test" });
+    expect(events).toEqual([]);
   });
 });

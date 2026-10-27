@@ -1,10 +1,12 @@
 import { isObject } from "../../../util/index";
-import { openAIAgentsCoreChannels } from "./openai-agents-channels";
-import { OpenAIAgentsTraceProcessor } from "./openai-agents-trace-processor";
 import type {
   OpenAIAgentsSpan,
   OpenAIAgentsTrace,
 } from "../../vendor-sdk-types/openai-agents";
+
+import { runInstrumentation } from "../core/observe-result";
+import { openAIAgentsCoreChannels } from "./openai-agents-interceptors";
+import { OpenAIAgentsTraceProcessor } from "./openai-agents-trace-processor";
 
 function firstArgument(args: unknown): unknown {
   if (Array.isArray(args)) {
@@ -47,52 +49,61 @@ class OpenAIAgentsInstrumentationConsumer {
   }
 
   private subscribeToTraceLifecycle(): void {
-    const traceStartChannel =
-      openAIAgentsCoreChannels.onTraceStart.tracingChannel();
-    const traceStartHandlers = {
-      start: (event: { arguments: unknown }) => {
-        const trace = firstArgument(event.arguments);
-        if (isOpenAIAgentsTrace(trace)) {
-          void this.processor.onTraceStart(trace);
-        }
-      },
-    };
-    traceStartChannel.subscribe(traceStartHandlers);
+    const traceStartChannel = openAIAgentsCoreChannels.onTraceStart;
 
-    const traceEndChannel =
-      openAIAgentsCoreChannels.onTraceEnd.tracingChannel();
-    const traceEndHandlers = {
-      start: (event: { arguments: unknown }) => {
-        const trace = firstArgument(event.arguments);
-        if (isOpenAIAgentsTrace(trace)) {
-          void this.processor.onTraceEnd(trace);
-        }
-      },
-    };
-    traceEndChannel.subscribe(traceEndHandlers);
+    traceStartChannel.intercept((target, receiver, args) => {
+      runInstrumentation(() =>
+        ((event: { arguments: unknown }) => {
+          const trace = firstArgument(event.arguments);
+          if (isOpenAIAgentsTrace(trace)) {
+            void this.processor.onTraceStart(trace);
+          }
+        })({ arguments: args }),
+      );
+      return Reflect.apply(target, receiver, args);
+    });
 
-    const spanStartChannel =
-      openAIAgentsCoreChannels.onSpanStart.tracingChannel();
-    const spanStartHandlers = {
-      start: (event: { arguments: unknown }) => {
-        const span = firstArgument(event.arguments);
-        if (isOpenAIAgentsSpan(span)) {
-          void this.processor.onSpanStart(span);
-        }
-      },
-    };
-    spanStartChannel.subscribe(spanStartHandlers);
+    const traceEndChannel = openAIAgentsCoreChannels.onTraceEnd;
 
-    const spanEndChannel = openAIAgentsCoreChannels.onSpanEnd.tracingChannel();
-    const spanEndHandlers = {
-      start: (event: { arguments: unknown }) => {
-        const span = firstArgument(event.arguments);
-        if (isOpenAIAgentsSpan(span)) {
-          void this.processor.onSpanEnd(span);
-        }
-      },
-    };
-    spanEndChannel.subscribe(spanEndHandlers);
+    traceEndChannel.intercept((target, receiver, args) => {
+      runInstrumentation(() =>
+        ((event: { arguments: unknown }) => {
+          const trace = firstArgument(event.arguments);
+          if (isOpenAIAgentsTrace(trace)) {
+            void this.processor.onTraceEnd(trace);
+          }
+        })({ arguments: args }),
+      );
+      return Reflect.apply(target, receiver, args);
+    });
+
+    const spanStartChannel = openAIAgentsCoreChannels.onSpanStart;
+
+    spanStartChannel.intercept((target, receiver, args) => {
+      runInstrumentation(() =>
+        ((event: { arguments: unknown }) => {
+          const span = firstArgument(event.arguments);
+          if (isOpenAIAgentsSpan(span)) {
+            void this.processor.onSpanStart(span);
+          }
+        })({ arguments: args }),
+      );
+      return Reflect.apply(target, receiver, args);
+    });
+
+    const spanEndChannel = openAIAgentsCoreChannels.onSpanEnd;
+
+    spanEndChannel.intercept((target, receiver, args) => {
+      runInstrumentation(() =>
+        ((event: { arguments: unknown }) => {
+          const span = firstArgument(event.arguments);
+          if (isOpenAIAgentsSpan(span)) {
+            void this.processor.onSpanEnd(span);
+          }
+        })({ arguments: args }),
+      );
+      return Reflect.apply(target, receiver, args);
+    });
   }
 }
 

@@ -1,14 +1,16 @@
+import { SpanTypeAttribute } from "../../../util/index";
 import { debugLogger } from "../../debug-logger";
-import type { IsoChannelHandlers } from "#braintrust-platform";
-import { _internalStartSpanWithContext } from "../../logger/core";
 import type { Span } from "../../logger/core";
+import { _internalStartSpanWithContext } from "../../logger/core";
 import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
 } from "../../span-origin";
-import { SpanTypeAttribute } from "../../../util/index";
-import type { ChannelMessage } from "../core/channel-definitions";
-import { cloudflareAgentsChannels } from "./cloudflare-agents-channels";
+
+import { observeResult, runInstrumentation } from "../core/observe-result";
+
+import type { ChannelMessage } from "../core/tracing-types";
+import { cloudflareAgentsChannels } from "./cloudflare-agents-interceptors";
 
 const CLOUDFLARE_WORKERS_CONTEXT = {
   span_origin: {
@@ -17,12 +19,18 @@ const CLOUDFLARE_WORKERS_CONTEXT = {
 };
 
 export function registerCloudflareAgentsInstrumentation(): void {
-  const channel = cloudflareAgentsChannels.runAgentTool.tracingChannel();
+  const channel = cloudflareAgentsChannels.runAgentTool;
   const spans = new WeakMap<object, Span>();
-  const handlers: IsoChannelHandlers<
-    ChannelMessage<typeof cloudflareAgentsChannels.runAgentTool>
-  > = {
-    start: (event) => {
+
+  channel.intercept((target, receiver, args, additional) => {
+    const event = {
+      ...additional,
+      arguments: args,
+      self: receiver,
+    } as ChannelMessage<typeof cloudflareAgentsChannels.runAgentTool>;
+    const prepare = (
+      event: ChannelMessage<typeof cloudflareAgentsChannels.runAgentTool>,
+    ) => {
       try {
         const agentClass = event.arguments[0];
         const options = event.arguments[1];
@@ -55,8 +63,10 @@ export function registerCloudflareAgentsInstrumentation(): void {
       } catch (error) {
         logInstrumentationError("start", error);
       }
-    },
-    asyncEnd: (event) => {
+    };
+    const resolved = (
+      event: ChannelMessage<typeof cloudflareAgentsChannels.runAgentTool>,
+    ) => {
       const span = spans.get(event);
       if (!span) {
         return;
@@ -78,8 +88,10 @@ export function registerCloudflareAgentsInstrumentation(): void {
       } finally {
         safelyEndSpan(span);
       }
-    },
-    error: (event) => {
+    };
+    const failed = (
+      event: ChannelMessage<typeof cloudflareAgentsChannels.runAgentTool>,
+    ) => {
       const span = spans.get(event);
       if (!span) {
         return;
@@ -93,10 +105,28 @@ export function registerCloudflareAgentsInstrumentation(): void {
       } finally {
         safelyEndSpan(span);
       }
-    },
-  };
-
-  channel.subscribe(handlers);
+    };
+    runInstrumentation(() => prepare(event));
+    let result;
+    try {
+      result = Reflect.apply(target, receiver, args);
+    } catch (error) {
+      Object.assign(event, { error });
+      runInstrumentation(() => failed(event));
+      throw error;
+    }
+    return observeResult(
+      result,
+      (value) => {
+        Object.assign(event, { result: value });
+        resolved(event);
+      },
+      (error) => {
+        Object.assign(event, { error });
+        failed(event);
+      },
+    );
+  });
 }
 
 function ownValue(value: unknown, key: PropertyKey): unknown {

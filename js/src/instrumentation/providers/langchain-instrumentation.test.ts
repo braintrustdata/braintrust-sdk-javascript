@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from "vite-plus/test";
 import { registerLangChainInstrumentation } from "./langchain-instrumentation";
-import { langChainChannels } from "./langchain-channels";
+import { langChainChannels } from "./langchain-interceptors";
 
 function createManager(handlers: unknown[] = []) {
   return {
@@ -12,21 +12,30 @@ function createManager(handlers: unknown[] = []) {
 }
 
 function traceConfigureResult(result: unknown) {
-  return langChainChannels.configure.traceSync(() => result as any, {
-    arguments: [],
-  });
+  return langChainChannels.configure.invoke(
+    () => result as any,
+    undefined,
+    [],
+    {},
+  );
 }
-
 function traceConfigureArguments(args: unknown[]) {
-  return langChainChannels.configure.traceSync(() => args as any, {
-    arguments: args as any,
-  });
+  return langChainChannels.configure.invoke(
+    (...received: unknown[]) => received as any,
+    undefined,
+    args as any,
+    {},
+  );
 }
-
 function traceConfigureArgumentsObject(args: IArguments) {
-  return langChainChannels.configure.traceSync(() => args as any, {
-    arguments: args as any,
-  });
+  return langChainChannels.configure.invoke(
+    function (..._received: unknown[]) {
+      return arguments as any;
+    },
+    undefined,
+    args as any,
+    {},
+  );
 }
 
 function createArgumentsObject(...args: unknown[]): IArguments {
@@ -43,9 +52,9 @@ describe("registerLangChainInstrumentation", () => {
   it("injects a Braintrust callback handler into empty CallbackManager.configure() arguments", () => {
     const args: unknown[] = [];
 
-    traceConfigureArguments(args);
+    const received = traceConfigureArguments(args);
 
-    expect(args[0]).toEqual([
+    expect(received[0]).toEqual([
       expect.objectContaining({
         name: "BraintrustCallbackHandler",
       }),
@@ -55,9 +64,9 @@ describe("registerLangChainInstrumentation", () => {
   it("injects a Braintrust callback handler into real arguments objects", () => {
     const args = createArgumentsObject();
 
-    traceConfigureArgumentsObject(args);
+    const received = traceConfigureArgumentsObject(args);
 
-    expect(args[0]).toEqual([
+    expect(received[0]).toEqual([
       expect.objectContaining({
         name: "BraintrustCallbackHandler",
       }),

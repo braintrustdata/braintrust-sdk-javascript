@@ -1,6 +1,6 @@
 import { registerInstrumentation } from "../instrumentation/registrations/langsmith";
 import { debugLogger } from "../debug-logger";
-import { langSmithChannels } from "../instrumentation/providers/langsmith-channels";
+import { langSmithChannels } from "../instrumentation/providers/langsmith-interceptors";
 import type {
   LangSmithClient,
   LangSmithClientConstructor,
@@ -78,8 +78,7 @@ function wrapNamespaceExport<T>(
     return namespace;
   }
   if (typeof candidate[exportName] !== "function") {
-    // eslint-disable-next-line no-restricted-properties -- public wrapper diagnostics follow existing wrapper behavior.
-    console.warn(
+    debugLogger.notice.warn(
       `Unsupported LangSmith ${exportName} namespace. Not wrapping.`,
     );
     return namespace;
@@ -224,22 +223,15 @@ function wrapRunTreeInstance(runTree: LangSmithRunTree): LangSmithRunTree {
       } else if (prop === "postRun") {
         const method = value as (...args: unknown[]) => Promise<unknown>;
         wrapped = (...args: unknown[]) =>
-          langSmithChannels.createRun.tracePromise(
-            () => Reflect.apply(method, target, args),
-            { arguments: [target] },
-          );
+          langSmithChannels.createRun.invoke(method, target, args, {
+            runTree: target,
+          });
       } else if (prop === "patchRun") {
         const method = value as (...args: unknown[]) => Promise<unknown>;
         wrapped = (...args: unknown[]) =>
-          langSmithChannels.updateRun.tracePromise(
-            () => Reflect.apply(method, target, args),
-            {
-              arguments: [
-                typeof target.id === "string" ? target.id : "",
-                target,
-              ],
-            },
-          );
+          langSmithChannels.updateRun.invoke(method, target, args, {
+            runTree: target,
+          });
       } else {
         wrapped = value.bind(target);
       }
@@ -291,29 +283,17 @@ function wrapClientInstance(client: LangSmithClient): LangSmithClient {
         const method = value as (...args: unknown[]) => Promise<unknown>;
         wrapped = (
           ...args: Parameters<NonNullable<LangSmithClient["createRun"]>>
-        ) =>
-          langSmithChannels.createRun.tracePromise(
-            () => Reflect.apply(method, target, args),
-            { arguments: args },
-          );
+        ) => langSmithChannels.createRun.invoke(method, target, args, {});
       } else if (prop === "updateRun") {
         const method = value as (...args: unknown[]) => Promise<unknown>;
         wrapped = (
           ...args: Parameters<NonNullable<LangSmithClient["updateRun"]>>
-        ) =>
-          langSmithChannels.updateRun.tracePromise(
-            () => Reflect.apply(method, target, args),
-            { arguments: args },
-          );
+        ) => langSmithChannels.updateRun.invoke(method, target, args, {});
       } else if (prop === "batchIngestRuns") {
         const method = value as (...args: unknown[]) => Promise<unknown>;
         wrapped = (
           ...args: Parameters<NonNullable<LangSmithClient["batchIngestRuns"]>>
-        ) =>
-          langSmithChannels.batchIngestRuns.tracePromise(
-            () => Reflect.apply(method, target, args),
-            { arguments: args },
-          );
+        ) => langSmithChannels.batchIngestRuns.invoke(method, target, args, {});
       } else {
         wrapped = value.bind(target);
       }
@@ -329,9 +309,12 @@ function publishRunUpdate(runTree: LangSmithRunTree | undefined): void {
 
   try {
     void langSmithChannels.updateRun
-      .tracePromise(() => Promise.resolve(undefined), {
-        arguments: [runTree.id, runTree],
-      })
+      .invoke(
+        () => Promise.resolve(undefined),
+        undefined,
+        [runTree.id, runTree],
+        {},
+      )
       .catch((error) => {
         debugLogger.error("LangSmith traceable instrumentation failed:", error);
       });

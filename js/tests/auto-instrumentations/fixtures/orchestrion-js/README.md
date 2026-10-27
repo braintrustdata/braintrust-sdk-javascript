@@ -4,5 +4,5 @@ This fixture suite is forked from `@apm-js-collab/code-transformer@0.12.0`
 
 The copied cases cover the Orchestrion behavior Braintrust still supports in
 its internal fork. Upstream cases for removed APIs, including custom transforms,
-constructor-only instrumentation, and expression-name queries, are
+constructor-only instrumentation, expression-name queries, and raw AST selectors, are
 intentionally omitted.

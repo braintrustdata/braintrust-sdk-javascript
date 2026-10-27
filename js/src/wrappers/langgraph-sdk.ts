@@ -1,7 +1,7 @@
 import { registerInstrumentation } from "../instrumentation/registrations/langgraphSDK";
 import { isObject } from "../../util";
 import { debugLogger } from "../debug-logger";
-import { langGraphSDKChannels } from "../instrumentation/providers/langgraph-sdk-channels";
+import { langGraphSDKChannels } from "../instrumentation/providers/langgraph-sdk-interceptors";
 import type { LangGraphSDKClient } from "../vendor-sdk-types/langgraph-sdk";
 
 const clients = new WeakMap<LangGraphSDKClient, LangGraphSDKClient>();
@@ -15,7 +15,7 @@ export function wrapLangGraphSDK<T>(client: T): T {
     !isObject(runsClient) ||
     !["wait", "stream"].every((key) => typeof runsClient[key] === "function")
   ) {
-    debugLogger.warn("Unsupported LangGraph SDK client. Not wrapping.");
+    debugLogger.notice.warn("Unsupported LangGraph SDK client. Not wrapping.");
     return client;
   }
   const sdk = client as unknown as LangGraphSDKClient;

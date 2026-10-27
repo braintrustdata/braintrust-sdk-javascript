@@ -57,21 +57,6 @@ function btqlFilterClause(predicate) {
   };
 }
 
-function buildSearchParam(metadataScenario, testRunIds, rootSpanIds) {
-  return JSON.stringify({
-    filter: rootSpanIds?.length
-      ? [
-          btqlFilterClause(
-            `root_span_id IN (${rootSpanIds.map(quoteFilterValue).join(", ")})`,
-          ),
-        ]
-      : [
-          btqlFilterClause(scenarioPredicate(metadataScenario)),
-          btqlFilterClause(testRunIdPredicate(testRunIds)),
-        ],
-  });
-}
-
 async function readScenarioConfig(configPath) {
   const raw = await readFile(configPath, "utf8");
   const parsed = JSON.parse(raw);
@@ -113,10 +98,21 @@ async function readScenarioConfig(configPath) {
               `Variant key/label must be non-empty at scenario index ${index}, variant index ${variantIndex} in ${configPath}`,
             );
           }
+          const variantKeys = variantEntry.variantKeys ?? [variantKey];
+          if (
+            !Array.isArray(variantKeys) ||
+            variantKeys.length === 0 ||
+            variantKeys.some((key) => typeof key !== "string" || !key.trim())
+          ) {
+            throw new Error(
+              `Invalid grouped variant keys at scenario index ${index}, variant index ${variantIndex}`,
+            );
+          }
 
           return {
             label: variantLabel,
             variantKey,
+            variantKeys: variantKeys.map((key) => key.trim()),
           };
         })
       : [];
@@ -236,12 +232,8 @@ async function readRunContextRecords(runContextDir) {
           : DEFAULT_VARIANT_KEY;
       records.push({
         entry: typeof parsed.entry === "string" ? parsed.entry : null,
-        logRootSpanIds: Array.isArray(parsed.logRootSpanIds)
-          ? parsed.logRootSpanIds.filter((id) => typeof id === "string")
-          : undefined,
-        experimentNames: Array.isArray(parsed.experimentNames)
-          ? parsed.experimentNames.filter((name) => typeof name === "string")
-          : undefined,
+        logRootSpanIds: parsed.logRootSpanIds,
+        experimentNames: parsed.experimentNames ?? [],
         scenarioDirName,
         testRunId: parsed.testRunId,
         variantKey,
@@ -407,7 +399,7 @@ function buildCommentBody(options) {
     lines.push("");
   }
 
-  lines.push("| Scenario | Braintrust Logs | Status |");
+  lines.push("| Scenario | Braintrust Traces | Status |");
   lines.push("| --- | --- | --- |");
 
   const pushScenarioRow = ({
@@ -433,43 +425,58 @@ function buildCommentBody(options) {
       ...new Set(records.flatMap((record) => record.logRootSpanIds ?? [])),
     ];
     const experimentNames = [
-      ...new Set(records.flatMap((record) => record.experimentNames ?? [])),
+      ...new Set(records.flatMap((record) => record.experimentNames)),
     ];
-    const legacyRecords = records.some(
-      (record) => record.logRootSpanIds === undefined,
-    );
-    const search = buildSearchParam(
-      metadataScenario,
-      observedRunIds,
-      rootSpanIds,
-    );
-    const logsUrl = buildLogsUrl({
-      appUrl: options.appPublicUrl,
-      orgName: options.orgName,
-      projectName: options.projectName,
-      search,
-    });
+    const legacyRunIds = records
+      .filter((record) => record.logRootSpanIds === undefined)
+      .map((record) => record.testRunId);
+    const links = [];
+    if (rootSpanIds.length > 0 || legacyRunIds.length > 0) {
+      const predicates = [];
+      if (rootSpanIds.length > 0) {
+        predicates.push(
+          `root_span_id IN (${rootSpanIds.map(quoteFilterValue).join(", ")})`,
+        );
+      }
+      if (legacyRunIds.length > 0) {
+        predicates.push(
+          `(${scenarioPredicate(metadataScenario)}) AND (${testRunIdPredicate(legacyRunIds)})`,
+        );
+      }
+      const logsUrl = buildLogsUrl({
+        appUrl: options.appPublicUrl,
+        orgName: options.orgName,
+        projectName: options.projectName,
+        search: JSON.stringify({
+          filter: [
+            btqlFilterClause(
+              predicates.map((predicate) => `(${predicate})`).join(" OR "),
+            ),
+          ],
+        }),
+      });
+      links.push(`[Open logs](${logsUrl})`);
+    }
+    for (const [index, experimentName] of experimentNames.entries()) {
+      const experimentUrl = buildExperimentUrl({
+        appUrl: options.appPublicUrl,
+        orgName: options.orgName,
+        projectName: options.projectName,
+        experimentName,
+      });
+      links.push(
+        `[Open eval${experimentNames.length > 1 ? ` ${index + 1}` : ""}](${experimentUrl})`,
+      );
+    }
     const runCount = observedRunIds.length;
     const runWord = runCount === 1 ? "run" : "runs";
     const status = statusSuffix
       ? `Observed (${runCount} ${runWord}, ${statusSuffix})`
       : `Observed (${runCount} ${runWord})`;
 
-    const links = [
-      ...(rootSpanIds.length || legacyRecords
-        ? [`[Open logs](${logsUrl})`]
-        : []),
-      ...experimentNames.map((experimentName, index) => {
-        const url = buildExperimentUrl({
-          appUrl: options.appPublicUrl,
-          orgName: options.orgName,
-          projectName: options.projectName,
-          experimentName,
-        });
-        return `[Open eval${experimentNames.length > 1 ? ` ${index + 1}` : ""}](${url})`;
-      }),
-    ];
-    lines.push(`| ${rowLabel} | ${links.join("<br>") || "N/A"} | ${status} |`);
+    lines.push(
+      `| ${rowLabel} | ${links.join("<br>") || "N/A"} | ${links.length ? status : "Observed (no captured traces)"} |`,
+    );
   };
 
   for (const scenario of options.scenarios) {
@@ -496,7 +503,7 @@ function buildCommentBody(options) {
     }
 
     const configuredVariantKeys = new Set(
-      configuredVariants.map((variant) => variant.variantKey),
+      configuredVariants.flatMap((variant) => variant.variantKeys),
     );
     const evalOnlyVariantKeys = new Set(
       (scenario.evals ?? [])
@@ -506,7 +513,11 @@ function buildCommentBody(options) {
 
     for (const variant of configuredVariants) {
       const observedRunIds = [
-        ...(observedVariants.get(variant.variantKey) ?? []),
+        ...new Set(
+          variant.variantKeys.flatMap((key) => [
+            ...(observedVariants.get(key) ?? []),
+          ]),
+        ),
       ].sort();
       pushScenarioRow({
         metadataScenario: scenario.metadataScenario,

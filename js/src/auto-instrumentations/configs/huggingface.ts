@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { huggingFaceChannels } from "../../instrumentation/providers/huggingface-channels";
+import { huggingFaceChannels } from "../../instrumentation/providers/huggingface-interceptors";
 
 export const huggingFaceConfigs: InstrumentationConfig[] = [
   {
@@ -11,7 +11,6 @@ export const huggingFaceConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       functionName: "chatCompletion",
-      kind: "Async",
     },
   },
   {
@@ -23,7 +22,6 @@ export const huggingFaceConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       functionName: "chatCompletion",
-      kind: "Async",
     },
   },
   {
@@ -35,7 +33,6 @@ export const huggingFaceConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       functionName: "chatCompletionStream",
-      kind: "Sync",
     },
   },
   {
@@ -47,7 +44,6 @@ export const huggingFaceConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       functionName: "chatCompletionStream",
-      kind: "Sync",
     },
   },
   {
@@ -59,7 +55,6 @@ export const huggingFaceConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       functionName: "textGeneration",
-      kind: "Async",
     },
   },
   {
@@ -71,7 +66,6 @@ export const huggingFaceConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       functionName: "textGeneration",
-      kind: "Async",
     },
   },
   {
@@ -83,7 +77,6 @@ export const huggingFaceConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       functionName: "textGenerationStream",
-      kind: "Sync",
     },
   },
   {
@@ -95,7 +88,6 @@ export const huggingFaceConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       functionName: "textGenerationStream",
-      kind: "Sync",
     },
   },
   {
@@ -107,7 +99,6 @@ export const huggingFaceConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       functionName: "featureExtraction",
-      kind: "Async",
     },
   },
   {
@@ -119,7 +110,6 @@ export const huggingFaceConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       functionName: "featureExtraction",
-      kind: "Async",
     },
   },
   {
@@ -131,7 +121,6 @@ export const huggingFaceConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       functionName: "chatCompletion",
-      kind: "Async",
     },
   },
   {
@@ -143,7 +132,6 @@ export const huggingFaceConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       functionName: "chatCompletion",
-      kind: "Async",
     },
   },
   {
@@ -155,7 +143,6 @@ export const huggingFaceConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       functionName: "chatCompletionStream",
-      kind: "Sync",
     },
   },
   {
@@ -167,7 +154,6 @@ export const huggingFaceConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       functionName: "chatCompletionStream",
-      kind: "Sync",
     },
   },
   {
@@ -179,7 +165,6 @@ export const huggingFaceConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       functionName: "textGeneration",
-      kind: "Async",
     },
   },
   {
@@ -191,7 +176,6 @@ export const huggingFaceConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       functionName: "textGeneration",
-      kind: "Async",
     },
   },
   {
@@ -203,7 +187,6 @@ export const huggingFaceConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       functionName: "textGenerationStream",
-      kind: "Sync",
     },
   },
   {
@@ -215,7 +198,6 @@ export const huggingFaceConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       functionName: "textGenerationStream",
-      kind: "Sync",
     },
   },
   {
@@ -227,7 +209,6 @@ export const huggingFaceConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       functionName: "featureExtraction",
-      kind: "Async",
     },
   },
   {
@@ -239,7 +220,6 @@ export const huggingFaceConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       functionName: "featureExtraction",
-      kind: "Async",
     },
   },
 ];

@@ -4540,6 +4540,1459 @@
           }
         },
         {
+          "name": "ai-sdk-tool-model-output-operation",
+          "children": [
+            {
+              "name": "generateText",
+              "type": "function",
+              "children": [
+                {
+                  "name": "doGenerate",
+                  "type": "llm",
+                  "children": [],
+                  "input": {
+                    "maxOutputTokens": 32,
+                    "messages": [
+                      {
+                        "content": "Use the lookup_signups tool to count today's signups, then reply with the count only.",
+                        "role": "user"
+                      }
+                    ],
+                    "model": {
+                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "provider": "openai.responses"
+                    },
+                    "temperature": 0,
+                    "tools": [
+                      {
+                        "description": "Look up today's signups",
+                        "inputSchema": {
+                          "$schema": "http://json-schema.org/draft-07/schema#",
+                          "additionalProperties": false,
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "name": "lookup_signups",
+                        "type": "function"
+                      }
+                    ]
+                  },
+                  "output": {
+                    "content": [
+                      {
+                        "input": {},
+                        "providerMetadata": {
+                          "openai": {
+                            "itemId": "<itemId:3>"
+                          }
+                        },
+                        "toolCallId": "<toolCallId:2>",
+                        "toolName": "lookup_signups",
+                        "type": "tool-call"
+                      }
+                    ],
+                    "finishReason": "tool-calls",
+                    "providerMetadata": {
+                      "openai": {
+                        "responseId": "<responseId:1>",
+                        "serviceTier": "default"
+                      }
+                    },
+                    "response": {},
+                    "usage": {
+                      "inputTokenDetails": {
+                        "cacheReadTokens": 0,
+                        "noCacheTokens": 61
+                      },
+                      "inputTokens": 61,
+                      "outputTokenDetails": {
+                        "reasoningTokens": 0,
+                        "textTokens": 2
+                      },
+                      "outputTokens": 2,
+                      "raw": {
+                        "input_tokens": 61,
+                        "input_tokens_details": {
+                          "cached_tokens": 0
+                        },
+                        "output_tokens": 2,
+                        "output_tokens_details": {
+                          "reasoning_tokens": 0
+                        }
+                      },
+                      "totalTokens": 63
+                    }
+                  },
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "model": "gpt-4o-mini-2024-07-18",
+                    "provider": "openai.responses"
+                  },
+                  "metrics": {
+                    "completion_tokens": 2,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 61,
+                    "tokens": 63
+                  }
+                },
+                {
+                  "name": "lookup_signups",
+                  "type": "tool",
+                  "children": [],
+                  "output": {
+                    "type": "text",
+                    "value": "1 signup; rows hidden from the model"
+                  },
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "toolCallId": "<toolCallId:1>",
+                    "toolName": "lookup_signups"
+                  }
+                },
+                {
+                  "name": "doGenerate",
+                  "type": "llm",
+                  "children": [],
+                  "input": {
+                    "maxOutputTokens": 32,
+                    "messages": [
+                      {
+                        "content": "Use the lookup_signups tool to count today's signups, then reply with the count only.",
+                        "role": "user"
+                      },
+                      {
+                        "content": [
+                          {
+                            "input": {},
+                            "providerOptions": {
+                              "openai": {
+                                "itemId": "<itemId:2>"
+                              }
+                            },
+                            "toolCallId": "<toolCallId:1>",
+                            "toolName": "lookup_signups",
+                            "type": "tool-call"
+                          }
+                        ],
+                        "role": "assistant"
+                      },
+                      {
+                        "content": [
+                          {
+                            "output": {
+                              "type": "text",
+                              "value": "1 signup; rows hidden from the model"
+                            },
+                            "providerOptions": {
+                              "openai": {
+                                "itemId": "<itemId:2>"
+                              }
+                            },
+                            "toolCallId": "<toolCallId:1>",
+                            "toolName": "lookup_signups",
+                            "type": "tool-result"
+                          }
+                        ],
+                        "role": "tool"
+                      }
+                    ],
+                    "model": {
+                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "provider": "openai.responses"
+                    },
+                    "temperature": 0,
+                    "tools": [
+                      {
+                        "description": "Look up today's signups",
+                        "inputSchema": {
+                          "$schema": "http://json-schema.org/draft-07/schema#",
+                          "additionalProperties": false,
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "name": "lookup_signups",
+                        "type": "function"
+                      }
+                    ]
+                  },
+                  "output": {
+                    "content": [
+                      {
+                        "input": {},
+                        "providerMetadata": {
+                          "openai": {
+                            "itemId": "<itemId:3>"
+                          }
+                        },
+                        "toolCallId": "<toolCallId:2>",
+                        "toolName": "lookup_signups",
+                        "type": "tool-call"
+                      }
+                    ],
+                    "finishReason": "tool-calls",
+                    "providerMetadata": {
+                      "openai": {
+                        "responseId": "<responseId:1>",
+                        "serviceTier": "default"
+                      }
+                    },
+                    "response": {},
+                    "usage": {
+                      "inputTokenDetails": {
+                        "cacheReadTokens": 0,
+                        "noCacheTokens": 87
+                      },
+                      "inputTokens": 87,
+                      "outputTokenDetails": {
+                        "reasoningTokens": 0,
+                        "textTokens": 2
+                      },
+                      "outputTokens": 2,
+                      "raw": {
+                        "input_tokens": 87,
+                        "input_tokens_details": {
+                          "cached_tokens": 0
+                        },
+                        "output_tokens": 2,
+                        "output_tokens_details": {
+                          "reasoning_tokens": 0
+                        }
+                      },
+                      "totalTokens": 89
+                    }
+                  },
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "model": "gpt-4o-mini-2024-07-18",
+                    "provider": "openai.responses"
+                  },
+                  "metrics": {
+                    "completion_tokens": 2,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 87,
+                    "tokens": 89
+                  }
+                },
+                {
+                  "name": "lookup_signups",
+                  "type": "tool",
+                  "children": [],
+                  "output": {
+                    "type": "text",
+                    "value": "1 signup; rows hidden from the model"
+                  },
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "toolCallId": "<toolCallId:1>",
+                    "toolName": "lookup_signups"
+                  }
+                }
+              ],
+              "input": {
+                "maxOutputTokens": 32,
+                "maxRetries": 2,
+                "messages": [
+                  {
+                    "content": "Use the lookup_signups tool to count today's signups, then reply with the count only.",
+                    "role": "user"
+                  }
+                ],
+                "model": {
+                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "provider": "openai.responses"
+                },
+                "providerOptions": {
+                  "openai": {
+                    "store": false
+                  }
+                },
+                "temperature": 0,
+                "toolChoice": "required",
+                "tools": {
+                  "lookup_signups": {
+                    "description": "Look up today's signups",
+                    "inputSchema": {
+                      "$schema": "http://json-schema.org/draft-07/schema#",
+                      "additionalProperties": false,
+                      "properties": {},
+                      "type": "object"
+                    }
+                  }
+                }
+              },
+              "output": {
+                "content": [
+                  {
+                    "input": {},
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:3>"
+                      }
+                    },
+                    "toolCallId": "<toolCallId:2>",
+                    "toolName": "lookup_signups",
+                    "type": "tool-call"
+                  },
+                  {
+                    "dynamic": false,
+                    "input": {},
+                    "output": {
+                      "type": "text",
+                      "value": "1 signup; rows hidden from the model"
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:3>"
+                      }
+                    },
+                    "toolCallId": "<toolCallId:2>",
+                    "toolName": "lookup_signups",
+                    "type": "tool-result"
+                  },
+                  {
+                    "input": {},
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:6>"
+                      }
+                    },
+                    "toolCallId": "<toolCallId:5>",
+                    "toolName": "lookup_signups",
+                    "type": "tool-call"
+                  },
+                  {
+                    "dynamic": false,
+                    "input": {},
+                    "output": {
+                      "type": "text",
+                      "value": "1 signup; rows hidden from the model"
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:6>"
+                      }
+                    },
+                    "toolCallId": "<toolCallId:5>",
+                    "toolName": "lookup_signups",
+                    "type": "tool-result"
+                  }
+                ],
+                "finishReason": "tool-calls",
+                "providerMetadata": {
+                  "openai": {
+                    "responseId": "<responseId:7>",
+                    "serviceTier": "default"
+                  }
+                },
+                "response": {
+                  "messages": [
+                    {
+                      "content": [
+                        {
+                          "input": {},
+                          "providerOptions": {
+                            "openai": {
+                              "itemId": "<itemId:6>"
+                            }
+                          },
+                          "toolCallId": "<toolCallId:5>",
+                          "toolName": "lookup_signups",
+                          "type": "tool-call"
+                        }
+                      ],
+                      "role": "assistant"
+                    },
+                    {
+                      "content": [
+                        {
+                          "output": {
+                            "type": "text",
+                            "value": "1 signup; rows hidden from the model"
+                          },
+                          "providerOptions": {
+                            "openai": {
+                              "itemId": "<itemId:6>"
+                            }
+                          },
+                          "toolCallId": "<toolCallId:5>",
+                          "toolName": "lookup_signups",
+                          "type": "tool-result"
+                        }
+                      ],
+                      "role": "tool"
+                    }
+                  ],
+                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "timestamp": "<timestamp>"
+                },
+                "responseMessages": "<omitted>",
+                "steps": [
+                  {
+                    "callId": "<callId:1>",
+                    "content": [
+                      {
+                        "input": {},
+                        "providerMetadata": {
+                          "openai": {
+                            "itemId": "<itemId:3>"
+                          }
+                        },
+                        "toolCallId": "<toolCallId:2>",
+                        "toolName": "lookup_signups",
+                        "type": "tool-call"
+                      },
+                      {
+                        "dynamic": false,
+                        "input": {},
+                        "output": {
+                          "type": "text",
+                          "value": "1 signup; rows hidden from the model"
+                        },
+                        "providerMetadata": {
+                          "openai": {
+                            "itemId": "<itemId:3>"
+                          }
+                        },
+                        "toolCallId": "<toolCallId:2>",
+                        "toolName": "lookup_signups",
+                        "type": "tool-result"
+                      }
+                    ],
+                    "finishReason": "tool-calls",
+                    "model": {
+                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "provider": "openai.responses"
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "responseId": "<responseId:4>",
+                        "serviceTier": "default"
+                      }
+                    },
+                    "response": {
+                      "messages": [
+                        {
+                          "content": [
+                            {
+                              "input": {},
+                              "providerOptions": {
+                                "openai": {
+                                  "itemId": "<itemId:3>"
+                                }
+                              },
+                              "toolCallId": "<toolCallId:2>",
+                              "toolName": "lookup_signups",
+                              "type": "tool-call"
+                            }
+                          ],
+                          "role": "assistant"
+                        },
+                        {
+                          "content": [
+                            {
+                              "output": {
+                                "type": "text",
+                                "value": "1 signup; rows hidden from the model"
+                              },
+                              "providerOptions": {
+                                "openai": {
+                                  "itemId": "<itemId:3>"
+                                }
+                              },
+                              "toolCallId": "<toolCallId:2>",
+                              "toolName": "lookup_signups",
+                              "type": "tool-result"
+                            }
+                          ],
+                          "role": "tool"
+                        }
+                      ],
+                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "timestamp": "<timestamp>"
+                    },
+                    "runtimeContext": {},
+                    "stepNumber": 0,
+                    "toolsContext": {},
+                    "usage": {
+                      "inputTokenDetails": {
+                        "cacheReadTokens": 0,
+                        "noCacheTokens": 61
+                      },
+                      "inputTokens": 61,
+                      "outputTokenDetails": {
+                        "reasoningTokens": 0,
+                        "textTokens": 2
+                      },
+                      "outputTokens": 2,
+                      "raw": {
+                        "input_tokens": 61,
+                        "input_tokens_details": {
+                          "cached_tokens": 0
+                        },
+                        "output_tokens": 2,
+                        "output_tokens_details": {
+                          "reasoning_tokens": 0
+                        }
+                      },
+                      "totalTokens": 63
+                    },
+                    "warnings": []
+                  },
+                  {
+                    "callId": "<callId:1>",
+                    "content": [
+                      {
+                        "input": {},
+                        "providerMetadata": {
+                          "openai": {
+                            "itemId": "<itemId:6>"
+                          }
+                        },
+                        "toolCallId": "<toolCallId:5>",
+                        "toolName": "lookup_signups",
+                        "type": "tool-call"
+                      },
+                      {
+                        "dynamic": false,
+                        "input": {},
+                        "output": {
+                          "type": "text",
+                          "value": "1 signup; rows hidden from the model"
+                        },
+                        "providerMetadata": {
+                          "openai": {
+                            "itemId": "<itemId:6>"
+                          }
+                        },
+                        "toolCallId": "<toolCallId:5>",
+                        "toolName": "lookup_signups",
+                        "type": "tool-result"
+                      }
+                    ],
+                    "finishReason": "tool-calls",
+                    "model": {
+                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "provider": "openai.responses"
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "responseId": "<responseId:7>",
+                        "serviceTier": "default"
+                      }
+                    },
+                    "response": {
+                      "messages": [
+                        {
+                          "content": [
+                            {
+                              "input": {},
+                              "providerOptions": {
+                                "openai": {
+                                  "itemId": "<itemId:6>"
+                                }
+                              },
+                              "toolCallId": "<toolCallId:5>",
+                              "toolName": "lookup_signups",
+                              "type": "tool-call"
+                            }
+                          ],
+                          "role": "assistant"
+                        },
+                        {
+                          "content": [
+                            {
+                              "output": {
+                                "type": "text",
+                                "value": "1 signup; rows hidden from the model"
+                              },
+                              "providerOptions": {
+                                "openai": {
+                                  "itemId": "<itemId:6>"
+                                }
+                              },
+                              "toolCallId": "<toolCallId:5>",
+                              "toolName": "lookup_signups",
+                              "type": "tool-result"
+                            }
+                          ],
+                          "role": "tool"
+                        }
+                      ],
+                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "timestamp": "<timestamp>"
+                    },
+                    "runtimeContext": {},
+                    "stepNumber": 1,
+                    "toolsContext": {},
+                    "usage": {
+                      "inputTokenDetails": {
+                        "cacheReadTokens": 0,
+                        "noCacheTokens": 87
+                      },
+                      "inputTokens": 87,
+                      "outputTokenDetails": {
+                        "reasoningTokens": 0,
+                        "textTokens": 2
+                      },
+                      "outputTokens": 2,
+                      "raw": {
+                        "input_tokens": 87,
+                        "input_tokens_details": {
+                          "cached_tokens": 0
+                        },
+                        "output_tokens": 2,
+                        "output_tokens_details": {
+                          "reasoning_tokens": 0
+                        }
+                      },
+                      "totalTokens": 89
+                    },
+                    "warnings": []
+                  }
+                ],
+                "text": "",
+                "toolCalls": [
+                  {
+                    "input": {},
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:3>"
+                      }
+                    },
+                    "toolCallId": "<toolCallId:2>",
+                    "toolName": "lookup_signups",
+                    "type": "tool-call"
+                  },
+                  {
+                    "input": {},
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:6>"
+                      }
+                    },
+                    "toolCallId": "<toolCallId:5>",
+                    "toolName": "lookup_signups",
+                    "type": "tool-call"
+                  }
+                ],
+                "toolResults": [
+                  {
+                    "dynamic": false,
+                    "input": {},
+                    "output": {
+                      "type": "text",
+                      "value": "1 signup; rows hidden from the model"
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:3>"
+                      }
+                    },
+                    "toolCallId": "<toolCallId:2>",
+                    "toolName": "lookup_signups",
+                    "type": "tool-result"
+                  },
+                  {
+                    "dynamic": false,
+                    "input": {},
+                    "output": {
+                      "type": "text",
+                      "value": "1 signup; rows hidden from the model"
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:6>"
+                      }
+                    },
+                    "toolCallId": "<toolCallId:5>",
+                    "toolName": "lookup_signups",
+                    "type": "tool-result"
+                  }
+                ],
+                "totalUsage": {
+                  "inputTokenDetails": {
+                    "cacheReadTokens": 0,
+                    "noCacheTokens": 148
+                  },
+                  "inputTokens": 148,
+                  "outputTokenDetails": {
+                    "reasoningTokens": 0,
+                    "textTokens": 4
+                  },
+                  "outputTokens": 4,
+                  "totalTokens": 152
+                },
+                "usage": {
+                  "inputTokenDetails": {
+                    "cacheReadTokens": 0,
+                    "noCacheTokens": 148
+                  },
+                  "inputTokens": 148,
+                  "outputTokenDetails": {
+                    "reasoningTokens": 0,
+                    "textTokens": 4
+                  },
+                  "outputTokens": 4,
+                  "totalTokens": 152
+                },
+                "warnings": []
+              },
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "model": "gpt-4o-mini-2024-07-18",
+                "provider": "openai.responses"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "tool-model-output",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ai-sdk-tool-model-output-stream-operation",
+          "children": [
+            {
+              "name": "streamText",
+              "type": "function",
+              "children": [
+                {
+                  "name": "doStream",
+                  "type": "llm",
+                  "children": [],
+                  "input": {
+                    "maxOutputTokens": 32,
+                    "messages": [
+                      {
+                        "content": "Use the lookup_signups tool to count today's signups, then reply with the count only.",
+                        "role": "user"
+                      }
+                    ],
+                    "model": {
+                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "provider": "openai.responses"
+                    },
+                    "temperature": 0,
+                    "tools": [
+                      {
+                        "description": "Look up today's signups",
+                        "inputSchema": {
+                          "$schema": "http://json-schema.org/draft-07/schema#",
+                          "additionalProperties": false,
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "name": "lookup_signups",
+                        "type": "function"
+                      }
+                    ]
+                  },
+                  "output": {
+                    "content": [
+                      {
+                        "input": {},
+                        "providerMetadata": {
+                          "openai": {
+                            "itemId": "<itemId:3>"
+                          }
+                        },
+                        "toolCallId": "<toolCallId:2>",
+                        "toolName": "lookup_signups",
+                        "type": "tool-call"
+                      }
+                    ],
+                    "finishReason": "tool-calls",
+                    "providerMetadata": {
+                      "openai": {
+                        "responseId": "<responseId:1>",
+                        "serviceTier": "default"
+                      }
+                    },
+                    "response": {},
+                    "usage": {
+                      "inputTokenDetails": {
+                        "cacheReadTokens": 0,
+                        "noCacheTokens": 61
+                      },
+                      "inputTokens": 61,
+                      "outputTokenDetails": {
+                        "reasoningTokens": 0,
+                        "textTokens": 2
+                      },
+                      "outputTokens": 2,
+                      "raw": {
+                        "input_tokens": 61,
+                        "input_tokens_details": {
+                          "cached_tokens": 0
+                        },
+                        "output_tokens": 2,
+                        "output_tokens_details": {
+                          "reasoning_tokens": 0
+                        }
+                      },
+                      "totalTokens": 63
+                    }
+                  },
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "model": "gpt-4o-mini-2024-07-18",
+                    "provider": "openai.responses"
+                  },
+                  "metrics": {
+                    "completion_tokens": 2,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 61,
+                    "tokens": 63
+                  }
+                },
+                {
+                  "name": "lookup_signups",
+                  "type": "tool",
+                  "children": [],
+                  "output": {
+                    "type": "text",
+                    "value": "1 signup; rows hidden from the model"
+                  },
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "toolCallId": "<toolCallId:1>",
+                    "toolName": "lookup_signups"
+                  }
+                },
+                {
+                  "name": "doStream",
+                  "type": "llm",
+                  "children": [],
+                  "input": {
+                    "maxOutputTokens": 32,
+                    "messages": [
+                      {
+                        "content": "Use the lookup_signups tool to count today's signups, then reply with the count only.",
+                        "role": "user"
+                      },
+                      {
+                        "content": [
+                          {
+                            "input": {},
+                            "providerOptions": {
+                              "openai": {
+                                "itemId": "<itemId:2>"
+                              }
+                            },
+                            "toolCallId": "<toolCallId:1>",
+                            "toolName": "lookup_signups",
+                            "type": "tool-call"
+                          }
+                        ],
+                        "role": "assistant"
+                      },
+                      {
+                        "content": [
+                          {
+                            "output": {
+                              "type": "text",
+                              "value": "1 signup; rows hidden from the model"
+                            },
+                            "providerOptions": {
+                              "openai": {
+                                "itemId": "<itemId:2>"
+                              }
+                            },
+                            "toolCallId": "<toolCallId:1>",
+                            "toolName": "lookup_signups",
+                            "type": "tool-result"
+                          }
+                        ],
+                        "role": "tool"
+                      }
+                    ],
+                    "model": {
+                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "provider": "openai.responses"
+                    },
+                    "temperature": 0,
+                    "tools": [
+                      {
+                        "description": "Look up today's signups",
+                        "inputSchema": {
+                          "$schema": "http://json-schema.org/draft-07/schema#",
+                          "additionalProperties": false,
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "name": "lookup_signups",
+                        "type": "function"
+                      }
+                    ]
+                  },
+                  "output": {
+                    "content": [
+                      {
+                        "input": {},
+                        "providerMetadata": {
+                          "openai": {
+                            "itemId": "<itemId:3>"
+                          }
+                        },
+                        "toolCallId": "<toolCallId:2>",
+                        "toolName": "lookup_signups",
+                        "type": "tool-call"
+                      }
+                    ],
+                    "finishReason": "tool-calls",
+                    "providerMetadata": {
+                      "openai": {
+                        "responseId": "<responseId:1>",
+                        "serviceTier": "default"
+                      }
+                    },
+                    "response": {},
+                    "usage": {
+                      "inputTokenDetails": {
+                        "cacheReadTokens": 0,
+                        "noCacheTokens": 87
+                      },
+                      "inputTokens": 87,
+                      "outputTokenDetails": {
+                        "reasoningTokens": 0,
+                        "textTokens": 2
+                      },
+                      "outputTokens": 2,
+                      "raw": {
+                        "input_tokens": 87,
+                        "input_tokens_details": {
+                          "cached_tokens": 0
+                        },
+                        "output_tokens": 2,
+                        "output_tokens_details": {
+                          "reasoning_tokens": 0
+                        }
+                      },
+                      "totalTokens": 89
+                    }
+                  },
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "model": "gpt-4o-mini-2024-07-18",
+                    "provider": "openai.responses"
+                  },
+                  "metrics": {
+                    "completion_tokens": 2,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 87,
+                    "tokens": 89
+                  }
+                },
+                {
+                  "name": "lookup_signups",
+                  "type": "tool",
+                  "children": [],
+                  "output": {
+                    "type": "text",
+                    "value": "1 signup; rows hidden from the model"
+                  },
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "toolCallId": "<toolCallId:1>",
+                    "toolName": "lookup_signups"
+                  }
+                }
+              ],
+              "input": {
+                "maxOutputTokens": 32,
+                "maxRetries": 2,
+                "messages": [
+                  {
+                    "content": "Use the lookup_signups tool to count today's signups, then reply with the count only.",
+                    "role": "user"
+                  }
+                ],
+                "model": {
+                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "provider": "openai.responses"
+                },
+                "providerOptions": {
+                  "openai": {
+                    "store": false
+                  }
+                },
+                "temperature": 0,
+                "toolChoice": "required",
+                "tools": {
+                  "lookup_signups": {
+                    "description": "Look up today's signups",
+                    "inputSchema": {
+                      "$schema": "http://json-schema.org/draft-07/schema#",
+                      "additionalProperties": false,
+                      "properties": {},
+                      "type": "object"
+                    }
+                  }
+                }
+              },
+              "output": {
+                "content": [
+                  {
+                    "input": {},
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:3>"
+                      }
+                    },
+                    "toolCallId": "<toolCallId:2>",
+                    "toolName": "lookup_signups",
+                    "type": "tool-call"
+                  },
+                  {
+                    "dynamic": false,
+                    "input": {},
+                    "output": {
+                      "type": "text",
+                      "value": "1 signup; rows hidden from the model"
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:3>"
+                      }
+                    },
+                    "toolCallId": "<toolCallId:2>",
+                    "toolName": "lookup_signups",
+                    "type": "tool-result"
+                  },
+                  {
+                    "input": {},
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:6>"
+                      }
+                    },
+                    "toolCallId": "<toolCallId:5>",
+                    "toolName": "lookup_signups",
+                    "type": "tool-call"
+                  },
+                  {
+                    "dynamic": false,
+                    "input": {},
+                    "output": {
+                      "type": "text",
+                      "value": "1 signup; rows hidden from the model"
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:6>"
+                      }
+                    },
+                    "toolCallId": "<toolCallId:5>",
+                    "toolName": "lookup_signups",
+                    "type": "tool-result"
+                  }
+                ],
+                "finishReason": "tool-calls",
+                "providerMetadata": {
+                  "openai": {
+                    "responseId": "<responseId:7>",
+                    "serviceTier": "default"
+                  }
+                },
+                "response": {
+                  "messages": [
+                    {
+                      "content": [
+                        {
+                          "input": {},
+                          "providerOptions": {
+                            "openai": {
+                              "itemId": "<itemId:6>"
+                            }
+                          },
+                          "toolCallId": "<toolCallId:5>",
+                          "toolName": "lookup_signups",
+                          "type": "tool-call"
+                        }
+                      ],
+                      "role": "assistant"
+                    },
+                    {
+                      "content": [
+                        {
+                          "output": {
+                            "type": "text",
+                            "value": "1 signup; rows hidden from the model"
+                          },
+                          "providerOptions": {
+                            "openai": {
+                              "itemId": "<itemId:6>"
+                            }
+                          },
+                          "toolCallId": "<toolCallId:5>",
+                          "toolName": "lookup_signups",
+                          "type": "tool-result"
+                        }
+                      ],
+                      "role": "tool"
+                    }
+                  ],
+                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "timestamp": "<timestamp>"
+                },
+                "responseMessages": "<omitted>",
+                "steps": [
+                  {
+                    "callId": "<callId:1>",
+                    "content": [
+                      {
+                        "input": {},
+                        "providerMetadata": {
+                          "openai": {
+                            "itemId": "<itemId:3>"
+                          }
+                        },
+                        "toolCallId": "<toolCallId:2>",
+                        "toolName": "lookup_signups",
+                        "type": "tool-call"
+                      },
+                      {
+                        "dynamic": false,
+                        "input": {},
+                        "output": {
+                          "type": "text",
+                          "value": "1 signup; rows hidden from the model"
+                        },
+                        "providerMetadata": {
+                          "openai": {
+                            "itemId": "<itemId:3>"
+                          }
+                        },
+                        "toolCallId": "<toolCallId:2>",
+                        "toolName": "lookup_signups",
+                        "type": "tool-result"
+                      }
+                    ],
+                    "finishReason": "tool-calls",
+                    "model": {
+                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "provider": "openai.responses"
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "responseId": "<responseId:4>",
+                        "serviceTier": "default"
+                      }
+                    },
+                    "response": {
+                      "messages": [
+                        {
+                          "content": [
+                            {
+                              "input": {},
+                              "providerOptions": {
+                                "openai": {
+                                  "itemId": "<itemId:3>"
+                                }
+                              },
+                              "toolCallId": "<toolCallId:2>",
+                              "toolName": "lookup_signups",
+                              "type": "tool-call"
+                            }
+                          ],
+                          "role": "assistant"
+                        },
+                        {
+                          "content": [
+                            {
+                              "output": {
+                                "type": "text",
+                                "value": "1 signup; rows hidden from the model"
+                              },
+                              "providerOptions": {
+                                "openai": {
+                                  "itemId": "<itemId:3>"
+                                }
+                              },
+                              "toolCallId": "<toolCallId:2>",
+                              "toolName": "lookup_signups",
+                              "type": "tool-result"
+                            }
+                          ],
+                          "role": "tool"
+                        }
+                      ],
+                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "timestamp": "<timestamp>"
+                    },
+                    "runtimeContext": {},
+                    "stepNumber": 0,
+                    "toolsContext": {},
+                    "usage": {
+                      "inputTokenDetails": {
+                        "cacheReadTokens": 0,
+                        "noCacheTokens": 61
+                      },
+                      "inputTokens": 61,
+                      "outputTokenDetails": {
+                        "reasoningTokens": 0,
+                        "textTokens": 2
+                      },
+                      "outputTokens": 2,
+                      "raw": {
+                        "input_tokens": 61,
+                        "input_tokens_details": {
+                          "cached_tokens": 0
+                        },
+                        "output_tokens": 2,
+                        "output_tokens_details": {
+                          "reasoning_tokens": 0
+                        }
+                      },
+                      "totalTokens": 63
+                    },
+                    "warnings": []
+                  },
+                  {
+                    "callId": "<callId:1>",
+                    "content": [
+                      {
+                        "input": {},
+                        "providerMetadata": {
+                          "openai": {
+                            "itemId": "<itemId:6>"
+                          }
+                        },
+                        "toolCallId": "<toolCallId:5>",
+                        "toolName": "lookup_signups",
+                        "type": "tool-call"
+                      },
+                      {
+                        "dynamic": false,
+                        "input": {},
+                        "output": {
+                          "type": "text",
+                          "value": "1 signup; rows hidden from the model"
+                        },
+                        "providerMetadata": {
+                          "openai": {
+                            "itemId": "<itemId:6>"
+                          }
+                        },
+                        "toolCallId": "<toolCallId:5>",
+                        "toolName": "lookup_signups",
+                        "type": "tool-result"
+                      }
+                    ],
+                    "finishReason": "tool-calls",
+                    "model": {
+                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "provider": "openai.responses"
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "responseId": "<responseId:7>",
+                        "serviceTier": "default"
+                      }
+                    },
+                    "response": {
+                      "messages": [
+                        {
+                          "content": [
+                            {
+                              "input": {},
+                              "providerOptions": {
+                                "openai": {
+                                  "itemId": "<itemId:6>"
+                                }
+                              },
+                              "toolCallId": "<toolCallId:5>",
+                              "toolName": "lookup_signups",
+                              "type": "tool-call"
+                            }
+                          ],
+                          "role": "assistant"
+                        },
+                        {
+                          "content": [
+                            {
+                              "output": {
+                                "type": "text",
+                                "value": "1 signup; rows hidden from the model"
+                              },
+                              "providerOptions": {
+                                "openai": {
+                                  "itemId": "<itemId:6>"
+                                }
+                              },
+                              "toolCallId": "<toolCallId:5>",
+                              "toolName": "lookup_signups",
+                              "type": "tool-result"
+                            }
+                          ],
+                          "role": "tool"
+                        }
+                      ],
+                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "timestamp": "<timestamp>"
+                    },
+                    "runtimeContext": {},
+                    "stepNumber": 1,
+                    "toolsContext": {},
+                    "usage": {
+                      "inputTokenDetails": {
+                        "cacheReadTokens": 0,
+                        "noCacheTokens": 87
+                      },
+                      "inputTokens": 87,
+                      "outputTokenDetails": {
+                        "reasoningTokens": 0,
+                        "textTokens": 2
+                      },
+                      "outputTokens": 2,
+                      "raw": {
+                        "input_tokens": 87,
+                        "input_tokens_details": {
+                          "cached_tokens": 0
+                        },
+                        "output_tokens": 2,
+                        "output_tokens_details": {
+                          "reasoning_tokens": 0
+                        }
+                      },
+                      "totalTokens": 89
+                    },
+                    "warnings": []
+                  }
+                ],
+                "text": "",
+                "toolCalls": [
+                  {
+                    "input": {},
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:3>"
+                      }
+                    },
+                    "toolCallId": "<toolCallId:2>",
+                    "toolName": "lookup_signups",
+                    "type": "tool-call"
+                  },
+                  {
+                    "input": {},
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:6>"
+                      }
+                    },
+                    "toolCallId": "<toolCallId:5>",
+                    "toolName": "lookup_signups",
+                    "type": "tool-call"
+                  }
+                ],
+                "toolResults": [
+                  {
+                    "dynamic": false,
+                    "input": {},
+                    "output": {
+                      "type": "text",
+                      "value": "1 signup; rows hidden from the model"
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:3>"
+                      }
+                    },
+                    "toolCallId": "<toolCallId:2>",
+                    "toolName": "lookup_signups",
+                    "type": "tool-result"
+                  },
+                  {
+                    "dynamic": false,
+                    "input": {},
+                    "output": {
+                      "type": "text",
+                      "value": "1 signup; rows hidden from the model"
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:6>"
+                      }
+                    },
+                    "toolCallId": "<toolCallId:5>",
+                    "toolName": "lookup_signups",
+                    "type": "tool-result"
+                  }
+                ],
+                "totalUsage": {
+                  "inputTokenDetails": {
+                    "cacheReadTokens": 0,
+                    "noCacheTokens": 148
+                  },
+                  "inputTokens": 148,
+                  "outputTokenDetails": {
+                    "reasoningTokens": 0,
+                    "textTokens": 4
+                  },
+                  "outputTokens": 4,
+                  "totalTokens": 152
+                },
+                "usage": {
+                  "inputTokenDetails": {
+                    "cacheReadTokens": 0,
+                    "noCacheTokens": 148
+                  },
+                  "inputTokens": 148,
+                  "outputTokenDetails": {
+                    "reasoningTokens": 0,
+                    "textTokens": 4
+                  },
+                  "outputTokens": 4,
+                  "totalTokens": 152
+                },
+                "warnings": []
+              },
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "model": "gpt-4o-mini-2024-07-18",
+                "provider": "openai.responses"
+              },
+              "metrics": {
+                "time_to_first_token": 0
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "tool-model-output-stream",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
           "name": "generateText",
           "type": "function",
           "children": [
@@ -9642,6 +11095,2830 @@
           ],
           "metadata": {
             "operation": "workflow-agent-stream-prompt",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ai-sdk-code-mode-auto-hook-sequential-operation",
+          "children": [
+            {
+              "name": "codeMode",
+              "type": "tool",
+              "children": [
+                {
+                  "name": "host",
+                  "type": "function",
+                  "children": [],
+                  "input": {
+                    "value": 2
+                  },
+                  "output": {
+                    "value": 4
+                  },
+                  "metadata": {
+                    "toolCallId": "<toolCallId:1>"
+                  }
+                },
+                {
+                  "name": "host",
+                  "type": "function",
+                  "children": [],
+                  "input": {
+                    "value": 4
+                  },
+                  "output": {
+                    "value": 8
+                  },
+                  "metadata": {
+                    "toolCallId": "<toolCallId:1>"
+                  }
+                }
+              ],
+              "input": {
+                "js": "const a = await tools.host({value: 2}); return await tools.host(a);"
+              },
+              "output": {
+                "value": 8
+              },
+              "metadata": {
+                "toolCallId": "<toolCallId:1>"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "code-mode-auto-hook-sequential",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ai-sdk-code-mode-auto-hook-parallel-operation",
+          "children": [
+            {
+              "name": "codeMode",
+              "type": "tool",
+              "children": [
+                {
+                  "name": "parallel",
+                  "type": "function",
+                  "children": [],
+                  "input": {
+                    "value": 1
+                  },
+                  "output": {
+                    "value": 1
+                  },
+                  "metadata": {
+                    "toolCallId": "<toolCallId:1>"
+                  }
+                },
+                {
+                  "name": "parallel",
+                  "type": "function",
+                  "children": [],
+                  "input": {
+                    "value": 2
+                  },
+                  "output": {
+                    "value": 2
+                  },
+                  "metadata": {
+                    "toolCallId": "<toolCallId:1>"
+                  }
+                }
+              ],
+              "input": {
+                "js": "return await Promise.all([tools.parallel({value: 1}), tools.parallel({value: 2})]);"
+              },
+              "output": [
+                {
+                  "value": 1
+                },
+                {
+                  "value": 2
+                }
+              ],
+              "metadata": {
+                "toolCallId": "<toolCallId:1>"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "code-mode-auto-hook-parallel",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ai-sdk-code-mode-auto-hook-nested-operation",
+          "children": [
+            {
+              "name": "codeMode",
+              "type": "tool",
+              "children": [
+                {
+                  "name": "nested",
+                  "type": "function",
+                  "children": [
+                    {
+                      "name": "host",
+                      "type": "function",
+                      "children": [],
+                      "input": {
+                        "value": 3
+                      },
+                      "output": {
+                        "value": 6
+                      },
+                      "metadata": {
+                        "toolCallId": "<toolCallId:1>"
+                      }
+                    }
+                  ],
+                  "input": {
+                    "value": 3
+                  },
+                  "output": {
+                    "value": 6
+                  },
+                  "metadata": {
+                    "toolCallId": "<toolCallId:1>"
+                  }
+                }
+              ],
+              "input": {
+                "js": "return await tools.nested({value: 3});"
+              },
+              "output": {
+                "value": 6
+              },
+              "metadata": {
+                "toolCallId": "<toolCallId:1>"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "code-mode-auto-hook-nested",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ai-sdk-code-mode-auto-hook-host-error-operation",
+          "children": [
+            {
+              "name": "codeMode",
+              "type": "tool",
+              "children": [
+                {
+                  "name": "fail",
+                  "type": "function",
+                  "children": [],
+                  "input": {
+                    "value": 1
+                  },
+                  "metadata": {
+                    "toolCallId": "<toolCallId:1>"
+                  },
+                  "error": "host failure"
+                }
+              ],
+              "input": {
+                "js": "return await tools.fail({value: 1});"
+              },
+              "metadata": {
+                "toolCallId": "<toolCallId:1>"
+              },
+              "error": "Host tool failed."
+            }
+          ],
+          "metadata": {
+            "operation": "code-mode-auto-hook-host-error",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ai-sdk-code-mode-auto-hook-code-error-operation",
+          "children": [
+            {
+              "name": "codeMode",
+              "type": "tool",
+              "children": [],
+              "input": {
+                "js": "throw new Error(\"code failure\");"
+              },
+              "metadata": {
+                "toolCallId": "<toolCallId:1>"
+              },
+              "error": "code failure"
+            }
+          ],
+          "metadata": {
+            "operation": "code-mode-auto-hook-code-error",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ai-sdk-code-mode-auto-hook-caught-error-operation",
+          "children": [
+            {
+              "name": "codeMode",
+              "type": "tool",
+              "children": [
+                {
+                  "name": "fail",
+                  "type": "function",
+                  "children": [],
+                  "input": {
+                    "value": 1
+                  },
+                  "metadata": {
+                    "toolCallId": "<toolCallId:1>"
+                  },
+                  "error": "host failure"
+                }
+              ],
+              "input": {
+                "js": "try { await tools.fail({value: 1}); } catch { return \"recovered\"; }"
+              },
+              "output": "recovered",
+              "metadata": {
+                "toolCallId": "<toolCallId:1>"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "code-mode-auto-hook-caught-error",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ai-sdk-code-mode-auto-hook-stream-output-operation",
+          "children": [
+            {
+              "name": "codeMode",
+              "type": "tool",
+              "children": [
+                {
+                  "name": "stream",
+                  "type": "function",
+                  "children": [],
+                  "input": {
+                    "value": 9
+                  },
+                  "output": {
+                    "value": 9
+                  },
+                  "metadata": {
+                    "toolCallId": "<toolCallId:1>"
+                  }
+                }
+              ],
+              "input": {
+                "js": "return await tools.stream({value: 9});"
+              },
+              "output": {
+                "value": 9
+              },
+              "metadata": {
+                "toolCallId": "<toolCallId:1>"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "code-mode-auto-hook-stream-output",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ai-sdk-code-mode-auto-hook-concurrent-operation",
+          "children": [
+            {
+              "name": "codeMode",
+              "type": "tool",
+              "children": [
+                {
+                  "name": "host",
+                  "type": "function",
+                  "children": [],
+                  "input": {
+                    "value": 4
+                  },
+                  "output": {
+                    "value": 8
+                  },
+                  "metadata": {
+                    "toolCallId": "<toolCallId:1>"
+                  }
+                }
+              ],
+              "input": {
+                "js": "return await tools.host({value: 4});"
+              },
+              "output": {
+                "value": 8
+              },
+              "metadata": {
+                "toolCallId": "<toolCallId:1>"
+              }
+            },
+            {
+              "name": "codeMode",
+              "type": "tool",
+              "children": [
+                {
+                  "name": "host",
+                  "type": "function",
+                  "children": [],
+                  "input": {
+                    "value": 5
+                  },
+                  "output": {
+                    "value": 10
+                  },
+                  "metadata": {
+                    "toolCallId": "<toolCallId:1>"
+                  }
+                }
+              ],
+              "input": {
+                "js": "return await tools.host({value: 5});"
+              },
+              "output": {
+                "value": 10
+              },
+              "metadata": {
+                "toolCallId": "<toolCallId:1>"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "code-mode-auto-hook-concurrent",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ai-sdk-code-mode-auto-hook-direct-operation",
+          "children": [
+            {
+              "name": "codeMode",
+              "type": "tool",
+              "children": [],
+              "input": {
+                "js": "return 42;"
+              },
+              "output": 42
+            }
+          ],
+          "metadata": {
+            "operation": "code-mode-auto-hook-direct",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ai-sdk-code-mode-auto-hook-factory-operation",
+          "children": [
+            {
+              "name": "codeMode",
+              "type": "tool",
+              "children": [
+                {
+                  "name": "host",
+                  "type": "function",
+                  "children": [],
+                  "input": {
+                    "value": 7
+                  },
+                  "output": {
+                    "value": 14
+                  },
+                  "metadata": {
+                    "toolCallId": "<toolCallId:1>"
+                  }
+                }
+              ],
+              "input": {
+                "js": "return await tools.host({value: 7});"
+              },
+              "output": {
+                "value": 14
+              },
+              "metadata": {
+                "toolCallId": "<toolCallId:1>"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "code-mode-auto-hook-factory",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ai-sdk-code-mode-auto-hook-generation-operation",
+          "children": [
+            {
+              "name": "generateText",
+              "type": "function",
+              "children": [
+                {
+                  "name": "doGenerate",
+                  "type": "llm",
+                  "children": [],
+                  "input": {
+                    "maxOutputTokens": 120,
+                    "messages": [
+                      {
+                        "content": "Call code with exactly this JavaScript: return await tools.host({value: 6});",
+                        "role": "user"
+                      }
+                    ],
+                    "model": {
+                      "modelId": "gpt-4.1-nano",
+                      "provider": "openai.responses"
+                    },
+                    "tools": [
+                      {
+                        "description": "Execute code-mode TypeScript in an isolated sandbox.\n\nPut the full program in `js`; top-level `await`/`return` work. Return a JSON-serializable result.\nCall host tools only as async `tools.name(input)`; await each or use `Promise.all` for independent calls.\nUse exact names/types below. `JSON.parse`/`JSON.stringify` are available.\nFetch: `fetch` is not available.\n\nTools:\n```ts\ndeclare const tools: {\n  host: (input: { value: number; }) => Promise<unknown>;\n};\n```\n\nTool call examples:\n```ts\nconst result = await tools.host({\"value\":1});\nreturn result;\n```",
+                        "inputSchema": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "js": {
+                              "description": "Code-mode TypeScript source to execute. The code-mode context lists the available global `tools` API, input types, and call examples.",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "js"
+                          ],
+                          "type": "object"
+                        },
+                        "name": "code",
+                        "type": "function"
+                      },
+                      {
+                        "inputSchema": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "value": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "value"
+                          ],
+                          "type": "object"
+                        },
+                        "name": "host",
+                        "type": "function"
+                      }
+                    ]
+                  },
+                  "output": {
+                    "content": [
+                      {
+                        "input": {
+                          "js": "return await tools.host({value: 6});"
+                        },
+                        "providerMetadata": {
+                          "openai": {
+                            "itemId": "<itemId:3>"
+                          }
+                        },
+                        "toolCallId": "<toolCallId:2>",
+                        "toolName": "code",
+                        "type": "tool-call"
+                      }
+                    ],
+                    "finishReason": "tool-calls",
+                    "providerMetadata": {
+                      "openai": {
+                        "responseId": "<responseId:1>",
+                        "serviceTier": "default"
+                      }
+                    },
+                    "response": {},
+                    "usage": {
+                      "inputTokenDetails": {
+                        "cacheReadTokens": 0,
+                        "cacheWriteTokens": 0,
+                        "noCacheTokens": 240
+                      },
+                      "inputTokens": 240,
+                      "outputTokenDetails": {
+                        "reasoningTokens": 0,
+                        "textTokens": 15
+                      },
+                      "outputTokens": 15,
+                      "raw": {
+                        "input_tokens": 240,
+                        "input_tokens_details": {
+                          "cache_write_tokens": 0,
+                          "cached_tokens": 0
+                        },
+                        "output_tokens": 15,
+                        "output_tokens_details": {
+                          "reasoning_tokens": 0
+                        },
+                        "total_tokens": 255
+                      },
+                      "totalTokens": 255
+                    }
+                  },
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "model": "gpt-4.1-nano",
+                    "provider": "openai.responses"
+                  },
+                  "metrics": {
+                    "completion_tokens": 15,
+                    "prompt_cache_creation_tokens": 0,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 240,
+                    "tokens": 255
+                  }
+                },
+                {
+                  "name": "code",
+                  "type": "tool",
+                  "children": [
+                    {
+                      "name": "host",
+                      "type": "function",
+                      "children": [],
+                      "input": {
+                        "value": 6
+                      },
+                      "output": {
+                        "value": 12
+                      },
+                      "metadata": {
+                        "toolCallId": "<toolCallId:1>"
+                      }
+                    }
+                  ],
+                  "input": {
+                    "js": "return await tools.host({value: 6});"
+                  },
+                  "output": {
+                    "value": 12
+                  },
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "toolCallId": "<toolCallId:1>",
+                    "toolName": "code"
+                  }
+                }
+              ],
+              "input": {
+                "maxOutputTokens": 120,
+                "maxRetries": 2,
+                "messages": [
+                  {
+                    "content": "Call code with exactly this JavaScript: return await tools.host({value: 6});",
+                    "role": "user"
+                  }
+                ],
+                "model": {
+                  "modelId": "gpt-4.1-nano",
+                  "provider": "openai.responses"
+                },
+                "toolChoice": {
+                  "toolName": "code",
+                  "type": "tool"
+                },
+                "tools": {
+                  "code": {
+                    "description": "Execute code-mode TypeScript in an isolated sandbox.\n\nPut the full program in `js`; top-level `await`/`return` work. Return a JSON-serializable result.\nCall host tools only as async `tools.name(input)`; await each or use `Promise.all` for independent calls.\nUse exact names/types below. `JSON.parse`/`JSON.stringify` are available.\nFetch: `fetch` is not available.\n\nTools:\nNo host tools. Do not call `tools.*`.",
+                    "inputSchema": {
+                      "jsonSchema": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "js": {
+                            "description": "Code-mode TypeScript source to execute. The code-mode context lists the available global `tools` API, input types, and call examples.",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "js"
+                        ],
+                        "type": "object"
+                      }
+                    }
+                  },
+                  "host": {
+                    "inputSchema": {
+                      "jsonSchema": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "value": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "value"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "label": "original receiver"
+                  }
+                }
+              },
+              "output": {
+                "content": [
+                  {
+                    "input": {
+                      "js": "return await tools.host({value: 6});"
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:3>"
+                      }
+                    },
+                    "toolCallId": "<toolCallId:2>",
+                    "toolName": "code",
+                    "type": "tool-call"
+                  },
+                  {
+                    "dynamic": false,
+                    "input": {
+                      "js": "return await tools.host({value: 6});"
+                    },
+                    "output": {
+                      "value": 12
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:3>"
+                      }
+                    },
+                    "toolCallId": "<toolCallId:2>",
+                    "toolName": "code",
+                    "type": "tool-result"
+                  }
+                ],
+                "finishReason": "tool-calls",
+                "providerMetadata": {
+                  "openai": {
+                    "responseId": "<responseId:4>",
+                    "serviceTier": "default"
+                  }
+                },
+                "response": {
+                  "messages": [
+                    {
+                      "content": [
+                        {
+                          "input": {
+                            "js": "return await tools.host({value: 6});"
+                          },
+                          "providerOptions": {
+                            "openai": {
+                              "itemId": "<itemId:3>"
+                            }
+                          },
+                          "toolCallId": "<toolCallId:2>",
+                          "toolName": "code",
+                          "type": "tool-call"
+                        }
+                      ],
+                      "role": "assistant"
+                    },
+                    {
+                      "content": [
+                        {
+                          "output": {
+                            "type": "json",
+                            "value": {
+                              "value": 12
+                            }
+                          },
+                          "providerOptions": {
+                            "openai": {
+                              "itemId": "<itemId:3>"
+                            }
+                          },
+                          "toolCallId": "<toolCallId:2>",
+                          "toolName": "code",
+                          "type": "tool-result"
+                        }
+                      ],
+                      "role": "tool"
+                    }
+                  ],
+                  "modelId": "gpt-4.1-nano-2025-04-14",
+                  "timestamp": "<timestamp>"
+                },
+                "responseMessages": "<omitted>",
+                "steps": [
+                  {
+                    "callId": "<callId:1>",
+                    "content": [
+                      {
+                        "input": {
+                          "js": "return await tools.host({value: 6});"
+                        },
+                        "providerMetadata": {
+                          "openai": {
+                            "itemId": "<itemId:3>"
+                          }
+                        },
+                        "toolCallId": "<toolCallId:2>",
+                        "toolName": "code",
+                        "type": "tool-call"
+                      },
+                      {
+                        "dynamic": false,
+                        "input": {
+                          "js": "return await tools.host({value: 6});"
+                        },
+                        "output": {
+                          "value": 12
+                        },
+                        "providerMetadata": {
+                          "openai": {
+                            "itemId": "<itemId:3>"
+                          }
+                        },
+                        "toolCallId": "<toolCallId:2>",
+                        "toolName": "code",
+                        "type": "tool-result"
+                      }
+                    ],
+                    "finishReason": "tool-calls",
+                    "model": {
+                      "modelId": "gpt-4.1-nano",
+                      "provider": "openai.responses"
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "responseId": "<responseId:4>",
+                        "serviceTier": "default"
+                      }
+                    },
+                    "response": {
+                      "messages": [
+                        {
+                          "content": [
+                            {
+                              "input": {
+                                "js": "return await tools.host({value: 6});"
+                              },
+                              "providerOptions": {
+                                "openai": {
+                                  "itemId": "<itemId:3>"
+                                }
+                              },
+                              "toolCallId": "<toolCallId:2>",
+                              "toolName": "code",
+                              "type": "tool-call"
+                            }
+                          ],
+                          "role": "assistant"
+                        },
+                        {
+                          "content": [
+                            {
+                              "output": {
+                                "type": "json",
+                                "value": {
+                                  "value": 12
+                                }
+                              },
+                              "providerOptions": {
+                                "openai": {
+                                  "itemId": "<itemId:3>"
+                                }
+                              },
+                              "toolCallId": "<toolCallId:2>",
+                              "toolName": "code",
+                              "type": "tool-result"
+                            }
+                          ],
+                          "role": "tool"
+                        }
+                      ],
+                      "modelId": "gpt-4.1-nano-2025-04-14",
+                      "timestamp": "<timestamp>"
+                    },
+                    "runtimeContext": {},
+                    "stepNumber": 0,
+                    "toolsContext": {},
+                    "usage": {
+                      "inputTokenDetails": {
+                        "cacheReadTokens": 0,
+                        "cacheWriteTokens": 0,
+                        "noCacheTokens": 240
+                      },
+                      "inputTokens": 240,
+                      "outputTokenDetails": {
+                        "reasoningTokens": 0,
+                        "textTokens": 15
+                      },
+                      "outputTokens": 15,
+                      "raw": {
+                        "input_tokens": 240,
+                        "input_tokens_details": {
+                          "cache_write_tokens": 0,
+                          "cached_tokens": 0
+                        },
+                        "output_tokens": 15,
+                        "output_tokens_details": {
+                          "reasoning_tokens": 0
+                        },
+                        "total_tokens": 255
+                      },
+                      "totalTokens": 255
+                    },
+                    "warnings": []
+                  }
+                ],
+                "text": "",
+                "toolCalls": [
+                  {
+                    "input": {
+                      "js": "return await tools.host({value: 6});"
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:3>"
+                      }
+                    },
+                    "toolCallId": "<toolCallId:2>",
+                    "toolName": "code",
+                    "type": "tool-call"
+                  }
+                ],
+                "toolResults": [
+                  {
+                    "dynamic": false,
+                    "input": {
+                      "js": "return await tools.host({value: 6});"
+                    },
+                    "output": {
+                      "value": 12
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:3>"
+                      }
+                    },
+                    "toolCallId": "<toolCallId:2>",
+                    "toolName": "code",
+                    "type": "tool-result"
+                  }
+                ],
+                "totalUsage": {
+                  "inputTokenDetails": {
+                    "cacheReadTokens": 0,
+                    "cacheWriteTokens": 0,
+                    "noCacheTokens": 240
+                  },
+                  "inputTokens": 240,
+                  "outputTokenDetails": {
+                    "reasoningTokens": 0,
+                    "textTokens": 15
+                  },
+                  "outputTokens": 15,
+                  "raw": {
+                    "input_tokens": 240,
+                    "input_tokens_details": {
+                      "cache_write_tokens": 0,
+                      "cached_tokens": 0
+                    },
+                    "output_tokens": 15,
+                    "output_tokens_details": {
+                      "reasoning_tokens": 0
+                    },
+                    "total_tokens": 255
+                  },
+                  "totalTokens": 255
+                },
+                "usage": {
+                  "inputTokenDetails": {
+                    "cacheReadTokens": 0,
+                    "cacheWriteTokens": 0,
+                    "noCacheTokens": 240
+                  },
+                  "inputTokens": 240,
+                  "outputTokenDetails": {
+                    "reasoningTokens": 0,
+                    "textTokens": 15
+                  },
+                  "outputTokens": 15,
+                  "raw": {
+                    "input_tokens": 240,
+                    "input_tokens_details": {
+                      "cache_write_tokens": 0,
+                      "cached_tokens": 0
+                    },
+                    "output_tokens": 15,
+                    "output_tokens_details": {
+                      "reasoning_tokens": 0
+                    },
+                    "total_tokens": 255
+                  },
+                  "totalTokens": 255
+                },
+                "warnings": []
+              },
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "model": "gpt-4.1-nano",
+                "provider": "openai.responses"
+              }
+            },
+            {
+              "name": "generateText",
+              "type": "function",
+              "children": [
+                {
+                  "name": "doGenerate",
+                  "type": "llm",
+                  "children": [],
+                  "input": {
+                    "maxOutputTokens": 80,
+                    "messages": [
+                      {
+                        "content": "Call host with value 8.",
+                        "role": "user"
+                      }
+                    ],
+                    "model": {
+                      "modelId": "gpt-4.1-nano",
+                      "provider": "openai.responses"
+                    },
+                    "tools": [
+                      {
+                        "inputSchema": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "value": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "value"
+                          ],
+                          "type": "object"
+                        },
+                        "name": "host",
+                        "type": "function"
+                      }
+                    ]
+                  },
+                  "output": {
+                    "content": [
+                      {
+                        "input": {
+                          "value": 8
+                        },
+                        "providerMetadata": {
+                          "openai": {
+                            "itemId": "<itemId:3>"
+                          }
+                        },
+                        "toolCallId": "<toolCallId:2>",
+                        "toolName": "host",
+                        "type": "tool-call"
+                      }
+                    ],
+                    "finishReason": "tool-calls",
+                    "providerMetadata": {
+                      "openai": {
+                        "responseId": "<responseId:1>",
+                        "serviceTier": "default"
+                      }
+                    },
+                    "response": {},
+                    "usage": {
+                      "inputTokenDetails": {
+                        "cacheReadTokens": 0,
+                        "cacheWriteTokens": 0,
+                        "noCacheTokens": 45
+                      },
+                      "inputTokens": 45,
+                      "outputTokenDetails": {
+                        "reasoningTokens": 0,
+                        "textTokens": 6
+                      },
+                      "outputTokens": 6,
+                      "raw": {
+                        "input_tokens": 45,
+                        "input_tokens_details": {
+                          "cache_write_tokens": 0,
+                          "cached_tokens": 0
+                        },
+                        "output_tokens": 6,
+                        "output_tokens_details": {
+                          "reasoning_tokens": 0
+                        },
+                        "total_tokens": 51
+                      },
+                      "totalTokens": 51
+                    }
+                  },
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "model": "gpt-4.1-nano",
+                    "provider": "openai.responses"
+                  },
+                  "metrics": {
+                    "completion_tokens": 6,
+                    "prompt_cache_creation_tokens": 0,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 45,
+                    "tokens": 51
+                  }
+                },
+                {
+                  "name": "host",
+                  "type": "tool",
+                  "children": [],
+                  "input": {
+                    "value": 8
+                  },
+                  "output": {
+                    "value": 16
+                  },
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "toolCallId": "<toolCallId:1>",
+                    "toolName": "host"
+                  }
+                }
+              ],
+              "input": {
+                "maxOutputTokens": 80,
+                "maxRetries": 2,
+                "messages": [
+                  {
+                    "content": "Call host with value 8.",
+                    "role": "user"
+                  }
+                ],
+                "model": {
+                  "modelId": "gpt-4.1-nano",
+                  "provider": "openai.responses"
+                },
+                "toolChoice": {
+                  "toolName": "host",
+                  "type": "tool"
+                },
+                "tools": {
+                  "host": {
+                    "inputSchema": {
+                      "jsonSchema": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "value": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "value"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "label": "original receiver"
+                  }
+                }
+              },
+              "output": {
+                "content": [
+                  {
+                    "input": {
+                      "value": 8
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:3>"
+                      }
+                    },
+                    "toolCallId": "<toolCallId:2>",
+                    "toolName": "host",
+                    "type": "tool-call"
+                  },
+                  {
+                    "dynamic": false,
+                    "input": {
+                      "value": 8
+                    },
+                    "output": {
+                      "value": 16
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:3>"
+                      }
+                    },
+                    "toolCallId": "<toolCallId:2>",
+                    "toolName": "host",
+                    "type": "tool-result"
+                  }
+                ],
+                "finishReason": "tool-calls",
+                "providerMetadata": {
+                  "openai": {
+                    "responseId": "<responseId:4>",
+                    "serviceTier": "default"
+                  }
+                },
+                "response": {
+                  "messages": [
+                    {
+                      "content": [
+                        {
+                          "input": {
+                            "value": 8
+                          },
+                          "providerOptions": {
+                            "openai": {
+                              "itemId": "<itemId:3>"
+                            }
+                          },
+                          "toolCallId": "<toolCallId:2>",
+                          "toolName": "host",
+                          "type": "tool-call"
+                        }
+                      ],
+                      "role": "assistant"
+                    },
+                    {
+                      "content": [
+                        {
+                          "output": {
+                            "type": "json",
+                            "value": {
+                              "value": 16
+                            }
+                          },
+                          "providerOptions": {
+                            "openai": {
+                              "itemId": "<itemId:3>"
+                            }
+                          },
+                          "toolCallId": "<toolCallId:2>",
+                          "toolName": "host",
+                          "type": "tool-result"
+                        }
+                      ],
+                      "role": "tool"
+                    }
+                  ],
+                  "modelId": "gpt-4.1-nano-2025-04-14",
+                  "timestamp": "<timestamp>"
+                },
+                "responseMessages": "<omitted>",
+                "steps": [
+                  {
+                    "callId": "<callId:1>",
+                    "content": [
+                      {
+                        "input": {
+                          "value": 8
+                        },
+                        "providerMetadata": {
+                          "openai": {
+                            "itemId": "<itemId:3>"
+                          }
+                        },
+                        "toolCallId": "<toolCallId:2>",
+                        "toolName": "host",
+                        "type": "tool-call"
+                      },
+                      {
+                        "dynamic": false,
+                        "input": {
+                          "value": 8
+                        },
+                        "output": {
+                          "value": 16
+                        },
+                        "providerMetadata": {
+                          "openai": {
+                            "itemId": "<itemId:3>"
+                          }
+                        },
+                        "toolCallId": "<toolCallId:2>",
+                        "toolName": "host",
+                        "type": "tool-result"
+                      }
+                    ],
+                    "finishReason": "tool-calls",
+                    "model": {
+                      "modelId": "gpt-4.1-nano",
+                      "provider": "openai.responses"
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "responseId": "<responseId:4>",
+                        "serviceTier": "default"
+                      }
+                    },
+                    "response": {
+                      "messages": [
+                        {
+                          "content": [
+                            {
+                              "input": {
+                                "value": 8
+                              },
+                              "providerOptions": {
+                                "openai": {
+                                  "itemId": "<itemId:3>"
+                                }
+                              },
+                              "toolCallId": "<toolCallId:2>",
+                              "toolName": "host",
+                              "type": "tool-call"
+                            }
+                          ],
+                          "role": "assistant"
+                        },
+                        {
+                          "content": [
+                            {
+                              "output": {
+                                "type": "json",
+                                "value": {
+                                  "value": 16
+                                }
+                              },
+                              "providerOptions": {
+                                "openai": {
+                                  "itemId": "<itemId:3>"
+                                }
+                              },
+                              "toolCallId": "<toolCallId:2>",
+                              "toolName": "host",
+                              "type": "tool-result"
+                            }
+                          ],
+                          "role": "tool"
+                        }
+                      ],
+                      "modelId": "gpt-4.1-nano-2025-04-14",
+                      "timestamp": "<timestamp>"
+                    },
+                    "runtimeContext": {},
+                    "stepNumber": 0,
+                    "toolsContext": {},
+                    "usage": {
+                      "inputTokenDetails": {
+                        "cacheReadTokens": 0,
+                        "cacheWriteTokens": 0,
+                        "noCacheTokens": 45
+                      },
+                      "inputTokens": 45,
+                      "outputTokenDetails": {
+                        "reasoningTokens": 0,
+                        "textTokens": 6
+                      },
+                      "outputTokens": 6,
+                      "raw": {
+                        "input_tokens": 45,
+                        "input_tokens_details": {
+                          "cache_write_tokens": 0,
+                          "cached_tokens": 0
+                        },
+                        "output_tokens": 6,
+                        "output_tokens_details": {
+                          "reasoning_tokens": 0
+                        },
+                        "total_tokens": 51
+                      },
+                      "totalTokens": 51
+                    },
+                    "warnings": []
+                  }
+                ],
+                "text": "",
+                "toolCalls": [
+                  {
+                    "input": {
+                      "value": 8
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:3>"
+                      }
+                    },
+                    "toolCallId": "<toolCallId:2>",
+                    "toolName": "host",
+                    "type": "tool-call"
+                  }
+                ],
+                "toolResults": [
+                  {
+                    "dynamic": false,
+                    "input": {
+                      "value": 8
+                    },
+                    "output": {
+                      "value": 16
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:3>"
+                      }
+                    },
+                    "toolCallId": "<toolCallId:2>",
+                    "toolName": "host",
+                    "type": "tool-result"
+                  }
+                ],
+                "totalUsage": {
+                  "inputTokenDetails": {
+                    "cacheReadTokens": 0,
+                    "cacheWriteTokens": 0,
+                    "noCacheTokens": 45
+                  },
+                  "inputTokens": 45,
+                  "outputTokenDetails": {
+                    "reasoningTokens": 0,
+                    "textTokens": 6
+                  },
+                  "outputTokens": 6,
+                  "raw": {
+                    "input_tokens": 45,
+                    "input_tokens_details": {
+                      "cache_write_tokens": 0,
+                      "cached_tokens": 0
+                    },
+                    "output_tokens": 6,
+                    "output_tokens_details": {
+                      "reasoning_tokens": 0
+                    },
+                    "total_tokens": 51
+                  },
+                  "totalTokens": 51
+                },
+                "usage": {
+                  "inputTokenDetails": {
+                    "cacheReadTokens": 0,
+                    "cacheWriteTokens": 0,
+                    "noCacheTokens": 45
+                  },
+                  "inputTokens": 45,
+                  "outputTokenDetails": {
+                    "reasoningTokens": 0,
+                    "textTokens": 6
+                  },
+                  "outputTokens": 6,
+                  "raw": {
+                    "input_tokens": 45,
+                    "input_tokens_details": {
+                      "cache_write_tokens": 0,
+                      "cached_tokens": 0
+                    },
+                    "output_tokens": 6,
+                    "output_tokens_details": {
+                      "reasoning_tokens": 0
+                    },
+                    "total_tokens": 51
+                  },
+                  "totalTokens": 51
+                },
+                "warnings": []
+              },
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "model": "gpt-4.1-nano",
+                "provider": "openai.responses"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "code-mode-auto-hook-generation",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ai-sdk-code-mode-combined-sequential-operation",
+          "children": [
+            {
+              "name": "codeMode",
+              "type": "tool",
+              "children": [
+                {
+                  "name": "host",
+                  "type": "function",
+                  "children": [],
+                  "input": {
+                    "value": 2
+                  },
+                  "output": {
+                    "value": 4
+                  },
+                  "metadata": {
+                    "toolCallId": "<toolCallId:1>"
+                  }
+                },
+                {
+                  "name": "host",
+                  "type": "function",
+                  "children": [],
+                  "input": {
+                    "value": 4
+                  },
+                  "output": {
+                    "value": 8
+                  },
+                  "metadata": {
+                    "toolCallId": "<toolCallId:1>"
+                  }
+                }
+              ],
+              "input": {
+                "js": "const a = await tools.host({value: 2}); return await tools.host(a);"
+              },
+              "output": {
+                "value": 8
+              },
+              "metadata": {
+                "toolCallId": "<toolCallId:1>"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "code-mode-combined-sequential",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ai-sdk-code-mode-combined-parallel-operation",
+          "children": [
+            {
+              "name": "codeMode",
+              "type": "tool",
+              "children": [
+                {
+                  "name": "parallel",
+                  "type": "function",
+                  "children": [],
+                  "input": {
+                    "value": 1
+                  },
+                  "output": {
+                    "value": 1
+                  },
+                  "metadata": {
+                    "toolCallId": "<toolCallId:1>"
+                  }
+                },
+                {
+                  "name": "parallel",
+                  "type": "function",
+                  "children": [],
+                  "input": {
+                    "value": 2
+                  },
+                  "output": {
+                    "value": 2
+                  },
+                  "metadata": {
+                    "toolCallId": "<toolCallId:1>"
+                  }
+                }
+              ],
+              "input": {
+                "js": "return await Promise.all([tools.parallel({value: 1}), tools.parallel({value: 2})]);"
+              },
+              "output": [
+                {
+                  "value": 1
+                },
+                {
+                  "value": 2
+                }
+              ],
+              "metadata": {
+                "toolCallId": "<toolCallId:1>"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "code-mode-combined-parallel",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ai-sdk-code-mode-combined-nested-operation",
+          "children": [
+            {
+              "name": "codeMode",
+              "type": "tool",
+              "children": [
+                {
+                  "name": "nested",
+                  "type": "function",
+                  "children": [
+                    {
+                      "name": "host",
+                      "type": "function",
+                      "children": [],
+                      "input": {
+                        "value": 3
+                      },
+                      "output": {
+                        "value": 6
+                      },
+                      "metadata": {
+                        "toolCallId": "<toolCallId:1>"
+                      }
+                    }
+                  ],
+                  "input": {
+                    "value": 3
+                  },
+                  "output": {
+                    "value": 6
+                  },
+                  "metadata": {
+                    "toolCallId": "<toolCallId:1>"
+                  }
+                }
+              ],
+              "input": {
+                "js": "return await tools.nested({value: 3});"
+              },
+              "output": {
+                "value": 6
+              },
+              "metadata": {
+                "toolCallId": "<toolCallId:1>"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "code-mode-combined-nested",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ai-sdk-code-mode-combined-host-error-operation",
+          "children": [
+            {
+              "name": "codeMode",
+              "type": "tool",
+              "children": [
+                {
+                  "name": "fail",
+                  "type": "function",
+                  "children": [],
+                  "input": {
+                    "value": 1
+                  },
+                  "metadata": {
+                    "toolCallId": "<toolCallId:1>"
+                  },
+                  "error": "host failure"
+                }
+              ],
+              "input": {
+                "js": "return await tools.fail({value: 1});"
+              },
+              "metadata": {
+                "toolCallId": "<toolCallId:1>"
+              },
+              "error": "Host tool failed."
+            }
+          ],
+          "metadata": {
+            "operation": "code-mode-combined-host-error",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ai-sdk-code-mode-combined-code-error-operation",
+          "children": [
+            {
+              "name": "codeMode",
+              "type": "tool",
+              "children": [],
+              "input": {
+                "js": "throw new Error(\"code failure\");"
+              },
+              "metadata": {
+                "toolCallId": "<toolCallId:1>"
+              },
+              "error": "code failure"
+            }
+          ],
+          "metadata": {
+            "operation": "code-mode-combined-code-error",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ai-sdk-code-mode-combined-caught-error-operation",
+          "children": [
+            {
+              "name": "codeMode",
+              "type": "tool",
+              "children": [
+                {
+                  "name": "fail",
+                  "type": "function",
+                  "children": [],
+                  "input": {
+                    "value": 1
+                  },
+                  "metadata": {
+                    "toolCallId": "<toolCallId:1>"
+                  },
+                  "error": "host failure"
+                }
+              ],
+              "input": {
+                "js": "try { await tools.fail({value: 1}); } catch { return \"recovered\"; }"
+              },
+              "output": "recovered",
+              "metadata": {
+                "toolCallId": "<toolCallId:1>"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "code-mode-combined-caught-error",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ai-sdk-code-mode-combined-stream-output-operation",
+          "children": [
+            {
+              "name": "codeMode",
+              "type": "tool",
+              "children": [
+                {
+                  "name": "stream",
+                  "type": "function",
+                  "children": [],
+                  "input": {
+                    "value": 9
+                  },
+                  "output": {
+                    "value": 9
+                  },
+                  "metadata": {
+                    "toolCallId": "<toolCallId:1>"
+                  }
+                }
+              ],
+              "input": {
+                "js": "return await tools.stream({value: 9});"
+              },
+              "output": {
+                "value": 9
+              },
+              "metadata": {
+                "toolCallId": "<toolCallId:1>"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "code-mode-combined-stream-output",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ai-sdk-code-mode-combined-concurrent-operation",
+          "children": [
+            {
+              "name": "codeMode",
+              "type": "tool",
+              "children": [
+                {
+                  "name": "host",
+                  "type": "function",
+                  "children": [],
+                  "input": {
+                    "value": 4
+                  },
+                  "output": {
+                    "value": 8
+                  },
+                  "metadata": {
+                    "toolCallId": "<toolCallId:1>"
+                  }
+                }
+              ],
+              "input": {
+                "js": "return await tools.host({value: 4});"
+              },
+              "output": {
+                "value": 8
+              },
+              "metadata": {
+                "toolCallId": "<toolCallId:1>"
+              }
+            },
+            {
+              "name": "codeMode",
+              "type": "tool",
+              "children": [
+                {
+                  "name": "host",
+                  "type": "function",
+                  "children": [],
+                  "input": {
+                    "value": 5
+                  },
+                  "output": {
+                    "value": 10
+                  },
+                  "metadata": {
+                    "toolCallId": "<toolCallId:1>"
+                  }
+                }
+              ],
+              "input": {
+                "js": "return await tools.host({value: 5});"
+              },
+              "output": {
+                "value": 10
+              },
+              "metadata": {
+                "toolCallId": "<toolCallId:1>"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "code-mode-combined-concurrent",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ai-sdk-code-mode-combined-direct-operation",
+          "children": [
+            {
+              "name": "codeMode",
+              "type": "tool",
+              "children": [],
+              "input": {
+                "js": "return 42;"
+              },
+              "output": 42
+            }
+          ],
+          "metadata": {
+            "operation": "code-mode-combined-direct",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ai-sdk-code-mode-combined-factory-operation",
+          "children": [
+            {
+              "name": "codeMode",
+              "type": "tool",
+              "children": [
+                {
+                  "name": "host",
+                  "type": "function",
+                  "children": [],
+                  "input": {
+                    "value": 7
+                  },
+                  "output": {
+                    "value": 14
+                  },
+                  "metadata": {
+                    "toolCallId": "<toolCallId:1>"
+                  }
+                }
+              ],
+              "input": {
+                "js": "return await tools.host({value: 7});"
+              },
+              "output": {
+                "value": 14
+              },
+              "metadata": {
+                "toolCallId": "<toolCallId:1>"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "code-mode-combined-factory",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ai-sdk-code-mode-combined-generation-operation",
+          "children": [
+            {
+              "name": "generateText",
+              "type": "function",
+              "children": [
+                {
+                  "name": "doGenerate",
+                  "type": "llm",
+                  "children": [],
+                  "input": {
+                    "maxOutputTokens": 120,
+                    "messages": [
+                      {
+                        "content": "Call code with exactly this JavaScript: return await tools.host({value: 6});",
+                        "role": "user"
+                      }
+                    ],
+                    "model": {
+                      "modelId": "gpt-4.1-nano",
+                      "provider": "openai.responses"
+                    },
+                    "tools": [
+                      {
+                        "description": "Execute code-mode TypeScript in an isolated sandbox.\n\nPut the full program in `js`; top-level `await`/`return` work. Return a JSON-serializable result.\nCall host tools only as async `tools.name(input)`; await each or use `Promise.all` for independent calls.\nUse exact names/types below. `JSON.parse`/`JSON.stringify` are available.\nFetch: `fetch` is not available.\n\nTools:\n```ts\ndeclare const tools: {\n  host: (input: { value: number; }) => Promise<unknown>;\n};\n```\n\nTool call examples:\n```ts\nconst result = await tools.host({\"value\":1});\nreturn result;\n```",
+                        "inputSchema": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "js": {
+                              "description": "Code-mode TypeScript source to execute. The code-mode context lists the available global `tools` API, input types, and call examples.",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "js"
+                          ],
+                          "type": "object"
+                        },
+                        "name": "code",
+                        "type": "function"
+                      },
+                      {
+                        "inputSchema": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "value": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "value"
+                          ],
+                          "type": "object"
+                        },
+                        "name": "host",
+                        "type": "function"
+                      }
+                    ]
+                  },
+                  "output": {
+                    "content": [
+                      {
+                        "input": {
+                          "js": "return await tools.host({value: 6});"
+                        },
+                        "providerMetadata": {
+                          "openai": {
+                            "itemId": "<itemId:3>"
+                          }
+                        },
+                        "toolCallId": "<toolCallId:2>",
+                        "toolName": "code",
+                        "type": "tool-call"
+                      }
+                    ],
+                    "finishReason": "tool-calls",
+                    "providerMetadata": {
+                      "openai": {
+                        "responseId": "<responseId:1>",
+                        "serviceTier": "default"
+                      }
+                    },
+                    "response": {},
+                    "usage": {
+                      "inputTokenDetails": {
+                        "cacheReadTokens": 0,
+                        "cacheWriteTokens": 0,
+                        "noCacheTokens": 240
+                      },
+                      "inputTokens": 240,
+                      "outputTokenDetails": {
+                        "reasoningTokens": 0,
+                        "textTokens": 15
+                      },
+                      "outputTokens": 15,
+                      "raw": {
+                        "input_tokens": 240,
+                        "input_tokens_details": {
+                          "cache_write_tokens": 0,
+                          "cached_tokens": 0
+                        },
+                        "output_tokens": 15,
+                        "output_tokens_details": {
+                          "reasoning_tokens": 0
+                        },
+                        "total_tokens": 255
+                      },
+                      "totalTokens": 255
+                    }
+                  },
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "model": "gpt-4.1-nano",
+                    "provider": "openai.responses"
+                  },
+                  "metrics": {
+                    "completion_tokens": 15,
+                    "prompt_cache_creation_tokens": 0,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 240,
+                    "tokens": 255
+                  }
+                },
+                {
+                  "name": "code",
+                  "type": "tool",
+                  "children": [
+                    {
+                      "name": "host",
+                      "type": "function",
+                      "children": [],
+                      "input": {
+                        "value": 6
+                      },
+                      "output": {
+                        "value": 12
+                      },
+                      "metadata": {
+                        "toolCallId": "<toolCallId:1>"
+                      }
+                    }
+                  ],
+                  "input": {
+                    "js": "return await tools.host({value: 6});"
+                  },
+                  "output": {
+                    "value": 12
+                  },
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "toolCallId": "<toolCallId:1>",
+                    "toolName": "code"
+                  }
+                }
+              ],
+              "input": {
+                "maxOutputTokens": 120,
+                "maxRetries": 2,
+                "messages": [
+                  {
+                    "content": "Call code with exactly this JavaScript: return await tools.host({value: 6});",
+                    "role": "user"
+                  }
+                ],
+                "model": {
+                  "modelId": "gpt-4.1-nano",
+                  "provider": "openai.responses"
+                },
+                "toolChoice": {
+                  "toolName": "code",
+                  "type": "tool"
+                },
+                "tools": {
+                  "code": {
+                    "description": "Execute code-mode TypeScript in an isolated sandbox.\n\nPut the full program in `js`; top-level `await`/`return` work. Return a JSON-serializable result.\nCall host tools only as async `tools.name(input)`; await each or use `Promise.all` for independent calls.\nUse exact names/types below. `JSON.parse`/`JSON.stringify` are available.\nFetch: `fetch` is not available.\n\nTools:\nNo host tools. Do not call `tools.*`.",
+                    "inputSchema": {
+                      "jsonSchema": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "js": {
+                            "description": "Code-mode TypeScript source to execute. The code-mode context lists the available global `tools` API, input types, and call examples.",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "js"
+                        ],
+                        "type": "object"
+                      }
+                    }
+                  },
+                  "host": {
+                    "inputSchema": {
+                      "jsonSchema": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "value": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "value"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "label": "original receiver"
+                  }
+                }
+              },
+              "output": {
+                "content": [
+                  {
+                    "input": {
+                      "js": "return await tools.host({value: 6});"
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:3>"
+                      }
+                    },
+                    "toolCallId": "<toolCallId:2>",
+                    "toolName": "code",
+                    "type": "tool-call"
+                  },
+                  {
+                    "dynamic": false,
+                    "input": {
+                      "js": "return await tools.host({value: 6});"
+                    },
+                    "output": {
+                      "value": 12
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:3>"
+                      }
+                    },
+                    "toolCallId": "<toolCallId:2>",
+                    "toolName": "code",
+                    "type": "tool-result"
+                  }
+                ],
+                "finishReason": "tool-calls",
+                "providerMetadata": {
+                  "openai": {
+                    "responseId": "<responseId:4>",
+                    "serviceTier": "default"
+                  }
+                },
+                "response": {
+                  "messages": [
+                    {
+                      "content": [
+                        {
+                          "input": {
+                            "js": "return await tools.host({value: 6});"
+                          },
+                          "providerOptions": {
+                            "openai": {
+                              "itemId": "<itemId:3>"
+                            }
+                          },
+                          "toolCallId": "<toolCallId:2>",
+                          "toolName": "code",
+                          "type": "tool-call"
+                        }
+                      ],
+                      "role": "assistant"
+                    },
+                    {
+                      "content": [
+                        {
+                          "output": {
+                            "type": "json",
+                            "value": {
+                              "value": 12
+                            }
+                          },
+                          "providerOptions": {
+                            "openai": {
+                              "itemId": "<itemId:3>"
+                            }
+                          },
+                          "toolCallId": "<toolCallId:2>",
+                          "toolName": "code",
+                          "type": "tool-result"
+                        }
+                      ],
+                      "role": "tool"
+                    }
+                  ],
+                  "modelId": "gpt-4.1-nano-2025-04-14",
+                  "timestamp": "<timestamp>"
+                },
+                "responseMessages": "<omitted>",
+                "steps": [
+                  {
+                    "callId": "<callId:1>",
+                    "content": [
+                      {
+                        "input": {
+                          "js": "return await tools.host({value: 6});"
+                        },
+                        "providerMetadata": {
+                          "openai": {
+                            "itemId": "<itemId:3>"
+                          }
+                        },
+                        "toolCallId": "<toolCallId:2>",
+                        "toolName": "code",
+                        "type": "tool-call"
+                      },
+                      {
+                        "dynamic": false,
+                        "input": {
+                          "js": "return await tools.host({value: 6});"
+                        },
+                        "output": {
+                          "value": 12
+                        },
+                        "providerMetadata": {
+                          "openai": {
+                            "itemId": "<itemId:3>"
+                          }
+                        },
+                        "toolCallId": "<toolCallId:2>",
+                        "toolName": "code",
+                        "type": "tool-result"
+                      }
+                    ],
+                    "finishReason": "tool-calls",
+                    "model": {
+                      "modelId": "gpt-4.1-nano",
+                      "provider": "openai.responses"
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "responseId": "<responseId:4>",
+                        "serviceTier": "default"
+                      }
+                    },
+                    "response": {
+                      "messages": [
+                        {
+                          "content": [
+                            {
+                              "input": {
+                                "js": "return await tools.host({value: 6});"
+                              },
+                              "providerOptions": {
+                                "openai": {
+                                  "itemId": "<itemId:3>"
+                                }
+                              },
+                              "toolCallId": "<toolCallId:2>",
+                              "toolName": "code",
+                              "type": "tool-call"
+                            }
+                          ],
+                          "role": "assistant"
+                        },
+                        {
+                          "content": [
+                            {
+                              "output": {
+                                "type": "json",
+                                "value": {
+                                  "value": 12
+                                }
+                              },
+                              "providerOptions": {
+                                "openai": {
+                                  "itemId": "<itemId:3>"
+                                }
+                              },
+                              "toolCallId": "<toolCallId:2>",
+                              "toolName": "code",
+                              "type": "tool-result"
+                            }
+                          ],
+                          "role": "tool"
+                        }
+                      ],
+                      "modelId": "gpt-4.1-nano-2025-04-14",
+                      "timestamp": "<timestamp>"
+                    },
+                    "runtimeContext": {},
+                    "stepNumber": 0,
+                    "toolsContext": {},
+                    "usage": {
+                      "inputTokenDetails": {
+                        "cacheReadTokens": 0,
+                        "cacheWriteTokens": 0,
+                        "noCacheTokens": 240
+                      },
+                      "inputTokens": 240,
+                      "outputTokenDetails": {
+                        "reasoningTokens": 0,
+                        "textTokens": 15
+                      },
+                      "outputTokens": 15,
+                      "raw": {
+                        "input_tokens": 240,
+                        "input_tokens_details": {
+                          "cache_write_tokens": 0,
+                          "cached_tokens": 0
+                        },
+                        "output_tokens": 15,
+                        "output_tokens_details": {
+                          "reasoning_tokens": 0
+                        },
+                        "total_tokens": 255
+                      },
+                      "totalTokens": 255
+                    },
+                    "warnings": []
+                  }
+                ],
+                "text": "",
+                "toolCalls": [
+                  {
+                    "input": {
+                      "js": "return await tools.host({value: 6});"
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:3>"
+                      }
+                    },
+                    "toolCallId": "<toolCallId:2>",
+                    "toolName": "code",
+                    "type": "tool-call"
+                  }
+                ],
+                "toolResults": [
+                  {
+                    "dynamic": false,
+                    "input": {
+                      "js": "return await tools.host({value: 6});"
+                    },
+                    "output": {
+                      "value": 12
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:3>"
+                      }
+                    },
+                    "toolCallId": "<toolCallId:2>",
+                    "toolName": "code",
+                    "type": "tool-result"
+                  }
+                ],
+                "totalUsage": {
+                  "inputTokenDetails": {
+                    "cacheReadTokens": 0,
+                    "cacheWriteTokens": 0,
+                    "noCacheTokens": 240
+                  },
+                  "inputTokens": 240,
+                  "outputTokenDetails": {
+                    "reasoningTokens": 0,
+                    "textTokens": 15
+                  },
+                  "outputTokens": 15,
+                  "raw": {
+                    "input_tokens": 240,
+                    "input_tokens_details": {
+                      "cache_write_tokens": 0,
+                      "cached_tokens": 0
+                    },
+                    "output_tokens": 15,
+                    "output_tokens_details": {
+                      "reasoning_tokens": 0
+                    },
+                    "total_tokens": 255
+                  },
+                  "totalTokens": 255
+                },
+                "usage": {
+                  "inputTokenDetails": {
+                    "cacheReadTokens": 0,
+                    "cacheWriteTokens": 0,
+                    "noCacheTokens": 240
+                  },
+                  "inputTokens": 240,
+                  "outputTokenDetails": {
+                    "reasoningTokens": 0,
+                    "textTokens": 15
+                  },
+                  "outputTokens": 15,
+                  "raw": {
+                    "input_tokens": 240,
+                    "input_tokens_details": {
+                      "cache_write_tokens": 0,
+                      "cached_tokens": 0
+                    },
+                    "output_tokens": 15,
+                    "output_tokens_details": {
+                      "reasoning_tokens": 0
+                    },
+                    "total_tokens": 255
+                  },
+                  "totalTokens": 255
+                },
+                "warnings": []
+              },
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "model": "gpt-4.1-nano",
+                "provider": "openai.responses"
+              }
+            },
+            {
+              "name": "generateText",
+              "type": "function",
+              "children": [
+                {
+                  "name": "doGenerate",
+                  "type": "llm",
+                  "children": [],
+                  "input": {
+                    "maxOutputTokens": 80,
+                    "messages": [
+                      {
+                        "content": "Call host with value 8.",
+                        "role": "user"
+                      }
+                    ],
+                    "model": {
+                      "modelId": "gpt-4.1-nano",
+                      "provider": "openai.responses"
+                    },
+                    "tools": [
+                      {
+                        "inputSchema": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "value": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "value"
+                          ],
+                          "type": "object"
+                        },
+                        "name": "host",
+                        "type": "function"
+                      }
+                    ]
+                  },
+                  "output": {
+                    "content": [
+                      {
+                        "input": {
+                          "value": 8
+                        },
+                        "providerMetadata": {
+                          "openai": {
+                            "itemId": "<itemId:3>"
+                          }
+                        },
+                        "toolCallId": "<toolCallId:2>",
+                        "toolName": "host",
+                        "type": "tool-call"
+                      }
+                    ],
+                    "finishReason": "tool-calls",
+                    "providerMetadata": {
+                      "openai": {
+                        "responseId": "<responseId:1>",
+                        "serviceTier": "default"
+                      }
+                    },
+                    "response": {},
+                    "usage": {
+                      "inputTokenDetails": {
+                        "cacheReadTokens": 0,
+                        "cacheWriteTokens": 0,
+                        "noCacheTokens": 45
+                      },
+                      "inputTokens": 45,
+                      "outputTokenDetails": {
+                        "reasoningTokens": 0,
+                        "textTokens": 6
+                      },
+                      "outputTokens": 6,
+                      "raw": {
+                        "input_tokens": 45,
+                        "input_tokens_details": {
+                          "cache_write_tokens": 0,
+                          "cached_tokens": 0
+                        },
+                        "output_tokens": 6,
+                        "output_tokens_details": {
+                          "reasoning_tokens": 0
+                        },
+                        "total_tokens": 51
+                      },
+                      "totalTokens": 51
+                    }
+                  },
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "model": "gpt-4.1-nano",
+                    "provider": "openai.responses"
+                  },
+                  "metrics": {
+                    "completion_tokens": 6,
+                    "prompt_cache_creation_tokens": 0,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 45,
+                    "tokens": 51
+                  }
+                },
+                {
+                  "name": "host",
+                  "type": "tool",
+                  "children": [],
+                  "input": {
+                    "value": 8
+                  },
+                  "output": {
+                    "value": 16
+                  },
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "toolCallId": "<toolCallId:1>",
+                    "toolName": "host"
+                  }
+                }
+              ],
+              "input": {
+                "maxOutputTokens": 80,
+                "maxRetries": 2,
+                "messages": [
+                  {
+                    "content": "Call host with value 8.",
+                    "role": "user"
+                  }
+                ],
+                "model": {
+                  "modelId": "gpt-4.1-nano",
+                  "provider": "openai.responses"
+                },
+                "toolChoice": {
+                  "toolName": "host",
+                  "type": "tool"
+                },
+                "tools": {
+                  "host": {
+                    "inputSchema": {
+                      "jsonSchema": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "value": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "value"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "label": "original receiver"
+                  }
+                }
+              },
+              "output": {
+                "content": [
+                  {
+                    "input": {
+                      "value": 8
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:3>"
+                      }
+                    },
+                    "toolCallId": "<toolCallId:2>",
+                    "toolName": "host",
+                    "type": "tool-call"
+                  },
+                  {
+                    "dynamic": false,
+                    "input": {
+                      "value": 8
+                    },
+                    "output": {
+                      "value": 16
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:3>"
+                      }
+                    },
+                    "toolCallId": "<toolCallId:2>",
+                    "toolName": "host",
+                    "type": "tool-result"
+                  }
+                ],
+                "finishReason": "tool-calls",
+                "providerMetadata": {
+                  "openai": {
+                    "responseId": "<responseId:4>",
+                    "serviceTier": "default"
+                  }
+                },
+                "response": {
+                  "messages": [
+                    {
+                      "content": [
+                        {
+                          "input": {
+                            "value": 8
+                          },
+                          "providerOptions": {
+                            "openai": {
+                              "itemId": "<itemId:3>"
+                            }
+                          },
+                          "toolCallId": "<toolCallId:2>",
+                          "toolName": "host",
+                          "type": "tool-call"
+                        }
+                      ],
+                      "role": "assistant"
+                    },
+                    {
+                      "content": [
+                        {
+                          "output": {
+                            "type": "json",
+                            "value": {
+                              "value": 16
+                            }
+                          },
+                          "providerOptions": {
+                            "openai": {
+                              "itemId": "<itemId:3>"
+                            }
+                          },
+                          "toolCallId": "<toolCallId:2>",
+                          "toolName": "host",
+                          "type": "tool-result"
+                        }
+                      ],
+                      "role": "tool"
+                    }
+                  ],
+                  "modelId": "gpt-4.1-nano-2025-04-14",
+                  "timestamp": "<timestamp>"
+                },
+                "responseMessages": "<omitted>",
+                "steps": [
+                  {
+                    "callId": "<callId:1>",
+                    "content": [
+                      {
+                        "input": {
+                          "value": 8
+                        },
+                        "providerMetadata": {
+                          "openai": {
+                            "itemId": "<itemId:3>"
+                          }
+                        },
+                        "toolCallId": "<toolCallId:2>",
+                        "toolName": "host",
+                        "type": "tool-call"
+                      },
+                      {
+                        "dynamic": false,
+                        "input": {
+                          "value": 8
+                        },
+                        "output": {
+                          "value": 16
+                        },
+                        "providerMetadata": {
+                          "openai": {
+                            "itemId": "<itemId:3>"
+                          }
+                        },
+                        "toolCallId": "<toolCallId:2>",
+                        "toolName": "host",
+                        "type": "tool-result"
+                      }
+                    ],
+                    "finishReason": "tool-calls",
+                    "model": {
+                      "modelId": "gpt-4.1-nano",
+                      "provider": "openai.responses"
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "responseId": "<responseId:4>",
+                        "serviceTier": "default"
+                      }
+                    },
+                    "response": {
+                      "messages": [
+                        {
+                          "content": [
+                            {
+                              "input": {
+                                "value": 8
+                              },
+                              "providerOptions": {
+                                "openai": {
+                                  "itemId": "<itemId:3>"
+                                }
+                              },
+                              "toolCallId": "<toolCallId:2>",
+                              "toolName": "host",
+                              "type": "tool-call"
+                            }
+                          ],
+                          "role": "assistant"
+                        },
+                        {
+                          "content": [
+                            {
+                              "output": {
+                                "type": "json",
+                                "value": {
+                                  "value": 16
+                                }
+                              },
+                              "providerOptions": {
+                                "openai": {
+                                  "itemId": "<itemId:3>"
+                                }
+                              },
+                              "toolCallId": "<toolCallId:2>",
+                              "toolName": "host",
+                              "type": "tool-result"
+                            }
+                          ],
+                          "role": "tool"
+                        }
+                      ],
+                      "modelId": "gpt-4.1-nano-2025-04-14",
+                      "timestamp": "<timestamp>"
+                    },
+                    "runtimeContext": {},
+                    "stepNumber": 0,
+                    "toolsContext": {},
+                    "usage": {
+                      "inputTokenDetails": {
+                        "cacheReadTokens": 0,
+                        "cacheWriteTokens": 0,
+                        "noCacheTokens": 45
+                      },
+                      "inputTokens": 45,
+                      "outputTokenDetails": {
+                        "reasoningTokens": 0,
+                        "textTokens": 6
+                      },
+                      "outputTokens": 6,
+                      "raw": {
+                        "input_tokens": 45,
+                        "input_tokens_details": {
+                          "cache_write_tokens": 0,
+                          "cached_tokens": 0
+                        },
+                        "output_tokens": 6,
+                        "output_tokens_details": {
+                          "reasoning_tokens": 0
+                        },
+                        "total_tokens": 51
+                      },
+                      "totalTokens": 51
+                    },
+                    "warnings": []
+                  }
+                ],
+                "text": "",
+                "toolCalls": [
+                  {
+                    "input": {
+                      "value": 8
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:3>"
+                      }
+                    },
+                    "toolCallId": "<toolCallId:2>",
+                    "toolName": "host",
+                    "type": "tool-call"
+                  }
+                ],
+                "toolResults": [
+                  {
+                    "dynamic": false,
+                    "input": {
+                      "value": 8
+                    },
+                    "output": {
+                      "value": 16
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:3>"
+                      }
+                    },
+                    "toolCallId": "<toolCallId:2>",
+                    "toolName": "host",
+                    "type": "tool-result"
+                  }
+                ],
+                "totalUsage": {
+                  "inputTokenDetails": {
+                    "cacheReadTokens": 0,
+                    "cacheWriteTokens": 0,
+                    "noCacheTokens": 45
+                  },
+                  "inputTokens": 45,
+                  "outputTokenDetails": {
+                    "reasoningTokens": 0,
+                    "textTokens": 6
+                  },
+                  "outputTokens": 6,
+                  "raw": {
+                    "input_tokens": 45,
+                    "input_tokens_details": {
+                      "cache_write_tokens": 0,
+                      "cached_tokens": 0
+                    },
+                    "output_tokens": 6,
+                    "output_tokens_details": {
+                      "reasoning_tokens": 0
+                    },
+                    "total_tokens": 51
+                  },
+                  "totalTokens": 51
+                },
+                "usage": {
+                  "inputTokenDetails": {
+                    "cacheReadTokens": 0,
+                    "cacheWriteTokens": 0,
+                    "noCacheTokens": 45
+                  },
+                  "inputTokens": 45,
+                  "outputTokenDetails": {
+                    "reasoningTokens": 0,
+                    "textTokens": 6
+                  },
+                  "outputTokens": 6,
+                  "raw": {
+                    "input_tokens": 45,
+                    "input_tokens_details": {
+                      "cache_write_tokens": 0,
+                      "cached_tokens": 0
+                    },
+                    "output_tokens": 6,
+                    "output_tokens_details": {
+                      "reasoning_tokens": 0
+                    },
+                    "total_tokens": 51
+                  },
+                  "totalTokens": 51
+                },
+                "warnings": []
+              },
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "model": "gpt-4.1-nano",
+                "provider": "openai.responses"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "code-mode-combined-generation",
             "testRunId": "<run:1>"
           }
         }

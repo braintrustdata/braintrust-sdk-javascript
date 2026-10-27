@@ -1,10 +1,9 @@
 import { registerInstrumentation } from "../instrumentation/registrations/cloudflareThink";
-import { cloudflareThinkChannels } from "../instrumentation/providers/cloudflare-think-channels";
+import { cloudflareThinkChannels } from "../instrumentation/providers/cloudflare-think-interceptors";
 import type {
   CloudflareThinkConstructor,
   CloudflareThinkInstance,
   CloudflareThinkModule,
-  CloudflareThinkTurnInput,
 } from "../vendor-sdk-types/cloudflare-think";
 
 const WRAPPED_THINK = Symbol.for("braintrust.cloudflare-think.wrapped");
@@ -57,15 +56,13 @@ function patchThinkClass(Think: CloudflareThinkConstructor): void {
     ...descriptor,
     value: function wrappedCloudflareThinkRunInferenceLoop(
       this: CloudflareThinkInstance,
-      input: CloudflareThinkTurnInput,
+      ...args: Parameters<typeof original>
     ) {
-      const args = [input] as [CloudflareThinkTurnInput];
-      return cloudflareThinkChannels.runInferenceLoop.tracePromise(
-        () => Reflect.apply(original, this, args),
-        {
-          arguments: args,
-          self: this,
-        },
+      return cloudflareThinkChannels.runInferenceLoop.invoke(
+        original,
+        this,
+        args,
+        {},
       );
     },
   });

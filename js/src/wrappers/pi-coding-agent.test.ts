@@ -1,20 +1,19 @@
+import { debugLogger } from "../debug-logger";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 const { invoke } = vi.hoisted(() => ({
   invoke: vi.fn(
-    (target: (...args: any[]) => unknown, thisArg: unknown, args: unknown[]) =>
-      Reflect.apply(target, thisArg, args),
+    (
+      target: (...args: any[]) => any,
+      receiver: unknown,
+      args: unknown[],
+      _additional?: unknown,
+    ) => Reflect.apply(target, receiver, args),
   ),
 }));
-
-vi.mock("#braintrust-platform", () => ({
-  default: {
-    newTracingChannel: vi.fn(() => ({
-      hasInterceptors: true,
-      hasSubscribers: false,
-      invoke,
-    })),
-  },
+vi.mock("../global-instrumentation-hooks", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../global-instrumentation-hooks")>()),
+  newGlobalInvocationHook: vi.fn(() => ({ invoke })),
 }));
 
 import { wrapPiCodingAgentSDK } from "./pi-coding-agent";
@@ -25,7 +24,9 @@ describe("wrapPiCodingAgentSDK", () => {
   });
 
   it("returns invalid modules unchanged", () => {
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const warnSpy = vi
+      .spyOn(debugLogger.notice, "warn")
+      .mockImplementation(() => true);
     const sdk = { Session: class {} };
 
     expect(wrapPiCodingAgentSDK(sdk)).toBe(sdk);

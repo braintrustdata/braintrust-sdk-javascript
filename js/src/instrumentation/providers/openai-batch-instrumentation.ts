@@ -20,7 +20,7 @@ import type {
   OpenAIBatchFile,
   OpenAIBatchLike,
 } from "../../openai-batch-types";
-import { openAIChannels } from "./openai-channels";
+import { openAIChannels } from "./openai-interceptors";
 import {
   extractOpenAIBatchInput,
   processImagesInOutput,

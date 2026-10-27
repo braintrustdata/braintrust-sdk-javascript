@@ -6,15 +6,21 @@ import {
   it,
   vi,
 } from "vite-plus/test";
+import { newGlobalInvocationHook } from "../../global-instrumentation-hooks";
+import { invocationController } from "../test-utils/invocation";
+vi.mock("../../global-instrumentation-hooks", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("../../global-instrumentation-hooks")
+  >()),
+  newGlobalInvocationHook: vi.fn(),
+}));
 
 const { mockStartSpan } = vi.hoisted(() => ({
   mockStartSpan: vi.fn(),
 }));
 
 vi.mock("#braintrust-platform", () => ({
-  default: {
-    newTracingChannel: vi.fn(),
-  },
+  default: {},
 }));
 
 vi.mock("../../logger/core", () => ({
@@ -22,10 +28,11 @@ vi.mock("../../logger/core", () => ({
   _internalStartSpan: (...args: unknown[]) => mockStartSpan(...args),
 }));
 
-import iso from "#braintrust-platform";
 import { registerCursorSDKInstrumentation } from "./cursor-sdk-instrumentation";
 
-const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
+const mockNewInvocationHook = newGlobalInvocationHook as ReturnType<
+  typeof vi.fn
+>;
 
 describe("registerCursorSDKInstrumentation", () => {
   let handlersByName: Map<string, any>;
@@ -39,9 +46,13 @@ describe("registerCursorSDKInstrumentation", () => {
   beforeEach(() => {
     handlersByName = new Map();
     spans = [];
-    mockNewTracingChannel.mockImplementation((name: string) => ({
-      subscribe: vi.fn((handlers) => handlersByName.set(name, handlers)),
-      tracePromise: vi.fn((fn) => fn()),
+    mockNewInvocationHook.mockImplementation((name: string) => ({
+      intercept: vi.fn((interceptor) => {
+        handlersByName.set(name, invocationController(interceptor));
+        return vi.fn();
+      }),
+      invoke: vi.fn((fn, receiver, args) => Reflect.apply(fn, receiver, args)),
+      unsubscribe: vi.fn(),
     }));
     mockStartSpan.mockImplementation((args: any) => {
       const span = {
@@ -93,7 +104,7 @@ describe("registerCursorSDKInstrumentation", () => {
       send: originalSend,
     };
 
-    createHandlers.asyncEnd({
+    createHandlers.call({
       arguments: [{ local: { cwd: "/tmp/repo" } }],
       result: agent,
     });
@@ -107,8 +118,8 @@ describe("registerCursorSDKInstrumentation", () => {
       arguments: ["use a tool", {}],
       result: run,
     };
-    sendHandlers.start(sendEvent);
-    sendHandlers.asyncEnd(sendEvent);
+    sendHandlers.begin(sendEvent);
+    sendHandlers.resolve(sendEvent);
 
     await run.wait();
 
@@ -171,7 +182,7 @@ describe("registerCursorSDKInstrumentation", () => {
       result: run,
     };
 
-    sendHandlers.start(event);
+    sendHandlers.begin(event);
     await (event.arguments[1] as any).onDelta({
       update: {
         type: "turn-ended",
@@ -183,7 +194,7 @@ describe("registerCursorSDKInstrumentation", () => {
         },
       },
     });
-    sendHandlers.asyncEnd(event);
+    sendHandlers.resolve(event);
 
     const chunks = [];
     for await (const chunk of run.stream()) {
@@ -227,12 +238,13 @@ describe("registerCursorSDKInstrumentation", () => {
     );
     const promptEvent = { arguments: ["hello", { local: { cwd: "/tmp" } }] };
 
-    promptHandlers.start(promptEvent);
-    sendHandlers.start({ arguments: ["nested", {}] });
-    promptHandlers.asyncEnd({
-      ...promptEvent,
-      result: { id: "run-1", result: "done", status: "finished" },
-    });
+    promptHandlers.begin(promptEvent);
+    sendHandlers.begin({ arguments: ["nested", {}] });
+    promptHandlers.resolve(
+      Object.assign(promptEvent, {
+        result: { id: "run-1", result: "done", status: "finished" },
+      }),
+    );
 
     expect(spans.filter((span) => span.name === "Cursor Agent")).toHaveLength(
       1,

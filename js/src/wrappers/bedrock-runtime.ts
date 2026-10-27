@@ -1,6 +1,7 @@
 import { registerInstrumentation } from "../instrumentation/registrations/awsBedrockRuntime";
+import { debugLogger } from "../debug-logger";
 import { runWithAutoInstrumentationSuppressed } from "../instrumentation/auto-instrumentation-suppression";
-import { bedrockRuntimeChannels } from "../instrumentation/providers/bedrock-runtime-channels";
+import { bedrockRuntimeChannels } from "../instrumentation/providers/bedrock-runtime-interceptors";
 import {
   buildBedrockRuntimeSpanInfo,
   getBedrockRuntimeOperation,
@@ -19,8 +20,7 @@ export function wrapBedrockRuntime<T>(client: T): T {
     return bedrockRuntimeProxy(client) as T;
   }
 
-  // eslint-disable-next-line no-restricted-properties -- preserving wrapper warning behavior.
-  console.warn("Unsupported Bedrock Runtime library. Not wrapping.");
+  debugLogger.notice.warn("Unsupported Bedrock Runtime library. Not wrapping.");
   return client;
 }
 
@@ -132,15 +132,14 @@ function wrapSend(
       return send(command, optionsOrCb, cb);
     }
 
-    return bedrockRuntimeChannels.clientSend.tracePromise(
-      () =>
+    return bedrockRuntimeChannels.clientSend.invoke(
+      (command, optionsOrCb) =>
         runWithAutoInstrumentationSuppressed(() =>
           send(command, optionsOrCb),
         ) as Promise<unknown>,
-      {
-        arguments: [command as BedrockRuntimeCommandLike, optionsOrCb],
-        span_info: buildBedrockRuntimeSpanInfo(command),
-      },
+      undefined,
+      [command as BedrockRuntimeCommandLike, optionsOrCb],
+      { span_info: buildBedrockRuntimeSpanInfo(command) },
     );
   };
 }

@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { voyageAIChannels } from "../../instrumentation/providers/voyageai-channels";
+import { voyageAIChannels } from "../../instrumentation/providers/voyageai-interceptors";
 
 const GENERATED_CLIENT_MODULES = [
   "dist/cjs/Client.js",
@@ -42,7 +42,6 @@ export const voyageAIConfigs: InstrumentationConfig[] = [
         functionQuery: {
           className: "VoyageAIClient",
           methodName,
-          kind: "Async" as const,
         },
       }),
     ),

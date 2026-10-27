@@ -1,4 +1,5 @@
 import { describe } from "vite-plus/test";
+import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -38,49 +39,45 @@ const openAICodexScenarios = await Promise.all(
 
 describe.concurrent("variants", () => {
   for (const scenario of openAICodexScenarios) {
-    describe(
-      `openai codex sdk ${scenario.version}`,
-      { concurrent: false },
-      () => {
-        defineOpenAICodexInstrumentationAssertions({
-          name: "wrapped instrumentation",
-          runScenario: async ({ runScenarioDir }) => {
-            await runScenarioDir({
-              entry: scenario.wrapperEntry,
-              env: { OPENAI_CODEX_PACKAGE_NAME: scenario.dependencyName },
-              runContext: {
-                variantKey: scenario.wrapperSnapshotName,
-                originalScenarioDir,
-              },
-              scenarioDir,
-              timeoutMs: TIMEOUT_MS,
-            });
-          },
-          snapshotName: scenario.wrapperSnapshotName,
-          testFileUrl: import.meta.url,
-          timeoutMs: TIMEOUT_MS,
-        });
+    describeVariant(`openai codex sdk ${scenario.version}`, () => {
+      defineOpenAICodexInstrumentationAssertions({
+        name: "wrapped instrumentation",
+        runScenario: async ({ runScenarioDir }) => {
+          await runScenarioDir({
+            entry: scenario.wrapperEntry,
+            env: { OPENAI_CODEX_PACKAGE_NAME: scenario.dependencyName },
+            runContext: {
+              variantKey: scenario.wrapperSnapshotName,
+              originalScenarioDir,
+            },
+            scenarioDir,
+            timeoutMs: TIMEOUT_MS,
+          });
+        },
+        snapshotName: scenario.wrapperSnapshotName,
+        testFileUrl: import.meta.url,
+        timeoutMs: TIMEOUT_MS,
+      });
 
-        defineOpenAICodexInstrumentationAssertions({
-          name: "auto-hook instrumentation",
-          runScenario: async ({ runNodeScenarioDir }) => {
-            await runNodeScenarioDir({
-              entry: scenario.autoEntry,
-              env: { OPENAI_CODEX_PACKAGE_NAME: scenario.dependencyName },
-              nodeArgs: ["--import", "braintrust/hook.mjs"],
-              runContext: {
-                variantKey: scenario.autoSnapshotName,
-                originalScenarioDir,
-              },
-              scenarioDir,
-              timeoutMs: TIMEOUT_MS,
-            });
-          },
-          snapshotName: scenario.autoSnapshotName,
-          testFileUrl: import.meta.url,
-          timeoutMs: TIMEOUT_MS,
-        });
-      },
-    );
+      defineOpenAICodexInstrumentationAssertions({
+        name: "auto-hook instrumentation",
+        runScenario: async ({ runNodeScenarioDir }) => {
+          await runNodeScenarioDir({
+            entry: scenario.autoEntry,
+            env: { OPENAI_CODEX_PACKAGE_NAME: scenario.dependencyName },
+            nodeArgs: ["--import", "braintrust/hook.mjs"],
+            runContext: {
+              variantKey: scenario.autoSnapshotName,
+              originalScenarioDir,
+            },
+            scenarioDir,
+            timeoutMs: TIMEOUT_MS,
+          });
+        },
+        snapshotName: scenario.autoSnapshotName,
+        testFileUrl: import.meta.url,
+        timeoutMs: TIMEOUT_MS,
+      });
+    });
   }
 });

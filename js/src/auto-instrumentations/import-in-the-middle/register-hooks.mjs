@@ -1,7 +1,5 @@
 import * as module from "module";
-import { createHook, supportsSyncHooks } from "./create-hook.mjs";
-
-export { supportsSyncHooks };
+import { createHook } from "./create-hook.mjs";
 
 const hook = createHook(import.meta);
 
@@ -20,8 +18,9 @@ let registered = false;
  *
  * Requires a Node.js version whose `module.registerHooks` accepts the nullish
  * CommonJS source the loader relies on: >= 22.22.3, >= 24.11.1, >= 25.1.0, or
- * >= 26.0.0 (see `supportsSyncHooks`). Use that predicate to fall back to the
- * asynchronous `module.register` loader on unsupported versions.
+ * >= 26.0.0 (see `supportsSyncHooks` in `node/apply-auto-instrumentation.ts`).
+ * Callers must fall back to the asynchronous `module.register` loader on
+ * unsupported versions.
  *
  * Braintrust's fork only intercepts modules registered through `Hook([...])`.
  * Call `Hook()` before importing the modules you want to wrap.
@@ -29,15 +28,6 @@ let registered = false;
  * @returns {void}
  */
 export function register() {
-  if (!supportsSyncHooks()) {
-    throw new Error(
-      "'import-in-the-middle' synchronous hooks require a Node.js version whose " +
-        "module.registerHooks accepts nullish CommonJS source " +
-        "(>= 22.22.3, >= 24.11.1, >= 25.1.0, or >= 26.0.0); " +
-        "see https://github.com/nodejs/node/pull/59929",
-    );
-  }
-
   if (registered) {
     process.emitWarning(
       "'import-in-the-middle' synchronous hooks have already been registered",

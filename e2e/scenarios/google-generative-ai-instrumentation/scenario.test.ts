@@ -1,4 +1,5 @@
 import { describe } from "vite-plus/test";
+import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -24,55 +25,51 @@ const scenarios = await Promise.all(
 
 describe.concurrent("variants", () => {
   for (const scenario of scenarios) {
-    describe(
-      `google generative ai sdk ${scenario.version}`,
-      { concurrent: false },
-      () => {
-        defineGoogleGenerativeAIInstrumentationAssertions({
-          name: "wrapped instrumentation",
-          runScenario: async ({ runScenarioDir }) => {
-            await runScenarioDir({
-              entry: "scenario.ts",
-              env: {
-                GOOGLE_GENERATIVE_AI_PACKAGE_NAME: scenario.dependencyName,
-                BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "true",
-              },
-              runContext: {
-                originalScenarioDir,
-                variantKey: scenario.snapshotName,
-              },
-              scenarioDir,
-              timeoutMs: TIMEOUT_MS,
-            });
-          },
-          snapshotName: scenario.snapshotName,
-          testFileUrl: import.meta.url,
-          timeoutMs: TIMEOUT_MS,
-        });
+    describeVariant(`google generative ai sdk ${scenario.version}`, () => {
+      defineGoogleGenerativeAIInstrumentationAssertions({
+        name: "wrapped instrumentation",
+        runScenario: async ({ runScenarioDir }) => {
+          await runScenarioDir({
+            entry: "scenario.ts",
+            env: {
+              BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "true",
+              GOOGLE_GENERATIVE_AI_PACKAGE_NAME: scenario.dependencyName,
+            },
+            runContext: {
+              originalScenarioDir,
+              variantKey: scenario.snapshotName,
+            },
+            scenarioDir,
+            timeoutMs: TIMEOUT_MS,
+          });
+        },
+        snapshotName: scenario.snapshotName,
+        testFileUrl: import.meta.url,
+        timeoutMs: TIMEOUT_MS,
+      });
 
-        defineGoogleGenerativeAIInstrumentationAssertions({
-          name: "auto-hook instrumentation",
-          runScenario: async ({ runNodeScenarioDir }) => {
-            await runNodeScenarioDir({
-              entry: "scenario.mjs",
-              nodeArgs: ["--import", "braintrust/hook.mjs"],
-              env: {
-                GOOGLE_GENERATIVE_AI_PACKAGE_NAME: scenario.dependencyName,
-                BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "true",
-              },
-              runContext: {
-                originalScenarioDir,
-                variantKey: scenario.snapshotName,
-              },
-              scenarioDir,
-              timeoutMs: TIMEOUT_MS,
-            });
-          },
-          snapshotName: scenario.snapshotName,
-          testFileUrl: import.meta.url,
-          timeoutMs: TIMEOUT_MS,
-        });
-      },
-    );
+      defineGoogleGenerativeAIInstrumentationAssertions({
+        name: "auto-hook instrumentation",
+        runScenario: async ({ runNodeScenarioDir }) => {
+          await runNodeScenarioDir({
+            entry: "scenario.mjs",
+            nodeArgs: ["--import", "braintrust/hook.mjs"],
+            env: {
+              GOOGLE_GENERATIVE_AI_PACKAGE_NAME: scenario.dependencyName,
+              BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "true",
+            },
+            runContext: {
+              originalScenarioDir,
+              variantKey: scenario.snapshotName,
+            },
+            scenarioDir,
+            timeoutMs: TIMEOUT_MS,
+          });
+        },
+        snapshotName: scenario.snapshotName,
+        testFileUrl: import.meta.url,
+        timeoutMs: TIMEOUT_MS,
+      });
+    });
   }
 });

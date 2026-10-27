@@ -1,5 +1,6 @@
 import { registerInstrumentation } from "../instrumentation/registrations/cohere";
-import { cohereChannels } from "../instrumentation/providers/cohere-channels";
+import { debugLogger } from "../debug-logger";
+import { cohereChannels } from "../instrumentation/providers/cohere-interceptors";
 import type {
   CohereChatRequest,
   CohereChatResponse,
@@ -21,8 +22,7 @@ export function wrapCohere<T>(cohere: T): T {
     return cohereProxy(cohere) as T;
   }
 
-  // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-  console.warn("Unsupported Cohere library. Not wrapping.");
+  debugLogger.notice.warn("Unsupported Cohere library. Not wrapping.");
   return cohere;
 }
 
@@ -97,9 +97,7 @@ function wrapChat(
   ) => Promise<CohereChatResponse>,
 ): NonNullable<CohereClient["chat"]> {
   return (request, options) =>
-    cohereChannels.chat.tracePromise(() => chat(request, options), {
-      arguments: [request],
-    } as Parameters<typeof cohereChannels.chat.tracePromise>[1]);
+    cohereChannels.chat.invoke(chat, undefined, [request, options], {});
 }
 
 function wrapChatStream(
@@ -109,9 +107,12 @@ function wrapChatStream(
   ) => Promise<CohereChatStreamResult>,
 ): NonNullable<CohereClient["chatStream"]> {
   return (request, options) =>
-    cohereChannels.chatStream.tracePromise(() => chatStream(request, options), {
-      arguments: [request],
-    } as Parameters<typeof cohereChannels.chatStream.tracePromise>[1]);
+    cohereChannels.chatStream.invoke(
+      chatStream,
+      undefined,
+      [request, options],
+      {},
+    );
 }
 
 function wrapEmbed(
@@ -121,9 +122,7 @@ function wrapEmbed(
   ) => Promise<CohereEmbedResponse>,
 ): NonNullable<CohereClient["embed"]> {
   return (request, options) =>
-    cohereChannels.embed.tracePromise(() => embed(request, options), {
-      arguments: [request],
-    });
+    cohereChannels.embed.invoke(embed, undefined, [request, options], {});
 }
 
 function wrapRerank(
@@ -133,7 +132,5 @@ function wrapRerank(
   ) => Promise<CohereRerankResponse>,
 ): NonNullable<CohereClient["rerank"]> {
   return (request, options) =>
-    cohereChannels.rerank.tracePromise(() => rerank(request, options), {
-      arguments: [request],
-    });
+    cohereChannels.rerank.invoke(rerank, undefined, [request, options], {});
 }

@@ -1,29 +1,22 @@
 import { uint8ArrayToBase64 } from "../../../util/bytes";
+import { debugLogger } from "../../debug-logger";
 import {
   getExtensionFromMediaType,
   omitMediaData,
   processInputAttachments,
 } from "../../wrappers/attachment-utils";
-import { debugLogger } from "../../debug-logger";
-import { traceStreamingChannel } from "../core/channel-tracing";
-import type {
-  ChannelMessage,
-  ErrorOf,
-  StartOf,
-} from "../core/channel-definitions";
-import type {
-  IsoChannelHandlers,
-  IsoTracingChannel,
-} from "#braintrust-platform";
+
+import { traceStreamingCall } from "../core/tracing";
+import { observeResult, runInstrumentation } from "../core/observe-result";
+
+import { SpanTypeAttribute } from "../../../util/index";
 import {
   _internalCaptureAttachmentsEnabled,
-  _internalGetGlobalState,
   Attachment,
   CAPTURE_ATTACHMENTS,
   currentSpan,
   startSpan as startBaseSpan,
   withCurrent,
-  type CurrentSpanStore,
   type Span,
   type StartSpanArgs,
 } from "../../logger/core";
@@ -31,17 +24,12 @@ import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
 } from "../../span-origin";
-import { SpanTypeAttribute } from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
-import { googleGenAIChannels } from "./google-genai-channels";
-import {
-  isAutoInstrumentationSuppressed,
-  runWithAutoInstrumentationSuppressed,
-} from "../auto-instrumentation-suppression";
 import type {
+  GoogleGenAIContent,
+  GoogleGenAIEditImageParams,
   GoogleGenAIEmbedContentParams,
   GoogleGenAIEmbedContentResponse,
-  GoogleGenAIEditImageParams,
   GoogleGenAIGenerateContentParams,
   GoogleGenAIGenerateContentResponse,
   GoogleGenAIGenerateImagesParams,
@@ -49,8 +37,6 @@ import type {
   GoogleGenAIGenerateVideosOperation,
   GoogleGenAIGenerateVideosParams,
   GoogleGenAIImage,
-  GoogleGenAIVideo,
-  GoogleGenAIContent,
   GoogleGenAIInteraction,
   GoogleGenAIInteractionContent,
   GoogleGenAIInteractionCreateParams,
@@ -58,7 +44,14 @@ import type {
   GoogleGenAIInteractionUsage,
   GoogleGenAIPart,
   GoogleGenAIUsageMetadata,
+  GoogleGenAIVideo,
 } from "../../vendor-sdk-types/google-genai";
+import {
+  isAutoInstrumentationSuppressed,
+  runWithAutoInstrumentationSuppressed,
+} from "../auto-instrumentation-suppression";
+import type { ChannelMessage, ErrorOf } from "../core/tracing-types";
+import { googleGenAIChannels } from "./google-genai-interceptors";
 
 type GenerateContentChannel = typeof googleGenAIChannels.generateContent;
 type GenerateContentStreamChannel =
@@ -132,38 +125,19 @@ class GoogleGenAIInstrumentationConsumer {
   }
 
   private subscribeToGenerateContentChannel(): void {
-    const tracingChannel =
-      googleGenAIChannels.generateContent.tracingChannel() as IsoTracingChannel<
-        ChannelMessage<GenerateContentChannel>
-      >;
+    const invocationHook = googleGenAIChannels.generateContent;
     const states = new WeakMap<object, SpanState>();
-    bindCurrentSpanStoreToStart(tracingChannel, states, (event) => {
-      const params = event.arguments[0];
-      const input = serializeGenerateContentInput(params);
-      const metadata = extractGenerateContentMetadata(params);
-      const span = startBaseSpan(
-        withSpanInstrumentationName(
-          {
-            name: "generate_content",
-            spanAttributes: {
-              type: SpanTypeAttribute.LLM,
-            },
-            event: createWrapperParityEvent({ input, metadata }),
-          },
-          INSTRUMENTATION_NAMES.GOOGLE_GENAI,
-        ),
-      );
 
-      return {
-        span,
-        startTime: getCurrentUnixTimestamp(),
-      };
-    });
-
-    const handlers: IsoChannelHandlers<ChannelMessage<GenerateContentChannel>> =
-      {
-        start: (event) => {
-          ensureSpanState(states, event, () => {
+    invocationHook.intercept((target, receiver, args, additional) => {
+      const event = {
+        ...additional,
+        arguments: args,
+        self: receiver,
+      } as ChannelMessage<GenerateContentChannel>;
+      const spanState = runInstrumentation(
+        () =>
+          states.get(event) ??
+          ((event) => {
             const params = event.arguments[0];
             const input = serializeGenerateContentInput(params);
             const metadata = extractGenerateContentMetadata(params);
@@ -184,51 +158,95 @@ class GoogleGenAIInstrumentationConsumer {
               span,
               startTime: getCurrentUnixTimestamp(),
             };
-          });
-        },
-        asyncEnd: (event) => {
-          const spanState = states.get(event as object);
-          if (!spanState) {
-            return;
-          }
+          })(event),
+      );
+      if (spanState) states.set(event, spanState);
+      const prepare = (event: ChannelMessage<GenerateContentChannel>) => {
+        ensureSpanState(states, event, () => {
+          const params = event.arguments[0];
+          const input = serializeGenerateContentInput(params);
+          const metadata = extractGenerateContentMetadata(params);
+          const span = startBaseSpan(
+            withSpanInstrumentationName(
+              {
+                name: "generate_content",
+                spanAttributes: {
+                  type: SpanTypeAttribute.LLM,
+                },
+                event: createWrapperParityEvent({ input, metadata }),
+              },
+              INSTRUMENTATION_NAMES.GOOGLE_GENAI,
+            ),
+          );
 
-          try {
-            const responseMetadata = extractResponseMetadata(event.result);
-            spanState.span.log({
-              ...(responseMetadata ? { metadata: responseMetadata } : {}),
-              metrics: cleanMetrics(
-                extractGenerateContentMetrics(
-                  event.result,
-                  spanState.startTime,
-                ),
-              ),
-              output: withCurrent(spanState.span, () =>
-                serializeGenerateContentOutput(event.result),
-              ),
-            });
-          } finally {
-            spanState.span.end();
-            states.delete(event as object);
-          }
-        },
-        error: (event) => {
-          logErrorAndEndSpan(states, event as ErrorOf<GenerateContentChannel>);
-        },
+          return {
+            span,
+            startTime: getCurrentUnixTimestamp(),
+          };
+        });
       };
+      const resolved = (event: ChannelMessage<GenerateContentChannel>) => {
+        const spanState = states.get(event as object);
+        if (!spanState) {
+          return;
+        }
 
-    tracingChannel.subscribe(handlers);
+        try {
+          const responseMetadata = extractResponseMetadata(event.result);
+          spanState.span.log({
+            ...(responseMetadata ? { metadata: responseMetadata } : {}),
+            metrics: cleanMetrics(
+              extractGenerateContentMetrics(event.result, spanState.startTime),
+            ),
+            output: withCurrent(spanState.span, () =>
+              serializeGenerateContentOutput(event.result),
+            ),
+          });
+        } finally {
+          spanState.span.end();
+          states.delete(event as object);
+        }
+      };
+      const failed = (event: ChannelMessage<GenerateContentChannel>) => {
+        logErrorAndEndSpan(states, event as ErrorOf<GenerateContentChannel>);
+      };
+      const invoke = () => {
+        runInstrumentation(() => prepare(event));
+        let result;
+        try {
+          result = Reflect.apply(target, receiver, args);
+        } catch (error) {
+          Object.assign(event, { error });
+          runInstrumentation(() => failed(event));
+          throw error;
+        }
+
+        return observeResult(
+          result,
+          (value) => {
+            Object.assign(event, { result: value });
+            resolved(event);
+          },
+          (error) => {
+            Object.assign(event, { error });
+            failed(event);
+          },
+        );
+      };
+      return spanState ? withCurrent(spanState.span, invoke) : invoke();
+    });
   }
 
   private subscribeToGenerateContentStreamChannel(): void {
-    const tracingChannel =
-      googleGenAIChannels.generateContentStream.tracingChannel() as IsoTracingChannel<
-        ChannelMessage<GenerateContentStreamChannel>
-      >;
+    const invocationHook = googleGenAIChannels.generateContentStream;
 
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<GenerateContentStreamChannel>
-    > = {
-      start: (event) => {
+    invocationHook.intercept((target, receiver, args, additional) => {
+      const event = {
+        ...additional,
+        arguments: args,
+        self: receiver,
+      } as ChannelMessage<GenerateContentStreamChannel>;
+      const prepare = (event: ChannelMessage<GenerateContentStreamChannel>) => {
         const streamEvent = event as GenerateContentStreamEvent;
         const params = event.arguments[0];
         streamEvent.googleGenAIInput = serializeGenerateContentInput(params);
@@ -236,8 +254,10 @@ class GoogleGenAIInstrumentationConsumer {
           extractGenerateContentMetadata(params);
         streamEvent.googleGenAIStartTime = getCurrentUnixTimestamp();
         streamEvent.captureAttachments = _internalCaptureAttachmentsEnabled();
-      },
-      asyncEnd: (event) => {
+      };
+      const resolved = (
+        event: ChannelMessage<GenerateContentStreamChannel>,
+      ) => {
         const streamEvent = event as GenerateContentStreamEvent;
         patchGoogleGenAIStreamingResult({
           captureAttachments: streamEvent.captureAttachments,
@@ -246,18 +266,22 @@ class GoogleGenAIInstrumentationConsumer {
           startTime: streamEvent.googleGenAIStartTime,
           result: streamEvent.result,
         });
-      },
-      error: () => {},
-    };
-
-    tracingChannel.subscribe(handlers);
+      };
+      runInstrumentation(() => prepare(event));
+      const result = Reflect.apply(target, receiver, args);
+      return observeResult(
+        result,
+        (value) => {
+          Object.assign(event, { result: value });
+          resolved(event);
+        },
+        () => {},
+      );
+    });
   }
 
   private subscribeToEmbedContentChannel(): void {
-    const tracingChannel =
-      googleGenAIChannels.embedContent.tracingChannel() as IsoTracingChannel<
-        ChannelMessage<EmbedContentChannel>
-      >;
+    const invocationHook = googleGenAIChannels.embedContent;
     const states = new WeakMap<object, SpanState>();
     const embeddingSpans = new WeakSet<Span>();
     googleGenAIChannels.httpResponseJson.intercept((target, thisArg, args) => {
@@ -287,32 +311,42 @@ class GoogleGenAIInstrumentationConsumer {
       }
       return result;
     });
-    bindCurrentSpanStoreToStart(tracingChannel, states, (event) => {
-      const params = event.arguments[0];
-      const input = serializeEmbedContentInput(params);
-      const metadata = { provider: "google", model: params.model };
-      const span = startBaseSpan(
-        withSpanInstrumentationName(
-          {
-            name: "embed_content",
-            spanAttributes: {
-              type: SpanTypeAttribute.LLM,
-            },
-            event: createWrapperParityEvent({ input, metadata }),
-          },
-          INSTRUMENTATION_NAMES.GOOGLE_GENAI,
-        ),
+
+    invocationHook.intercept((target, receiver, args, additional) => {
+      const event = {
+        ...additional,
+        arguments: args,
+        self: receiver,
+      } as ChannelMessage<EmbedContentChannel>;
+      const spanState = runInstrumentation(
+        () =>
+          states.get(event) ??
+          ((event) => {
+            const params = event.arguments[0];
+            const input = serializeEmbedContentInput(params);
+            const metadata = { provider: "google", model: params.model };
+            const span = startBaseSpan(
+              withSpanInstrumentationName(
+                {
+                  name: "embed_content",
+                  spanAttributes: {
+                    type: SpanTypeAttribute.LLM,
+                  },
+                  event: createWrapperParityEvent({ input, metadata }),
+                },
+                INSTRUMENTATION_NAMES.GOOGLE_GENAI,
+              ),
+            );
+
+            embeddingSpans.add(span);
+            return {
+              span,
+              startTime: getCurrentUnixTimestamp(),
+            };
+          })(event),
       );
-
-      embeddingSpans.add(span);
-      return {
-        span,
-        startTime: getCurrentUnixTimestamp(),
-      };
-    });
-
-    const handlers: IsoChannelHandlers<ChannelMessage<EmbedContentChannel>> = {
-      start: (event) => {
+      if (spanState) states.set(event, spanState);
+      const prepare = (event: ChannelMessage<EmbedContentChannel>) => {
         ensureSpanState(states, event, () => {
           const params = event.arguments[0];
           const input = serializeEmbedContentInput(params);
@@ -336,8 +370,8 @@ class GoogleGenAIInstrumentationConsumer {
             startTime: getCurrentUnixTimestamp(),
           };
         });
-      },
-      asyncEnd: (event) => {
+      };
+      const resolved = (event: ChannelMessage<EmbedContentChannel>) => {
         const spanState = states.get(event as object);
         if (!spanState) {
           return;
@@ -355,8 +389,8 @@ class GoogleGenAIInstrumentationConsumer {
           spanState.span.end();
           states.delete(event as object);
         }
-      },
-      error: (event) => {
+      };
+      const failed = (event: ChannelMessage<EmbedContentChannel>) => {
         const spanState = states.get(event as object);
         if (!spanState) return;
         try {
@@ -366,172 +400,194 @@ class GoogleGenAIInstrumentationConsumer {
           spanState.span.end();
           states.delete(event as object);
         }
-      },
-    };
+      };
+      const invoke = () => {
+        runInstrumentation(() => prepare(event));
+        let result;
+        try {
+          result = Reflect.apply(target, receiver, args);
+        } catch (error) {
+          Object.assign(event, { error });
+          runInstrumentation(() => failed(event));
+          throw error;
+        }
 
-    tracingChannel.subscribe(handlers);
+        return observeResult(
+          result,
+          (value) => {
+            Object.assign(event, { result: value });
+            resolved(event);
+          },
+          (error) => {
+            Object.assign(event, { error });
+            failed(event);
+          },
+        );
+      };
+      return spanState ? withCurrent(spanState.span, invoke) : invoke();
+    });
   }
 
   private subscribeToInteractionsCreateChannel(): void {
-    traceStreamingChannel(
-      googleGenAIChannels.interactionsCreate as InteractionsCreateChannel,
-      {
-        name: ([params]) =>
-          isVideoInteractionCreate(params)
-            ? "generate_video"
-            : "create_interaction",
-        shouldTrace: ([params]) => !isBackgroundInteractionCreate(params),
-        type: SpanTypeAttribute.LLM,
-        extractInput: ([params]) => ({
-          input: isVideoInteractionCreate(params)
-            ? serializeVideoInteractionInput(params)
-            : serializeInteractionInput(params),
-          metadata: isVideoInteractionCreate(params)
-            ? { model: params.model, provider: "google" }
-            : extractInteractionMetadata(params),
-        }),
-        extractOutput: (result, event) =>
-          isVideoInteractionCreate(event?.arguments?.[0]) ||
-          getInteractionVideoOutput(result).length > 0
-            ? serializeVideoInteractionOutput(result)
-            : serializeInteractionValue(result),
-        extractMetadata: (result) => extractInteractionResponseMetadata(result),
-        extractMetrics: (result, startTime) =>
-          cleanMetrics(extractInteractionMetrics(result, startTime)),
-        aggregateChunks: (chunks, _result, _event, startTime) =>
-          aggregateInteractionEvents(chunks, startTime),
-      },
+    googleGenAIChannels.interactionsCreate.intercept(
+      (target, receiver, args, additional) =>
+        traceStreamingCall<InteractionsCreateChannel>(
+          () => Reflect.apply(target, receiver, args),
+          { ...additional, arguments: args, self: receiver },
+          {
+            instrumentationName: INSTRUMENTATION_NAMES.GOOGLE_GENAI,
+            name: ([params]) =>
+              isVideoInteractionCreate(params)
+                ? "generate_video"
+                : "create_interaction",
+            shouldTrace: ([params]) => !isBackgroundInteractionCreate(params),
+            type: SpanTypeAttribute.LLM,
+            extractInput: ([params]) => ({
+              input: isVideoInteractionCreate(params)
+                ? serializeVideoInteractionInput(params)
+                : serializeInteractionInput(params),
+              metadata: isVideoInteractionCreate(params)
+                ? { model: params.model, provider: "google" }
+                : extractInteractionMetadata(params),
+            }),
+            extractOutput: (result, event) =>
+              isVideoInteractionCreate(event?.arguments?.[0]) ||
+              getInteractionVideoOutput(result).length > 0
+                ? serializeVideoInteractionOutput(result)
+                : serializeInteractionValue(result),
+            extractMetadata: (result) =>
+              extractInteractionResponseMetadata(result),
+            extractMetrics: (result, startTime) =>
+              cleanMetrics(extractInteractionMetrics(result, startTime)),
+            aggregateChunks: (chunks, _result, _event, startTime) =>
+              aggregateInteractionEvents(chunks, startTime),
+          },
+        ),
     );
   }
 
   private subscribeToGenerateImagesChannel(): void {
-    interceptGoogleGenAIMediaCall(
-      googleGenAIChannels.generateImages,
-      "generate_images",
-      serializeGenerateImagesInput,
-      serializeGenerateImagesOutput,
+    googleGenAIChannels.generateImages.intercept(
+      (target, receiver, args, additional) =>
+        traceGoogleGenAIMediaCall(
+          () => Reflect.apply(target, receiver, args),
+          { arguments: args, self: receiver, additional },
+          "generate_images",
+          serializeGenerateImagesInput,
+          serializeGenerateImagesOutput,
+        ),
     );
   }
 
   private subscribeToEditImageChannel(): void {
-    interceptGoogleGenAIMediaCall(
-      googleGenAIChannels.editImage,
-      "edit_image",
-      serializeEditImageInput,
-      serializeGenerateImagesOutput,
+    googleGenAIChannels.editImage.intercept(
+      (target, receiver, args, additional) =>
+        traceGoogleGenAIMediaCall(
+          () => Reflect.apply(target, receiver, args),
+          { arguments: args, self: receiver, additional },
+          "edit_image",
+          serializeEditImageInput,
+          serializeGenerateImagesOutput,
+        ),
     );
   }
 
   private subscribeToGenerateVideosChannel(): void {
-    interceptGoogleGenAIMediaCall(
-      googleGenAIChannels.generateVideos,
-      "generate_videos",
-      serializeGenerateVideosInput,
-      serializeGenerateVideosOutput,
+    googleGenAIChannels.generateVideos.intercept(
+      (target, receiver, args, additional) =>
+        traceGoogleGenAIMediaCall(
+          () => Reflect.apply(target, receiver, args),
+          { arguments: args, self: receiver, additional },
+          "generate_videos",
+          serializeGenerateVideosInput,
+          serializeGenerateVideosOutput,
+        ),
     );
   }
 }
 
-type GoogleGenAIMediaChannel<TParams extends { model: string }, TResult> = {
-  intercept(
-    interceptor: (
-      target: (this: unknown, params: TParams) => PromiseLike<TResult>,
-      thisArg: unknown,
-      args: [TParams],
-    ) => PromiseLike<TResult>,
-  ): () => void;
-};
-
-function interceptGoogleGenAIMediaCall<
-  TParams extends { model: string },
-  TResult,
->(
-  channel: GoogleGenAIMediaChannel<TParams, TResult>,
+function traceGoogleGenAIMediaCall<TParams extends { model: string }, TResult>(
+  call: () => PromiseLike<TResult>,
+  context: { arguments: [TParams]; self: unknown; additional: unknown },
   name: string,
   serializeInput: (params: TParams) => Record<string, unknown>,
   serializeOutput: (
     response: TResult,
     params: TParams,
   ) => Record<string, unknown>,
-): () => void {
-  return channel.intercept((target, thisArg, args) => {
-    const invoke = () => Reflect.apply(target, thisArg, args);
-    if (isAutoInstrumentationSuppressed()) {
-      return invoke();
-    }
+): PromiseLike<TResult> {
+  const args = context.arguments;
 
-    const [params] = args;
-    let span: Span;
+  if (isAutoInstrumentationSuppressed()) {
+    return call();
+  }
+  const [params] = args;
+  let span: Span;
+  try {
+    span = startBaseSpan(
+      withSpanInstrumentationName(
+        {
+          name,
+          spanAttributes: { type: SpanTypeAttribute.LLM },
+          event: createWrapperParityEvent({
+            input: serializeInput(params),
+            metadata: { model: params.model, provider: "google" },
+          }),
+        },
+        INSTRUMENTATION_NAMES.GOOGLE_GENAI,
+      ),
+    );
+  } catch (error) {
+    debugLogger.error(`Error starting Google GenAI ${name} span:`, error);
+    return call();
+  }
+  let ended = false;
+  const finish = (error?: unknown) => {
+    if (ended) {
+      return;
+    }
+    ended = true;
     try {
-      span = startBaseSpan(
-        withSpanInstrumentationName(
-          {
-            name,
-            spanAttributes: { type: SpanTypeAttribute.LLM },
-            event: createWrapperParityEvent({
-              input: serializeInput(params),
-              metadata: { model: params.model, provider: "google" },
-            }),
-          },
-          INSTRUMENTATION_NAMES.GOOGLE_GENAI,
-        ),
-      );
-    } catch (error) {
-      debugLogger.error(`Error starting Google GenAI ${name} span:`, error);
-      return invoke();
-    }
-
-    let ended = false;
-    const finish = (error?: unknown) => {
-      if (ended) {
-        return;
+      if (error !== undefined) {
+        span.log({ error });
       }
-      ended = true;
+      span.end();
+    } catch (loggingError) {
+      debugLogger.error(
+        `Error ending Google GenAI ${name} span:`,
+        loggingError,
+      );
+    }
+  };
+  let result: PromiseLike<TResult>;
+  try {
+    result = withCurrent(span, () =>
+      runWithAutoInstrumentationSuppressed(call),
+    );
+  } catch (error) {
+    finish(error);
+    throw error;
+  }
+  try {
+    void Promise.resolve(result).then((response) => {
       try {
-        if (error !== undefined) {
-          span.log({ error });
-        }
-        span.end();
-      } catch (loggingError) {
+        span.log({
+          output: withCurrent(span, () => serializeOutput(response, params)),
+        });
+      } catch (error) {
         debugLogger.error(
-          `Error ending Google GenAI ${name} span:`,
-          loggingError,
+          `Error capturing Google GenAI ${name} output:`,
+          error,
         );
+      } finally {
+        finish();
       }
-    };
-
-    let result: PromiseLike<TResult>;
-    try {
-      result = withCurrent(span, () =>
-        runWithAutoInstrumentationSuppressed(invoke),
-      );
-    } catch (error) {
-      finish(error);
-      throw error;
-    }
-
-    try {
-      void Promise.resolve(result).then((response) => {
-        try {
-          span.log({
-            output: withCurrent(span, () => serializeOutput(response, params)),
-          });
-        } catch (error) {
-          debugLogger.error(
-            `Error capturing Google GenAI ${name} output:`,
-            error,
-          );
-        } finally {
-          finish();
-        }
-      }, finish);
-    } catch (error) {
-      debugLogger.error(`Error observing Google GenAI ${name} result:`, error);
-      finish();
-    }
-
-    return result;
-  });
+    }, finish);
+  } catch (error) {
+    debugLogger.error(`Error observing Google GenAI ${name} result:`, error);
+    finish();
+  }
+  return result;
 }
 
 function isBackgroundInteractionCreate(params: unknown): boolean {
@@ -551,37 +607,6 @@ function ensureSpanState<TEvent extends object>(
   const created = create();
   states.set(event, created);
   return created;
-}
-
-function bindCurrentSpanStoreToStart<
-  TChannel extends GoogleGenAINonStreamingChannel,
->(
-  tracingChannel: IsoTracingChannel<ChannelMessage<TChannel>>,
-  states: WeakMap<object, SpanState>,
-  create: (event: StartOf<TChannel>) => SpanState,
-): void {
-  const state = _internalGetGlobalState();
-  const contextManager = state?.contextManager;
-  const startChannel = tracingChannel.start as
-    | ({
-        bindStore?: (
-          store: CurrentSpanStore,
-          callback: (event: ChannelMessage<TChannel>) => unknown,
-        ) => void;
-      } & object)
-    | undefined;
-  const currentSpanStore = contextManager?.getCurrentSpanStore();
-
-  if (!startChannel?.bindStore || !currentSpanStore) {
-    return;
-  }
-
-  startChannel.bindStore(currentSpanStore, (event) => {
-    const span = ensureSpanState(states, event as object, () =>
-      create(event as StartOf<TChannel>),
-    ).span;
-    return contextManager!.wrapSpanForStore(span);
-  });
 }
 
 function logErrorAndEndSpan<TChannel extends GoogleGenAINonStreamingChannel>(

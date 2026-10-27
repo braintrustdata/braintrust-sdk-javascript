@@ -1,5 +1,6 @@
 import { registerInstrumentation } from "../instrumentation/registrations/anthropic";
-import { anthropicChannels } from "../instrumentation/providers/anthropic-channels";
+import { debugLogger } from "../debug-logger";
+import { anthropicChannels } from "../instrumentation/providers/anthropic-interceptors";
 import { TypedApplyProxy } from "../typed-instrumentation-helpers";
 import type {
   AnthropicBeta,
@@ -40,8 +41,7 @@ export function wrapAnthropic<T extends object>(anthropic: T): T {
     return anthropicProxy(au as AnthropicClient) as T;
   }
 
-  // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-  console.warn("Unsupported Anthropic library. Not wrapping.");
+  debugLogger.notice.warn("Unsupported Anthropic library. Not wrapping.");
   return anthropic;
 }
 
@@ -111,9 +111,11 @@ function betaSessionEventsProxy(
       if (prop === "stream") {
         return new TypedApplyProxy(target.stream, {
           apply(stream, thisArg, argArray) {
-            return anthropicChannels.betaSessionsEventsStream.tracePromise(
-              () => Reflect.apply(stream, thisArg, argArray),
-              { arguments: argArray },
+            return anthropicChannels.betaSessionsEventsStream.invoke(
+              stream,
+              thisArg,
+              argArray,
+              {},
             );
           },
         });
@@ -146,9 +148,11 @@ function betaSessionThreadEventsProxy(
       if (prop === "stream") {
         return new TypedApplyProxy(target.stream, {
           apply(stream, thisArg, argArray) {
-            return anthropicChannels.betaSessionsThreadsEventsStream.tracePromise(
-              () => Reflect.apply(stream, thisArg, argArray),
-              { arguments: argArray },
+            return anthropicChannels.betaSessionsThreadsEventsStream.invoke(
+              stream,
+              thisArg,
+              argArray,
+              {},
             );
           },
         });
@@ -210,12 +214,7 @@ function createProxy(
 ) {
   return new TypedApplyProxy(create, {
     apply(target, thisArg, argArray) {
-      return channel.tracePromise(
-        () => Reflect.apply(target, thisArg, argArray),
-        {
-          arguments: argArray,
-        },
-      );
+      return channel.invoke(target, thisArg, argArray, {});
     },
   });
 }
@@ -240,12 +239,7 @@ function toolRunnerProxy(
             })
           : { _client: anthropic };
 
-      return channel.traceSync(
-        () => Reflect.apply(target, invocationTarget, argArray),
-        {
-          arguments: argArray,
-        },
-      );
+      return channel.invoke(target, invocationTarget, argArray, {});
     },
   });
 }

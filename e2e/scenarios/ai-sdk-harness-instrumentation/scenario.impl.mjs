@@ -36,6 +36,13 @@ export async function runHarnessAgentScenario(HarnessAgent) {
     harness: createCodex({
       model: process.env.AI_SDK_HARNESS_CODEX_E2E_MODEL ?? "gpt-5.4-mini",
       reasoningEffort: "low",
+      // Keep ambient Gateway credentials from bypassing the replay transport.
+      auth: {
+        openai: {
+          apiKey: process.env.OPENAI_API_KEY,
+          baseUrl: process.env.OPENAI_BASE_URL,
+        },
+      },
       webSearch: false,
     }),
     permissionMode: "allow-all",

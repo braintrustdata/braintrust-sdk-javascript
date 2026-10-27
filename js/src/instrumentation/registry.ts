@@ -1,3 +1,4 @@
+import { debugLogger } from "../debug-logger";
 import iso from "#braintrust-platform";
 import {
   readDisabledInstrumentationEnvConfig,
@@ -34,11 +35,20 @@ class InstrumentationRegistry {
     const state = getRegistryState();
     if (state.registered.size > 0) {
       // eslint-disable-next-line no-restricted-properties -- intentional configuration diagnostic.
-      console.warn(
+      debugLogger.notice.warn(
         "Braintrust: Cannot configure instrumentation after it has been enabled. " +
           "Call configureInstrumentation() before registering instrumentation or wrapping an AI SDK.",
       );
       return;
+    }
+    if (
+      config.streamingAttachmentBufferBytes !== undefined &&
+      (!Number.isSafeInteger(config.streamingAttachmentBufferBytes) ||
+        config.streamingAttachmentBufferBytes <= 0)
+    ) {
+      throw new Error(
+        "streamingAttachmentBufferBytes must be a positive safe integer",
+      );
     }
     if ("spanCustomizers" in config) {
       setSpanCustomizers(config.spanCustomizers);
@@ -52,7 +62,10 @@ class InstrumentationRegistry {
 
   register(
     provider: Provider,
-    subscribe: (integrations: InstrumentationIntegrationsConfig) => void,
+    subscribe: (
+      integrations: InstrumentationIntegrationsConfig,
+      config: InstrumentationConfig,
+    ) => void,
   ): void {
     const state = getRegistryState();
     if (state.registered.has(provider)) return;
@@ -71,7 +84,7 @@ class InstrumentationRegistry {
     installGlobalHookErrorReporter();
     // Stamp before subscribing, so reentrant setup cannot install twice.
     state.registered.add(provider);
-    subscribe(integrations);
+    subscribe(integrations, state.config);
   }
 
   isRegistered(provider: Provider): boolean {

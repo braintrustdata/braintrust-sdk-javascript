@@ -1,5 +1,5 @@
 import { registerInstrumentation } from "../instrumentation/registrations/googleGenerativeAI";
-import { googleGenerativeAIChannels } from "../instrumentation/providers/google-generative-ai-channels";
+import { googleGenerativeAIChannels } from "../instrumentation/providers/google-generative-ai-interceptors";
 import { isObject } from "../util";
 import type {
   GenerativeAIClient,

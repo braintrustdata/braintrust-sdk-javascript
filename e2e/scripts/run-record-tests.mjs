@@ -2,9 +2,10 @@
 
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
-import { mkdir, mkdtemp, readFile, readdir, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, rm } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { auditCassettes } from "./cassette-audit.mjs";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const E2E_DIR = path.resolve(SCRIPT_DIR, "..");
@@ -55,20 +56,27 @@ if (shouldBuildDeps) {
   }
 }
 
-await mkdir(TMP_ROOT, { recursive: true });
-const runContextDir = await mkdtemp(path.join(TMP_ROOT, "record-context-"));
+const contextParent = process.env[RUN_CONTEXT_DIR_ENV];
+await mkdir(contextParent || TMP_ROOT, { recursive: true });
+const runContextDir = await mkdtemp(
+  path.join(contextParent || TMP_ROOT, "record-context-"),
+);
 
 const result = await runVitest(scenarioNames, runContextDir);
 
 try {
   if (result.code === 0) {
-    await cleanupStaleCassettes(
-      scenarioNames,
-      await readRunContextRecords(runContextDir),
-    );
+    await auditCassettes({
+      e2eDir: E2E_DIR,
+      runContextDir,
+      reportPath: path.join(runContextDir, "results.json"),
+      clean: true,
+    });
   }
 } finally {
-  await rm(runContextDir, { recursive: true, force: true });
+  if (!contextParent) {
+    await rm(runContextDir, { recursive: true, force: true });
+  }
 }
 
 if (result.signal) {
@@ -79,123 +87,6 @@ process.exit(result.code ?? 1);
 
 function scenarioTestPath(scenarioName) {
   return path.join(E2E_DIR, "scenarios", scenarioName, "scenario.test.ts");
-}
-
-async function readRunContextRecords(dir) {
-  let entries;
-  try {
-    entries = await readdir(dir, { withFileTypes: true });
-  } catch (err) {
-    if (err.code === "ENOENT") {
-      return [];
-    }
-    throw err;
-  }
-
-  const records = [];
-  for (const entry of entries) {
-    if (
-      !entry.isFile() ||
-      !entry.name.startsWith("run-context-") ||
-      !entry.name.endsWith(".ndjson")
-    ) {
-      continue;
-    }
-
-    const raw = await readFile(path.join(dir, entry.name), "utf8");
-    for (const line of raw.split("\n")) {
-      if (!line.trim()) {
-        continue;
-      }
-      try {
-        const record = JSON.parse(line);
-        if (record && typeof record === "object") {
-          records.push(record);
-        }
-      } catch {
-        console.error(
-          `[record] Ignoring malformed run-context line in ${entry.name}.`,
-        );
-      }
-    }
-  }
-  return records;
-}
-
-async function cleanupStaleCassettes(scenarioNames, records) {
-  const { createJsonFileStore } = await import("@braintrust/seinfeld");
-  const variantsByScenario = new Map();
-  for (const record of records) {
-    if (
-      typeof record.scenarioDirName !== "string" ||
-      typeof record.variantKey !== "string" ||
-      !record.variantKey.trim()
-    ) {
-      continue;
-    }
-
-    const variants =
-      variantsByScenario.get(record.scenarioDirName) ?? new Set();
-    variants.add(record.variantKey);
-    variantsByScenario.set(record.scenarioDirName, variants);
-  }
-
-  const cleanupScenarioNames =
-    scenarioNames.length > 0 ? scenarioNames : [...variantsByScenario.keys()];
-
-  for (const scenarioName of cleanupScenarioNames) {
-    const cassetteDir = path.join(
-      E2E_DIR,
-      "scenarios",
-      scenarioName,
-      "__cassettes__",
-    );
-    const variantsToKeep = variantsByScenario.get(scenarioName);
-    if (!variantsToKeep || variantsToKeep.size === 0) {
-      continue;
-    }
-
-    const variantKeys = await cassetteArtifactVariantKeys(cassetteDir);
-    const store = createJsonFileStore({ rootDir: cassetteDir });
-
-    let removedCount = 0;
-    for (const variantKey of variantKeys) {
-      if (variantsToKeep.has(variantKey)) {
-        continue;
-      }
-
-      await store.delete(variantKey);
-      removedCount++;
-    }
-
-    if (removedCount > 0) {
-      console.error(
-        `[record] Removed ${removedCount} stale cassette artifact(s) in ${scenarioName}.`,
-      );
-    }
-  }
-}
-
-async function cassetteArtifactVariantKeys(cassetteDir) {
-  let entries;
-  try {
-    entries = await readdir(cassetteDir, { withFileTypes: true });
-  } catch (err) {
-    if (err.code === "ENOENT") {
-      return [];
-    }
-    throw err;
-  }
-
-  const variantKeys = new Set();
-  for (const entry of entries) {
-    if (entry.isFile() && entry.name.endsWith(".cassette.json")) {
-      variantKeys.add(entry.name.slice(0, -".cassette.json".length));
-    } else if (entry.isDirectory() && entry.name.endsWith(".cassette.blobs")) {
-      variantKeys.add(entry.name.slice(0, -".cassette.blobs".length));
-    }
-  }
-  return [...variantKeys].sort();
 }
 
 async function runVitest(scenarioNames, runContextDir) {
@@ -219,6 +110,11 @@ async function runVitest(scenarioNames, runContextDir) {
           ...(await defaultScenarioTestPaths()),
           "--update",
         ];
+  vitestArgs.push(
+    "--reporter=default",
+    "--reporter=json",
+    `--outputFile=${path.join(runContextDir, "results.json")}`,
+  );
 
   return await runProcess(VITEST_COMMAND, ["test", ...vitestArgs], {
     cwd: E2E_DIR,

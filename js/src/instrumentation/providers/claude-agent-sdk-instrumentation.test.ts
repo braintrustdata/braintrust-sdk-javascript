@@ -1,14 +1,21 @@
-import {
-  describe,
-  it,
-  expect,
-  vi,
-  beforeEach,
-  afterEach,
-} from "vite-plus/test";
 import { AsyncLocalStorage } from "node:async_hooks";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vite-plus/test";
+import { newGlobalInvocationHook } from "../../global-instrumentation-hooks";
+vi.mock("../../global-instrumentation-hooks", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("../../global-instrumentation-hooks")
+  >()),
+  newGlobalInvocationHook: vi.fn(),
+}));
 
-// Mock iso's newTracingChannel - must be before any imports that use it
+// Mock platform context independently of invocation hooks.
 const streamPatcherMock = vi.hoisted(() => ({
   options: undefined as
     | {
@@ -21,7 +28,6 @@ const streamPatcherMock = vi.hoisted(() => ({
 vi.mock("#braintrust-platform", () => ({
   default: {
     newAsyncLocalStorage: <T>() => new AsyncLocalStorage<T>(),
-    newTracingChannel: vi.fn(),
   },
 }));
 
@@ -40,10 +46,11 @@ vi.mock("../core/stream-patcher", () => ({
 }));
 
 import { registerClaudeAgentSDKInstrumentation } from "./claude-agent-sdk-instrumentation";
-import iso from "#braintrust-platform";
 import { _internalStartSpan as startSpan } from "../../logger/core";
 
-const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
+const mockNewInvocationHook = newGlobalInvocationHook as ReturnType<
+  typeof vi.fn
+>;
 
 // Mock the logger module
 vi.mock("../../logger/core", () => {
@@ -100,7 +107,7 @@ describe("registerClaudeAgentSDKInstrumentation", () => {
       hasSubscribers: false,
     };
 
-    mockNewTracingChannel.mockReturnValue(mockChannel);
+    mockNewInvocationHook.mockReturnValue(mockChannel);
   });
 
   afterEach(() => {
@@ -111,7 +118,7 @@ describe("registerClaudeAgentSDKInstrumentation", () => {
     it("subscribes to the channel", () => {
       registerClaudeAgentSDKInstrumentation();
 
-      expect(mockNewTracingChannel).toHaveBeenCalledWith(
+      expect(mockNewInvocationHook).toHaveBeenCalledWith(
         "orchestrion:@anthropic-ai/claude-agent-sdk:query",
       );
       expect(mockChannel.intercept).toHaveBeenCalledTimes(1);

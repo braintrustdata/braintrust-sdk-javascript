@@ -1,17 +1,18 @@
 import { registerInstrumentation } from "../instrumentation/registrations/openai";
+import { debugLogger } from "../debug-logger";
 import type {
   OpenAIMediaClient,
   OpenAIMediaMethod,
   OpenAIMediaParams,
 } from "../vendor-sdk-types/openai-media";
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import type { ArgsOf } from "../instrumentation/core/interceptor-definitions";
+import type { ResultOf } from "../instrumentation/core/tracing-types";
+import { openAIChannels } from "../instrumentation/providers/openai-interceptors";
 import type { CompiledPrompt } from "../logger/prompts";
 import { responsesProxy } from "./oai_responses";
-import type {
-  ArgsOf,
-  ResultOf,
-} from "../instrumentation/core/channel-definitions";
-import { openAIChannels } from "../instrumentation/providers/openai-channels";
+
+import type { OpenAIDecisionCreateParams } from "../vendor-sdk-types/openai-decisions";
 import type {
   OpenAIChatCompletion,
   OpenAIChatCreateParams,
@@ -22,16 +23,17 @@ import type {
   OpenAIModerationCreateParams,
   OpenAIModerationResponse,
 } from "../vendor-sdk-types/openai";
+import { OpenAIV4Client } from "../vendor-sdk-types/openai-v4";
+
 import {
   APIPromise,
   createChannelContext,
   createLazyAPIPromise,
   EnhancedResponse,
   splitSpanInfo,
-  tracePromiseAsResponse,
-  tracePromiseWithResponse,
+  invokeAsResponse,
+  invokeWithResponse,
 } from "./openai-promise-utils";
-import { OpenAIV4Client } from "../vendor-sdk-types/openai-v4";
 
 declare global {
   var __inherited_braintrust_wrap_openai: ((openai: any) => any) | undefined;
@@ -42,7 +44,7 @@ declare global {
  * not configured, nothing will be traced. If this is not an `OpenAI` object, this function is
  * a no-op.
  *
- * Currently, this supports the `v4`, `v5`, and `v6` API.
+ * Currently, this supports the `v4`, `v5`, `v6`, and `v7` API.
  *
  * @param openai
  * @returns The wrapped `OpenAI` object.
@@ -66,8 +68,9 @@ export function wrapOpenAI<T extends object>(openai: T): T {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return wrapOpenAIv4(typedOpenAI) as T;
   } else {
-    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    console.warn("Unsupported OpenAI library (potentially v3). Not wrapping.");
+    debugLogger.notice.warn(
+      "Unsupported OpenAI library (potentially v3). Not wrapping.",
+    );
     return openai;
   }
 }
@@ -115,6 +118,34 @@ function wrapOpenAIv4<T extends OpenAILike>(openai: T): T {
     OpenAIModerationCreateParams,
     OpenAIModerationResponse
   >(typedOpenai.moderations, wrapModerations);
+  const decisionsProxy =
+    typedOpenai.decisions &&
+    new Proxy(typedOpenai.decisions, {
+      get(target, key) {
+        const value = Reflect.get(target, key, target);
+        if (key === "create") {
+          return (
+            allParams: OpenAIDecisionCreateParams & SpanInfo,
+            options?: unknown,
+          ) => {
+            const { span_info, params } =
+              "span_info" in allParams
+                ? splitSpanInfo<
+                    OpenAIDecisionCreateParams,
+                    SpanInfo["span_info"]
+                  >(allParams)
+                : { params: allParams, span_info: undefined };
+            return openAIChannels.decisionsCreate.invoke(
+              value,
+              target,
+              [params, options],
+              { span_info },
+            );
+          };
+        }
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
   let betaProxy: OpenAIClient["beta"];
   if (typedOpenai.beta?.chat?.completions?.stream) {
     const betaChatCompletionProxy = new Proxy(
@@ -207,6 +238,8 @@ function wrapOpenAIv4<T extends OpenAILike>(openai: T): T {
   const topLevelProxy = new Proxy(typedOpenai, {
     get(target, name) {
       switch (name) {
+        case "decisions":
+          return decisionsProxy;
         case "images":
           return imagesProxy;
         case "audio":
@@ -276,9 +309,11 @@ function wrapBetaChatCompletionParse<
     const { span_info, params } = splitSpanInfo<P, SpanInfo["span_info"]>(
       allParams,
     );
-    return openAIChannels.betaChatCompletionsParse.tracePromise(
-      async () => await completion(params),
-      { arguments: [params], span_info },
+    return openAIChannels.betaChatCompletionsParse.invoke(
+      completion,
+      undefined,
+      [params],
+      { span_info },
     );
   };
 }
@@ -290,9 +325,11 @@ function wrapBetaChatCompletionStream<P extends OpenAIChatCreateParams, C>(
     const { span_info, params } = splitSpanInfo<P, SpanInfo["span_info"]>(
       allParams,
     );
-    return openAIChannels.betaChatCompletionsStream.traceSync(
-      () => completion(params),
-      { arguments: [params], span_info },
+    return openAIChannels.betaChatCompletionsStream.invoke(
+      completion,
+      undefined,
+      [params],
+      { span_info },
     );
   };
 }
@@ -331,12 +368,11 @@ function wrapChatCompletion<
             const completionPromise =
               // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
               getAPIPromise() as APIPromise<OpenAIChatStream>;
-            const { data, response, request_id } =
-              await tracePromiseWithResponse(
-                openAIChannels.chatCompletionsCreate,
-                traceContext,
-                completionPromise,
-              );
+            const { data, response, request_id } = await invokeWithResponse(
+              openAIChannels.chatCompletionsCreate,
+              traceContext,
+              completionPromise,
+            );
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             return { data: data as C, response, request_id };
           }
@@ -344,7 +380,7 @@ function wrapChatCompletion<
           const completionResponse =
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             getAPIPromise() as APIPromise<OpenAIChatCompletion>;
-          const { data, response, request_id } = await tracePromiseWithResponse(
+          const { data, response, request_id } = await invokeWithResponse(
             openAIChannels.chatCompletionsCreate,
             traceContext,
             completionResponse,
@@ -359,7 +395,7 @@ function wrapChatCompletion<
     return createLazyAPIPromise(
       ensureExecuted,
       () =>
-        tracePromiseAsResponse(
+        invokeAsResponse(
           openAIChannels.chatCompletionsCreate,
           createChannelContext(
             openAIChannels.chatCompletionsCreate,
@@ -421,11 +457,7 @@ function wrapApiCreateWithChannel<
       if (!executionPromise) {
         executionPromise = (async () => {
           const traceContext = createChannelContext(channel, params, span_info);
-          return tracePromiseWithResponse(
-            channel,
-            traceContext,
-            getAPIPromise(),
-          );
+          return invokeWithResponse(channel, traceContext, getAPIPromise());
         })();
       }
       return executionPromise;
@@ -433,7 +465,7 @@ function wrapApiCreateWithChannel<
     return createLazyAPIPromise(
       ensureExecuted,
       () =>
-        tracePromiseAsResponse(
+        invokeAsResponse(
           channel,
           createChannelContext(channel, params, span_info),
           getAPIPromise(),

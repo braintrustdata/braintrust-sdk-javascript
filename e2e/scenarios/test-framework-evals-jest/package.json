@@ -18,9 +18,10 @@
   },
   "pnpm": {
     "overrides": {
-      "brace-expansion@<1.1.17": "^1.1.17",
+      "brace-expansion@<1.1.17": "1.1.21",
       "js-yaml@3": "^3.15.1",
-      "js-yaml@4": "^4.3.1"
+      "js-yaml@4": "^4.3.1",
+      "brace-expansion@>=1.0.0 <1.1.21": "1.1.21"
     }
   }
 }

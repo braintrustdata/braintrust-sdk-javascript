@@ -307,8 +307,14 @@ export function defineCursorSDKInstrumentationAssertions(options: {
       }
     });
 
-    test("matches the shared span tree snapshot", testConfig, async () => {
-      await matchSpanTreeSnapshot(events, snapshotPath);
-    });
+    test(
+      "matches the shared span tree snapshot",
+      testConfig,
+      async ({ expect }) => {
+        await matchSpanTreeSnapshot(events, snapshotPath, {
+          snapshotExpect: expect,
+        });
+      },
+    );
   });
 }

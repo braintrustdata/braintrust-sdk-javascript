@@ -357,7 +357,7 @@ describe("Flue instrumentation", () => {
           estimated_cost: 0.01,
           prompt_cache_creation_tokens: 2,
           prompt_cached_tokens: 1,
-          prompt_tokens: 3,
+          prompt_tokens: 6,
           tokens: 10,
         }),
         output: {
@@ -382,7 +382,7 @@ describe("Flue instrumentation", () => {
     );
     expect(operationSpan?.log).not.toHaveBeenCalledWith(
       expect.objectContaining({
-        metrics: expect.objectContaining({ prompt_tokens: 3 }),
+        metrics: expect.objectContaining({ prompt_tokens: 6 }),
       }),
     );
     expect(workflowSpan?.end).toHaveBeenCalledWith({
@@ -820,7 +820,7 @@ describe("Flue instrumentation", () => {
       expect.objectContaining({
         metrics: expect.objectContaining({
           completion_tokens: 4,
-          prompt_tokens: 3,
+          prompt_tokens: 6,
           tokens: 10,
         }),
         output: "PROMPT_DONE",

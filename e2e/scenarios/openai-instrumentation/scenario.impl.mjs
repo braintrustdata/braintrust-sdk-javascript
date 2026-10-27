@@ -9,10 +9,12 @@ import {
 } from "../../helpers/provider-runtime.mjs";
 import {
   completeOpenAIBatchTrace,
+  flush,
   currentSpan,
   openaiBatchesRetrieveTraced,
   openaiFilesCreateTraced,
 } from "braintrust";
+import "./configure.mjs";
 import { once } from "node:events";
 import { Writable } from "node:stream";
 
@@ -534,7 +536,7 @@ export async function runOpenAIInstrumentationScenario(options) {
               typeof client.buildRequest !== "function"
             ) {
               throw new Error(
-                "Expected wrapped OpenAI v6 client to expose buildURL and buildRequest",
+                "Expected wrapped OpenAI client to expose buildURL and buildRequest",
               );
             }
 
@@ -962,6 +964,149 @@ export async function runOpenAIInstrumentationScenario(options) {
           });
         },
       );
+
+      if (client.decisions) {
+        await runOperation(
+          "openai-decisions-operation",
+          "decisions",
+          async () => {
+            const promise = client.decisions.create({
+              model: "gpt-6-luna",
+              input:
+                "I was charged twice. Please refund the duplicate charge today.",
+              questions: [
+                {
+                  name: "duplicate",
+                  type: "predicate",
+                  instructions: "Does the customer report a duplicate charge?",
+                },
+                {
+                  name: "category",
+                  type: "choice",
+                  instructions: "Which team should handle this?",
+                  choices: [
+                    { value: "billing", description: "Payments and refunds" },
+                    { value: "technical", description: "Technical issues" },
+                  ],
+                },
+                {
+                  name: "urgency",
+                  type: "score",
+                  instructions: "How urgent is this request?",
+                  levels: [
+                    { label: "routine", description: "Can wait" },
+                    { label: "urgent", description: "Needs attention today" },
+                  ],
+                },
+              ],
+            });
+            const { data, response, request_id } = await promise.withResponse();
+            if (
+              data.answers.length !== 3 ||
+              !response.ok ||
+              !request_id ||
+              (await promise) !== data
+            )
+              throw new Error("Decision APIPromise helpers changed");
+          },
+        );
+        await runOperation(
+          "openai-decisions-raw-operation",
+          "decisions-raw",
+          async () => {
+            const response = await client.decisions
+              .create({
+                model: "gpt-6-luna",
+                input: [
+                  {
+                    role: "user",
+                    content: [
+                      {
+                        type: "input_text",
+                        text: "The package arrived intact and on time.",
+                      },
+                    ],
+                  },
+                ],
+                questions: [
+                  {
+                    type: "predicate",
+                    instructions: "Is this feedback positive?",
+                  },
+                ],
+              })
+              .asResponse();
+            if (response.bodyUsed)
+              throw new Error("Instrumentation consumed the raw body");
+            const data = await response.json();
+            if (data.answers[0].type !== "predicate")
+              throw new Error("Unexpected raw decision answer");
+          },
+        );
+        for (const mode of ["images", "images-redacted", "images-disabled"]) {
+          await flush();
+          process.env.BRAINTRUST_E2E_REDACT_DECISION_IMAGES = String(
+            mode === "images-redacted",
+          );
+          try {
+            await runOperation(
+              `openai-decisions-${mode}-operation`,
+              `decisions-${mode}`,
+              async () => {
+                const request = {
+                  model: "gpt-6-luna",
+                  input: [
+                    {
+                      role: "user",
+                      content: [
+                        {
+                          type: "input_text",
+                          text: "Compare these two images.",
+                        },
+                        {
+                          type: "input_image",
+                          image_url: `data:image/png;base64,${MINIMAL_PNG_BASE64}`,
+                        },
+                        {
+                          type: "input_text",
+                          text: "Here is the second image.",
+                        },
+                        {
+                          type: "input_image",
+                          image_url: `data:image/png;base64,${MINIMAL_PNG_BASE64}`,
+                        },
+                      ],
+                    },
+                  ],
+                  questions: [
+                    {
+                      name: "same",
+                      type: "predicate",
+                      instructions: "Do the two images look the same?",
+                    },
+                  ],
+                };
+                const before = JSON.stringify(request);
+                const promise = client.decisions.create(request);
+                const { data } = await promise.withResponse();
+                if (
+                  (await promise) !== data ||
+                  JSON.stringify(request) !== before
+                )
+                  throw new Error(
+                    "Decision image request or response identity changed",
+                  );
+                if (data.answers[0].name !== "same")
+                  throw new Error("Decision image answer association changed");
+              },
+              { autoCaptureAttachments: mode !== "images-disabled" },
+            );
+            await flush();
+          } finally {
+            delete process.env.BRAINTRUST_E2E_REDACT_DECISION_IMAGES;
+          }
+        }
+      }
 
       await runOperation(
         "openai-responses-operation",

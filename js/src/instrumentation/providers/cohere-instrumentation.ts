@@ -1,11 +1,6 @@
-import {
-  traceAsyncChannel,
-  traceStreamingChannel,
-} from "../core/channel-tracing";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
-import { processInputAttachments } from "../../wrappers/attachment-utils";
+import { INSTRUMENTATION_NAMES } from "../../span-origin";
 import { getCurrentUnixTimestamp } from "../../util";
-import { cohereChannels } from "./cohere-channels";
 import type {
   CohereChatResponse,
   CohereChatStreamEvent,
@@ -13,6 +8,10 @@ import type {
   CohereToolCall,
   CohereUsageLike,
 } from "../../vendor-sdk-types/cohere";
+import { processInputAttachments } from "../../wrappers/attachment-utils";
+
+import { traceAsyncCall, traceStreamingCall } from "../core/tracing";
+import { cohereChannels } from "./cohere-interceptors";
 
 class CohereInstrumentationConsumer {
   public register(): void {
@@ -20,61 +19,90 @@ class CohereInstrumentationConsumer {
   }
 
   private subscribeToCohereChannels(): void {
-    traceStreamingChannel(cohereChannels.chat, {
-      name: "cohere.chat",
-      type: SpanTypeAttribute.LLM,
-      extractInput: extractChatInputWithMetadata,
-      extractOutput: (result) => extractCohereChatOutput(result),
-      extractMetadata: (result) => extractCohereResponseMetadata(result),
-      extractMetrics: (result, startTime) => {
-        const metrics = parseCohereMetricsFromUsage(result);
-        if (startTime) {
-          metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
-        }
-        return metrics;
-      },
-    });
+    cohereChannels.chat.intercept((target, receiver, args, additional) =>
+      traceStreamingCall<typeof cohereChannels.chat>(
+        () => Reflect.apply(target, receiver, args),
+        { ...additional, arguments: args, self: receiver },
+        {
+          instrumentationName: INSTRUMENTATION_NAMES.COHERE,
+          name: "cohere.chat",
+          type: SpanTypeAttribute.LLM,
+          extractInput: extractChatInputWithMetadata,
+          extractOutput: (result) => extractCohereChatOutput(result),
+          extractMetadata: (result) => extractCohereResponseMetadata(result),
+          extractMetrics: (result, startTime) => {
+            const metrics = parseCohereMetricsFromUsage(result);
+            if (startTime) {
+              metrics.time_to_first_token =
+                getCurrentUnixTimestamp() - startTime;
+            }
+            return metrics;
+          },
+        },
+      ),
+    );
 
-    traceStreamingChannel(cohereChannels.chatStream, {
-      name: "cohere.chatStream",
-      type: SpanTypeAttribute.LLM,
-      extractInput: extractChatInputWithMetadata,
-      extractOutput: () => undefined,
-      extractMetadata: () => undefined,
-      extractMetrics: () => ({}),
-      aggregateChunks: aggregateCohereChatStreamChunks,
-    });
+    cohereChannels.chatStream.intercept((target, receiver, args, additional) =>
+      traceStreamingCall<typeof cohereChannels.chatStream>(
+        () => Reflect.apply(target, receiver, args),
+        { ...additional, arguments: args, self: receiver },
+        {
+          instrumentationName: INSTRUMENTATION_NAMES.COHERE,
+          name: "cohere.chatStream",
+          type: SpanTypeAttribute.LLM,
+          extractInput: extractChatInputWithMetadata,
+          extractOutput: () => undefined,
+          extractMetadata: () => undefined,
+          extractMetrics: () => ({}),
+          aggregateChunks: aggregateCohereChatStreamChunks,
+        },
+      ),
+    );
 
-    traceAsyncChannel(cohereChannels.embed, {
-      name: "cohere.embed",
-      type: SpanTypeAttribute.LLM,
-      extractInput: extractEmbedInputWithMetadata,
-      extractOutput: extractCohereEmbeddingOutput,
-      extractMetadata: (result) => extractCohereResponseMetadata(result),
-      extractMetrics: (result) => parseCohereMetricsFromUsage(result),
-    });
+    cohereChannels.embed.intercept((target, receiver, args, additional) =>
+      traceAsyncCall<typeof cohereChannels.embed>(
+        () => Reflect.apply(target, receiver, args),
+        { ...additional, arguments: args, self: receiver },
+        {
+          instrumentationName: INSTRUMENTATION_NAMES.COHERE,
+          name: "cohere.embed",
+          type: SpanTypeAttribute.LLM,
+          extractInput: extractEmbedInputWithMetadata,
+          extractOutput: extractCohereEmbeddingOutput,
+          extractMetadata: (result) => extractCohereResponseMetadata(result),
+          extractMetrics: (result) => parseCohereMetricsFromUsage(result),
+        },
+      ),
+    );
 
-    traceAsyncChannel(cohereChannels.rerank, {
-      name: "cohere.rerank",
-      type: SpanTypeAttribute.LLM,
-      extractInput: extractRerankInputWithMetadata,
-      extractOutput: (result) => {
-        if (!isObject(result) || !Array.isArray(result.results)) {
-          return undefined;
-        }
+    cohereChannels.rerank.intercept((target, receiver, args, additional) =>
+      traceAsyncCall<typeof cohereChannels.rerank>(
+        () => Reflect.apply(target, receiver, args),
+        { ...additional, arguments: args, self: receiver },
+        {
+          instrumentationName: INSTRUMENTATION_NAMES.COHERE,
+          name: "cohere.rerank",
+          type: SpanTypeAttribute.LLM,
+          extractInput: extractRerankInputWithMetadata,
+          extractOutput: (result) => {
+            if (!isObject(result) || !Array.isArray(result.results)) {
+              return undefined;
+            }
 
-        return result.results.slice(0, 100).map((item) => ({
-          index: isObject(item) ? item.index : undefined,
-          relevance_score: isObject(item)
-            ? ((typeof item.relevanceScore === "number"
-                ? item.relevanceScore
-                : item.relevance_score) ?? null)
-            : null,
-        }));
-      },
-      extractMetadata: (result) => extractCohereResponseMetadata(result),
-      extractMetrics: (result) => parseCohereMetricsFromUsage(result),
-    });
+            return result.results.slice(0, 100).map((item) => ({
+              index: isObject(item) ? item.index : undefined,
+              relevance_score: isObject(item)
+                ? ((typeof item.relevanceScore === "number"
+                    ? item.relevanceScore
+                    : item.relevance_score) ?? null)
+                : null,
+            }));
+          },
+          extractMetadata: (result) => extractCohereResponseMetadata(result),
+          extractMetrics: (result) => parseCohereMetricsFromUsage(result),
+        },
+      ),
+    );
   }
 }
 

@@ -1,7 +1,7 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { cloudflareThinkChannels } from "../../instrumentation/providers/cloudflare-think-channels";
+import { cloudflareThinkChannels } from "../../instrumentation/providers/cloudflare-think-interceptors";
 
-const cloudflareThinkVersionRange = ">=0.13.0 <0.14.0";
+const cloudflareThinkVersionRange = ">=0.13.0 <0.21.0";
 
 export const cloudflareThinkConfigs: InstrumentationConfig[] = [
   {
@@ -14,7 +14,6 @@ export const cloudflareThinkConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Think",
       methodName: "_runInferenceLoop",
-      kind: "Async",
     },
   },
 ];

@@ -8,8 +8,6 @@ const context = getContext("orchestrion:undici:fetch_nonpromise");
 const result = fetch("https://example.com");
 assert.equal(result, 42);
 assert.deepStrictEqual(context, {
-  start: true,
-  end: true,
-  asyncStart: 42,
-  asyncEnd: 42,
+  called: true,
+  result: 42,
 });

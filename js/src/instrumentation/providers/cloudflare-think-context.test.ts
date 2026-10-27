@@ -8,10 +8,14 @@ test("shares active Think spans between separately loaded provider consumers", a
   const span = new NoopSpan();
   span.spanId = "think-cross-bundle-test";
 
-  first.registerCloudflareThinkSpan(span);
+  first.registerCloudflareThinkSpan({
+    span,
+    startTelemetry: vi.fn(),
+    finishTelemetry: vi.fn(),
+  });
   try {
     _internalGetGlobalState().contextManager.runInContext(span, () => {
-      expect(second.currentCloudflareThinkSpan()).toBe(span);
+      expect(second.currentCloudflareThinkRun()?.span).toBe(span);
     });
     second.unregisterCloudflareThinkSpan(span);
     expect(first.cloudflareThinkSpanCountForTesting()).toBe(0);

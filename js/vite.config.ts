@@ -162,7 +162,6 @@ export default defineConfig({
       outDir: "dist/tooling",
       entry: Object.fromEntries(
         [
-          "index",
           "bundler/vite",
           "bundler/webpack",
           "bundler/next",
@@ -188,7 +187,8 @@ export default defineConfig({
       outDir: "dist/hooks",
       entry: {
         hook: "src/auto-instrumentations/hook.mts",
-        "loader/esm-hook": "src/auto-instrumentations/loader/esm-hook.mts",
+        "loader/module-hooks":
+          "src/auto-instrumentations/loader/module-hooks.mts",
       },
       fixedExtension: true,
       deps: { neverBundle: ["../auto.js"] },

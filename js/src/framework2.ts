@@ -1,4 +1,5 @@
 import { _initializeSpanContext, getEvaluatorRegistry } from "./framework";
+import { debugLogger } from "./debug-logger";
 import type { Trace } from "./trace";
 import iso from "#braintrust-platform";
 import { slugify } from "../util/string_util";
@@ -117,16 +118,14 @@ class Project {
 
   async publish(): Promise<void> {
     if (globalThis._lazy_load) {
-      // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-      console.warn("publish() is a no-op when running `bt push`.");
+      debugLogger.notice.warn("publish() is a no-op when running `bt push`.");
       return;
     }
     await login();
     const projectMap = new ProjectNameIdMap();
     const functionDefinitions: PromptFunctionEvent[] = [];
     if (this._publishableCodeFunctions.length > 0) {
-      // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-      console.warn(
+      debugLogger.notice.warn(
         "Code functions cannot be published directly. Use `bt push` instead.",
       );
     }

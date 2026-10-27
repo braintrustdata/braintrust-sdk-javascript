@@ -183,7 +183,19 @@ pnpm --filter=@braintrust/js-e2e-tests run test:e2e
 
 If a scenario records but later replay fails because of volatile fields in the request body (e.g. AI-SDK's generated message ids), add or update `<scenario-dir>/cassette-filter.mjs` for that scenario, then re-record.
 
-After any successful record run, stale cassette variants are cleaned only inside scenarios that emitted cassette run-context records during that run. With explicit scenario names, cleanup is limited to those scenarios; with a full record run, cleanup applies to every observed cassette-backed scenario. Per-cassette blob sidecar cleanup still happens in the cassette file store when each cassette is saved.
+After a successful record run, unused cassette variants and their blob directories are cleaned only for scenarios whose test files and tests all passed. Cleanup uses the cassette keys actually selected by the harness, including overrides and opt-outs. Scenarios with skipped tests, missing test files, or missing usage records are left untouched. Per-cassette blob sidecar cleanup still happens in the cassette file store when each cassette is saved.
+
+### Checking unused cassettes without re-recording
+
+```bash
+pnpm run test:e2e:cassettes
+pnpm run test:e2e:cassettes -- cloudflare-think-instrumentation
+pnpm run test:e2e:cassettes -- --clean-cassettes cloudflare-think-instrumentation
+```
+
+These commands run a fresh replay and compare the cassette files on disk with actual usage. The default check leaves files untouched and exits nonzero when it finds unused variants. `--clean-cassettes` removes unused JSON files and their `.cassette.blobs` directories after the tests pass.
+
+Only whole scenarios can be selected; test filters, file paths, sharding, and snapshot updates are rejected. A scenario with skipped tests, missing test files, or missing usage records is reported as not checked and makes the command exit nonzero. Unselected scenarios and directories with no test files are not checked. Use `BRAINTRUST_E2E_RUN_CONTEXT_DIR` to retain the run records and test report for the trace summary.
 
 ### In-scope scenarios
 

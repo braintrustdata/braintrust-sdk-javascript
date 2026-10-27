@@ -4,7 +4,9 @@ import { Readable } from "node:stream";
 
 export async function createDockerSandbox() {
   const containerName = `braintrust-harness-codex-${process.pid}`;
-  const containerPort = 4000;
+  // Linux host networking lets the CLI reach loopback cassette servers even
+  // when the host firewall rejects connections from Docker's bridge subnet.
+  const hostNetworking = process.platform === "linux";
   const hostPort = await new Promise((resolve, reject) => {
     const server = createServer();
     server.once("error", reject);
@@ -16,6 +18,7 @@ export async function createDockerSandbox() {
       });
     });
   });
+  const containerPort = hostNetworking ? hostPort : 4000;
   const children = new Set();
   const loopbackForwarders = new Map();
   let containerStarted = false;
@@ -81,10 +84,14 @@ export async function createDockerSandbox() {
       "--rm",
       "--name",
       containerName,
-      "--add-host",
-      "host.docker.internal:host-gateway",
-      "--publish",
-      `127.0.0.1:${hostPort}:${containerPort}`,
+      ...(hostNetworking
+        ? ["--network", "host"]
+        : [
+            "--add-host",
+            "host.docker.internal:host-gateway",
+            "--publish",
+            `127.0.0.1:${hostPort}:${containerPort}`,
+          ]),
       "node:24-bookworm",
       "sleep",
       "infinity",
@@ -110,7 +117,11 @@ export async function createDockerSandbox() {
       let serializedValue = String(value);
       try {
         const url = new URL(serializedValue);
-        if (url.hostname === "127.0.0.1" && url.port !== "") {
+        if (
+          !hostNetworking &&
+          url.hostname === "127.0.0.1" &&
+          url.port !== ""
+        ) {
           url.hostname = "host.docker.internal";
           url.port = String(await forwardLoopbackPort(Number(url.port)));
           serializedValue = url.toString();

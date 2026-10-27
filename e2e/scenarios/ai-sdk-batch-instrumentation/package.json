@@ -1,0 +1,19 @@
+{
+  "name": "@braintrust/e2e-ai-sdk-batch-instrumentation",
+  "private": true,
+  "type": "module",
+  "braintrustScenario": {
+    "bump": {
+      "dependencies": {
+        "ai-sdk-v7-latest": {
+          "package": "ai",
+          "range": "7"
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "ai-sdk-v7": "npm:ai@7.0.108",
+    "ai-sdk-v7-latest": "npm:ai@7.0.138"
+  }
+}

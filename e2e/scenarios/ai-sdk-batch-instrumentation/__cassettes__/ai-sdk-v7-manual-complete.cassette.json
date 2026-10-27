@@ -1,0 +1,670 @@
+{
+  "entries": [
+    {
+      "callIndex": 0,
+      "id": "e0bec5e42a89fee3",
+      "matchKey": "POST ai-gateway.vercel.sh/v4/ai/batch/status",
+      "recordedAt": "2026-10-20T17:51:38.828Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "batchId": "job_01M5D718KH8NHVAWWFV0AVATNX"
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://ai-gateway.vercel.sh/v4/ai/batch/status"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "batchId": "job_01M5D718KH8NHVAWWFV0AVATNX",
+            "createdAt": "2026-10-20T17:51:33.489Z",
+            "providerMetadata": {
+              "gateway": {
+                "asyncJob": {
+                  "jobId": "job_01M5D718KH8NHVAWWFV0AVATNX",
+                  "providerOperationStarted": false,
+                  "requestCount": 2,
+                  "status": "running"
+                }
+              }
+            },
+            "status": "pending"
+          }
+        },
+        "headers": {
+          "access-control-allow-headers": "Content-Type, Content-Encoding, Authorization, ai-gateway-auth-method, ai-gateway-protocol-version, ai-model-id, ai-language-model-id, ai-language-model-specification-version, ai-image-model-specification-version, ai-embedding-model-specification-version, ai-decision-model-specification-version, ai-evaluation-model-specification-version, ai-language-model-streaming, ai-reporting-tags, ai-reporting-user, http-referer, x-title, x-ai-gateway-api-key, x-api-key, anthropic-beta, anthropic-version, idempotency-key, x-vercel-ai-gateway-team, x-vercel-gateway-extended-time, x-session-id, x-session-affinity, TypeSafe-Danger-Zone-Images, TypeSafe-Danger-Zone-Long-Context",
+          "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "retry-after, x-should-retry",
+          "cache-control": "public, max-age=0, must-revalidate",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Tue, 20 Oct 2026 17:51:38 GMT",
+          "server": "Vercel",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "x-matched-path": "/v4/ai/batch/status",
+          "x-vercel-cache": "MISS",
+          "x-vercel-id": "cdg1::cdg1::k89f7-1792518698776-ff0ff47f8064"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "00cb971a782777ea",
+      "matchKey": "POST ai-gateway.vercel.sh/v4/ai/batch/status",
+      "recordedAt": "2026-10-20T17:51:48.945Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "batchId": "job_01M5D718KH8NHVAWWFV0AVATNX"
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://ai-gateway.vercel.sh/v4/ai/batch/status"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "batchId": "job_01M5D718KH8NHVAWWFV0AVATNX",
+            "createdAt": "2026-10-20T17:51:34.400103719Z",
+            "providerMetadata": {
+              "gateway": {
+                "asyncJob": {
+                  "jobId": "job_01M5D718KH8NHVAWWFV0AVATNX",
+                  "providerOperationStarted": true,
+                  "requestCount": 2,
+                  "status": "running"
+                }
+              }
+            },
+            "rawStatus": "BATCH_STATE_PENDING",
+            "requestCounts": {
+              "completed": 0,
+              "failed": 0,
+              "pending": 2,
+              "total": 2
+            },
+            "status": "pending"
+          }
+        },
+        "headers": {
+          "access-control-allow-headers": "Content-Type, Content-Encoding, Authorization, ai-gateway-auth-method, ai-gateway-protocol-version, ai-model-id, ai-language-model-id, ai-language-model-specification-version, ai-image-model-specification-version, ai-embedding-model-specification-version, ai-decision-model-specification-version, ai-evaluation-model-specification-version, ai-language-model-streaming, ai-reporting-tags, ai-reporting-user, http-referer, x-title, x-ai-gateway-api-key, x-api-key, anthropic-beta, anthropic-version, idempotency-key, x-vercel-ai-gateway-team, x-vercel-gateway-extended-time, x-session-id, x-session-affinity, TypeSafe-Danger-Zone-Images, TypeSafe-Danger-Zone-Long-Context",
+          "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "retry-after, x-should-retry",
+          "cache-control": "public, max-age=0, must-revalidate",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Tue, 20 Oct 2026 17:51:48 GMT",
+          "server": "Vercel",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "x-matched-path": "/v4/ai/batch/status",
+          "x-vercel-cache": "MISS",
+          "x-vercel-id": "cdg1::cdg1::n4pts-1792518708888-7d63cd308f28"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 2,
+      "id": "757621488c04fe18",
+      "matchKey": "POST ai-gateway.vercel.sh/v4/ai/batch/status",
+      "recordedAt": "2026-10-20T17:51:59.024Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "batchId": "job_01M5D718KH8NHVAWWFV0AVATNX"
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://ai-gateway.vercel.sh/v4/ai/batch/status"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "batchId": "job_01M5D718KH8NHVAWWFV0AVATNX",
+            "createdAt": "2026-10-20T17:51:34.400103719Z",
+            "providerMetadata": {
+              "gateway": {
+                "asyncJob": {
+                  "jobId": "job_01M5D718KH8NHVAWWFV0AVATNX",
+                  "providerOperationStarted": true,
+                  "requestCount": 2,
+                  "status": "running"
+                }
+              }
+            },
+            "rawStatus": "BATCH_STATE_PENDING",
+            "requestCounts": {
+              "completed": 0,
+              "failed": 0,
+              "pending": 2,
+              "total": 2
+            },
+            "status": "pending"
+          }
+        },
+        "headers": {
+          "access-control-allow-headers": "Content-Type, Content-Encoding, Authorization, ai-gateway-auth-method, ai-gateway-protocol-version, ai-model-id, ai-language-model-id, ai-language-model-specification-version, ai-image-model-specification-version, ai-embedding-model-specification-version, ai-decision-model-specification-version, ai-evaluation-model-specification-version, ai-language-model-streaming, ai-reporting-tags, ai-reporting-user, http-referer, x-title, x-ai-gateway-api-key, x-api-key, anthropic-beta, anthropic-version, idempotency-key, x-vercel-ai-gateway-team, x-vercel-gateway-extended-time, x-session-id, x-session-affinity, TypeSafe-Danger-Zone-Images, TypeSafe-Danger-Zone-Long-Context",
+          "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "retry-after, x-should-retry",
+          "cache-control": "public, max-age=0, must-revalidate",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Tue, 20 Oct 2026 17:51:59 GMT",
+          "server": "Vercel",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "x-matched-path": "/v4/ai/batch/status",
+          "x-vercel-cache": "MISS",
+          "x-vercel-id": "cdg1::cdg1::96z77-1792518718973-4db21405ddde"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 3,
+      "id": "5b266bd263cb0804",
+      "matchKey": "POST ai-gateway.vercel.sh/v4/ai/batch/status",
+      "recordedAt": "2026-10-20T17:52:09.259Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "batchId": "job_01M5D718KH8NHVAWWFV0AVATNX"
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://ai-gateway.vercel.sh/v4/ai/batch/status"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "batchId": "job_01M5D718KH8NHVAWWFV0AVATNX",
+            "createdAt": "2026-10-20T17:51:34.400103719Z",
+            "providerMetadata": {
+              "gateway": {
+                "asyncJob": {
+                  "jobId": "job_01M5D718KH8NHVAWWFV0AVATNX",
+                  "providerOperationStarted": true,
+                  "requestCount": 2,
+                  "status": "running"
+                }
+              }
+            },
+            "rawStatus": "BATCH_STATE_RUNNING",
+            "requestCounts": {
+              "completed": 0,
+              "failed": 0,
+              "pending": 2,
+              "total": 2
+            },
+            "status": "pending"
+          }
+        },
+        "headers": {
+          "access-control-allow-headers": "Content-Type, Content-Encoding, Authorization, ai-gateway-auth-method, ai-gateway-protocol-version, ai-model-id, ai-language-model-id, ai-language-model-specification-version, ai-image-model-specification-version, ai-embedding-model-specification-version, ai-decision-model-specification-version, ai-evaluation-model-specification-version, ai-language-model-streaming, ai-reporting-tags, ai-reporting-user, http-referer, x-title, x-ai-gateway-api-key, x-api-key, anthropic-beta, anthropic-version, idempotency-key, x-vercel-ai-gateway-team, x-vercel-gateway-extended-time, x-session-id, x-session-affinity, TypeSafe-Danger-Zone-Images, TypeSafe-Danger-Zone-Long-Context",
+          "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "retry-after, x-should-retry",
+          "cache-control": "public, max-age=0, must-revalidate",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Tue, 20 Oct 2026 17:52:09 GMT",
+          "server": "Vercel",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "x-matched-path": "/v4/ai/batch/status",
+          "x-vercel-cache": "MISS",
+          "x-vercel-id": "cdg1::cdg1::7wj8k-1792518729062-d7c3f756e260"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 4,
+      "id": "42620b0dcfc6f60c",
+      "matchKey": "POST ai-gateway.vercel.sh/v4/ai/batch/status",
+      "recordedAt": "2026-10-20T17:52:19.351Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "batchId": "job_01M5D718KH8NHVAWWFV0AVATNX"
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://ai-gateway.vercel.sh/v4/ai/batch/status"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "batchId": "job_01M5D718KH8NHVAWWFV0AVATNX",
+            "createdAt": "2026-10-20T17:51:34.400103719Z",
+            "providerMetadata": {
+              "gateway": {
+                "asyncJob": {
+                  "jobId": "job_01M5D718KH8NHVAWWFV0AVATNX",
+                  "providerOperationStarted": true,
+                  "requestCount": 2,
+                  "status": "running"
+                }
+              }
+            },
+            "rawStatus": "BATCH_STATE_RUNNING",
+            "requestCounts": {
+              "completed": 0,
+              "failed": 0,
+              "pending": 2,
+              "total": 2
+            },
+            "status": "pending"
+          }
+        },
+        "headers": {
+          "access-control-allow-headers": "Content-Type, Content-Encoding, Authorization, ai-gateway-auth-method, ai-gateway-protocol-version, ai-model-id, ai-language-model-id, ai-language-model-specification-version, ai-image-model-specification-version, ai-embedding-model-specification-version, ai-decision-model-specification-version, ai-evaluation-model-specification-version, ai-language-model-streaming, ai-reporting-tags, ai-reporting-user, http-referer, x-title, x-ai-gateway-api-key, x-api-key, anthropic-beta, anthropic-version, idempotency-key, x-vercel-ai-gateway-team, x-vercel-gateway-extended-time, x-session-id, x-session-affinity, TypeSafe-Danger-Zone-Images, TypeSafe-Danger-Zone-Long-Context",
+          "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "retry-after, x-should-retry",
+          "cache-control": "public, max-age=0, must-revalidate",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Tue, 20 Oct 2026 17:52:19 GMT",
+          "server": "Vercel",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "x-matched-path": "/v4/ai/batch/status",
+          "x-vercel-cache": "MISS",
+          "x-vercel-id": "cdg1::cdg1::lpw88-1792518739284-abdf8ed105df"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 5,
+      "id": "2d3a9cf7722fdd3c",
+      "matchKey": "POST ai-gateway.vercel.sh/v4/ai/batch/status",
+      "recordedAt": "2026-10-20T17:52:29.435Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "batchId": "job_01M5D718KH8NHVAWWFV0AVATNX"
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://ai-gateway.vercel.sh/v4/ai/batch/status"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "batchId": "job_01M5D718KH8NHVAWWFV0AVATNX",
+            "createdAt": "2026-10-20T17:51:34.400103719Z",
+            "providerMetadata": {
+              "gateway": {
+                "asyncJob": {
+                  "jobId": "job_01M5D718KH8NHVAWWFV0AVATNX",
+                  "providerOperationStarted": true,
+                  "requestCount": 2,
+                  "status": "running"
+                }
+              }
+            },
+            "rawStatus": "BATCH_STATE_RUNNING",
+            "requestCounts": {
+              "completed": 0,
+              "failed": 0,
+              "pending": 2,
+              "total": 2
+            },
+            "status": "pending"
+          }
+        },
+        "headers": {
+          "access-control-allow-headers": "Content-Type, Content-Encoding, Authorization, ai-gateway-auth-method, ai-gateway-protocol-version, ai-model-id, ai-language-model-id, ai-language-model-specification-version, ai-image-model-specification-version, ai-embedding-model-specification-version, ai-decision-model-specification-version, ai-evaluation-model-specification-version, ai-language-model-streaming, ai-reporting-tags, ai-reporting-user, http-referer, x-title, x-ai-gateway-api-key, x-api-key, anthropic-beta, anthropic-version, idempotency-key, x-vercel-ai-gateway-team, x-vercel-gateway-extended-time, x-session-id, x-session-affinity, TypeSafe-Danger-Zone-Images, TypeSafe-Danger-Zone-Long-Context",
+          "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "retry-after, x-should-retry",
+          "cache-control": "public, max-age=0, must-revalidate",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Tue, 20 Oct 2026 17:52:29 GMT",
+          "server": "Vercel",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "x-matched-path": "/v4/ai/batch/status",
+          "x-vercel-cache": "MISS",
+          "x-vercel-id": "cdg1::cdg1::k89f7-1792518749381-16fe44558397"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 6,
+      "id": "ec0d76b83c7f52a7",
+      "matchKey": "POST ai-gateway.vercel.sh/v4/ai/batch/status",
+      "recordedAt": "2026-10-20T17:52:39.551Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "batchId": "job_01M5D718KH8NHVAWWFV0AVATNX"
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://ai-gateway.vercel.sh/v4/ai/batch/status"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "batchId": "job_01M5D718KH8NHVAWWFV0AVATNX",
+            "createdAt": "2026-10-20T17:51:34.400103719Z",
+            "providerMetadata": {
+              "gateway": {
+                "asyncJob": {
+                  "jobId": "job_01M5D718KH8NHVAWWFV0AVATNX",
+                  "providerOperationStarted": true,
+                  "requestCount": 2,
+                  "status": "running"
+                }
+              }
+            },
+            "rawStatus": "BATCH_STATE_RUNNING",
+            "requestCounts": {
+              "completed": 0,
+              "failed": 0,
+              "pending": 2,
+              "total": 2
+            },
+            "status": "pending"
+          }
+        },
+        "headers": {
+          "access-control-allow-headers": "Content-Type, Content-Encoding, Authorization, ai-gateway-auth-method, ai-gateway-protocol-version, ai-model-id, ai-language-model-id, ai-language-model-specification-version, ai-image-model-specification-version, ai-embedding-model-specification-version, ai-decision-model-specification-version, ai-evaluation-model-specification-version, ai-language-model-streaming, ai-reporting-tags, ai-reporting-user, http-referer, x-title, x-ai-gateway-api-key, x-api-key, anthropic-beta, anthropic-version, idempotency-key, x-vercel-ai-gateway-team, x-vercel-gateway-extended-time, x-session-id, x-session-affinity, TypeSafe-Danger-Zone-Images, TypeSafe-Danger-Zone-Long-Context",
+          "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "retry-after, x-should-retry",
+          "cache-control": "public, max-age=0, must-revalidate",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Tue, 20 Oct 2026 17:52:39 GMT",
+          "server": "Vercel",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "x-matched-path": "/v4/ai/batch/status",
+          "x-vercel-cache": "MISS",
+          "x-vercel-id": "cdg1::cdg1::4zhd5-1792518759462-d4efe458d317"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 7,
+      "id": "e251332ca950040b",
+      "matchKey": "POST ai-gateway.vercel.sh/v4/ai/batch/status",
+      "recordedAt": "2026-10-20T17:52:49.814Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "batchId": "job_01M5D718KH8NHVAWWFV0AVATNX"
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://ai-gateway.vercel.sh/v4/ai/batch/status"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "batchId": "job_01M5D718KH8NHVAWWFV0AVATNX",
+            "createdAt": "2026-10-20T17:51:34.400103719Z",
+            "providerMetadata": {
+              "gateway": {
+                "asyncJob": {
+                  "jobId": "job_01M5D718KH8NHVAWWFV0AVATNX",
+                  "providerOperationStarted": true,
+                  "requestCount": 2,
+                  "status": "running"
+                }
+              }
+            },
+            "rawStatus": "BATCH_STATE_RUNNING",
+            "requestCounts": {
+              "completed": 0,
+              "failed": 0,
+              "pending": 2,
+              "total": 2
+            },
+            "status": "pending"
+          }
+        },
+        "headers": {
+          "access-control-allow-headers": "Content-Type, Content-Encoding, Authorization, ai-gateway-auth-method, ai-gateway-protocol-version, ai-model-id, ai-language-model-id, ai-language-model-specification-version, ai-image-model-specification-version, ai-embedding-model-specification-version, ai-decision-model-specification-version, ai-evaluation-model-specification-version, ai-language-model-streaming, ai-reporting-tags, ai-reporting-user, http-referer, x-title, x-ai-gateway-api-key, x-api-key, anthropic-beta, anthropic-version, idempotency-key, x-vercel-ai-gateway-team, x-vercel-gateway-extended-time, x-session-id, x-session-affinity, TypeSafe-Danger-Zone-Images, TypeSafe-Danger-Zone-Long-Context",
+          "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "retry-after, x-should-retry",
+          "cache-control": "public, max-age=0, must-revalidate",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Tue, 20 Oct 2026 17:52:49 GMT",
+          "server": "Vercel",
+          "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "x-matched-path": "/v4/ai/batch/status",
+          "x-vercel-cache": "MISS",
+          "x-vercel-id": "cdg1::cdg1::9tgss-1792518769579-d5e51412d13d"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 8,
+      "id": "33b28fcc31b6f6ed",
+      "matchKey": "POST ai-gateway.vercel.sh/v4/ai/batch/status",
+      "recordedAt": "2026-10-20T17:52:59.945Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "batchId": "job_01M5D718KH8NHVAWWFV0AVATNX"
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://ai-gateway.vercel.sh/v4/ai/batch/status"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "batchId": "job_01M5D718KH8NHVAWWFV0AVATNX",
+            "createdAt": "2026-10-20T17:51:34.400103719Z",
+            "providerMetadata": {
+              "gateway": {
+                "asyncJob": {
+                  "jobId": "job_01M5D718KH8NHVAWWFV0AVATNX",
+                  "providerOperationStarted": true,
+                  "requestCount": 2,
+                  "status": "running"
+                }
+              }
+            },
+            "rawStatus": "BATCH_STATE_RUNNING",
+            "requestCounts": {
+              "completed": 0,
+              "failed": 0,
+              "pending": 2,
+              "total": 2
+            },
+            "status": "pending"
+          }
+        },
+        "headers": {
+          "access-control-allow-headers": "Content-Type, Content-Encoding, Authorization, ai-gateway-auth-method, ai-gateway-protocol-version, ai-model-id, ai-language-model-id, ai-language-model-specification-version, ai-image-model-specification-version, ai-embedding-model-specification-version, ai-decision-model-specification-version, ai-evaluation-model-specification-version, ai-language-model-streaming, ai-reporting-tags, ai-reporting-user, http-referer, x-title, x-ai-gateway-api-key, x-api-key, anthropic-beta, anthropic-version, idempotency-key, x-vercel-ai-gateway-team, x-vercel-gateway-extended-time, x-session-id, x-session-affinity, TypeSafe-Danger-Zone-Images, TypeSafe-Danger-Zone-Long-Context",
+          "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "retry-after, x-should-retry",
+          "cache-control": "public, max-age=0, must-revalidate",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Tue, 20 Oct 2026 17:52:59 GMT",
+          "server": "Vercel",
+          "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "x-matched-path": "/v4/ai/batch/status",
+          "x-vercel-cache": "MISS",
+          "x-vercel-id": "cdg1::cdg1::rb696-1792518779861-f16436e81e1e"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 9,
+      "id": "67dda7a033367ada",
+      "matchKey": "POST ai-gateway.vercel.sh/v4/ai/batch/status",
+      "recordedAt": "2026-10-20T17:53:10.229Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "batchId": "job_01M5D718KH8NHVAWWFV0AVATNX"
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://ai-gateway.vercel.sh/v4/ai/batch/status"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "batchId": "job_01M5D718KH8NHVAWWFV0AVATNX",
+            "createdAt": "2026-10-20T17:51:34.400103719Z",
+            "providerMetadata": {
+              "gateway": {
+                "asyncJob": {
+                  "completedAt": 1792518787771,
+                  "jobId": "job_01M5D718KH8NHVAWWFV0AVATNX",
+                  "providerOperationStarted": true,
+                  "requestCount": 2,
+                  "status": "completed"
+                }
+              }
+            },
+            "rawStatus": "BATCH_STATE_SUCCEEDED",
+            "requestCounts": {
+              "completed": 2,
+              "failed": 0,
+              "pending": 0,
+              "total": 2
+            },
+            "status": "completed"
+          }
+        },
+        "headers": {
+          "access-control-allow-headers": "Content-Type, Content-Encoding, Authorization, ai-gateway-auth-method, ai-gateway-protocol-version, ai-model-id, ai-language-model-id, ai-language-model-specification-version, ai-image-model-specification-version, ai-embedding-model-specification-version, ai-decision-model-specification-version, ai-evaluation-model-specification-version, ai-language-model-streaming, ai-reporting-tags, ai-reporting-user, http-referer, x-title, x-ai-gateway-api-key, x-api-key, anthropic-beta, anthropic-version, idempotency-key, x-vercel-ai-gateway-team, x-vercel-gateway-extended-time, x-session-id, x-session-affinity, TypeSafe-Danger-Zone-Images, TypeSafe-Danger-Zone-Long-Context",
+          "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "retry-after, x-should-retry",
+          "cache-control": "public, max-age=0, must-revalidate",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Tue, 20 Oct 2026 17:53:10 GMT",
+          "server": "Vercel",
+          "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "x-matched-path": "/v4/ai/batch/status",
+          "x-vercel-cache": "MISS",
+          "x-vercel-id": "cdg1::cdg1::69ndk-1792518789975-6b8877834680"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "7fde223413539457",
+      "matchKey": "POST ai-gateway.vercel.sh/v4/ai/batch/results",
+      "recordedAt": "2026-10-20T17:53:11.278Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "batchId": "job_01M5D718KH8NHVAWWFV0AVATNX"
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://ai-gateway.vercel.sh/v4/ai/batch/results"
+      },
+      "response": {
+        "body": {
+          "contentType": "application/x-ndjson",
+          "kind": "base64",
+          "value": "eyJ0eXBlIjoidGV4dCIsImlkIjoib25lIiwic3RhdHVzIjoic3VjY2VlZGVkIiwicmVzdWx0Ijp7ImNvbnRlbnQiOlt7InR5cGUiOiJ0ZXh0IiwidGV4dCI6Ik9uZSJ9XSwiZmluaXNoUmVhc29uIjp7InVuaWZpZWQiOiJzdG9wIiwicmF3IjoiU1RPUCJ9LCJwcm92aWRlck1ldGFkYXRhIjp7Imdvb2dsZSI6eyJwcm9tcHRGZWVkYmFjayI6bnVsbCwiZ3JvdW5kaW5nTWV0YWRhdGEiOm51bGwsInVybENvbnRleHRNZXRhZGF0YSI6bnVsbCwic2FmZXR5UmF0aW5ncyI6bnVsbCwidXNhZ2VNZXRhZGF0YSI6eyJwcm9tcHRUb2tlbkNvdW50Ijo4LCJjYW5kaWRhdGVzVG9rZW5Db3VudCI6MSwidG90YWxUb2tlbkNvdW50Ijo5LCJzZXJ2aWNlVGllciI6InN0YW5kYXJkIiwicHJvbXB0VG9rZW5zRGV0YWlscyI6W3sibW9kYWxpdHkiOiJURVhUIiwidG9rZW5Db3VudCI6OH1dfSwiZmluaXNoTWVzc2FnZSI6bnVsbCwic2VydmljZVRpZXIiOiJzdGFuZGFyZCJ9fSwicmVzcG9uc2UiOnsibW9kZWxJZCI6Imdvb2dsZS9nZW1pbmktMi41LWZsYXNoIn0sInVzYWdlIjp7ImlucHV0VG9rZW5zIjp7InRvdGFsIjo4LCJub0NhY2hlIjo4LCJjYWNoZVJlYWQiOjB9LCJvdXRwdXRUb2tlbnMiOnsidG90YWwiOjEsInRleHQiOjEsInJlYXNvbmluZyI6MH0sInJhdyI6eyJwcm9tcHRUb2tlbkNvdW50Ijo4LCJjYW5kaWRhdGVzVG9rZW5Db3VudCI6MSwidG90YWxUb2tlbkNvdW50Ijo5LCJzZXJ2aWNlVGllciI6InN0YW5kYXJkIiwicHJvbXB0VG9rZW5zRGV0YWlscyI6W3sibW9kYWxpdHkiOiJURVhUIiwidG9rZW5Db3VudCI6OH1dfX0sIndhcm5pbmdzIjpbXX19CnsidHlwZSI6InRleHQiLCJpZCI6InR3byIsInN0YXR1cyI6InN1Y2NlZWRlZCIsInJlc3VsdCI6eyJjb250ZW50IjpbeyJ0eXBlIjoidGV4dCIsInRleHQiOiJ0d28ifV0sImZpbmlzaFJlYXNvbiI6eyJ1bmlmaWVkIjoic3RvcCIsInJhdyI6IlNUT1AifSwicHJvdmlkZXJNZXRhZGF0YSI6eyJnb29nbGUiOnsicHJvbXB0RmVlZGJhY2siOm51bGwsImdyb3VuZGluZ01ldGFkYXRhIjpudWxsLCJ1cmxDb250ZXh0TWV0YWRhdGEiOm51bGwsInNhZmV0eVJhdGluZ3MiOm51bGwsInVzYWdlTWV0YWRhdGEiOnsicHJvbXB0VG9rZW5Db3VudCI6OCwiY2FuZGlkYXRlc1Rva2VuQ291bnQiOjEsInRvdGFsVG9rZW5Db3VudCI6OSwic2VydmljZVRpZXIiOiJzdGFuZGFyZCIsInByb21wdFRva2Vuc0RldGFpbHMiOlt7Im1vZGFsaXR5IjoiVEVYVCIsInRva2VuQ291bnQiOjh9XX0sImZpbmlzaE1lc3NhZ2UiOm51bGwsInNlcnZpY2VUaWVyIjoic3RhbmRhcmQifX0sInJlc3BvbnNlIjp7Im1vZGVsSWQiOiJnb29nbGUvZ2VtaW5pLTIuNS1mbGFzaCJ9LCJ1c2FnZSI6eyJpbnB1dFRva2VucyI6eyJ0b3RhbCI6OCwibm9DYWNoZSI6OCwiY2FjaGVSZWFkIjowfSwib3V0cHV0VG9rZW5zIjp7InRvdGFsIjoxLCJ0ZXh0IjoxLCJyZWFzb25pbmciOjB9LCJyYXciOnsicHJvbXB0VG9rZW5Db3VudCI6OCwiY2FuZGlkYXRlc1Rva2VuQ291bnQiOjEsInRvdGFsVG9rZW5Db3VudCI6OSwic2VydmljZVRpZXIiOiJzdGFuZGFyZCIsInByb21wdFRva2Vuc0RldGFpbHMiOlt7Im1vZGFsaXR5IjoiVEVYVCIsInRva2VuQ291bnQiOjh9XX19LCJ3YXJuaW5ncyI6W119fQo="
+        },
+        "headers": {
+          "access-control-allow-headers": "Content-Type, Content-Encoding, Authorization, ai-gateway-auth-method, ai-gateway-protocol-version, ai-model-id, ai-language-model-id, ai-language-model-specification-version, ai-image-model-specification-version, ai-embedding-model-specification-version, ai-decision-model-specification-version, ai-evaluation-model-specification-version, ai-language-model-streaming, ai-reporting-tags, ai-reporting-user, http-referer, x-title, x-ai-gateway-api-key, x-api-key, anthropic-beta, anthropic-version, idempotency-key, x-vercel-ai-gateway-team, x-vercel-gateway-extended-time, x-session-id, x-session-affinity, TypeSafe-Danger-Zone-Images, TypeSafe-Danger-Zone-Long-Context",
+          "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "retry-after, x-should-retry",
+          "cache-control": "public, max-age=0, must-revalidate",
+          "content-encoding": "gzip",
+          "content-type": "application/x-ndjson",
+          "date": "Tue, 20 Oct 2026 17:53:11 GMT",
+          "server": "Vercel",
+          "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "x-matched-path": "/v4/ai/batch/results",
+          "x-vercel-cache": "MISS",
+          "x-vercel-id": "cdg1::cdg1::s4lsk-1792518790236-d0145c5a8c3b"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    }
+  ],
+  "meta": {
+    "createdAt": "2026-10-20T17:48:13.672Z"
+  }
+}

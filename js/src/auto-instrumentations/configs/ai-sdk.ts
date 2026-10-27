@@ -1,8 +1,9 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
 import {
   aiSDKChannels,
+  codeModeChannels,
   harnessAgentChannels,
-} from "../../instrumentation/providers/ai-sdk-channels";
+} from "../../instrumentation/providers/ai-sdk-interceptors";
 
 /**
  * Instrumentation configurations for the Vercel AI SDK.
@@ -16,18 +17,38 @@ import {
  * "orchestrion:ai-sdk:generateText"
  */
 export const aiSDKConfigs: InstrumentationConfig[] = [
-  // Evaluation does not emit v7 telemetry callbacks. Instrument its public export.
+  // Think needs the synchronous invocation boundary to keep its task open
+  // until v7's asynchronous telemetry callbacks take over.
+  {
+    channelName: aiSDKChannels.streamTextV7.channelName,
+    module: {
+      name: "ai",
+      versionRange: ">=7.0.0 <8.0.0",
+      filePath: "dist/index.js",
+    },
+    functionQuery: { functionName: "streamText" },
+  },
+  {
+    channelName: codeModeChannels.run.channelName,
+    module: {
+      name: "@ai-sdk/code-mode",
+      versionRange: ">=1.0.100 <2.0.0",
+      filePath: "dist/run-code-mode.js",
+    },
+    functionQuery: { functionName: "runCodeMode" },
+  },
+  // Older evaluation releases have no telemetry callbacks. Newer versions use
+  // the telemetry dispatcher below, including the renamed decision API.
   {
     channelName: aiSDKChannels.evaluate.channelName,
     module: {
       name: "ai",
-      versionRange: ">=7.0.103 <8.0.0",
+      versionRange: ">=7.0.103 <7.0.111",
       filePath: "dist/index.js",
     },
     functionQuery: {
       functionName: "experimental_evaluate",
       isExportAlias: true,
-      kind: "Async",
     },
   },
   // HarnessAgent turn methods are published only from the package's ESM
@@ -49,7 +70,6 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "HarnessAgent",
       methodName,
-      kind: "Async" as const,
       index: 0,
     },
   })),
@@ -70,7 +90,6 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
       },
       functionQuery: {
         functionName,
-        kind: "Async" as const,
       },
     })),
   ),
@@ -97,7 +116,6 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
       },
       functionQuery: {
         functionName,
-        kind: "Async" as const,
         ...(isExportAlias ? { isExportAlias } : {}),
       },
     })),
@@ -117,7 +135,6 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
       },
       functionQuery: {
         functionName,
-        kind: "Sync" as const,
       },
     })),
   ),
@@ -132,7 +149,6 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       functionName: "rerank",
-      kind: "Async",
     },
   },
   {
@@ -144,7 +160,6 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       functionName: "rerank",
-      kind: "Async",
     },
   },
 
@@ -160,7 +175,6 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       functionName: "createTelemetryDispatcher",
-      kind: "Sync",
     },
   },
   {
@@ -172,7 +186,6 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       functionName: "createTelemetryDispatcher",
-      kind: "Sync",
     },
   },
 
@@ -188,7 +201,6 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       methodName: "generate",
-      kind: "Async",
       index: 0,
     },
   },
@@ -201,7 +213,6 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       methodName: "generate",
-      kind: "Async",
       index: 0,
     },
   },
@@ -218,7 +229,6 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       methodName: "stream",
-      kind: "Sync",
       index: 0,
     },
   },
@@ -231,7 +241,6 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       methodName: "stream",
-      kind: "Sync",
       index: 0,
     },
   },
@@ -248,7 +257,6 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       methodName: "generate",
-      kind: "Async",
       index: 0,
     },
   },
@@ -261,7 +269,6 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       methodName: "generate",
-      kind: "Async",
       index: 0,
     },
   },
@@ -278,7 +285,6 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       methodName: "stream",
-      kind: "Async",
       index: 0,
     },
   },
@@ -291,7 +297,6 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       methodName: "stream",
-      kind: "Async",
       index: 0,
     },
   },

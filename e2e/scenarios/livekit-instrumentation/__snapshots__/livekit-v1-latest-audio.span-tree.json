@@ -1,0 +1,280 @@
+{
+  "span_tree": [
+    {
+      "name": "session",
+      "type": "task",
+      "children": [
+        {
+          "name": "livekit.session_start",
+          "type": "task",
+          "children": [
+            {
+              "name": "livekit.start_agent_activity",
+              "type": "task",
+              "children": [
+                {
+                  "name": "livekit.setup_toolsets",
+                  "type": "task",
+                  "children": [],
+                  "metadata": {
+                    "scenario": "livekit-instrumentation",
+                    "testRunId": "<run:1>"
+                  }
+                },
+                {
+                  "name": "livekit.on_enter",
+                  "type": "task",
+                  "children": [],
+                  "metadata": {
+                    "contrib.livekit.agent_label": "default_agent",
+                    "scenario": "livekit-instrumentation",
+                    "testRunId": "<run:1>"
+                  }
+                }
+              ],
+              "metadata": {
+                "contrib.livekit.agent_label": "default_agent",
+                "gen_ai.agent.name": "default_agent",
+                "gen_ai.operation.name": "create_agent",
+                "scenario": "livekit-instrumentation",
+                "testRunId": "<run:1>"
+              }
+            }
+          ],
+          "metadata": {
+            "scenario": "livekit-instrumentation",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "agent_turn",
+          "type": "task",
+          "children": [
+            {
+              "name": "agent_speech",
+              "type": "task",
+              "children": [],
+              "output": [
+                {
+                  "content": "Fixture playback",
+                  "role": "assistant"
+                }
+              ],
+              "metadata": {
+                "audio.selections": [
+                  {
+                    "channel_index": 1,
+                    "end_offset_ms": 0,
+                    "recording_id": "call-0000",
+                    "recording_span_id": "<span:2>",
+                    "start_offset_ms": 0
+                  }
+                ],
+                "contrib.livekit.message_ids": [
+                  "<native:3>"
+                ],
+                "scenario": "livekit-instrumentation",
+                "testRunId": "<run:1>",
+                "turn.id": "<span:1>"
+              }
+            }
+          ],
+          "metadata": {
+            "audio.selections": [
+              {
+                "channel_index": 1,
+                "end_offset_ms": 0,
+                "recording_id": "call-0000",
+                "recording_span_id": "<span:2>",
+                "start_offset_ms": 0
+              }
+            ],
+            "contrib.livekit.events": [
+              {
+                "attributes": {
+                  "contrib.livekit.generation_id": "<native:2>"
+                },
+                "name": "generation",
+                "time_unix_ms": 0
+              }
+            ],
+            "contrib.livekit.generation_count": 1,
+            "contrib.livekit.generation_id": "<native:2>",
+            "contrib.livekit.playback_events": [
+              {
+                "attributes": {
+                  "interrupted": false,
+                  "playbackPosition": 0
+                },
+                "name": "playbackFinished",
+                "time_unix_ms": 0
+              }
+            ],
+            "contrib.livekit.speech.queue_wait": 0,
+            "contrib.livekit.speech_id": "<native:1>",
+            "gen_ai.agent.name": "default_agent",
+            "gen_ai.operation.name": "invoke_agent",
+            "scenario": "livekit-instrumentation",
+            "testRunId": "<run:1>",
+            "turn.id": "<span:1>"
+          }
+        },
+        {
+          "name": "livekit.session_close",
+          "type": "task",
+          "children": [
+            {
+              "name": "livekit.drain_agent_activity",
+              "type": "task",
+              "children": [
+                {
+                  "name": "livekit.on_exit",
+                  "type": "task",
+                  "children": [],
+                  "metadata": {
+                    "contrib.livekit.agent_label": "default_agent",
+                    "scenario": "livekit-instrumentation",
+                    "testRunId": "<run:1>"
+                  }
+                }
+              ],
+              "metadata": {
+                "contrib.livekit.agent_label": "default_agent",
+                "scenario": "livekit-instrumentation",
+                "testRunId": "<run:1>"
+              }
+            }
+          ],
+          "metadata": {
+            "contrib.livekit.close.drain": false,
+            "contrib.livekit.close_reason": "user_initiated",
+            "scenario": "livekit-instrumentation",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "user_turn",
+          "type": "task",
+          "children": [
+            {
+              "name": "livekit.eou_wait",
+              "type": "task",
+              "children": [
+                {
+                  "name": "livekit.eou_detection",
+                  "type": "task",
+                  "children": [],
+                  "metadata": {
+                    "contrib.livekit.eou.endpointing_delay": 0,
+                    "contrib.livekit.eou.from_cache": false,
+                    "contrib.livekit.eou.language": "",
+                    "contrib.livekit.eou.source": "manual",
+                    "scenario": "livekit-instrumentation",
+                    "testRunId": "<run:1>",
+                    "turn.id": "<span:1>"
+                  }
+                }
+              ],
+              "metadata": {
+                "contrib.livekit.eou.endpointing_delay": 0,
+                "contrib.livekit.eou.not_committed_count": 0,
+                "contrib.livekit.eou.outcome": "committed",
+                "contrib.livekit.eou.rearm_count": 0,
+                "contrib.livekit.eou.source": "manual",
+                "contrib.livekit.eou.wait_duration": 0,
+                "scenario": "livekit-instrumentation",
+                "testRunId": "<run:1>",
+                "turn.id": "<span:1>"
+              }
+            }
+          ],
+          "metadata": {
+            "contrib.livekit.end_of_turn_delay": 0,
+            "contrib.livekit.transcript_confidence": 0,
+            "contrib.livekit.transcription_delay": 0,
+            "scenario": "livekit-instrumentation",
+            "testRunId": "<run:1>",
+            "turn.id": "<span:1>"
+          }
+        }
+      ],
+      "input": {
+        "audio": {
+          "call-0000": {
+            "content_type": "audio/pcm",
+            "filename": "call-0000.pcm",
+            "key": "<uuid:1>",
+            "type": "braintrust_attachment"
+          }
+        }
+      },
+      "metadata": {
+        "audio.recordings": [
+          {
+            "attachment": {
+              "ref": "/input/audio/call-0000",
+              "span_id": "<span:2>"
+            },
+            "channel_count": 2,
+            "duration_ms": 0,
+            "id": "<span:1>",
+            "mime_type": "audio/pcm",
+            "recording_group_id": "call",
+            "sample_format": "s16le",
+            "sample_rate_hz": 24000,
+            "sources": [
+              {
+                "boundary": "local_audio_output",
+                "channel_index": 1
+              }
+            ],
+            "state": "ready",
+            "timeline": {
+              "basis": "local_input_arrival_and_output_playout",
+              "origin_unix_ms": 0,
+              "recording_start_offset_ms": 0
+            }
+          }
+        ],
+        "contrib.livekit.agent_label": "default_agent",
+        "contrib.livekit.audio.input_formats": [],
+        "contrib.livekit.audio.output_formats": [
+          {
+            "channel_count": 1,
+            "sample_rate_hz": 24000
+          }
+        ],
+        "contrib.livekit.events": [
+          {
+            "attributes": {
+              "contrib.livekit.new_state": "listening",
+              "contrib.livekit.old_state": "initializing"
+            },
+            "name": "agent_state_changed",
+            "time_unix_ms": 0
+          },
+          {
+            "attributes": {
+              "contrib.livekit.new_state": "speaking",
+              "contrib.livekit.old_state": "listening"
+            },
+            "name": "agent_state_changed",
+            "time_unix_ms": 0
+          },
+          {
+            "attributes": {
+              "contrib.livekit.new_state": "listening",
+              "contrib.livekit.old_state": "speaking"
+            },
+            "name": "agent_state_changed",
+            "time_unix_ms": 0
+          }
+        ],
+        "gen_ai.operation.name": "invoke_workflow",
+        "gen_ai.workflow.name": "agent_session",
+        "scenario": "livekit-instrumentation",
+        "testRunId": "<run:1>"
+      }
+    }
+  ]
+}

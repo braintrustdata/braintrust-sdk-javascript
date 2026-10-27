@@ -1,4 +1,5 @@
 import { describe } from "vite-plus/test";
+import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -32,75 +33,71 @@ const anthropicBedrockScenarios = await Promise.all(
 
 describe.concurrent("variants", () => {
   for (const scenario of anthropicBedrockScenarios) {
-    describe(
-      `anthropic bedrock sdk ${scenario.version}`,
-      { concurrent: false },
-      () => {
-        defineAnthropicBedrockInstrumentationAssertions({
-          name: "wrapped instrumentation",
-          runScenario: async ({ runScenarioDir }) => {
-            await runScenarioDir({
-              entry: "scenario.ts",
-              env: {
-                ANTHROPIC_BEDROCK_PACKAGE_NAME: scenario.dependencyName,
-              },
-              runContext: {
-                variantKey: scenario.snapshotName,
-                originalScenarioDir,
-              },
-              scenarioDir,
-              timeoutMs: ANTHROPIC_BEDROCK_SCENARIO_TIMEOUT_MS,
-            });
-          },
-          snapshotName: `${scenario.snapshotName}-wrapped`,
-          testFileUrl: import.meta.url,
-          timeoutMs: ANTHROPIC_BEDROCK_SCENARIO_TIMEOUT_MS,
-        });
+    describeVariant(`anthropic bedrock sdk ${scenario.version}`, () => {
+      defineAnthropicBedrockInstrumentationAssertions({
+        name: "wrapped instrumentation",
+        runScenario: async ({ runScenarioDir }) => {
+          await runScenarioDir({
+            entry: "scenario.ts",
+            env: {
+              ANTHROPIC_BEDROCK_PACKAGE_NAME: scenario.dependencyName,
+            },
+            runContext: {
+              variantKey: scenario.snapshotName,
+              originalScenarioDir,
+            },
+            scenarioDir,
+            timeoutMs: ANTHROPIC_BEDROCK_SCENARIO_TIMEOUT_MS,
+          });
+        },
+        snapshotName: `${scenario.snapshotName}-wrapped`,
+        testFileUrl: import.meta.url,
+        timeoutMs: ANTHROPIC_BEDROCK_SCENARIO_TIMEOUT_MS,
+      });
 
-        defineAnthropicBedrockInstrumentationAssertions({
-          name: "auto-hook instrumentation ESM",
-          runScenario: async ({ runNodeScenarioDir }) => {
-            await runNodeScenarioDir({
-              entry: "scenario.mjs",
-              env: {
-                ANTHROPIC_BEDROCK_PACKAGE_NAME: scenario.dependencyName,
-              },
-              nodeArgs: ["--import", "braintrust/hook.mjs"],
-              runContext: {
-                variantKey: scenario.snapshotName,
-                originalScenarioDir,
-              },
-              scenarioDir,
-              timeoutMs: ANTHROPIC_BEDROCK_SCENARIO_TIMEOUT_MS,
-            });
-          },
-          snapshotName: `${scenario.snapshotName}-auto-esm`,
-          testFileUrl: import.meta.url,
-          timeoutMs: ANTHROPIC_BEDROCK_SCENARIO_TIMEOUT_MS,
-        });
+      defineAnthropicBedrockInstrumentationAssertions({
+        name: "auto-hook instrumentation ESM",
+        runScenario: async ({ runNodeScenarioDir }) => {
+          await runNodeScenarioDir({
+            entry: "scenario.mjs",
+            env: {
+              ANTHROPIC_BEDROCK_PACKAGE_NAME: scenario.dependencyName,
+            },
+            nodeArgs: ["--import", "braintrust/hook.mjs"],
+            runContext: {
+              variantKey: scenario.snapshotName,
+              originalScenarioDir,
+            },
+            scenarioDir,
+            timeoutMs: ANTHROPIC_BEDROCK_SCENARIO_TIMEOUT_MS,
+          });
+        },
+        snapshotName: `${scenario.snapshotName}-auto-esm`,
+        testFileUrl: import.meta.url,
+        timeoutMs: ANTHROPIC_BEDROCK_SCENARIO_TIMEOUT_MS,
+      });
 
-        defineAnthropicBedrockInstrumentationAssertions({
-          name: "auto-hook instrumentation CJS",
-          runScenario: async ({ runNodeScenarioDir }) => {
-            await runNodeScenarioDir({
-              entry: "scenario.cjs",
-              env: {
-                ANTHROPIC_BEDROCK_PACKAGE_NAME: scenario.dependencyName,
-              },
-              nodeArgs: ["--import", "braintrust/hook.mjs"],
-              runContext: {
-                variantKey: scenario.snapshotName,
-                originalScenarioDir,
-              },
-              scenarioDir,
-              timeoutMs: ANTHROPIC_BEDROCK_SCENARIO_TIMEOUT_MS,
-            });
-          },
-          snapshotName: `${scenario.snapshotName}-auto-cjs`,
-          testFileUrl: import.meta.url,
-          timeoutMs: ANTHROPIC_BEDROCK_SCENARIO_TIMEOUT_MS,
-        });
-      },
-    );
+      defineAnthropicBedrockInstrumentationAssertions({
+        name: "auto-hook instrumentation CJS",
+        runScenario: async ({ runNodeScenarioDir }) => {
+          await runNodeScenarioDir({
+            entry: "scenario.cjs",
+            env: {
+              ANTHROPIC_BEDROCK_PACKAGE_NAME: scenario.dependencyName,
+            },
+            nodeArgs: ["--import", "braintrust/hook.mjs"],
+            runContext: {
+              variantKey: scenario.snapshotName,
+              originalScenarioDir,
+            },
+            scenarioDir,
+            timeoutMs: ANTHROPIC_BEDROCK_SCENARIO_TIMEOUT_MS,
+          });
+        },
+        snapshotName: `${scenario.snapshotName}-auto-cjs`,
+        testFileUrl: import.meta.url,
+        timeoutMs: ANTHROPIC_BEDROCK_SCENARIO_TIMEOUT_MS,
+      });
+    });
   }
 });

@@ -1,4 +1,5 @@
 import { describe } from "vite-plus/test";
+import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -32,49 +33,45 @@ const bedrockRuntimeScenarios = await Promise.all(
 
 describe.concurrent("variants", () => {
   for (const scenario of bedrockRuntimeScenarios) {
-    describe(
-      `bedrock runtime sdk ${scenario.version}`,
-      { concurrent: false },
-      () => {
-        defineBedrockRuntimeInstrumentationAssertions({
-          name: "wrapped instrumentation",
-          runScenario: async ({ runScenarioDir }) => {
-            await runScenarioDir({
-              entry: "scenario.ts",
-              env: { BEDROCK_RUNTIME_PACKAGE_NAME: scenario.dependencyName },
-              runContext: {
-                variantKey: scenario.snapshotName,
-                originalScenarioDir,
-              },
-              scenarioDir,
-              timeoutMs: BEDROCK_RUNTIME_SCENARIO_TIMEOUT_MS,
-            });
-          },
-          snapshotName: `${scenario.snapshotName}-wrapped`,
-          testFileUrl: import.meta.url,
-          timeoutMs: BEDROCK_RUNTIME_SCENARIO_TIMEOUT_MS,
-        });
+    describeVariant(`bedrock runtime sdk ${scenario.version}`, () => {
+      defineBedrockRuntimeInstrumentationAssertions({
+        name: "wrapped instrumentation",
+        runScenario: async ({ runScenarioDir }) => {
+          await runScenarioDir({
+            entry: "scenario.ts",
+            env: { BEDROCK_RUNTIME_PACKAGE_NAME: scenario.dependencyName },
+            runContext: {
+              variantKey: scenario.snapshotName,
+              originalScenarioDir,
+            },
+            scenarioDir,
+            timeoutMs: BEDROCK_RUNTIME_SCENARIO_TIMEOUT_MS,
+          });
+        },
+        snapshotName: `${scenario.snapshotName}-wrapped`,
+        testFileUrl: import.meta.url,
+        timeoutMs: BEDROCK_RUNTIME_SCENARIO_TIMEOUT_MS,
+      });
 
-        defineBedrockRuntimeInstrumentationAssertions({
-          name: "auto-hook instrumentation",
-          runScenario: async ({ runNodeScenarioDir }) => {
-            await runNodeScenarioDir({
-              entry: "scenario.mjs",
-              env: { BEDROCK_RUNTIME_PACKAGE_NAME: scenario.dependencyName },
-              nodeArgs: ["--import", "braintrust/hook.mjs"],
-              runContext: {
-                variantKey: scenario.snapshotName,
-                originalScenarioDir,
-              },
-              scenarioDir,
-              timeoutMs: BEDROCK_RUNTIME_SCENARIO_TIMEOUT_MS,
-            });
-          },
-          snapshotName: `${scenario.snapshotName}-auto`,
-          testFileUrl: import.meta.url,
-          timeoutMs: BEDROCK_RUNTIME_SCENARIO_TIMEOUT_MS,
-        });
-      },
-    );
+      defineBedrockRuntimeInstrumentationAssertions({
+        name: "auto-hook instrumentation",
+        runScenario: async ({ runNodeScenarioDir }) => {
+          await runNodeScenarioDir({
+            entry: "scenario.mjs",
+            env: { BEDROCK_RUNTIME_PACKAGE_NAME: scenario.dependencyName },
+            nodeArgs: ["--import", "braintrust/hook.mjs"],
+            runContext: {
+              variantKey: scenario.snapshotName,
+              originalScenarioDir,
+            },
+            scenarioDir,
+            timeoutMs: BEDROCK_RUNTIME_SCENARIO_TIMEOUT_MS,
+          });
+        },
+        snapshotName: `${scenario.snapshotName}-auto`,
+        testFileUrl: import.meta.url,
+        timeoutMs: BEDROCK_RUNTIME_SCENARIO_TIMEOUT_MS,
+      });
+    });
   }
 });

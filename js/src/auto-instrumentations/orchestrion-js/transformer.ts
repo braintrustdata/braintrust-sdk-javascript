@@ -3,13 +3,12 @@
  * licensed under Apache-2.0. Modified by Braintrust.
  */
 
-import esquery from "esquery";
 import { generate } from "astring";
+import esquery from "esquery";
 import { parse } from "meriyah";
 import { SourceMapGenerator } from "source-map";
-import { transforms, type TransformState } from "./transforms";
+import { wrapInvocation, type TransformState } from "./transforms";
 import type {
-  FunctionKind,
   FunctionQuery,
   InstrumentationConfig,
   ModuleType,
@@ -18,7 +17,6 @@ import type {
 
 type AnyNode = any;
 type ExportAliases = Record<string, string>;
-type TraceOperator = "traceCallback" | "tracePromise" | "traceSync";
 
 /**
  * Applies instrumentation configs to JavaScript source by parsing it into an
@@ -44,76 +42,67 @@ export class Transformer {
   }
 
   /**
-   * Instruments `code` by injecting global tracing hooks around the
+   * Instruments `code` by injecting global invocation hooks around the
    * target functions defined by this transformer's configs.
    */
   transform(
-    code: string | Buffer,
+    code: string,
     moduleType: ModuleType,
     runtimeImport?: string,
   ): TransformOutput {
-    if (Buffer.isBuffer(code)) {
-      code = code.toString();
-    }
-    if (!code) {
+    if (!code || (this.configs.length === 0 && !runtimeImport)) {
       return { code };
     }
 
-    let ast: AnyNode | undefined;
-    let aliases: ExportAliases = {};
+    const options = {
+      loc: true,
+      ranges: true,
+      raw: true,
+      module: moduleType === "esm",
+    };
+    let ast: AnyNode;
+    try {
+      ast = parse(code, options);
+    } catch {
+      ast = parse(code, { ...options, module: !options.module });
+    }
+    const aliases = moduleType === "esm" ? this.collectExportAliases(ast) : {};
     let injectionCount = 0;
 
     for (const config of this.configs) {
-      const { astQuery, functionQuery } = config;
-
-      if (!ast) {
-        const options = {
-          loc: true,
-          ranges: true,
-          raw: true,
-          module: moduleType === "esm",
-        };
-
-        try {
-          ast = parse(code, options as any);
-        } catch {
-          ast = parse(code, { ...options, module: !options.module } as any);
-        }
-
-        if (moduleType === "esm") {
-          aliases = this.collectExportAliases(ast);
-        }
-      }
+      const { functionQuery } = config;
 
       const resolvedFunctionQuery = this.resolveExportAlias(
         functionQuery,
         aliases,
       );
-      const query = astQuery || this.fromFunctionQuery(resolvedFunctionQuery);
+      const query = this.fromFunctionQuery(resolvedFunctionQuery);
       const state: TransformState = {
         ...config,
         moduleVersion: this.version,
         functionQuery: resolvedFunctionQuery,
-        operator: this.getOperator(resolvedFunctionQuery.kind),
       };
 
-      esquery.traverse(ast, esquery.parse(query), (...args: any[]) => {
+      let functionIndex = 0;
+      esquery.traverse(ast, esquery.parse(query), (node: AnyNode) => {
         injectionCount++;
-        this.visit(state, ...args);
+        // Class matches cover instance methods installed in constructors;
+        // only function matches participate in index selection.
+        if (
+          node.type !== "ClassDeclaration" &&
+          node.type !== "ClassExpression"
+        ) {
+          if (node.type === "VariableDeclarator") return;
+          if ((functionQuery.index ?? 0) !== functionIndex++) return;
+        }
+        wrapInvocation(state, node, ast);
       });
     }
 
     if (injectionCount === 0 && this.configs.length > 0) {
-      const names = this.configs.map(({ astQuery, functionQuery }) => {
+      const names = this.configs.map(({ functionQuery }) => {
         const resolvedQuery = this.resolveExportAlias(functionQuery, aliases);
-        const queryName = (q: any) =>
-          q.methodName ||
-          q.privateMethodName ||
-          q.functionName ||
-          q.propertyName ||
-          astQuery ||
-          "unknown";
-        const originalName = queryName(functionQuery);
+        const originalName = this.functionQueryLabel(functionQuery);
         const originalAlias =
           (functionQuery as any).className ||
           (functionQuery as any).functionName;
@@ -155,53 +144,10 @@ export class Transformer {
       ast.body.splice(index, 0, ...initialization.body);
     }
 
-    if (ast) {
-      const file = `${this.moduleName}/${this.filePath}`;
-      const sourceMap = new SourceMapGenerator({ file });
-      const transformedCode = generate(ast, { sourceMap });
-      const map = sourceMap.toString();
-
-      return { code: transformedCode, map };
-    }
-
-    return { code };
-  }
-
-  free(): void {}
-
-  private visit(state: TransformState, ...args: any[]): void {
-    const transform = transforms[state.operator];
-    const { index = 0 } = state.functionQuery as any;
-    const [node] = args;
-    const type = node.init?.type || node.type;
-
-    // Class nodes are visited for traceInstanceMethod, but index matching only
-    // counts function nodes.
-    if (type !== "ClassDeclaration" && type !== "ClassExpression") {
-      if (node.type === "VariableDeclarator") {
-        return;
-      }
-
-      state.functionIndex =
-        state.functionIndex === undefined ? 0 : state.functionIndex + 1;
-
-      if (index !== null && index !== state.functionIndex) {
-        return;
-      }
-    }
-
-    (transform as (...args: any[]) => void)(state, ...args);
-  }
-
-  private getOperator(kind: FunctionKind): TraceOperator {
-    switch (kind) {
-      case "Async":
-        return "tracePromise";
-      case "Callback":
-        return "traceCallback";
-      case "Sync":
-        return "traceSync";
-    }
+    const sourceMap = new SourceMapGenerator({
+      file: `${this.moduleName}/${this.filePath}`,
+    });
+    return { code: generate(ast, { sourceMap }), map: sourceMap.toString() };
   }
 
   private collectExportAliases(ast: AnyNode): ExportAliases {
@@ -251,33 +197,22 @@ export class Transformer {
     if ("methodName" in functionQuery) {
       return functionQuery.methodName;
     }
-    if ("privateMethodName" in functionQuery) {
-      return functionQuery.privateMethodName;
-    }
     if ("functionName" in functionQuery) {
       return functionQuery.functionName;
     }
-    if ("propertyName" in functionQuery) {
-      return functionQuery.propertyName;
-    }
-    return "unknown";
+    return functionQuery.propertyName;
   }
 
   private fromFunctionQuery(functionQuery: FunctionQuery): string {
     const queries: string[] = [];
 
     if ("className" in functionQuery) {
-      const { className } = functionQuery;
-      const methodName = this.functionQueryLabel(functionQuery);
-      const keyType =
-        "privateMethodName" in functionQuery
-          ? "PrivateIdentifier"
-          : "Identifier";
+      const { className, methodName } = functionQuery;
       queries.push(
         `[id.name="${className}"]`,
         `[id.name="${className}"] > ClassExpression`,
-        `[id.name="${className}"] > ClassBody > [key.name="${methodName}"][key.type=${keyType}] > [async]`,
-        `[id.name="${className}"] > ClassExpression > ClassBody > [key.name="${methodName}"][key.type=${keyType}] > [async]`,
+        `[id.name="${className}"] > ClassBody > [key.name="${methodName}"][key.type=Identifier] > [async]`,
+        `[id.name="${className}"] > ClassExpression > ClassBody > [key.name="${methodName}"][key.type=Identifier] > [async]`,
       );
     } else if ("methodName" in functionQuery) {
       const { methodName } = functionQuery;
@@ -292,14 +227,10 @@ export class Transformer {
       queries.push(`FunctionDeclaration[id.name="${functionName}"][async]`);
     }
 
-    if ("objectName" in functionQuery) {
-      const { objectName, propertyName } = functionQuery;
-      const objectSelector =
-        objectName === "this"
-          ? "left.object.type=ThisExpression"
-          : `left.object.name="${objectName}"`;
+    if ("propertyName" in functionQuery) {
+      const { propertyName } = functionQuery;
       queries.push(
-        `AssignmentExpression[${objectSelector}][left.property.name="${propertyName}"] > [async]`,
+        `AssignmentExpression[left.object.type=ThisExpression][left.property.name="${propertyName}"] > [async]`,
       );
     }
 

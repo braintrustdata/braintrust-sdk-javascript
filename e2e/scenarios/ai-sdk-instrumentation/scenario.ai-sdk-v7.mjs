@@ -28,6 +28,7 @@ import { runAutoAISDKInstrumentationOrExit } from "./scenario.impl.mjs";
 
 runAutoAISDKInstrumentationOrExit({
   agentClassExport: "ToolLoopAgent",
+  codeModeModes: ["auto-hook", "combined"],
   ai,
   anthropic,
   createAnthropic,

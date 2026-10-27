@@ -1,3 +1,4 @@
+import { sdkConsole } from "./logs/console";
 import {
   makeScorerPropagatedEvent,
   Classification,
@@ -863,11 +864,9 @@ export async function Eval<
       return ret;
     } finally {
       if (experiment) {
-        // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-        await experiment.flush().catch(console.error);
+        await experiment.flush().catch(sdkConsole.error);
       } else if (options.parent) {
-        // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-        await flush({ state: evaluator.state }).catch(console.error);
+        await flush({ state: evaluator.state }).catch(sdkConsole.error);
       }
     }
   } finally {
@@ -1690,13 +1689,11 @@ async function runEvaluatorInternal(
 
 const warning = (text: string) => `Warning: ${text}`;
 
-function logError(e: unknown, verbose: boolean) {
+export function logError(e: unknown, verbose: boolean): void {
   if (!verbose) {
-    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    console.error(`${e}`);
+    sdkConsole.error(`${e}`);
   } else {
-    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    console.error(e);
+    sdkConsole.error(e);
   }
 }
 
@@ -1769,15 +1766,13 @@ function reportFailures<Input, Output, Expected, Metadata extends BaseMetadata>(
     // TODO: We may want to support a non-strict mode (and make this the "strict" behavior), so that
     // users can still log imperfect evaluations. In the meantime, they should handle these cases inside
     // of their tasks.
-    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    console.error(
+    sdkConsole.error(
       warning(
         `Evaluator ${evaluator.evalName} failed with ${failingResults.length} error${failingResults.length === 1 ? "" : "s"}. This evaluation ("${evaluator.evalName}") will not be fully logged.`,
       ),
     );
     if (jsonl) {
-      // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-      console.log(
+      sdkConsole.log(
         JSON.stringify({
           evaluatorName: evaluator.evalName,
           errors: failingResults.map(
@@ -1791,8 +1786,7 @@ function reportFailures<Input, Output, Expected, Metadata extends BaseMetadata>(
       }
     }
     if (!verbose && !jsonl) {
-      // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-      console.error(
+      sdkConsole.error(
         warning(
           "Use --debug-logging debug to see full stack traces and troubleshooting details.",
         ),

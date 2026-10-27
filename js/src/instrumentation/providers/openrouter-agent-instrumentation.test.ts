@@ -8,10 +8,10 @@ import {
   it,
   vi,
 } from "vite-plus/test";
-import { configureNode } from "../../node/config";
 import { _exportsForTestingOnly } from "../../logger/testing";
 import { initLogger } from "../../logger/core";
-import { openRouterAgentChannels } from "./openrouter-agent-channels";
+import { configureNode } from "../../node/config";
+import { openRouterAgentChannels } from "./openrouter-agent-interceptors";
 import {
   aggregateOpenRouterChatChunks,
   aggregateOpenRouterResponseStreamEvents,
@@ -462,7 +462,7 @@ describe("OpenRouter Agent instrumentation", () => {
         tools: [tool],
       };
 
-      const result = openRouterAgentChannels.callModel.traceSync(
+      const result = openRouterAgentChannels.callModel.invoke(
         () => {
           const modelResult = {
             allToolExecutionRounds: [] as any[],
@@ -518,9 +518,9 @@ describe("OpenRouter Agent instrumentation", () => {
 
           return modelResult;
         },
-        {
-          arguments: [request as any],
-        },
+        undefined,
+        [request as any],
+        {},
       );
       expect(request.tools[0]).not.toBe(tool);
 
@@ -638,7 +638,7 @@ describe("OpenRouter Agent instrumentation", () => {
         model: "openai/gpt-4.1-mini",
       };
 
-      const result = openRouterAgentChannels.callModel.traceSync(
+      const result = openRouterAgentChannels.callModel.invoke(
         () => ({
           async getResponse() {
             return finalResponse;
@@ -647,9 +647,9 @@ describe("OpenRouter Agent instrumentation", () => {
             return "ok";
           },
         }),
-        {
-          arguments: [request],
-        },
+        undefined,
+        [request],
+        {},
       );
 
       await expect(result.getText()).resolves.toBe("ok");

@@ -1,4 +1,5 @@
 import { describe } from "vite-plus/test";
+import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -32,33 +33,29 @@ const openAIAgentsScenarios = await Promise.all(
 
 describe.concurrent("variants", () => {
   for (const scenario of openAIAgentsScenarios) {
-    describe(
-      `openai agents sdk ${scenario.version}`,
-      { concurrent: false },
-      () => {
-        defineOpenAIAgentsAutoInstrumentationAssertions({
-          name: "auto-hook instrumentation",
-          runScenario: async ({ runNodeScenarioDir }) => {
-            await runNodeScenarioDir({
-              entry: "scenario.mjs",
-              env: {
-                NODE_ENV: "development",
-                OPENAI_AGENTS_PACKAGE_NAME: scenario.dependencyName,
-              },
-              nodeArgs: ["--import", "braintrust/hook.mjs"],
-              runContext: {
-                variantKey: scenario.variantKey,
-                originalScenarioDir,
-              },
-              scenarioDir,
-              timeoutMs: TIMEOUT_MS,
-            });
-          },
-          snapshotName: scenario.variantKey,
-          testFileUrl: import.meta.url,
-          timeoutMs: TIMEOUT_MS,
-        });
-      },
-    );
+    describeVariant(`openai agents sdk ${scenario.version}`, () => {
+      defineOpenAIAgentsAutoInstrumentationAssertions({
+        name: "auto-hook instrumentation",
+        runScenario: async ({ runNodeScenarioDir }) => {
+          await runNodeScenarioDir({
+            entry: "scenario.mjs",
+            env: {
+              NODE_ENV: "development",
+              OPENAI_AGENTS_PACKAGE_NAME: scenario.dependencyName,
+            },
+            nodeArgs: ["--import", "braintrust/hook.mjs"],
+            runContext: {
+              variantKey: scenario.variantKey,
+              originalScenarioDir,
+            },
+            scenarioDir,
+            timeoutMs: TIMEOUT_MS,
+          });
+        },
+        snapshotName: scenario.variantKey,
+        testFileUrl: import.meta.url,
+        timeoutMs: TIMEOUT_MS,
+      });
+    });
   }
 });

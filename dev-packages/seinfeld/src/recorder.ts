@@ -64,6 +64,7 @@ interface CassetteContext {
   ignoredRequests: IgnoredRequestMatcher[] | undefined;
   streamingRequests: StreamingRequestMatcher[] | undefined;
   threshold: number | false;
+  inlineRequestBodies: boolean;
   onMiss: ((req: RecordedRequest) => void) | undefined;
 
   // Per-run mutable state (reset on each start)
@@ -106,11 +107,17 @@ async function handleCassetteRequest(
 
   switch (ctx.mode) {
     case "replay": {
-      const recorded = await recordRequest(request, ctx.threshold);
+      const recorded = await recordRequest(
+        request,
+        ctx.inlineRequestBodies ? false : ctx.threshold,
+      );
       return handleReplay(ctx, recorded);
     }
     case "record": {
-      const draft = await recordRequestDraft(request, ctx.threshold);
+      const draft = await recordRequestDraft(
+        request,
+        ctx.inlineRequestBodies ? false : ctx.threshold,
+      );
       return handleRecord(ctx, getRealResponse, draft);
     }
     case "passthrough":
@@ -449,6 +456,8 @@ export interface CassetteServerOptions {
   store: CassetteStore;
   /** Filter spec (matching-only normalization). */
   filters?: FilterSpec;
+  /** Keep large request bodies inline so matching filters can normalize their bytes. */
+  inlineRequestBodies?: boolean;
   /** Redaction spec for what gets persisted to disk. Defaults to paranoid. */
   redact?: RedactionSpec;
   /**
@@ -496,6 +505,7 @@ function createContext(options: CassetteServerOptions): CassetteContext {
     ignoredRequests: options.ignoredRequests,
     streamingRequests: options.streamingRequests,
     threshold: DEFAULT_EXTERNAL_BLOB_THRESHOLD,
+    inlineRequestBodies: options.inlineRequestBodies ?? false,
     onMiss: options.onMiss,
     candidates: [],
     callCounts: new Map(),
@@ -797,15 +807,25 @@ async function writeFetchResponse(
 
   const reader = response.body.getReader();
   try {
-    for (;;) {
+    while (!res.destroyed) {
       const { done, value } = await reader.read();
       if (done) break;
       if (!res.write(Buffer.from(value))) {
-        await new Promise<void>((resolve) => res.once("drain", resolve));
+        // A client that disconnects mid-stream never drains.
+        await new Promise<void>((resolve) => {
+          const resume = () => {
+            res.off("drain", resume);
+            res.off("close", resume);
+            resolve();
+          };
+          res.on("drain", resume);
+          res.on("close", resume);
+        });
       }
     }
   } finally {
     res.end();
-    reader.releaseLock();
+    if (res.destroyed) await reader.cancel();
+    else reader.releaseLock();
   }
 }

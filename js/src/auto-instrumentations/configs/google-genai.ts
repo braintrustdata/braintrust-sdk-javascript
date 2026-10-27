@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { googleGenAIChannels } from "../../instrumentation/providers/google-genai-channels";
+import { googleGenAIChannels } from "../../instrumentation/providers/google-genai-interceptors";
 
 /**
  * Instrumentation configurations for the Google GenAI SDK.
@@ -25,7 +25,6 @@ export const googleGenAIConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Models",
       methodName: "generateContentInternal",
-      kind: "Async",
     },
   },
 
@@ -41,7 +40,6 @@ export const googleGenAIConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Models",
       methodName: "generateContentStreamInternal",
-      kind: "Async",
     },
   },
 
@@ -54,9 +52,7 @@ export const googleGenAIConfigs: InstrumentationConfig[] = [
       filePath: "dist/node/index.mjs",
     },
     functionQuery: {
-      objectName: "this",
       propertyName: "generateImages",
-      kind: "Async",
     },
   },
 
@@ -69,9 +65,7 @@ export const googleGenAIConfigs: InstrumentationConfig[] = [
       filePath: "dist/node/index.mjs",
     },
     functionQuery: {
-      objectName: "this",
       propertyName: "editImage",
-      kind: "Async",
     },
   },
 
@@ -86,9 +80,7 @@ export const googleGenAIConfigs: InstrumentationConfig[] = [
       filePath: "dist/node/index.mjs",
     },
     functionQuery: {
-      objectName: "this",
       propertyName: "generateVideos",
-      kind: "Async",
     },
   },
 
@@ -103,7 +95,6 @@ export const googleGenAIConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Models",
       methodName: "embedContent",
-      kind: "Async",
     },
   },
 
@@ -119,7 +110,6 @@ export const googleGenAIConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Models",
       methodName: "embedContentInternal",
-      kind: "Async",
     },
   },
 
@@ -135,7 +125,6 @@ export const googleGenAIConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "HttpResponse",
       methodName: "json",
-      kind: "Async",
     },
   },
 
@@ -150,7 +139,6 @@ export const googleGenAIConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "BaseInteractions",
       methodName: "create",
-      kind: "Async",
     },
   },
 ];

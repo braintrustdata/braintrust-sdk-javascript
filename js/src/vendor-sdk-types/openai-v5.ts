@@ -1,4 +1,5 @@
 import type { OpenAIMediaClient } from "./openai-media";
+import type { OpenAIDecisionsClient } from "./openai-decisions";
 import type {
   OpenAIBeta,
   OpenAIChatWithParsing,
@@ -7,7 +8,8 @@ import type {
   OpenAIResponsesWithParsing,
 } from "./openai-common";
 
-export interface OpenAIV5Client extends OpenAIMediaClient {
+export interface OpenAIV5Client
+  extends OpenAIMediaClient, OpenAIDecisionsClient {
   chat: OpenAIChatWithParsing;
   embeddings: OpenAIEmbeddings;
   moderations: OpenAIModerations;

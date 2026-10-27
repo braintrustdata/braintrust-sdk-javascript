@@ -1,7 +1,7 @@
 import { registerInstrumentation } from "../instrumentation/registrations/elevenlabs";
 import { isObject } from "../../util";
 import { debugLogger } from "../debug-logger";
-import { elevenLabsChannels } from "../instrumentation/providers/elevenlabs-channels";
+import { elevenLabsChannels } from "../instrumentation/providers/elevenlabs-interceptors";
 import type {
   ElevenLabsClient,
   ElevenLabsSpeechArgs,
@@ -32,7 +32,7 @@ export function wrapElevenLabs<T>(client: T): T {
     !isObject(client.textToSpeech) ||
     typeof client.textToSpeech.convert !== "function"
   ) {
-    debugLogger.warn("Unsupported ElevenLabs client. Not wrapping.");
+    debugLogger.notice.warn("Unsupported ElevenLabs client. Not wrapping.");
     return client;
   }
   const cached = clients.get(client);

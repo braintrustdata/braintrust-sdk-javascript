@@ -8,15 +8,19 @@ import {
   vi,
 } from "vite-plus/test";
 
-import { BraintrustState, initLogger, login } from "./logger/core";
-import { _exportsForTestingOnly } from "./logger/testing";
 import {
   debugLogger,
   getEnvDebugLogLevel,
   resetDebugLoggerForTests,
 } from "./debug-logger";
-import { newGlobalTracingChannel } from "./global-instrumentation-hooks";
+import {
+  newGlobalInvocationHook,
+  GLOBAL_INSTRUMENTATION_HOOKS_KEY,
+} from "./global-instrumentation-hooks";
+import { BraintrustState, initLogger, login } from "./logger/core";
+import { _exportsForTestingOnly } from "./logger/testing";
 import { configureNode } from "./node/config";
+import iso from "#braintrust-platform";
 
 configureNode();
 
@@ -76,26 +80,75 @@ describe("debug logger", () => {
     expect(debugSpy).toHaveBeenCalledWith("[braintrust]", "debug");
   });
 
-  test("global hook failures are logged without escaping the provider call", () => {
+  test("invalid global hooks are reported without changing the provider call", () => {
     process.env.BRAINTRUST_DEBUG_LOG_LEVEL = "error";
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     installGlobalHookErrorReporter();
-    const subscriberError = new Error("subscriber failed");
-    const channel = newGlobalTracingChannel<Record<string, unknown>>(
-      `test:debug-logger:${Math.random()}`,
-    );
-    channel.subscribe({
-      start() {
-        throw subscriberError;
-      },
-    });
-
-    expect(channel.traceSync(() => "result", {})).toBe("result");
+    const name = `test:debug-logger:${Math.random()}`;
+    newGlobalInvocationHook(name);
+    const registry = (
+      globalThis as unknown as Record<string, Map<string, unknown>>
+    )[GLOBAL_INSTRUMENTATION_HOOKS_KEY];
+    registry.set(name, {});
+    expect(
+      newGlobalInvocationHook(name).invoke(() => "result", undefined, [], {}),
+    ).toBe("result");
     expect(errorSpy).toHaveBeenCalledWith(
       "[braintrust]",
       "Global instrumentation hook error:",
-      subscriberError,
+      expect.any(Error),
     );
+  });
+
+  test("notice messages are shown at warn when no level is configured", () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    debugLogger.warn("hidden warning");
+    expect(debugLogger.notice.warn("notice warning")).toBe(true);
+    expect(debugLogger.notice.error("notice error")).toBe(true);
+
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    expect(warnSpy).toHaveBeenCalledWith("[braintrust]", "notice warning");
+    expect(errorSpy).toHaveBeenCalledWith("[braintrust]", "notice error");
+  });
+
+  test("notice messages respect an explicit level", () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const state = {
+      getDebugLogLevel: () => "error" as const,
+      hasDebugLogLevelOverride: () => true,
+    };
+
+    const scopedLogger = debugLogger.forState(state);
+    expect(scopedLogger.notice.warn("notice warning")).toBe(false);
+    expect(scopedLogger.notice.error("notice error")).toBe(true);
+
+    expect(warnSpy).not.toHaveBeenCalled();
+    expect(errorSpy).toHaveBeenCalledWith("[braintrust]", "notice error");
+  });
+
+  test("notice messages are silenced when logging is disabled", () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    _exportsForTestingOnly.setInitialTestState();
+    const state = _exportsForTestingOnly.simulateLogoutForTests();
+    state.setDebugLogLevel(false);
+
+    expect(debugLogger.notice.warn("notice warning")).toBe(false);
+    expect(debugLogger.notice.error("notice error")).toBe(false);
+    expect(
+      debugLogger
+        .forState({
+          getDebugLogLevel: () => undefined,
+          hasDebugLogLevelOverride: () => true,
+        })
+        .notice.error("scoped notice error"),
+    ).toBe(false);
+
+    expect(warnSpy).not.toHaveBeenCalled();
+    expect(errorSpy).not.toHaveBeenCalled();
   });
 
   test("default logger resolves the global SDK state", () => {
@@ -109,7 +162,8 @@ describe("debug logger", () => {
     expect(warnSpy).toHaveBeenCalledWith("[braintrust]", "global warning");
   });
 
-  test("BRAINTRUST_DEBUG_LOG_LEVEL accepts error, warn, info, and debug", () => {
+  test("BRAINTRUST_DEBUG_LOG_LEVEL works before platform initialization", () => {
+    vi.spyOn(iso, "getEnv").mockReturnValue(undefined);
     process.env.BRAINTRUST_DEBUG_LOG_LEVEL = "error";
     expect(getEnvDebugLogLevel()).toBe("error");
 
@@ -121,6 +175,16 @@ describe("debug logger", () => {
 
     process.env.BRAINTRUST_DEBUG_LOG_LEVEL = "debug";
     expect(getEnvDebugLogLevel()).toBe("debug");
+  });
+
+  test("BRAINTRUST_DEBUG_LOG_LEVEL fallback tolerates a process shim without env", () => {
+    vi.spyOn(iso, "getEnv").mockReturnValue(undefined);
+    vi.stubGlobal("process", {});
+    try {
+      expect(getEnvDebugLogLevel()).toBeUndefined();
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   test("BRAINTRUST_DEBUG_LOG_LEVEL rejects invalid values and warns once", () => {

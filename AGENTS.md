@@ -46,7 +46,21 @@ Keep public exports minimal. Generally, export only the requested runtime APIs a
 
 ## Instrumentation
 
+Our vendored Orchestrion implementation is purely internal to the Braintrust SDK.
+Downstream packages must not depend on its APIs, config schema, generated helpers, or compatibility with upstream Orchestrion.
+Do not expose these internals through SDK entrypoints or public configuration options.
+Change the transformer and its SDK callers together, and remove unused upstream features instead of retaining compatibility scaffolding.
+Preserve instrumented application behavior, coordination between SDK copies, and upstream license notices.
+
 Use the normal Orchestrion config plus plugin/channel path by default. Special-case source patches should be rare exceptions only when the target SDK cannot be instrumented through the standard transformer path, and the reason should be documented next to the patch.
+
+API wrapping and span instrumentation are separate concepts.
+Use `defineInterceptor` to define invocation hooks and `intercept`/`invoke` exclusively as generic wrapping machinery.
+Wrapping definitions and runtime code must not depend on spans, tracing lifecycle events, provenance, or SDK initialization.
+Keep span creation, context propagation, and finalization in separate tracing functions.
+Provider plugins explicitly register those functions through interceptors; tracing helpers accept callables and tracing configuration, never hooks or registration responsibilities.
+Do not introduce combined APIs such as `traceInvocation` or `interceptAndTrace`, including internal convenience APIs.
+Manual wrappers and generated wrappers only invoke hooks.
 
 Instrumentation patches generally do not need to be removed during teardown. Prefer leaving behavior-preserving patches installed when they are idempotent; do not add unpatching machinery by default.
 
@@ -61,10 +75,16 @@ Generally, do not add tests for build or linting code or their configuration. Va
 **From `js/` directory:**
 
 ```bash
-pnpm test                         # Core vitest suite (excludes wrappers)
-pnpm test -- -t "test name"       # Filter by test name
-pnpm run test:checks              # Hermetic tests (core + vitest wrapper)
+pnpm test                                    # Core vitest suite (excludes wrappers)
+pnpm exec vitest run src/foo.test.ts         # Run a single test file
+pnpm exec vitest run src/foo.test.ts -t "x"  # Filter by test name within a file
+pnpm run test:checks                         # Hermetic tests (core + vitest wrapper)
+pnpm run check:typings                       # Typecheck source and test files
 ```
+
+Do not pass filters through `pnpm test -- ...`; the `--` makes Vitest ignore them and run the full suite.
+
+Vitest does not typecheck. Before opening or updating a pull request, run `pnpm run check:typings` in each package you touched (or from the repo root) so type errors in source or test files are caught before CI.
 
 **E2E tests (`e2e/`):**
 

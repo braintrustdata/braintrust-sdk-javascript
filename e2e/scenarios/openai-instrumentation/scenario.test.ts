@@ -1,5 +1,6 @@
 import { defineAttachmentCaptureTests } from "../../helpers/attachment-capture-assertions";
 import { describe, it } from "vite-plus/test";
+import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -55,6 +56,18 @@ const openaiScenarios = await Promise.all(
       snapshotName: "openai-v6-latest",
       wrapperEntry: "scenario.ts",
     },
+    {
+      autoEntry: "scenario.mjs",
+      dependencyName: "openai-v7",
+      snapshotName: "openai-v7",
+      wrapperEntry: "scenario.ts",
+    },
+    {
+      autoEntry: "scenario.mjs",
+      dependencyName: "openai-v7-latest",
+      snapshotName: "openai-v7-latest",
+      wrapperEntry: "scenario.ts",
+    },
   ].map(async (scenario) => ({
     ...scenario,
     version: await readInstalledPackageVersion(
@@ -72,7 +85,12 @@ describe("real HTTP server (undici responses)", () => {
     async () => {
       await runNodeScenarioDir({
         entry: "scenario.real-http.mjs",
-        nodeArgs: ["--import", "braintrust/hook.mjs"],
+        nodeArgs: [
+          "--import",
+          "./configure.mjs",
+          "--import",
+          "braintrust/hook.mjs",
+        ],
         scenarioDir,
         timeoutMs: TIMEOUT_MS,
       });
@@ -86,7 +104,7 @@ describe.concurrent("variants", () => {
     const assertPrivateFieldMethodsOperation =
       !scenario.disablePrivateFieldMethodsAssertion;
 
-    describe(`openai sdk ${scenario.version}`, { concurrent: false }, () => {
+    describeVariant(`openai sdk ${scenario.version}`, () => {
       defineOpenAIInstrumentationAssertions({
         assertPrivateFieldMethodsOperation,
         name: "wrapped instrumentation",
@@ -120,7 +138,12 @@ describe.concurrent("variants", () => {
               BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "true",
               OPENAI_PACKAGE_NAME: scenario.dependencyName,
             },
-            nodeArgs: ["--import", "braintrust/hook.mjs"],
+            nodeArgs: [
+              "--import",
+              "./configure.mjs",
+              "--import",
+              "braintrust/hook.mjs",
+            ],
             runContext: {
               variantKey: scenario.snapshotName,
               originalScenarioDir,

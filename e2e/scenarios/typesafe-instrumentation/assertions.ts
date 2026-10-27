@@ -28,12 +28,24 @@ type RunTypeSafeScenario = (harness: {
   }) => Promise<unknown>;
 }) => Promise<void>;
 
-const OPERATIONS = ["typesafe-mixed-operation", "typesafe-raw-operation"];
-
-function spanTreeEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
+function spanTreeEvents(
+  events: CapturedLogEvent[],
+  supportsImages: boolean,
+): CapturedLogEvent[] {
+  const operations = [
+    "typesafe-mixed-operation",
+    "typesafe-raw-operation",
+    ...(supportsImages
+      ? [
+          "typesafe-image-operation",
+          "typesafe-template-operation",
+          "typesafe-box-operation",
+        ]
+      : []),
+  ];
   return [
     findLatestSpan(events, ROOT_NAME),
-    ...OPERATIONS.flatMap((operationName) => {
+    ...operations.flatMap((operationName) => {
       const operation = findLatestSpan(events, operationName);
       return [
         operation,
@@ -47,6 +59,7 @@ export function defineTypeSafeInstrumentationAssertions(options: {
   name: string;
   runScenario: RunTypeSafeScenario;
   snapshotName: string;
+  supportsImages: boolean;
   testFileUrl: string;
 }): void {
   const spanSnapshotPath = resolveFileSnapshotPath(
@@ -74,7 +87,7 @@ export function defineTypeSafeInstrumentationAssertions(options: {
       );
 
       expect(root?.row.metadata).toMatchObject({ scenario: SCENARIO_NAME });
-      expect(span?.span.type).toBe("question");
+      expect(span?.span.type).toBe("decision");
       expect(span?.input).toMatchObject({
         state: { message: expect.any(String) },
         questions: expect.arrayContaining([
@@ -139,8 +152,130 @@ export function defineTypeSafeInstrumentationAssertions(options: {
       });
     });
 
-    test("matches the span tree snapshot", async () => {
-      await matchSpanTreeSnapshot(spanTreeEvents(events), spanSnapshotPath);
+    if (options.supportsImages) {
+      test("preserves image references without capturing bytes by default", () => {
+        const operation = findLatestSpan(events, "typesafe-image-operation");
+        const span = findLatestChildSpan(
+          events,
+          "typesafe.systemOne",
+          operation?.span.id,
+        );
+        expect(span?.input).toMatchObject({ state: { type: "image" } });
+        expect(span?.input).not.toHaveProperty("assets");
+        expect(span?.output).toMatchObject({
+          answers: [{ id: "ship", type: "noul", noul: expect.any(Number) }],
+        });
+      });
+
+      test("captures template images in place in state, instructions and criteria", () => {
+        const operation = findLatestSpan(events, "typesafe-template-operation");
+        const span = findLatestChildSpan(
+          events,
+          "typesafe.systemOne",
+          operation?.span.id,
+        );
+        const reference = {
+          type: "braintrust_attachment",
+          content_type: "image/png",
+        };
+        expect(span?.input).toMatchObject({
+          state: { scene: ["Look at ", reference, "."] },
+          questions: [
+            {
+              id: "weather",
+              instructions: ["What weather is shown in ", reference, "?"],
+              criteria: { stormy: ["Stormy weather in ", reference] },
+            },
+          ],
+        });
+        expect(span?.input).not.toHaveProperty("assets");
+        expect(span?.output).toMatchObject({
+          answers: [
+            { id: "weather", type: "choice", choice: expect.any(String) },
+          ],
+        });
+      });
+
+      test("captures mixed answers and associates multiple boxes with the nested image", () => {
+        const operation = findLatestSpan(events, "typesafe-box-operation");
+        const span = findLatestChildSpan(
+          events,
+          "typesafe.systemOne",
+          operation?.span.id,
+        );
+        expect(span?.span.type).toBe("decision");
+        expect(span?.input).toMatchObject({
+          state: {
+            "photos~/": [
+              { type: "braintrust_attachment", content_type: "image/png" },
+            ],
+            description: "Locate the ship.",
+          },
+          questions: expect.arrayContaining([
+            { id: "ship", type: "box", instructions: "The sailing ship" },
+            {
+              id: "mast",
+              type: "box",
+              instructions: "The tallest mast on the ship",
+            },
+            expect.objectContaining({ id: "present", type: "noul" }),
+            expect.objectContaining({ id: "weather", type: "choice" }),
+            expect.objectContaining({ id: "waves", type: "score" }),
+          ]),
+        });
+        expect(span?.output).toMatchObject({
+          answers: expect.arrayContaining([
+            ...["ship", "mast"].map((id) => ({
+              id,
+              type: "box",
+              image_path: "/state/photos~0~1/0",
+              box: {
+                top: expect.any(Number),
+                bottom: expect.any(Number),
+                left: expect.any(Number),
+                right: expect.any(Number),
+              },
+              confidence: expect.toSatisfy(
+                (value: unknown) => value === null || typeof value === "number",
+              ),
+            })),
+            expect.objectContaining({
+              id: "present",
+              type: "noul",
+              noul: expect.any(Number),
+            }),
+            expect.objectContaining({
+              id: "weather",
+              type: "choice",
+              choice: expect.any(String),
+            }),
+            expect.objectContaining({
+              id: "waves",
+              type: "score",
+              score: expect.any(Number),
+            }),
+          ]),
+        });
+        expect((span?.output as { answers: unknown[] }).answers).toHaveLength(
+          5,
+        );
+        expect(span?.row).not.toHaveProperty("scores");
+        expect(span?.row.metadata).toMatchObject({
+          model: expect.stringMatching(/^jev-/),
+          provider: "typesafe",
+        });
+        expect(span?.metrics).toMatchObject({
+          prompt_tokens: expect.any(Number),
+        });
+      });
+    }
+
+    test("matches the span tree snapshot", async ({ expect }) => {
+      await matchSpanTreeSnapshot(
+        spanTreeEvents(events, options.supportsImages),
+        spanSnapshotPath,
+        { snapshotExpect: expect },
+      );
     });
   });
 }

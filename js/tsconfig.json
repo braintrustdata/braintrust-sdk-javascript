@@ -29,7 +29,6 @@
     "src/auto-instrumentations/bundler/**",
     "src/auto-instrumentations/configs/**",
     "src/auto-instrumentations/loader/**",
-    "src/auto-instrumentations/index.ts",
     "tests/auto-instrumentations/**",
     "./playground.ts",
     "vite.config.ts"

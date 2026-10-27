@@ -60,7 +60,7 @@ describe("registerOtelFlush", () => {
   });
 
   test("should register OTEL flush callback", async () => {
-    const { registerOtelFlush } = await import("../logger");
+    const { registerOtelFlush } = await import("../logger/core");
     const state = _internalGetGlobalState();
 
     let flushed = false;

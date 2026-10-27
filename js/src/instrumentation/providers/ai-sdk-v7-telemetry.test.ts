@@ -5,6 +5,7 @@ import {
   describe,
   expect,
   it,
+  vi,
 } from "vite-plus/test";
 import { _exportsForTestingOnly } from "../../logger/testing";
 import {
@@ -21,6 +22,8 @@ import {
   unregisterWorkflowAgentWrapperSpan,
 } from "../../wrappers/ai-sdk/workflow-agent-context";
 import { BRAINTRUST_AI_SDK_V7_OPERATION_KEY as AI_SDK_V7_OPERATION_KEY } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
+import { runWithAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
+import { processAISDKDecisionInput } from "./ai-sdk-instrumentation";
 
 try {
   configureNode();
@@ -47,6 +50,163 @@ describe("braintrustAISDKTelemetry", () => {
 
   afterEach(() => {
     _exportsForTestingOnly.clearTestBackgroundLogger();
+    vi.unstubAllEnvs();
+  });
+
+  it.each(["Decide", "Evaluate"])(
+    "captures %s telemetry as one question span",
+    async (api) => {
+      const telemetry = braintrustAISDKTelemetry();
+      const parent = startSpan({ name: "parent" });
+      const event = {
+        callId: "decision",
+        operationId: api === "Decide" ? "ai.decide" : "ai.evaluate",
+        provider: "typesafe",
+        modelId: "jev-latest",
+        state: [{ type: "json", value: { message: "Charged twice" } }],
+        questions: {
+          category: {
+            type: "choice",
+            instructions: "Route",
+            criteria: { billing: null },
+          },
+        },
+      };
+      withCurrent(parent, () => telemetry[`experimental_on${api}Start`](event));
+      telemetry[`experimental_on${api}End`]({
+        ...event,
+        answers: {
+          category: {
+            type: "choice",
+            choice: "billing",
+            probabilities: { billing: 1 },
+          },
+        },
+        usage: { inputTokens: 2, outputTokens: 1, totalTokens: 3 },
+        providerMetadata: {
+          typesafe: { confidence: { category: 0.9 } },
+          private: { secret: "hidden" },
+        },
+        response: { modelId: "jev-resolved" },
+      });
+      parent.end();
+      const spans = await backgroundLogger.drain();
+      expect(spans).toHaveLength(2);
+      expect(
+        spans.find(
+          (span) =>
+            "span_attributes" in span &&
+            span.span_attributes?.type === "question",
+        ),
+      ).toMatchObject({
+        span_attributes: { name: "evaluate", type: "question" },
+        span_parents: [parent.spanId],
+        input: {
+          state: event.state,
+          questions: [{ id: "category", ...event.questions.category }],
+        },
+        output: {
+          answers: [
+            {
+              id: "category",
+              type: "choice",
+              choice: "billing",
+              probabilities: { billing: 1 },
+              confidence: 0.9,
+            },
+          ],
+        },
+        metrics: { prompt_tokens: 2, completion_tokens: 1, tokens: 3 },
+        metadata: {
+          model: "jev-resolved",
+          provider: "typesafe",
+          providerMetadata: { typesafe: { confidence: { category: 0.9 } } },
+        },
+      });
+    },
+  );
+
+  it("honors decision capture flags, suppression, and refusal errors", async () => {
+    const telemetry = braintrustAISDKTelemetry();
+    const event = {
+      callId: "decision",
+      operationId: "ai.decide",
+      provider: "typesafe",
+      modelId: "jev",
+      state: "private",
+      questions: {},
+    };
+    runWithAutoInstrumentationSuppressed(() =>
+      telemetry.experimental_onDecideStart(event),
+    );
+    expect(await backgroundLogger.drain()).toHaveLength(0);
+    telemetry.experimental_onDecideStart({
+      ...event,
+      recordInputs: false,
+      recordOutputs: false,
+    });
+    telemetry.experimental_onDecideEnd({
+      ...event,
+      answers: {},
+      usage: { inputTokens: 2, outputTokens: 1 },
+    });
+    const [success] = await backgroundLogger.drain();
+    expect(success).not.toHaveProperty("input");
+    expect(success).not.toHaveProperty("output");
+    expect(success).toMatchObject({ metrics: { tokens: 3 } });
+    telemetry.experimental_onDecideStart(event);
+    telemetry.onError({
+      callId: event.callId,
+      error: new Error("Decision refused"),
+    });
+    // A subsequent terminal callback must not log a successful result after the error.
+    telemetry.experimental_onDecideEnd({ ...event, answers: {} });
+    const [failure] = await backgroundLogger.drain();
+    expect(failure).toMatchObject({
+      error: expect.stringContaining("Decision refused"),
+      metrics: { end: expect.any(Number) },
+    });
+    expect(failure).not.toHaveProperty("output");
+  });
+
+  it("omits decision file bytes by default and preserves remote references", () => {
+    vi.stubEnv("BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS", "false");
+    const input = processAISDKDecisionInput({
+      questions: {},
+      state: [
+        { type: "text", text: "What is this?" },
+        { type: "file", data: new Uint8Array([1, 2]), mediaType: "image/png" },
+        {
+          type: "file",
+          data: new URL("https://example.com/image.png"),
+          mediaType: "image/png",
+        },
+      ],
+    });
+    expect(input.state).toEqual([
+      { type: "text", text: "What is this?" },
+      { type: "file", data: "<omitted>", mediaType: "image/png" },
+      {
+        type: "file",
+        data: "https://example.com/image.png",
+        mediaType: "image/png",
+      },
+    ]);
+  });
+
+  it("snapshots decision bytes and defers attachments until export", () => {
+    vi.stubEnv("BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS", "true");
+    const state = [
+      {
+        type: "file",
+        data: new Uint8Array([1, 2]),
+        mediaType: "image/png",
+        filename: "image.png",
+      },
+    ];
+    const input = processAISDKDecisionInput({ state, questions: {} });
+    expect(input.state).toEqual([{ ...state[0], data: "AQI=" }]);
+    expect(state[0].data).toEqual(new Uint8Array([1, 2]));
   });
 
   it.each([false, true])(
@@ -641,6 +801,74 @@ describe("braintrustAISDKTelemetry", () => {
     });
     expect(modelCall?.output).toMatchObject({ text: "OK" });
   });
+
+  // AI SDK names array tools by index, so tool results report toolName "0".
+  it.each([
+    ["record", "runQuery"],
+    ["array", "0"],
+  ])(
+    "logs toModelOutput results instead of raw tool outputs for %s tool sets",
+    async (toolSet, toolName) => {
+      const telemetry = braintrustAISDKTelemetry();
+      const rawOutput = { rows: [{ email: "user@example.com" }] };
+      const modelOutput = { type: "text", value: "Rows hidden from the model" };
+      const toModelOutput = vi.fn(async () => modelOutput);
+      const toolResult = {
+        type: "tool-result",
+        toolCallId: "tool-1",
+        toolName,
+        input: {},
+        output: rawOutput,
+      };
+
+      telemetry.onStart?.({
+        callId: "call-model-output",
+        operationId: "ai.generateText",
+        tools:
+          toolSet === "array"
+            ? [{ execute: async () => rawOutput, toModelOutput }]
+            : { runQuery: { execute: async () => rawOutput, toModelOutput } },
+      });
+      telemetry.onToolExecutionStart?.({
+        callId: "call-model-output",
+        toolCall: { toolCallId: "tool-1", toolName, input: {} },
+      });
+      await telemetry.onToolExecutionEnd?.({
+        callId: "call-model-output",
+        toolCall: { toolCallId: "tool-1", toolName, input: {} },
+        toolOutput: toolResult,
+      });
+      // tool-2 has no tool message, so its raw output must be dropped.
+      const unmatchedResult = { ...toolResult, toolCallId: "tool-2" };
+      telemetry.onEnd?.({
+        callId: "call-model-output",
+        operationId: "ai.generateText",
+        content: [toolResult, unmatchedResult],
+        response: {
+          messages: [
+            { role: "tool", content: [{ ...toolResult, output: modelOutput }] },
+          ],
+        },
+      });
+
+      const spans = (await backgroundLogger.drain()) as Array<
+        Record<string, any>
+      >;
+      const toolSpan = spans.find(
+        (span) => span.span_attributes?.name === toolName,
+      );
+      const operation = spans.find(
+        (span) => span.span_attributes?.name === "generateText",
+      );
+
+      // The SDK already called toModelOutput; telemetry must not call it again.
+      expect(toModelOutput).not.toHaveBeenCalled();
+      expect(toolSpan?.output).toEqual(modelOutput);
+      expect(operation?.output.content[0].output).toEqual(modelOutput);
+      expect(operation?.output.content[1]).not.toHaveProperty("output");
+      expect(JSON.stringify(spans)).not.toContain("user@example.com");
+    },
+  );
 
   it("normalizes WorkflowAgent stream operation names", async () => {
     const telemetry = braintrustAISDKTelemetry();

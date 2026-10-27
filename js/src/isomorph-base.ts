@@ -1,11 +1,5 @@
 import type { GitMetadataSettings, RepoInfo } from "./sdk-types";
-import {
-  newGlobalTracingChannel,
-  type GlobalHookAsyncLocalStorage,
-  type GlobalHookHandlers,
-  type GlobalTracingChannel,
-  type GlobalTracingChannelCollection,
-} from "./global-instrumentation-hooks";
+import { sdkConsole } from "./logs/console";
 
 export interface CallerLocation {
   caller_functionname: string;
@@ -13,7 +7,10 @@ export interface CallerLocation {
   caller_lineno: number;
 }
 
-export type IsoAsyncLocalStorage<T> = GlobalHookAsyncLocalStorage<T>;
+export interface IsoAsyncLocalStorage<T> {
+  run<R>(store: T | undefined, callback: () => R): R;
+  getStore(): T | undefined;
+}
 
 class DefaultAsyncLocalStorage<T> implements IsoAsyncLocalStorage<T> {
   constructor() {}
@@ -25,10 +22,6 @@ class DefaultAsyncLocalStorage<T> implements IsoAsyncLocalStorage<T> {
     return undefined;
   }
 }
-
-type IsoTracingChannelCollection<M = any> = GlobalTracingChannelCollection<M>;
-export type IsoTracingChannel<M = any> = GlobalTracingChannel<M>;
-export type IsoChannelHandlers<M = any> = GlobalHookHandlers<M>;
 
 export interface Common {
   buildType:
@@ -48,9 +41,7 @@ export interface Common {
   getCallerLocation: () => CallerLocation | undefined;
   newAsyncLocalStorage: <T>() => IsoAsyncLocalStorage<T>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  newTracingChannel: <M = any>(
-    nameOrChannels: string | IsoTracingChannelCollection<M>,
-  ) => IsoTracingChannel<M>;
+  formatLogMessage?: (...args: unknown[]) => string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   processOn: (event: string, handler: (code: any) => void) => void;
 
@@ -109,12 +100,9 @@ export function createIsomorph(): Common {
     getCallerLocation: () => undefined,
     newAsyncLocalStorage: <T>() => new DefaultAsyncLocalStorage<T>(),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    newTracingChannel: <M = any>(
-      nameOrChannels: string | IsoTracingChannelCollection<M>,
-    ) => newGlobalTracingChannel<M>(nameOrChannels),
     processOn: (_0, _1) => {},
     basename: (filepath: string) => filepath.split(/[\\/]/).pop() || filepath,
     // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    writeln: (text: string) => console.log(text),
+    writeln: (text: string) => sdkConsole.log(text),
   };
 }

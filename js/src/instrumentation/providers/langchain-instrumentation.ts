@@ -1,14 +1,12 @@
-import type { ChannelMessage } from "../core/channel-definitions";
-import type {
-  IsoChannelHandlers,
-  IsoTracingChannel,
-} from "#braintrust-platform";
+import { runInstrumentation } from "../core/observe-result";
+
 import type { LangChainCallbackManager } from "../../vendor-sdk-types/langchain";
 import {
   BRAINTRUST_LANGCHAIN_CALLBACK_HANDLER_NAME,
   BraintrustLangChainCallbackHandler,
 } from "../../wrappers/langchain/callback-handler";
-import { langChainChannels } from "./langchain-channels";
+import type { ChannelMessage } from "../core/tracing-types";
+import { langChainChannels } from "./langchain-interceptors";
 
 type LangChainConfigureChannel =
   | typeof langChainChannels.configure
@@ -23,22 +21,31 @@ class LangChainInstrumentationConsumer {
   }
 
   private subscribeToConfigure(channel: LangChainConfigureChannel): void {
-    const tracingChannel: IsoTracingChannel<
-      ChannelMessage<LangChainConfigureChannel>
-    > = channel.tracingChannel();
+    const invocationHook = channel;
 
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<LangChainConfigureChannel>
-    > = {
-      start: (event) => {
+    invocationHook.intercept((target, receiver, args, additional) => {
+      const event = {
+        ...additional,
+        arguments: args,
+        self: receiver,
+      } as ChannelMessage<LangChainConfigureChannel>;
+      const prepare = (event: ChannelMessage<LangChainConfigureChannel>) => {
         injectHandlerIntoArguments(event.arguments);
-      },
-      end: (event) => {
+      };
+      const returned = (event: ChannelMessage<LangChainConfigureChannel>) => {
         this.injectHandler(event.result);
-      },
-    };
-
-    tracingChannel.subscribe(handlers);
+      };
+      runInstrumentation(() => prepare(event));
+      let result;
+      try {
+        result = Reflect.apply(target, receiver, args);
+      } catch (error) {
+        throw error;
+      }
+      Object.assign(event, { result });
+      runInstrumentation(() => returned(event));
+      return result;
+    });
   }
 
   private injectHandler(result: unknown): void {

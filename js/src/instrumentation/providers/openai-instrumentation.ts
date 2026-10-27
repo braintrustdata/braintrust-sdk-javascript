@@ -1,41 +1,44 @@
 import { _internalCaptureAttachmentsEnabled } from "../../logger/core";
 import { processInputAttachments } from "../../wrappers/attachment-utils";
-import { interceptOpenAIMedia } from "./openai-media";
-import {
-  traceAsyncChannel,
-  traceStreamingChannel,
-  traceSyncStreamChannel,
-} from "../core/channel-tracing";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
-import { getCurrentUnixTimestamp } from "../../util";
-import { openAIChannels } from "./openai-channels";
-import {
-  extractOpenAIChatInput,
-  extractOpenAIResponsesInput,
-  extractOpenAIResponsesMetadata,
-  processImagesInOutput,
-} from "./openai-span-data";
-import {
-  interceptOpenAIBatchesRetrieveTraced,
-  interceptOpenAIBatchTraceComplete,
-  interceptOpenAIFilesCreateTraced,
-} from "./openai-batch-instrumentation";
-import {
-  interceptOpenAIAgentsTraceCapture,
-  interceptOpenAIAgentsTraceFail,
-  interceptOpenAIAgentsTraceStart,
-} from "./openai-agents-api-instrumentation";
 import {
   BRAINTRUST_CACHED_STREAM_METRIC,
   getCachedMetricFromHeaders,
   parseMetricsFromUsage,
 } from "../../openai-utils";
+import { INSTRUMENTATION_NAMES } from "../../span-origin";
+import { getCurrentUnixTimestamp } from "../../util";
 import type {
   OpenAIChatChoice,
   OpenAIChatCompletionChunk,
   OpenAIChatLogprobs,
   OpenAIResponseStreamEvent,
 } from "../../vendor-sdk-types/openai";
+
+import {
+  traceAsyncCall,
+  traceStreamingCall,
+  traceSyncStreamCall,
+} from "../core/tracing";
+import {
+  interceptOpenAIAgentsTraceCapture,
+  interceptOpenAIAgentsTraceFail,
+  interceptOpenAIAgentsTraceStart,
+} from "./openai-agents-api-instrumentation";
+import {
+  interceptOpenAIBatchTraceComplete,
+  interceptOpenAIBatchesRetrieveTraced,
+  interceptOpenAIFilesCreateTraced,
+} from "./openai-batch-instrumentation";
+import { openAIChannels } from "./openai-interceptors";
+import { traceOpenAIDecisions } from "./openai-decisions";
+import { traceOpenAIMedia } from "./openai-media";
+import {
+  extractOpenAIChatInput,
+  extractOpenAIResponsesInput,
+  extractOpenAIResponsesMetadata,
+  processImagesInOutput,
+} from "./openai-span-data";
 
 /**
  * Registers OpenAI SDK instrumentation.
@@ -48,6 +51,14 @@ import type {
  * - Responses API (create, stream, parse, compact)
  */
 export function registerOpenAIInstrumentation(): void {
+  openAIChannels.decisionsCreate.intercept(
+    (target, receiver, args, additional) =>
+      traceOpenAIDecisions(() => Reflect.apply(target, receiver, args), {
+        arguments: args,
+        self: receiver,
+        additional,
+      }),
+  );
   openAIChannels.agentsTraceStart.intercept(interceptOpenAIAgentsTraceStart);
   openAIChannels.agentsTraceCapture.intercept(
     interceptOpenAIAgentsTraceCapture,
@@ -61,195 +72,382 @@ export function registerOpenAIInstrumentation(): void {
     interceptOpenAIBatchTraceComplete,
   );
 
-  interceptOpenAIMedia(openAIChannels.imagesGenerate, "generate");
-  interceptOpenAIMedia(openAIChannels.imagesEdit, "edit");
-  interceptOpenAIMedia(openAIChannels.imagesCreateVariation, "variation");
-  interceptOpenAIMedia(openAIChannels.audioSpeechCreate, "speech");
-  interceptOpenAIMedia(openAIChannels.audioTranscriptionsCreate, "transcribe");
-  interceptOpenAIMedia(openAIChannels.audioTranslationsCreate, "translate");
+  openAIChannels.imagesGenerate.intercept(
+    (target, receiver, args, additional) =>
+      traceOpenAIMedia(
+        () => Reflect.apply(target, receiver, args),
+        { arguments: args, self: receiver, additional },
+        openAIChannels.imagesGenerate.channelName,
+        "generate",
+      ),
+  );
+  openAIChannels.imagesEdit.intercept((target, receiver, args, additional) =>
+    traceOpenAIMedia(
+      () => Reflect.apply(target, receiver, args),
+      { arguments: args, self: receiver, additional },
+      openAIChannels.imagesEdit.channelName,
+      "edit",
+    ),
+  );
+  openAIChannels.imagesCreateVariation.intercept(
+    (target, receiver, args, additional) =>
+      traceOpenAIMedia(
+        () => Reflect.apply(target, receiver, args),
+        { arguments: args, self: receiver, additional },
+        openAIChannels.imagesCreateVariation.channelName,
+        "variation",
+      ),
+  );
+  openAIChannels.audioSpeechCreate.intercept(
+    (target, receiver, args, additional) =>
+      traceOpenAIMedia(
+        () => Reflect.apply(target, receiver, args),
+        { arguments: args, self: receiver, additional },
+        openAIChannels.audioSpeechCreate.channelName,
+        "speech",
+      ),
+  );
+  openAIChannels.audioTranscriptionsCreate.intercept(
+    (target, receiver, args, additional) =>
+      traceOpenAIMedia(
+        () => Reflect.apply(target, receiver, args),
+        { arguments: args, self: receiver, additional },
+        openAIChannels.audioTranscriptionsCreate.channelName,
+        "transcribe",
+      ),
+  );
+  openAIChannels.audioTranslationsCreate.intercept(
+    (target, receiver, args, additional) =>
+      traceOpenAIMedia(
+        () => Reflect.apply(target, receiver, args),
+        { arguments: args, self: receiver, additional },
+        openAIChannels.audioTranslationsCreate.channelName,
+        "translate",
+      ),
+  );
 
   // Chat Completions - supports streaming
-  traceStreamingChannel(openAIChannels.chatCompletionsCreate, {
-    name: "Chat Completion",
-    type: SpanTypeAttribute.LLM,
-    extractInput: ([params]) => extractOpenAIChatInput(params),
-    extractOutput: (result, event) =>
-      processChatCompletionOutput(
-        result?.choices,
-        event?.arguments?.[0].audio?.format,
+  openAIChannels.chatCompletionsCreate.intercept(
+    (target, receiver, args, additional) =>
+      traceStreamingCall<typeof openAIChannels.chatCompletionsCreate>(
+        () => Reflect.apply(target, receiver, args),
+        {
+          ...additional,
+          arguments: args,
+          self: receiver,
+          get response() {
+            return additional.responseInfo?.response ?? additional.response;
+          },
+        },
+        {
+          instrumentationName: INSTRUMENTATION_NAMES.OPENAI,
+          name: "Chat Completion",
+          type: SpanTypeAttribute.LLM,
+          extractInput: ([params]) => extractOpenAIChatInput(params),
+          extractOutput: (result, event) =>
+            processChatCompletionOutput(
+              result?.choices,
+              event?.arguments?.[0].audio?.format,
+            ),
+          extractMetrics: (result, startTime, endEvent) => {
+            const metrics = withCachedMetric(
+              parseMetricsFromUsage(result?.usage),
+              result,
+              endEvent,
+            );
+            if (startTime) {
+              metrics.time_to_first_token =
+                getCurrentUnixTimestamp() - startTime;
+            }
+            return metrics;
+          },
+          aggregateChunks: aggregateChatCompletionChunks,
+        },
       ),
-    extractMetrics: (result, startTime, endEvent) => {
-      const metrics = withCachedMetric(
-        parseMetricsFromUsage(result?.usage),
-        result,
-        endEvent,
-      );
-      if (startTime) {
-        metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
-      }
-      return metrics;
-    },
-    aggregateChunks: aggregateChatCompletionChunks,
-  });
+  );
 
   // Embeddings
-  traceAsyncChannel(openAIChannels.embeddingsCreate, {
-    name: "Embedding",
-    type: SpanTypeAttribute.LLM,
-    extractInput: ([params]) => {
-      const { input, ...metadata } = params;
-      return {
-        input,
-        metadata: { ...metadata, provider: "openai" },
-      };
-    },
-    extractOutput: (result) => {
-      const embedding = result?.data?.[0]?.embedding;
-      return Array.isArray(embedding)
-        ? { embedding_length: embedding.length }
-        : undefined;
-    },
-    extractMetrics: (result, _startTime, endEvent) => {
-      return withCachedMetric(
-        parseMetricsFromUsage(result?.usage),
-        result,
-        endEvent,
-      );
-    },
-  });
+  openAIChannels.embeddingsCreate.intercept(
+    (target, receiver, args, additional) =>
+      traceAsyncCall<typeof openAIChannels.embeddingsCreate>(
+        () => Reflect.apply(target, receiver, args),
+        {
+          ...additional,
+          arguments: args,
+          self: receiver,
+          get response() {
+            return additional.responseInfo?.response ?? additional.response;
+          },
+        },
+        {
+          instrumentationName: INSTRUMENTATION_NAMES.OPENAI,
+          name: "Embedding",
+          type: SpanTypeAttribute.LLM,
+          extractInput: ([params]) => {
+            const { input, ...metadata } = params;
+            return {
+              input,
+              metadata: { ...metadata, provider: "openai" },
+            };
+          },
+          extractOutput: (result) => {
+            const embedding = result?.data?.[0]?.embedding;
+            return Array.isArray(embedding)
+              ? { embedding_length: embedding.length }
+              : undefined;
+          },
+          extractMetrics: (result, _startTime, endEvent) => {
+            return withCachedMetric(
+              parseMetricsFromUsage(result?.usage),
+              result,
+              endEvent,
+            );
+          },
+        },
+      ),
+  );
 
   // Beta Chat Completions Parse
-  traceStreamingChannel(openAIChannels.betaChatCompletionsParse, {
-    name: "Chat Completion",
-    type: SpanTypeAttribute.LLM,
-    extractInput: ([params]) => extractOpenAIChatInput(params),
-    extractOutput: (result, event) =>
-      processChatCompletionOutput(
-        result?.choices,
-        event?.arguments?.[0].audio?.format,
+  openAIChannels.betaChatCompletionsParse.intercept(
+    (target, receiver, args, additional) =>
+      traceStreamingCall<typeof openAIChannels.betaChatCompletionsParse>(
+        () => Reflect.apply(target, receiver, args),
+        {
+          ...additional,
+          arguments: args,
+          self: receiver,
+          get response() {
+            return additional.responseInfo?.response ?? additional.response;
+          },
+        },
+        {
+          instrumentationName: INSTRUMENTATION_NAMES.OPENAI,
+          name: "Chat Completion",
+          type: SpanTypeAttribute.LLM,
+          extractInput: ([params]) => extractOpenAIChatInput(params),
+          extractOutput: (result, event) =>
+            processChatCompletionOutput(
+              result?.choices,
+              event?.arguments?.[0].audio?.format,
+            ),
+          extractMetrics: (result, startTime, endEvent) => {
+            const metrics = withCachedMetric(
+              parseMetricsFromUsage(result?.usage),
+              result,
+              endEvent,
+            );
+            if (startTime) {
+              metrics.time_to_first_token =
+                getCurrentUnixTimestamp() - startTime;
+            }
+            return metrics;
+          },
+          aggregateChunks: aggregateChatCompletionChunks,
+        },
       ),
-    extractMetrics: (result, startTime, endEvent) => {
-      const metrics = withCachedMetric(
-        parseMetricsFromUsage(result?.usage),
-        result,
-        endEvent,
-      );
-      if (startTime) {
-        metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
-      }
-      return metrics;
-    },
-    aggregateChunks: aggregateChatCompletionChunks,
-  });
+  );
 
   // Beta Chat Completions Stream (sync method returning event-based stream)
-  traceSyncStreamChannel(openAIChannels.betaChatCompletionsStream, {
-    name: "Chat Completion",
-    type: SpanTypeAttribute.LLM,
-    extractInput: ([params]) => extractOpenAIChatInput(params),
-  });
+  openAIChannels.betaChatCompletionsStream.intercept(
+    (target, receiver, args, additional) =>
+      traceSyncStreamCall<typeof openAIChannels.betaChatCompletionsStream>(
+        () => Reflect.apply(target, receiver, args),
+        {
+          ...additional,
+          arguments: args,
+          self: receiver,
+          get response() {
+            return additional.responseInfo?.response ?? additional.response;
+          },
+        },
+        {
+          instrumentationName: INSTRUMENTATION_NAMES.OPENAI,
+          name: "Chat Completion",
+          type: SpanTypeAttribute.LLM,
+          extractInput: ([params]) => extractOpenAIChatInput(params),
+        },
+      ),
+  );
 
   // Moderations
-  traceAsyncChannel(openAIChannels.moderationsCreate, {
-    name: "Moderation",
-    type: SpanTypeAttribute.LLM,
-    extractInput: ([params]) => {
-      const { input, ...metadata } = params;
-      return {
-        input,
-        metadata: { ...metadata, provider: "openai" },
-      };
-    },
-    extractOutput: (result) => {
-      return result?.results;
-    },
-    extractMetrics: (result, _startTime, endEvent) => {
-      return withCachedMetric(
-        parseMetricsFromUsage(result?.usage),
-        result,
-        endEvent,
-      );
-    },
-  });
+  openAIChannels.moderationsCreate.intercept(
+    (target, receiver, args, additional) =>
+      traceAsyncCall<typeof openAIChannels.moderationsCreate>(
+        () => Reflect.apply(target, receiver, args),
+        {
+          ...additional,
+          arguments: args,
+          self: receiver,
+          get response() {
+            return additional.responseInfo?.response ?? additional.response;
+          },
+        },
+        {
+          instrumentationName: INSTRUMENTATION_NAMES.OPENAI,
+          name: "Moderation",
+          type: SpanTypeAttribute.LLM,
+          extractInput: ([params]) => {
+            const { input, ...metadata } = params;
+            return {
+              input,
+              metadata: { ...metadata, provider: "openai" },
+            };
+          },
+          extractOutput: (result) => {
+            return result?.results;
+          },
+          extractMetrics: (result, _startTime, endEvent) => {
+            return withCachedMetric(
+              parseMetricsFromUsage(result?.usage),
+              result,
+              endEvent,
+            );
+          },
+        },
+      ),
+  );
 
   // Responses API - create (supports streaming via stream=true param)
-  traceStreamingChannel(openAIChannels.responsesCreate, {
-    name: "openai.responses.create",
-    type: SpanTypeAttribute.LLM,
-    extractInput: ([params]) => extractOpenAIResponsesInput(params),
-    extractOutput: (result) => {
-      return processImagesInOutput(result?.output);
-    },
-    extractMetadata: (result) => extractOpenAIResponsesMetadata(result),
-    extractMetrics: (result, startTime, endEvent) => {
-      const metrics = withCachedMetric(
-        parseMetricsFromUsage(result?.usage),
-        result,
-        endEvent,
-      );
-      if (startTime) {
-        metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
-      }
-      return metrics;
-    },
-    aggregateChunks: aggregateResponseStreamEvents,
-  });
+  openAIChannels.responsesCreate.intercept(
+    (target, receiver, args, additional) =>
+      traceStreamingCall<typeof openAIChannels.responsesCreate>(
+        () => Reflect.apply(target, receiver, args),
+        {
+          ...additional,
+          arguments: args,
+          self: receiver,
+          get response() {
+            return additional.responseInfo?.response ?? additional.response;
+          },
+        },
+        {
+          instrumentationName: INSTRUMENTATION_NAMES.OPENAI,
+          name: "openai.responses.create",
+          type: SpanTypeAttribute.LLM,
+          extractInput: ([params]) => extractOpenAIResponsesInput(params),
+          extractOutput: (result) => {
+            return processImagesInOutput(result?.output);
+          },
+          extractMetadata: (result) => extractOpenAIResponsesMetadata(result),
+          extractMetrics: (result, startTime, endEvent) => {
+            const metrics = withCachedMetric(
+              parseMetricsFromUsage(result?.usage),
+              result,
+              endEvent,
+            );
+            if (startTime) {
+              metrics.time_to_first_token =
+                getCurrentUnixTimestamp() - startTime;
+            }
+            return metrics;
+          },
+          aggregateChunks: aggregateResponseStreamEvents,
+        },
+      ),
+  );
 
   // Responses API - stream (sync method returning event-based stream)
-  traceSyncStreamChannel(openAIChannels.responsesStream, {
-    name: "openai.responses.create",
-    type: SpanTypeAttribute.LLM,
-    extractInput: ([params]) => extractOpenAIResponsesInput(params),
-    extractFromEvent: (event) =>
-      TERMINAL_RESPONSE_EVENT_TYPES.has(event.type)
-        ? aggregateResponseStreamEvents([event])
-        : {},
-  });
+  openAIChannels.responsesStream.intercept(
+    (target, receiver, args, additional) =>
+      traceSyncStreamCall<typeof openAIChannels.responsesStream>(
+        () => Reflect.apply(target, receiver, args),
+        {
+          ...additional,
+          arguments: args,
+          self: receiver,
+          get response() {
+            return additional.responseInfo?.response ?? additional.response;
+          },
+        },
+        {
+          instrumentationName: INSTRUMENTATION_NAMES.OPENAI,
+          name: "openai.responses.create",
+          type: SpanTypeAttribute.LLM,
+          extractInput: ([params]) => extractOpenAIResponsesInput(params),
+          extractFromEvent: (event) =>
+            TERMINAL_RESPONSE_EVENT_TYPES.has(event.type)
+              ? aggregateResponseStreamEvents([event])
+              : {},
+        },
+      ),
+  );
 
   // Responses API - parse
-  traceStreamingChannel(openAIChannels.responsesParse, {
-    name: "openai.responses.parse",
-    type: SpanTypeAttribute.LLM,
-    extractInput: ([params]) => extractOpenAIResponsesInput(params),
-    extractOutput: (result) => {
-      return processImagesInOutput(result?.output);
-    },
-    extractMetadata: (result) => extractOpenAIResponsesMetadata(result),
-    extractMetrics: (result, startTime, endEvent) => {
-      const metrics = withCachedMetric(
-        parseMetricsFromUsage(result?.usage),
-        result,
-        endEvent,
-      );
-      if (startTime) {
-        metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
-      }
-      return metrics;
-    },
-    aggregateChunks: aggregateResponseStreamEvents,
-  });
+  openAIChannels.responsesParse.intercept(
+    (target, receiver, args, additional) =>
+      traceStreamingCall<typeof openAIChannels.responsesParse>(
+        () => Reflect.apply(target, receiver, args),
+        {
+          ...additional,
+          arguments: args,
+          self: receiver,
+          get response() {
+            return additional.responseInfo?.response ?? additional.response;
+          },
+        },
+        {
+          instrumentationName: INSTRUMENTATION_NAMES.OPENAI,
+          name: "openai.responses.parse",
+          type: SpanTypeAttribute.LLM,
+          extractInput: ([params]) => extractOpenAIResponsesInput(params),
+          extractOutput: (result) => {
+            return processImagesInOutput(result?.output);
+          },
+          extractMetadata: (result) => extractOpenAIResponsesMetadata(result),
+          extractMetrics: (result, startTime, endEvent) => {
+            const metrics = withCachedMetric(
+              parseMetricsFromUsage(result?.usage),
+              result,
+              endEvent,
+            );
+            if (startTime) {
+              metrics.time_to_first_token =
+                getCurrentUnixTimestamp() - startTime;
+            }
+            return metrics;
+          },
+          aggregateChunks: aggregateResponseStreamEvents,
+        },
+      ),
+  );
 
   // Responses API - compact
-  traceAsyncChannel(openAIChannels.responsesCompact, {
-    name: "openai.responses.compact",
-    type: SpanTypeAttribute.LLM,
-    extractInput: ([params]) => extractOpenAIResponsesInput(params),
-    extractOutput: (result) => {
-      return processImagesInOutput(result?.output);
-    },
-    extractMetadata: (result) => extractOpenAIResponsesMetadata(result),
-    extractMetrics: (result, startTime, endEvent) => {
-      const metrics = withCachedMetric(
-        parseMetricsFromUsage(result?.usage),
-        result,
-        endEvent,
-      );
-      if (startTime) {
-        metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
-      }
-      return metrics;
-    },
-  });
+  openAIChannels.responsesCompact.intercept(
+    (target, receiver, args, additional) =>
+      traceAsyncCall<typeof openAIChannels.responsesCompact>(
+        () => Reflect.apply(target, receiver, args),
+        {
+          ...additional,
+          arguments: args,
+          self: receiver,
+          get response() {
+            return additional.responseInfo?.response ?? additional.response;
+          },
+        },
+        {
+          instrumentationName: INSTRUMENTATION_NAMES.OPENAI,
+          name: "openai.responses.compact",
+          type: SpanTypeAttribute.LLM,
+          extractInput: ([params]) => extractOpenAIResponsesInput(params),
+          extractOutput: (result) => {
+            return processImagesInOutput(result?.output);
+          },
+          extractMetadata: (result) => extractOpenAIResponsesMetadata(result),
+          extractMetrics: (result, startTime, endEvent) => {
+            const metrics = withCachedMetric(
+              parseMetricsFromUsage(result?.usage),
+              result,
+              endEvent,
+            );
+            if (startTime) {
+              metrics.time_to_first_token =
+                getCurrentUnixTimestamp() - startTime;
+            }
+            return metrics;
+          },
+        },
+      ),
+  );
 }
 
 function processChatCompletionOutput(
@@ -436,6 +634,33 @@ function toChatChoice(choice: AggregatedChatChoice): OpenAIChatChoice {
   };
 }
 
+// Some OpenAI-compatible providers omit `index` on streamed tool call deltas.
+// Match existing ids before starting a new call; a delta without an id
+// continues the latest one.
+function resolveToolCallIndex(
+  toolCallsByIndex: AggregatedChatChoice["toolCallsByIndex"],
+  toolDelta: { index?: number | null; id?: string },
+): number {
+  if (typeof toolDelta.index === "number") {
+    return toolDelta.index;
+  }
+  if (toolDelta.id) {
+    for (const [index, toolCall] of toolCallsByIndex) {
+      if (toolCall.id === toolDelta.id) {
+        return index;
+      }
+    }
+  }
+  if (toolCallsByIndex.size === 0) {
+    return 0;
+  }
+  const lastIndex = Math.max(...toolCallsByIndex.keys());
+  const lastId = toolCallsByIndex.get(lastIndex)?.id;
+  return toolDelta.id && lastId && lastId !== toolDelta.id
+    ? lastIndex + 1
+    : lastIndex;
+}
+
 /**
  * Aggregate chat completion chunks into a single response.
  * Combines role (first), content, reasoning_content and audio transcripts (concatenated),
@@ -536,15 +761,18 @@ export function aggregateChatCompletionChunks(
 
       if (delta.tool_calls) {
         for (const toolDelta of delta.tool_calls) {
-          let aggregatedToolCall = aggregatedChoice.toolCallsByIndex.get(
-            toolDelta.index,
+          const toolIndex = resolveToolCallIndex(
+            aggregatedChoice.toolCallsByIndex,
+            toolDelta,
           );
+          let aggregatedToolCall =
+            aggregatedChoice.toolCallsByIndex.get(toolIndex);
           if (!aggregatedToolCall) {
             aggregatedToolCall = {
               function: { arguments: "" },
             };
             aggregatedChoice.toolCallsByIndex.set(
-              toolDelta.index,
+              toolIndex,
               aggregatedToolCall,
             );
           }

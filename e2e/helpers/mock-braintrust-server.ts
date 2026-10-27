@@ -61,6 +61,7 @@ interface MockBraintrustServer {
   apiKey: string;
   close: () => Promise<void>;
   events: CapturedLogEvent[];
+  experiments: { id: string; name: string; projectId: string }[];
   payloads: CapturedLogPayload[];
   requests: CapturedRequest[];
   url: string;
@@ -68,6 +69,7 @@ interface MockBraintrustServer {
 
 interface StartMockBraintrustServerOptions {
   apiKey?: string;
+  isolateProductionLogIds?: boolean;
   prodForwarding?: ProdForwarding | null;
   testRunId?: string;
 }
@@ -423,6 +425,22 @@ export async function startMockBraintrustServer(
 
     const jsonBody = clone(capturedRequest.jsonBody) as Record<string, unknown>;
     let changed = false;
+
+    if (
+      options.isolateProductionLogIds &&
+      testRunId &&
+      capturedRequest.path === "/logs3" &&
+      Array.isArray(jsonBody.rows)
+    ) {
+      // Replayed provider batches reuse deterministic row IDs. Namespace only
+      // forwarded rows so each test run keeps its own complete production trace.
+      for (const row of jsonBody.rows) {
+        if (isRecord(row) && typeof row.id === "string") {
+          row.id = `${testRunId}:${row.id}`;
+          changed = true;
+        }
+      }
+    }
 
     if ("org_id" in jsonBody) {
       jsonBody.org_id = prodForwarding.orgId;
@@ -810,6 +828,9 @@ export async function startMockBraintrustServer(
       }
     },
     events,
+    get experiments() {
+      return [...experimentsByProjectAndName.values()];
+    },
     payloads,
     requests,
     url: serverUrl,

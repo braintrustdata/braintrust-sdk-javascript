@@ -1,4 +1,5 @@
 import { describe } from "vite-plus/test";
+import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -27,7 +28,7 @@ const mistralScenarios = await Promise.all(
 
 describe.concurrent("variants", () => {
   for (const scenario of mistralScenarios) {
-    describe(`mistral sdk ${scenario.version}`, { concurrent: false }, () => {
+    describeVariant(`mistral sdk ${scenario.version}`, () => {
       defineMistralInstrumentationAssertions({
         name: "wrapped instrumentation",
         runScenario: async ({ runScenarioDir }) => {

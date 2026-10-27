@@ -1,0 +1,352 @@
+span_tree:
+└── typesafe-instrumentation-root [task]
+    metadata: {
+      "scenario": "typesafe-instrumentation",
+      "testRunId": "<run:1>"
+    }
+    ├── typesafe-mixed-operation
+    │   metadata: {
+    │     "operation": "mixed",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── typesafe.systemOne [decision]
+    │       input: {
+    │         "questions": [
+    │           {
+    │             "criteria": {
+    │               "billing": null,
+    │               "other": null,
+    │               "technical": null
+    │             },
+    │             "id": "<span:1>",
+    │             "instructions": "Which team should handle this?",
+    │             "type": "choice"
+    │           },
+    │           {
+    │             "criteria": [
+    │               "routine",
+    │               "soon",
+    │               "urgent"
+    │             ],
+    │             "id": "<span:2>",
+    │             "instructions": "How urgent is this request?",
+    │             "type": "score"
+    │           },
+    │           {
+    │             "id": "<span:3>",
+    │             "instructions": {
+    │               "question": "Does the customer report a duplicate charge?"
+    │             },
+    │             "type": "noul"
+    │           }
+    │         ],
+    │         "state": {
+    │           "message": "I was charged twice. Please refund the duplicate charge today."
+    │         }
+    │       }
+    │       output: {
+    │         "answers": [
+    │           {
+    │             "choice": "billing",
+    │             "confidence": 1,
+    │             "id": "<span:1>",
+    │             "probabilities": {
+    │               "billing": 1,
+    │               "other": 0,
+    │               "technical": 0
+    │             },
+    │             "type": "choice"
+    │           },
+    │           {
+    │             "id": "<span:2>",
+    │             "noul": 0.99,
+    │             "type": "noul"
+    │           },
+    │           {
+    │             "confidence": 0.71,
+    │             "id": "<span:3>",
+    │             "legend": {
+    │               "0": "routine",
+    │               "1": "soon",
+    │               "2": "urgent"
+    │             },
+    │             "probabilities": {
+    │               "0": 0,
+    │               "1": 0.19,
+    │               "2": 0.81
+    │             },
+    │             "score": 1.8,
+    │             "type": "score"
+    │           }
+    │         ]
+    │       }
+    │       metadata: {
+    │         "model": "jev-1.13.0",
+    │         "provider": "typesafe"
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 70,
+    │         "prompt_tokens": 370,
+    │         "tokens": 440
+    │       }
+    ├── typesafe-raw-operation
+    │   metadata: {
+    │     "operation": "raw",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── typesafe.systemOne [decision]
+    │       input: {
+    │         "questions": [
+    │           {
+    │             "id": "<span:1>",
+    │             "instructions": "Is this feedback positive?",
+    │             "type": "noul"
+    │           }
+    │         ],
+    │         "state": "The package arrived intact and on time."
+    │       }
+    │       output: {
+    │         "answers": [
+    │           {
+    │             "id": "<span:1>",
+    │             "noul": 0.97,
+    │             "type": "noul"
+    │           }
+    │         ]
+    │       }
+    │       metadata: {
+    │         "model": "jev-1.13.0",
+    │         "provider": "typesafe"
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 20,
+    │         "prompt_tokens": 279,
+    │         "tokens": 299
+    │       }
+    ├── typesafe-image-operation
+    │   metadata: {
+    │     "operation": "image",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── typesafe.systemOne [decision]
+    │       input: {
+    │         "questions": [
+    │           {
+    │             "id": "<span:1>",
+    │             "instructions": "Is there a sailing ship?",
+    │             "type": "noul"
+    │           }
+    │         ],
+    │         "state": {
+    │           "type": "image"
+    │         }
+    │       }
+    │       output: {
+    │         "answers": [
+    │           {
+    │             "id": "<span:1>",
+    │             "noul": 0.96,
+    │             "type": "noul"
+    │           }
+    │         ]
+    │       }
+    │       metadata: {
+    │         "model": "jev-1.14.0",
+    │         "provider": "typesafe"
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 20,
+    │         "prompt_tokens": 3043,
+    │         "tokens": 3063
+    │       }
+    ├── typesafe-template-operation
+    │   metadata: {
+    │     "operation": "template",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── typesafe.systemOne [decision]
+    │       input: {
+    │         "questions": [
+    │           {
+    │             "criteria": {
+    │               "clear": "Clear skies",
+    │               "stormy": [
+    │                 "Stormy weather in ",
+    │                 {
+    │                   "content_type": "image/png",
+    │                   "filename": "attachment.png",
+    │                   "key": "<uuid:3>",
+    │                   "type": "braintrust_attachment"
+    │                 }
+    │               ]
+    │             },
+    │             "id": "<span:4>",
+    │             "instructions": [
+    │               "What weather is shown in ",
+    │               {
+    │                 "content_type": "image/png",
+    │                 "filename": "attachment.png",
+    │                 "key": "<uuid:2>",
+    │                 "type": "braintrust_attachment"
+    │               },
+    │               "?"
+    │             ],
+    │             "type": "choice"
+    │           }
+    │         ],
+    │         "state": {
+    │           "scene": [
+    │             "Look at ",
+    │             {
+    │               "content_type": "image/png",
+    │               "filename": "attachment.png",
+    │               "key": "<uuid:1>",
+    │               "type": "braintrust_attachment"
+    │             },
+    │             "."
+    │           ]
+    │         }
+    │       }
+    │       output: {
+    │         "answers": [
+    │           {
+    │             "choice": "stormy",
+    │             "confidence": 1,
+    │             "id": "<span:1>",
+    │             "probabilities": {
+    │               "clear": 0,
+    │               "stormy": 1
+    │             },
+    │             "type": "choice"
+    │           }
+    │         ]
+    │       }
+    │       metadata: {
+    │         "model": "jev-1.14.0",
+    │         "provider": "typesafe"
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 33,
+    │         "prompt_tokens": 8641,
+    │         "tokens": 8674
+    │       }
+    └── typesafe-box-operation
+        metadata: {
+          "operation": "box",
+          "testRunId": "<run:1>"
+        }
+        └── typesafe.systemOne [decision]
+            input: {
+              "questions": [
+                {
+                  "id": "<span:2>",
+                  "instructions": "The sailing ship",
+                  "type": "box"
+                },
+                {
+                  "id": "<span:3>",
+                  "instructions": "The tallest mast on the ship",
+                  "type": "box"
+                },
+                {
+                  "id": "<span:4>",
+                  "instructions": "Is there a sailing ship?",
+                  "type": "noul"
+                },
+                {
+                  "criteria": {
+                    "clear": null,
+                    "stormy": null
+                  },
+                  "id": "<span:5>",
+                  "instructions": "What weather is shown?",
+                  "type": "choice"
+                },
+                {
+                  "criteria": [
+                    "calm",
+                    "rough"
+                  ],
+                  "id": "<span:6>",
+                  "instructions": "How rough are the waves?",
+                  "type": "score"
+                }
+              ],
+              "state": {
+                "description": "Locate the ship.",
+                "photos~/": [
+                  {
+                    "content_type": "image/png",
+                    "filename": "attachment.png",
+                    "key": "<uuid:1>",
+                    "type": "braintrust_attachment"
+                  }
+                ]
+              }
+            }
+            output: {
+              "answers": [
+                {
+                  "box": {
+                    "bottom": 0.68,
+                    "left": 0.46,
+                    "right": 0.64,
+                    "top": 0.12
+                  },
+                  "confidence": 0.41,
+                  "id": "<span:1>",
+                  "image_path": "/state/photos~0~1/0",
+                  "type": "box"
+                },
+                {
+                  "id": "<span:2>",
+                  "noul": 0.95,
+                  "type": "noul"
+                },
+                {
+                  "box": {
+                    "bottom": 0.7,
+                    "left": 0.37,
+                    "right": 0.7,
+                    "top": 0.11
+                  },
+                  "confidence": 0.88,
+                  "id": "<span:3>",
+                  "image_path": "/state/photos~0~1/0",
+                  "type": "box"
+                },
+                {
+                  "confidence": 1,
+                  "id": "<span:4>",
+                  "legend": {
+                    "0": "calm",
+                    "1": "rough"
+                  },
+                  "probabilities": {
+                    "0": 0,
+                    "1": 1
+                  },
+                  "score": 1,
+                  "type": "score"
+                },
+                {
+                  "choice": "stormy",
+                  "confidence": 1,
+                  "id": "<span:5>",
+                  "probabilities": {
+                    "clear": 0,
+                    "stormy": 1
+                  },
+                  "type": "choice"
+                }
+              ]
+            }
+            metadata: {
+              "model": "jev-1.14.0",
+              "provider": "typesafe"
+            }
+            metrics: {
+              "completion_tokens": 95,
+              "prompt_tokens": 3121,
+              "tokens": 3216
+            }

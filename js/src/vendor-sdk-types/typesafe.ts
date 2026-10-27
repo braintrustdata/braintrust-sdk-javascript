@@ -1,6 +1,19 @@
+// SDK brands are shared across copies of @typesafe-ai/sdk.
+export interface TypeSafeImage {
+  readonly type: "image";
+  readonly data: Uint8Array | Blob;
+  toString(): string;
+}
+
+export interface TypeSafeTextWithAssets {
+  readonly text: string;
+  readonly assets: readonly TypeSafeImage[];
+}
+
 export type TypeSafeSystemOneRequest = {
   state: unknown;
   questions: Record<string, unknown>;
+  assets?: Record<string, TypeSafeImage>;
   model?: string;
   [key: string]: unknown;
 };

@@ -36,13 +36,13 @@ import {
 } from "./otel";
 import { initLogger } from "braintrust";
 import { SpanComponentsV3, SpanComponentsV4 } from "../../../js/util";
-import { _exportsForTestingOnly } from "../../../js/src/logger";
+import { _exportsForTestingOnly } from "../../../js/src/logger/testing";
 import {
   base64ToUint8Array,
   getExportVersion,
   createTracerProvider,
 } from "../tests/utils";
-import { setupOtelCompat, resetOtelCompat } from ".";
+import { setupOtelCompat, resetOtelCompat } from "./";
 
 const packageJson = JSON.parse(
   readFileSync(path.join(__dirname, "../package.json"), "utf8"),

@@ -1,5 +1,6 @@
 import { registerInstrumentation } from "../instrumentation/registrations/gitHubCopilot";
-import { gitHubCopilotChannels } from "../instrumentation/providers/github-copilot-channels";
+import { debugLogger } from "../debug-logger";
+import { gitHubCopilotChannels } from "../instrumentation/providers/github-copilot-interceptors";
 import type {
   GitHubCopilotClient,
   GitHubCopilotResumeSessionConfig,
@@ -39,9 +40,8 @@ function isGitHubCopilotClient(value: unknown): value is GitHubCopilotClient {
 export function wrapCopilotClient<T extends object>(client: T): T {
   registerInstrumentation();
   if (!isGitHubCopilotClient(client)) {
-    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    console.warn(
-      "[Braintrust] wrapCopilotClient: argument does not look like a CopilotClient. Not wrapping.",
+    debugLogger.notice.warn(
+      "wrapCopilotClient: argument does not look like a CopilotClient. Not wrapping.",
     );
     return client;
   }
@@ -93,9 +93,11 @@ function wrappedCreateSession(
   client: GitHubCopilotClient,
 ): (config: GitHubCopilotSessionConfig) => Promise<GitHubCopilotSession> {
   return (config: GitHubCopilotSessionConfig) =>
-    gitHubCopilotChannels.createSession.tracePromise(
-      () => client.createSession(config),
-      { arguments: [config] },
+    gitHubCopilotChannels.createSession.invoke(
+      client.createSession,
+      client,
+      [config],
+      {},
     );
 }
 
@@ -106,8 +108,10 @@ function wrappedResumeSession(
   config: GitHubCopilotResumeSessionConfig,
 ) => Promise<GitHubCopilotSession> {
   return (sessionId: string, config: GitHubCopilotResumeSessionConfig) =>
-    gitHubCopilotChannels.resumeSession.tracePromise(
-      () => client.resumeSession(sessionId, config),
-      { arguments: [sessionId, config] },
+    gitHubCopilotChannels.resumeSession.invoke(
+      client.resumeSession,
+      client,
+      [sessionId, config],
+      {},
     );
 }

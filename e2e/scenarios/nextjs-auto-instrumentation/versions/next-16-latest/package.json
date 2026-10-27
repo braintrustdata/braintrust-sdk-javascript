@@ -2,7 +2,7 @@
   "name": "@braintrust/e2e-nextjs-auto-instrumentation-next-16-latest",
   "private": true,
   "dependencies": {
-    "next": "16.2.12",
+    "next": "16.3.8",
     "openai": "6.32.0",
     "react": "19.2.4",
     "react-dom": "19.2.4"
@@ -14,7 +14,9 @@
     "overrides": {
       "postcss@<8.5.18": "^8.5.18",
       "nanoid@<3.3.18": "^3.3.18",
-      "sharp@<0.35.0": "^0.35.3"
+      "sharp@<0.35.0": "0.35.5",
+      "source-map-js@>=1.0.0 <1.2.2": "1.2.2",
+      "sharp@>=0.35.0 <0.35.5": "0.35.5"
     }
   }
 }

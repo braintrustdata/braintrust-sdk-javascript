@@ -692,27 +692,180 @@ describe("login deduplication", () => {
   });
 
   test.each(["apiKey", "appUrl", "orgName", "fetch"] as const)(
-    "does not combine differing %s options",
+    "rejects a queued conflicting %s login without replacing the active login",
     async (field) => {
       const { state, fetch } = createState();
-      await Promise.all([
-        state.login({}),
-        state.login(
-          field === "fetch"
-            ? { fetch: (...args) => fetch(...args) }
-            : {
-                [field]:
-                  field === "orgName"
-                    ? "org-id"
-                    : field === "appUrl"
-                      ? "https://other.test"
-                      : "different",
-              },
-        ),
-      ]);
-      expect(fetch).toHaveBeenCalledTimes(2);
+      let resolveFirst!: (value: Response) => void;
+      fetch.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveFirst = resolve;
+          }),
+      );
+
+      const first = state.login({
+        apiKey: "first-credential",
+        orgName: "first-org-id",
+      });
+      const conflictingOptions =
+        field === "apiKey"
+          ? { apiKey: "different-credential" }
+          : field === "appUrl"
+            ? { appUrl: "https://other.test" }
+            : field === "orgName"
+              ? { orgName: "different-org-id" }
+              : {
+                  fetch: (...args: Parameters<typeof fetch>) => fetch(...args),
+                };
+      const conflicting = state.login(conflictingOptions);
+      expect(fetch).toHaveBeenCalledTimes(1);
+
+      resolveFirst(loginResponse("first-org-id"));
+      await first;
+      await expect(conflicting).rejects.toThrow("forceLogin: true");
+
+      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(state.loginToken).toBe("first-credential");
+      expect(state.orgId).toBe("first-org-id");
+      expect(state.orgName).toBe("first-org-id");
     },
   );
+
+  test("reuses a matching login queued behind the active login", async () => {
+    const { state, fetch } = createState();
+    let resolveFirst!: (value: Response) => void;
+    fetch.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveFirst = resolve;
+        }),
+    );
+    const first = state.login({ apiKey: " matching-credential " });
+    const matching = state.login({
+      apiKey: "matching-credential",
+      orgName: "matching-org-id",
+    });
+    resolveFirst(loginResponse("matching-org-id"));
+    await Promise.all([first, matching]);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(state.loginToken).toBe("matching-credential");
+    expect(state.orgId).toBe("matching-org-id");
+  });
+
+  test("applies a queued matching login's debug level after the earlier login", async () => {
+    const { state, fetch } = createState();
+    let resolveFirst!: (value: Response) => void;
+    fetch.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveFirst = resolve;
+        }),
+    );
+    const first = state.login({
+      apiKey: "matching-credential",
+      debugLogLevel: "warn",
+    });
+    const queued = state.login({
+      apiKey: "matching-credential",
+      debugLogLevel: "debug",
+    });
+    resolveFirst(loginResponse());
+    await Promise.all([first, queued]);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(state.getDebugLogLevel()).toBe("debug");
+  });
+
+  test("restores the constructor debug level for a queued login without an override", async () => {
+    const { fetch } = createState();
+    const state = new BraintrustState({
+      apiKey: "matching-credential",
+      appUrl: "https://app.test",
+      fetch,
+      debugLogLevel: "warn",
+      noExitFlush: true,
+    });
+    let resolveFirst!: (value: Response) => void;
+    fetch.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveFirst = resolve;
+        }),
+    );
+    const first = state.login({ debugLogLevel: "debug" });
+    const queued = state.login({});
+    resolveFirst(loginResponse());
+    await Promise.all([first, queued]);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(state.getDebugLogLevel()).toBe("warn");
+  });
+
+  test("restores the environment debug level for a queued login without an override", async () => {
+    const originalDebugLevel = process.env.BRAINTRUST_DEBUG_LOG_LEVEL;
+    process.env.BRAINTRUST_DEBUG_LOG_LEVEL = "warn";
+    try {
+      const { fetch } = createState();
+      const state = new BraintrustState({
+        apiKey: "matching-credential",
+        appUrl: "https://app.test",
+        fetch,
+        noExitFlush: true,
+      });
+      let resolveFirst!: (value: Response) => void;
+      fetch.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveFirst = resolve;
+          }),
+      );
+      const first = state.login({ debugLogLevel: "debug" });
+      const queued = state.login({});
+      resolveFirst(loginResponse());
+      await Promise.all([first, queued]);
+      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(state.getDebugLogLevel()).toBe("warn");
+      expect(state.hasDebugLogLevelOverride()).toBe(false);
+    } finally {
+      if (originalDebugLevel === undefined) {
+        delete process.env.BRAINTRUST_DEBUG_LOG_LEVEL;
+      } else {
+        process.env.BRAINTRUST_DEBUG_LOG_LEVEL = originalDebugLevel;
+      }
+    }
+  });
+
+  test("allows a queued login to proceed when the preceding login fails", async () => {
+    const { state, fetch } = createState();
+    fetch.mockRejectedValueOnce(new Error("first login failed"));
+    const first = state.login({ apiKey: "first-credential" });
+    const next = state.login({ apiKey: "second-credential" });
+    await expect(first).rejects.toThrow("first login failed");
+    await expect(next).resolves.toBeUndefined();
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(state.loginToken).toBe("second-credential");
+  });
+
+  test("forced login still runs after a queued conflict", async () => {
+    const { state, fetch } = createState();
+    let resolveFirst!: (value: Response) => void;
+    fetch.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveFirst = resolve;
+        }),
+    );
+    const first = state.login({ apiKey: "first-credential" });
+    const conflicting = state.login({ apiKey: "second-credential" });
+    const forced = state.login({
+      apiKey: "second-credential",
+      forceLogin: true,
+    });
+    resolveFirst(loginResponse("first-org-id"));
+    await first;
+    await expect(conflicting).rejects.toThrow("forceLogin: true");
+    await forced;
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(state.loginToken).toBe("second-credential");
+  });
 
   test.each([false, true])(
     "concurrent forced loggers remain usable (credential discovery: %s)",

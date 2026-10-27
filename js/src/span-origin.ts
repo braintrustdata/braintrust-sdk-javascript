@@ -30,6 +30,7 @@ export const INSTRUMENTATION_NAMES = {
   HUGGINGFACE: "huggingface",
   LANGCHAIN: "langchain",
   LANGSMITH: "langsmith",
+  LIVEKIT: "livekit",
   MASTRA: "mastra",
   MISTRAL: "mistral",
   LANGGRAPH_SDK: "langgraph-sdk",
@@ -43,6 +44,7 @@ export const INSTRUMENTATION_NAMES = {
   STRANDS_AGENT_SDK: "strands-agent-sdk",
   TEMPORAL: "temporal",
   TYPESAFE: "typesafe",
+  WORKERS_AI: "workers-ai",
   VOYAGEAI: "voyageai",
   ELEVENLABS: "elevenlabs",
 } as const;

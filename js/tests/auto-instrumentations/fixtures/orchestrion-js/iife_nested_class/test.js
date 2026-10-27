@@ -10,7 +10,7 @@ const context = getContext("orchestrion:undici:register");
   const result = server.register();
   assert.strictEqual(result, 1);
   assert.deepStrictEqual(context, {
-    start: true,
-    end: 1,
+    called: true,
+    result: 1,
   });
 })();

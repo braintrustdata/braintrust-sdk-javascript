@@ -6,10 +6,7 @@ import {
   withScenarioHarness,
   type ScenarioRunContext,
 } from "../../helpers/scenario-harness";
-import {
-  matchSpanTreeSnapshot,
-  type SpanTreeFields,
-} from "../../helpers/span-tree";
+import { matchSpanTreeSnapshot, spanTreeFields } from "../../helpers/span-tree";
 import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
 
 type ScenarioRunner = (harness: {
@@ -28,6 +25,7 @@ export function defineCloudflareThinkAssertions(options: {
   snapshotName: string;
   testFileUrl: string;
   timeoutMs: number;
+  usesV7Telemetry: boolean;
 }): void {
   const timeoutMs = effectiveScenarioTimeoutMs(options.timeoutMs);
   const snapshotPath = resolveFileSnapshotPath(
@@ -85,13 +83,24 @@ export function defineCloudflareThinkAssertions(options: {
           expect(span.span.type).toBe("llm");
           expect(span.span.parentIds).toEqual([task?.span.id]);
           expect(span.input).toEqual(
-            expect.objectContaining({ prompt: expect.any(Array) }),
+            expect.objectContaining(
+              options.usesV7Telemetry
+                ? { messages: expect.any(Array) }
+                : { prompt: expect.any(Array) },
+            ),
           );
           expect(span.output).toEqual(
-            expect.objectContaining({
-              finishReason: expect.any(Object),
-              toolCalls: expect.any(Array),
-            }),
+            expect.objectContaining(
+              options.usesV7Telemetry
+                ? {
+                    finishReason: expect.any(String),
+                    content: expect.any(Array),
+                  }
+                : {
+                    finishReason: expect.any(Object),
+                    toolCalls: expect.any(Array),
+                  },
+            ),
           );
           expect(span.row.metadata).toMatchObject({
             model: "gpt-5-nano",
@@ -136,7 +145,7 @@ export function defineCloudflareThinkAssertions(options: {
       await matchSpanTreeSnapshot(
         [...latestBySpanId.values()].map((event) => ({
           event,
-          fields: stableThinkSpanFields(event),
+          fields: { ...spanTreeFields(event), context: event.row.context },
         })),
         snapshotPath,
       );
@@ -152,41 +161,4 @@ function expectPositiveTokenMetrics(
   expect(metrics?.tokens).toBe(
     (metrics?.prompt_tokens ?? 0) + (metrics?.completion_tokens ?? 0),
   );
-}
-
-function stableThinkSpanFields(event: CapturedLogEvent): SpanTreeFields {
-  const metadata = event.metadata;
-  const metrics = event.metrics;
-  const isTask = event.span.name === "Think.runTurn";
-
-  return {
-    input: isTask ? taskUserInput(event.input) : event.input,
-    output: event.output,
-    metadata: metadata
-      ? {
-          braintrust: isTask ? metadata.braintrust : undefined,
-          model: metadata.model,
-          provider: metadata.provider,
-        }
-      : undefined,
-    metrics: metrics
-      ? {
-          completion_tokens: metrics.completion_tokens,
-          prompt_tokens: metrics.prompt_tokens,
-          tokens: metrics.tokens,
-        }
-      : undefined,
-  };
-}
-
-function taskUserInput(input: unknown): unknown {
-  return Array.isArray(input)
-    ? input.filter(
-        (message) =>
-          typeof message === "object" &&
-          message !== null &&
-          "role" in message &&
-          message.role === "user",
-      )
-    : input;
 }

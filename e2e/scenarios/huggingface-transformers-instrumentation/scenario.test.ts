@@ -1,4 +1,5 @@
 import { describe } from "vite-plus/test";
+import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -23,36 +24,78 @@ const scenarios = await Promise.all(
 
 describe.concurrent("variants", () => {
   for (const scenario of scenarios) {
-    describe(
-      `Transformers.js ${scenario.version}`,
-      { concurrent: false },
-      () => {
-        defineAssertions({
-          name: "wrapped instrumentation",
-          runScenario: async ({ runScenarioDir }) => {
-            await runScenarioDir({
-              entry: "scenario.wrapper.ts",
-              env: {
-                HUGGINGFACE_TRANSFORMERS_PACKAGE_NAME: scenario.dependencyName,
-              },
-              runContext: {
-                originalScenarioDir,
-                variantKey: scenario.snapshotName,
-              },
-              scenarioDir,
-              timeoutMs: SCENARIO_TIMEOUT_MS,
-            });
-          },
-          snapshotName: `${scenario.snapshotName}-wrapped`,
-          testFileUrl: import.meta.url,
-          timeoutMs: SCENARIO_TIMEOUT_MS,
-        });
+    describeVariant(`Transformers.js ${scenario.version}`, () => {
+      defineAssertions({
+        name: "wrapped instrumentation",
+        runScenario: async ({ runScenarioDir }) => {
+          await runScenarioDir({
+            entry: "scenario.wrapper.ts",
+            env: {
+              HUGGINGFACE_TRANSFORMERS_PACKAGE_NAME: scenario.dependencyName,
+            },
+            runContext: {
+              originalScenarioDir,
+              variantKey: scenario.snapshotName,
+            },
+            scenarioDir,
+            timeoutMs: SCENARIO_TIMEOUT_MS,
+          });
+        },
+        snapshotName: `${scenario.snapshotName}-wrapped`,
+        testFileUrl: import.meta.url,
+        timeoutMs: SCENARIO_TIMEOUT_MS,
+      });
 
+      defineAssertions({
+        name: "auto-hook instrumentation ESM",
+        runScenario: async ({ runNodeScenarioDir }) => {
+          await runNodeScenarioDir({
+            entry: "scenario.auto.mjs",
+            env: {
+              HUGGINGFACE_TRANSFORMERS_PACKAGE_NAME: scenario.dependencyName,
+            },
+            nodeArgs: ["--import", "braintrust/hook.mjs"],
+            runContext: {
+              originalScenarioDir,
+              variantKey: scenario.snapshotName,
+            },
+            scenarioDir,
+            timeoutMs: SCENARIO_TIMEOUT_MS,
+          });
+        },
+        snapshotName: `${scenario.snapshotName}-auto-esm`,
+        testFileUrl: import.meta.url,
+        timeoutMs: SCENARIO_TIMEOUT_MS,
+      });
+
+      defineAssertions({
+        name: "auto-hook instrumentation ESM",
+        runScenario: async ({ runNodeScenarioDir }) => {
+          await runNodeScenarioDir({
+            entry: "scenario.auto.mjs",
+            env: {
+              HUGGINGFACE_TRANSFORMERS_PACKAGE_NAME: scenario.dependencyName,
+            },
+            nodeArgs: ["--import", "braintrust/hook.mjs"],
+            runContext: {
+              originalScenarioDir,
+              variantKey: scenario.snapshotName,
+            },
+            scenarioDir,
+            timeoutMs: SCENARIO_TIMEOUT_MS,
+          });
+        },
+        snapshotName: `${scenario.snapshotName}-auto-esm`,
+        testFileUrl: import.meta.url,
+        timeoutMs: SCENARIO_TIMEOUT_MS,
+      });
+
+      if (scenario.runCjsAutoInstrumentation) {
         defineAssertions({
-          name: "auto-hook instrumentation ESM",
+          name: "auto-hook instrumentation CJS",
           runScenario: async ({ runNodeScenarioDir }) => {
             await runNodeScenarioDir({
-              entry: "scenario.auto.mjs",
+              entry: "scenario.auto.cjs",
               env: {
                 HUGGINGFACE_TRANSFORMERS_PACKAGE_NAME: scenario.dependencyName,
               },
@@ -65,36 +108,11 @@ describe.concurrent("variants", () => {
               timeoutMs: SCENARIO_TIMEOUT_MS,
             });
           },
-          snapshotName: `${scenario.snapshotName}-auto-esm`,
+          snapshotName: `${scenario.snapshotName}-auto-cjs`,
           testFileUrl: import.meta.url,
           timeoutMs: SCENARIO_TIMEOUT_MS,
         });
-
-        if (scenario.runCjsAutoInstrumentation) {
-          defineAssertions({
-            name: "auto-hook instrumentation CJS",
-            runScenario: async ({ runNodeScenarioDir }) => {
-              await runNodeScenarioDir({
-                entry: "scenario.auto.cjs",
-                env: {
-                  HUGGINGFACE_TRANSFORMERS_PACKAGE_NAME:
-                    scenario.dependencyName,
-                },
-                nodeArgs: ["--import", "braintrust/hook.mjs"],
-                runContext: {
-                  originalScenarioDir,
-                  variantKey: scenario.snapshotName,
-                },
-                scenarioDir,
-                timeoutMs: SCENARIO_TIMEOUT_MS,
-              });
-            },
-            snapshotName: `${scenario.snapshotName}-auto-cjs`,
-            testFileUrl: import.meta.url,
-            timeoutMs: SCENARIO_TIMEOUT_MS,
-          });
-        }
-      },
-    );
+      }
+    });
   }
 });

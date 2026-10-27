@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { mistralChannels } from "../../instrumentation/providers/mistral-channels";
+import { mistralChannels } from "../../instrumentation/providers/mistral-interceptors";
 
 export const mistralConfigs: InstrumentationConfig[] = [
   {
@@ -12,7 +12,6 @@ export const mistralConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Chat",
       methodName: "complete",
-      kind: "Async",
     },
   },
 
@@ -26,7 +25,6 @@ export const mistralConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Chat",
       methodName: "complete",
-      kind: "Async",
     },
   },
 
@@ -40,7 +38,6 @@ export const mistralConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Chat",
       methodName: "stream",
-      kind: "Async",
     },
   },
 
@@ -54,7 +51,6 @@ export const mistralConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Chat",
       methodName: "stream",
-      kind: "Async",
     },
   },
 
@@ -68,7 +64,6 @@ export const mistralConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Embeddings",
       methodName: "create",
-      kind: "Async",
     },
   },
 
@@ -82,7 +77,6 @@ export const mistralConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Embeddings",
       methodName: "create",
-      kind: "Async",
     },
   },
 
@@ -96,7 +90,6 @@ export const mistralConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Classifiers",
       methodName: "moderate",
-      kind: "Async",
     },
   },
 
@@ -110,7 +103,6 @@ export const mistralConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Classifiers",
       methodName: "moderate",
-      kind: "Async",
     },
   },
 
@@ -124,7 +116,6 @@ export const mistralConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Classifiers",
       methodName: "moderateChat",
-      kind: "Async",
     },
   },
 
@@ -138,7 +129,6 @@ export const mistralConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Classifiers",
       methodName: "moderateChat",
-      kind: "Async",
     },
   },
 
@@ -152,7 +142,6 @@ export const mistralConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Classifiers",
       methodName: "classify",
-      kind: "Async",
     },
   },
 
@@ -166,7 +155,6 @@ export const mistralConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Classifiers",
       methodName: "classify",
-      kind: "Async",
     },
   },
 
@@ -180,7 +168,6 @@ export const mistralConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Classifiers",
       methodName: "classifyChat",
-      kind: "Async",
     },
   },
 
@@ -194,7 +181,6 @@ export const mistralConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Classifiers",
       methodName: "classifyChat",
-      kind: "Async",
     },
   },
 
@@ -208,7 +194,6 @@ export const mistralConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Fim",
       methodName: "complete",
-      kind: "Async",
     },
   },
 
@@ -222,7 +207,6 @@ export const mistralConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Fim",
       methodName: "complete",
-      kind: "Async",
     },
   },
 
@@ -236,7 +220,6 @@ export const mistralConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Fim",
       methodName: "stream",
-      kind: "Async",
     },
   },
 
@@ -250,7 +233,6 @@ export const mistralConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Fim",
       methodName: "stream",
-      kind: "Async",
     },
   },
 
@@ -264,7 +246,6 @@ export const mistralConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Agents",
       methodName: "complete",
-      kind: "Async",
     },
   },
 
@@ -278,7 +259,6 @@ export const mistralConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Agents",
       methodName: "complete",
-      kind: "Async",
     },
   },
 
@@ -292,7 +272,6 @@ export const mistralConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Agents",
       methodName: "stream",
-      kind: "Async",
     },
   },
 
@@ -306,7 +285,6 @@ export const mistralConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Agents",
       methodName: "stream",
-      kind: "Async",
     },
   },
 ];

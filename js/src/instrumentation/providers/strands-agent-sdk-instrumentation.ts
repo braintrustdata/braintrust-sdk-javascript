@@ -21,7 +21,7 @@ import {
   omitMediaData,
 } from "../../wrappers/attachment-utils";
 import { runWithAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
-import { strandsAgentSDKChannels } from "./strands-agent-sdk-channels";
+import { strandsAgentSDKChannels } from "./strands-agent-sdk-interceptors";
 import type {
   StrandsAfterModelCallEvent,
   StrandsAfterNodeCallEvent,

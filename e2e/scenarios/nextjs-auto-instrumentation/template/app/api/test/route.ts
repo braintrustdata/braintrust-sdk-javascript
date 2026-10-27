@@ -6,12 +6,13 @@ import type { AddressInfo } from "node:net";
 export const dynamic = "force-dynamic";
 
 type InstrumentationHook = {
-  subscribe(handlers: InstrumentationHookHandlers): void;
-  unsubscribe(handlers: InstrumentationHookHandlers): boolean;
-};
-
-type InstrumentationHookHandlers = {
-  start(): void;
+  intercept(
+    interceptor: (
+      target: (...args: unknown[]) => unknown,
+      receiver: unknown,
+      args: unknown[],
+    ) => unknown,
+  ): () => void;
 };
 
 export async function GET() {
@@ -42,18 +43,15 @@ export async function GET() {
 
   const hooks = (
     globalThis as typeof globalThis & {
-      __braintrust_instrumentation_hooks?: Map<string, InstrumentationHook>;
+      __braintrust_invocation_hooks_v2?: Map<string, InstrumentationHook>;
     }
-  ).__braintrust_instrumentation_hooks;
+  ).__braintrust_invocation_hooks_v2;
   const hook = hooks?.get("orchestrion:openai:chat.completions.create");
   let hookFired = false;
-  const subscriber = {
-    start: () => {
-      hookFired = true;
-    },
-  };
-
-  hook?.subscribe(subscriber);
+  const remove = hook?.intercept((target, receiver, args) => {
+    hookFired = true;
+    return Reflect.apply(target, receiver, args);
+  });
 
   try {
     const client = new OpenAI({
@@ -66,7 +64,7 @@ export async function GET() {
       messages: [{ role: "user", content: "hi" }],
     });
   } finally {
-    hook?.unsubscribe(subscriber);
+    remove?.();
     mockServer.close();
   }
 

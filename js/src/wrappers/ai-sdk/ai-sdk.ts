@@ -4,9 +4,10 @@ import { registerInstrumentation } from "../../instrumentation/registrations/ais
 import { SpanTypeAttribute } from "../../../util";
 import {
   aiSDKChannels,
+  codeModeChannels,
   BRAINTRUST_WRAPPED_AI_SDK_MODEL,
   harnessAgentChannels,
-} from "../../instrumentation/providers/ai-sdk-channels";
+} from "../../instrumentation/providers/ai-sdk-interceptors";
 import type {
   AISDK,
   AISDKAgentClass,
@@ -15,9 +16,9 @@ import type {
   AISDKEmbedFunction,
   AISDKEmbedParams,
   AISDKEvaluateParams,
+  AISDKGenerateFunction,
   AISDKGenerateImageFunction,
   AISDKGenerateImageParams,
-  AISDKGenerateFunction,
   AISDKHarnessAgentCallParams,
   AISDKHarnessAgentCreateSessionFunction,
   AISDKHarnessAgentGenerateFunction,
@@ -30,6 +31,10 @@ import type {
   AISDKStreamFunction,
   AISDKWorkflowAgentClass,
 } from "../../vendor-sdk-types/ai-sdk";
+import type {
+  AISDKRunCodeMode,
+  AISDKRunCodeModeInput,
+} from "../../vendor-sdk-types/ai-sdk-code-mode";
 import { currentWorkflowAgentWrapperSpan } from "./workflow-agent-context";
 
 interface WrapAISDKOptions {
@@ -93,6 +98,10 @@ function isModuleNamespace(obj: unknown): obj is AISDKNamespaceObject {
 /**
  * Wraps Vercel AI SDK methods with Braintrust tracing.
  *
+ * For code-mode without a loader hook, wrap the code-mode namespace and call
+ * `wrapAISDK(codeMode).experimental_runCodeMode(...)`. Factory-created tools
+ * call runCodeMode internally and require auto-instrumentation.
+ *
  * @param ai - The AI SDK namespace (e.g., import * as ai from "ai")
  * @returns AI SDK with Braintrust tracing.
  *
@@ -139,18 +148,35 @@ export function wrapAISDK<T>(aiSDK: T, options: WrapAISDKOptions = {}): T {
     get(target, prop, receiver) {
       const original = Reflect.get(target, prop, receiver);
       switch (prop) {
+        case "experimental_runCodeMode":
+          return typeof original === "function"
+            ? function (this: unknown, input: AISDKRunCodeModeInput) {
+                return codeModeChannels.run.invoke(
+                  original as AISDKRunCodeMode,
+                  this,
+                  [input],
+                  {},
+                );
+              }
+            : original;
+        case "experimental_decide":
         case "experimental_evaluate": {
-          const evaluate = typedAISDK.experimental_evaluate;
+          const evaluate = typedAISDK[prop];
           return typeof evaluate === "function"
             ? function (
                 this: unknown,
                 allParams: AISDKEvaluateParams & SpanInfo,
               ) {
                 const { span_info, ...params } = allParams;
-                return aiSDKChannels.evaluate.invoke(evaluate, this, [params], {
-                  denyOutputPaths: options.denyOutputPaths,
-                  span_info,
-                });
+                return aiSDKChannels.evaluate.invoke(
+                  evaluate,
+                  this,
+                  ["span_info" in allParams ? params : allParams],
+                  {
+                    denyOutputPaths: options.denyOutputPaths,
+                    span_info,
+                  },
+                );
               }
             : original;
         }
@@ -373,12 +399,11 @@ const wrapHarnessAgentCreateSession = (
   const wrapper = function (
     params?: Parameters<AISDKHarnessAgentCreateSessionFunction>[0],
   ) {
-    return harnessAgentChannels.createSession.tracePromise(
-      () =>
-        params === undefined
-          ? createSession.call(instance)
-          : createSession.call(instance, params),
-      createAISDKChannelContext(params ?? {}, { self: instance }),
+    return harnessAgentChannels.createSession.invoke(
+      createSession,
+      instance,
+      params === undefined ? [] : [params],
+      {},
     );
   };
   Object.defineProperty(wrapper, "name", {
@@ -520,8 +545,10 @@ const makeGenerateTextWrapper = (
     const { span_info, ...params } = allParams;
     const tracedParams = { ...params };
 
-    return channel.tracePromise(
-      () => generateText(tracedParams),
+    return channel.invoke(
+      generateText,
+      contextOptions.self,
+      [tracedParams],
       createAISDKChannelContext(tracedParams, {
         aiSDK: contextOptions.aiSDK,
         denyOutputPaths: options.denyOutputPaths,
@@ -588,8 +615,10 @@ const makeGenerateImageWrapper = (
     const { span_info, ...params } = allParams;
     const tracedParams = { ...params };
 
-    return aiSDKChannels.generateImage.tracePromise(
-      () => generateImage(tracedParams),
+    return aiSDKChannels.generateImage.invoke(
+      generateImage,
+      contextOptions.self,
+      [tracedParams],
       createAISDKChannelContext(tracedParams, {
         aiSDK: contextOptions.aiSDK,
         denyOutputPaths: options.denyOutputPaths,
@@ -623,8 +652,10 @@ const makeEmbedWrapper = (
     const { span_info, ...params } = allParams;
     const tracedParams = { ...params };
 
-    return channel.tracePromise(
-      () => embed(tracedParams),
+    return channel.invoke(
+      embed,
+      contextOptions.self,
+      [tracedParams],
       createAISDKChannelContext(tracedParams, {
         aiSDK: contextOptions.aiSDK,
         denyOutputPaths: options.denyOutputPaths,
@@ -681,8 +712,10 @@ const makeRerankWrapper = (
     const { span_info, ...params } = allParams;
     const tracedParams = { ...params };
 
-    return aiSDKChannels.rerank.tracePromise(
-      () => rerank(tracedParams),
+    return aiSDKChannels.rerank.invoke(
+      rerank,
+      contextOptions.self,
+      [tracedParams],
       createAISDKChannelContext(tracedParams, {
         aiSDK: contextOptions.aiSDK,
         denyOutputPaths: options.denyOutputPaths,
@@ -708,8 +741,8 @@ const wrapRerank = (
 
 const makeStreamWrapper = (
   channel:
-    | typeof aiSDKChannels.streamTextSync
-    | typeof aiSDKChannels.streamObjectSync
+    | typeof aiSDKChannels.streamText
+    | typeof aiSDKChannels.streamObject
     | typeof aiSDKChannels.agentStream
     | typeof harnessAgentChannels.stream
     | typeof harnessAgentChannels.continueStream
@@ -739,11 +772,12 @@ const makeStreamWrapper = (
       }),
     });
 
-    if ("traceSync" in channel) {
-      return channel.traceSync(() => streamText(tracedParams) as any, context);
-    }
-
-    return channel.tracePromise(() => streamText(tracedParams) as any, context);
+    return channel.invoke(
+      streamText,
+      contextOptions.self,
+      [tracedParams],
+      context,
+    );
   };
   Object.defineProperty(wrapper, "name", { value: name, writable: false });
   return wrapper;
@@ -755,7 +789,7 @@ const wrapStreamText = (
   aiSDK?: AISDK,
 ) => {
   return makeStreamWrapper(
-    aiSDKChannels.streamTextSync,
+    aiSDKChannels.streamText,
     "streamText",
     streamText,
     { aiSDK },
@@ -769,7 +803,7 @@ const wrapStreamObject = (
   aiSDK?: AISDK,
 ) => {
   return makeStreamWrapper(
-    aiSDKChannels.streamObjectSync,
+    aiSDKChannels.streamObject,
     "streamObject",
     streamObject,
     { aiSDK },

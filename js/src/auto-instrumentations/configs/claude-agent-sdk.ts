@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { claudeAgentSDKChannels } from "../../instrumentation/providers/claude-agent-sdk-channels";
+import { claudeAgentSDKChannels } from "../../instrumentation/providers/claude-agent-sdk-interceptors";
 
 /**
  * Instrumentation configuration for the Claude Agent SDK.
@@ -24,7 +24,6 @@ export const claudeAgentSDKConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       functionName: "query",
-      kind: "Sync",
     },
   },
   {
@@ -36,7 +35,6 @@ export const claudeAgentSDKConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       functionName: "query",
-      kind: "Sync",
       isExportAlias: true,
     },
   },

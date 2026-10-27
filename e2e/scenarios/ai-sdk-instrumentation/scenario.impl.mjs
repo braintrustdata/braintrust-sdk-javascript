@@ -134,6 +134,7 @@ export const AI_SDK_SCENARIO_SPECS = [
     openaiModuleName: "ai-sdk-openai-v7",
     packageName: "ai-sdk-v7",
     snapshotName: "ai-sdk-v7",
+    codeModeModuleName: "code-mode-v1",
     supportsEvaluate: true,
     supportsEvaluateStringModel: false,
     anthropicModuleName: "ai-sdk-anthropic-v7",
@@ -164,6 +165,7 @@ export const AI_SDK_SCENARIO_SPECS = [
     openaiModuleName: "ai-sdk-openai-v7-latest",
     packageName: "ai-sdk-v7-latest",
     snapshotName: "ai-sdk-v7-latest",
+    codeModeModuleName: "code-mode-v1-latest",
     supportsEvaluate: true,
     anthropicModuleName: "ai-sdk-anthropic-v7-latest",
     supportsAgentToolLoop: true,
@@ -223,13 +225,30 @@ function createOutputObjectIfSupported(ai) {
   return undefined;
 }
 
-function createTypeSafeEvaluationModel(modelId = "jev-latest") {
+function createTypeSafeEvaluationModel(
+  modelId = "jev-latest",
+  supportsDecide = false,
+) {
   return {
     specificationVersion: "v4",
     provider: "typesafe",
     modelId,
     supportedQuestionTypes: ["choice", "score", "boolean"],
-    async doEvaluate({ state, questions, abortSignal, headers }) {
+    async [supportsDecide ? "doDecide" : "doEvaluate"]({
+      state,
+      questions,
+      abortSignal,
+      headers,
+    }) {
+      if (supportsDecide) {
+        // The v4 decision interface normalizes public state to ordered parts.
+        if (state.length !== 1 || !["text", "json"].includes(state[0].type)) {
+          throw new Error(
+            "TypeSafe scenario requires one text or JSON state part",
+          );
+        }
+        state = state[0].type === "json" ? state[0].value : state[0].text;
+      }
       const apiKey = process.env.TYPESAFE_API_KEY;
       if (!apiKey) {
         throw new Error(
@@ -370,6 +389,67 @@ function createWeatherTool(ai, schemaKey) {
         temperatureC: 22,
       }),
   });
+}
+
+export const MODEL_OUTPUT_TOOL_SECRET = "signup-secret@example.com";
+export const MODEL_OUTPUT_TOOL_VALUE = "1 signup; rows hidden from the model";
+
+// toModelOutput keeps the raw rows away from the model; traces must match.
+function createModelOutputTool(ai, sdkMajorVersion) {
+  return ai.tool({
+    description: "Look up today's signups",
+    inputSchema: z.object({}),
+    execute: async () => ({ rows: [{ email: MODEL_OUTPUT_TOOL_SECRET }] }),
+    // AI SDK v5 passes the output directly; v6+ passes { toolCallId, input, output }.
+    toModelOutput: (options) => {
+      const output = sdkMajorVersion >= 6 ? options.output : options;
+      if (output?.rows?.[0]?.email !== MODEL_OUTPUT_TOOL_SECRET) {
+        throw new Error("Unexpected toModelOutput argument");
+      }
+      return { type: "text", value: MODEL_OUTPUT_TOOL_VALUE };
+    },
+  });
+}
+
+async function runToolModelOutputOperations({
+  ai,
+  instrumentedAI,
+  maxTokensKey,
+  openaiModel,
+  sdkMajorVersion,
+}) {
+  const createRequest = () => ({
+    model: openaiModel,
+    prompt:
+      "Use the lookup_signups tool to count today's signups, then reply with the count only.",
+    // Send prior tool items inline instead of referencing stored responses.
+    providerOptions: { openai: { store: false } },
+    temperature: 0,
+    toolChoice: "required",
+    stopWhen: ai.stepCountIs(2),
+    tools: {
+      lookup_signups: createModelOutputTool(ai, sdkMajorVersion),
+    },
+    ...tokenLimit(maxTokensKey, 32),
+  });
+
+  await runOperation(
+    "ai-sdk-tool-model-output-operation",
+    "tool-model-output",
+    async () => {
+      await instrumentedAI.generateText(createRequest());
+    },
+  );
+
+  await runOperation(
+    "ai-sdk-tool-model-output-stream-operation",
+    "tool-model-output-stream",
+    async () => {
+      const result = await instrumentedAI.streamText(createRequest());
+      for await (const _chunk of result.textStream) {
+      }
+    },
+  );
 }
 
 async function runWorkflowAgentStreamOperation({
@@ -561,13 +641,20 @@ async function runAISDKInstrumentationScenario(
 
       if (options.supportsEvaluate) {
         const evaluate =
-          options.evaluate ?? instrumentedAI.experimental_evaluate;
+          options.evaluate ??
+          instrumentedAI.experimental_decide ??
+          instrumentedAI.experimental_evaluate;
+        const supportsDecide =
+          typeof instrumentedAI.experimental_decide === "function";
         await runOperation(
           "ai-sdk-evaluate-operation",
           "evaluate",
           async () => {
             await evaluate({
-              model: createTypeSafeEvaluationModel(),
+              model: createTypeSafeEvaluationModel(
+                "jev-latest",
+                supportsDecide,
+              ),
               state: {
                 message:
                   "I was charged twice for my subscription. Please refund the duplicate charge.",
@@ -594,20 +681,79 @@ async function runAISDKInstrumentationScenario(
             });
           },
         );
+        if (supportsDecide) {
+          const png =
+            "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKElEQVR4nO3NsQ0AAAzCMP5/un0CNkuZ41wybXsHAAAAAAAAAAAAxR4yw/wuPL6QkAAAAABJRU5ErkJggg==";
+          for (const method of [
+            "experimental_decide",
+            "experimental_evaluate",
+          ]) {
+            await runOperation(
+              `ai-sdk-${method}-images-operation`,
+              "decision-images",
+              async () => {
+                const state = [
+                  { type: "text", text: "Compare these two pixels." },
+                  {
+                    type: "file",
+                    mediaType: "image/png",
+                    filename: "first.png",
+                    data: Buffer.from(png, "base64"),
+                  },
+                  { type: "json", value: { label: "two pixels" } },
+                  {
+                    type: "file",
+                    mediaType: "image/png",
+                    filename: "second.png",
+                    data: { type: "data", data: png },
+                  },
+                ];
+                const before = JSON.stringify(state);
+                // The renamed API exercises native telemetry; the deprecated
+                // alias also exercises the manual wrapper with telemetry enabled.
+                const decide =
+                  method === "experimental_decide"
+                    ? evaluate
+                    : wrapAISDK(instrumentedAI)[method];
+                await decide({
+                  model: openai.decisionModel("gpt-6-luna"),
+                  state,
+                  questions: {
+                    same: {
+                      type: "boolean",
+                      instructions: "Do both images show the same color?",
+                    },
+                  },
+                });
+                if (JSON.stringify(state) !== before)
+                  throw new Error(
+                    "Decision instrumentation mutated provider input",
+                  );
+              },
+            );
+          }
+        }
         if (options.supportsEvaluateStringModel !== false) {
           const originalProvider = globalThis.AI_SDK_DEFAULT_PROVIDER;
           try {
             globalThis.AI_SDK_DEFAULT_PROVIDER = {
-              evaluationModel: (modelId) =>
+              [supportsDecide ? "decisionModel" : "evaluationModel"]: (
+                modelId,
+              ) =>
                 createTypeSafeEvaluationModel(
                   modelId === "typesafe-ai/jev" ? "jev-latest" : modelId,
+                  supportsDecide,
                 ),
             };
             await runOperation(
               "ai-sdk-evaluate-string-operation",
               "evaluate-string",
               async () => {
-                await evaluate({
+                // Verify wrapping composes with registered telemetry and auto hooks.
+                const wrappedDecide = supportsDecide
+                  ? wrapAISDK(instrumentedAI).experimental_decide
+                  : evaluate;
+                await wrappedDecide({
                   model: "typesafe-ai/jev",
                   state: "The package arrived intact and on time.",
                   questions: {
@@ -760,6 +906,16 @@ async function runAISDKInstrumentationScenario(
 
         await instrumentedAI.generateText(toolRequest);
       });
+
+      if (options.supportsToolExecution && sdkMajorVersion >= 5) {
+        await runToolModelOutputOperations({
+          ai: options.ai,
+          instrumentedAI,
+          maxTokensKey: options.maxTokensKey,
+          openaiModel,
+          sdkMajorVersion,
+        });
+      }
 
       if (supportsOpenAICacheScenario) {
         const prompt = `${CACHE_PROMPT_PREFIX}\n\nReply with exactly CACHE_OK and nothing else.`;
@@ -1018,6 +1174,15 @@ async function runAISDKInstrumentationScenario(
           instrumentedWorkflow: options.workflow,
           openaiModel,
         });
+      }
+      if (process.env.AI_SDK_CODE_MODE_PACKAGE_NAME) {
+        const { runAISDKCodeMode } = await import("./scenario.code-mode.mjs");
+        for (const mode of options.codeModeModes) {
+          await runAISDKCodeMode(
+            mode,
+            process.env.AI_SDK_CODE_MODE_PACKAGE_NAME,
+          );
+        }
       }
     },
     flushCount,
