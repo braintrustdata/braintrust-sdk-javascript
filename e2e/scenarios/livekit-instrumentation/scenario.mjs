@@ -303,6 +303,10 @@ try {
   await session.close();
   await logger.flush();
   if (provider) assert.equal(telemetry.tracer.getProvider(), provider);
+  // Save or verify the websocket cassette before exiting, which skips `finally`.
+  const cassette = ws;
+  ws = undefined;
+  await cassette?.close();
   // LiveKit's job process exits right after its shutdown callbacks, like this;
   // anything not finished by then is lost.
   await new Promise((resolve) => process.stdout.write("", resolve));
