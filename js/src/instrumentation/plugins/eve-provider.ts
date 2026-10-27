@@ -22,6 +22,8 @@ import type {
   EveProviderModelCallStartedEvent,
   EveProviderModelCallTerminalEvent,
   EveProviderStepAttemptTerminalEvent,
+  EveProviderToolCallStartedEvent,
+  EveProviderToolCallTerminalEvent,
   EveProviderTurnStartedEvent,
   EveProviderTurnTerminalEvent,
   EveProviderUsage,
@@ -58,6 +60,8 @@ type EveProviderEvent =
   | EveProviderModelCallStartedEvent
   | EveProviderModelCallTerminalEvent
   | EveProviderStepAttemptTerminalEvent
+  | EveProviderToolCallStartedEvent
+  | EveProviderToolCallTerminalEvent
   | EveProviderTurnStartedEvent
   | EveProviderTurnTerminalEvent;
 
@@ -119,6 +123,18 @@ export function createEveInstrumentationProvider(
       "step.attempt.failed": providerHandler("step.attempt.failed", (event) =>
         bridge.handleStepAttemptTerminal(event),
       ),
+      "tool.call.started": providerHandler(
+        "tool.call.started",
+        bridge.handleActionStarted.bind(bridge),
+      ),
+      "tool.call.completed": providerHandler(
+        "tool.call.completed",
+        bridge.handleActionTerminal.bind(bridge),
+      ),
+      "tool.call.failed": providerHandler(
+        "tool.call.failed",
+        bridge.handleActionTerminal.bind(bridge),
+      ),
       "turn.cancelled": providerHandler(
         "turn.cancelled",
         bridge.handleTurnTerminal.bind(bridge),
@@ -137,11 +153,19 @@ export function createEveInstrumentationProvider(
       ),
     },
     flush,
-    setup: options.setup,
+    setup: (context) => {
+      // Before 0.72, Eve publishes both the durable action events and separate
+      // AI SDK tool events with different IDs for the same tool execution.
+      const [major, minor] =
+        context.frameworkVersion?.split(".").map(Number) ?? [];
+      bridge.useLegacyActions = major === 0 && minor < 72;
+      return options.setup?.(context);
+    },
   };
 }
 
 class EveProviderBridge {
+  useLegacyActions = false;
   private readonly activeActions = new Map<string, ActiveSpan>();
   private readonly activeModels = new Map<string, ActiveSpan>();
   private readonly modelsByAttempt = new Map<string, Set<string>>();
@@ -377,9 +401,10 @@ class EveProviderBridge {
   }
 
   async handleActionStarted(
-    event: EveProviderActionStartedEvent,
+    event: EveProviderActionStartedEvent | EveProviderToolCallStartedEvent,
     context: EveProviderContext,
   ): Promise<void> {
+    if (event.type === "tool.call.started" && this.useLegacyActions) return;
     await this.contain("action start", async () => {
       if (
         event.kind === "load-skill" ||
@@ -389,6 +414,18 @@ class EveProviderBridge {
         return;
       }
       const parent = await this.parentForScope(event.scope);
+      if (event.type === "tool.call.started" && event.parentCallId) {
+        parent.spanId = (
+          await generateEveIds(
+            "tool",
+            actionIdempotencyKey(
+              event.scope.sessionId,
+              event.scope.turnId,
+              event.parentCallId,
+            ),
+          )
+        ).spanId;
+      }
       // Child turns derive their parent from this id without knowing the
       // action kind, and Eve 0.70+ reports agent calls as tool calls.
       const { rowId, spanId } = await generateEveIds(
@@ -397,15 +434,20 @@ class EveProviderBridge {
       );
       const metadata = {
         ...this.spanMetadata(event.scope.sessionId),
-        "eve.action_kind": event.kind,
+        "eve.action_kind": event.kind ?? "tool-call",
       };
+      const start =
+        event.type === "tool.call.started"
+          ? finiteTimestamp(event.startedAtMs)
+          : undefined;
       const span = await this.startSpan(context, {
         event: {
           id: rowId,
           ...(event.input !== undefined ? { input: event.input } : {}),
           metadata,
         },
-        name: event.name,
+        name: event.type === "tool.call.started" ? event.toolName : event.name,
+        ...(start !== undefined ? { startTime: start / 1000 } : {}),
         parentSpanIds: parent,
         spanAttributes: { type: SpanTypeAttribute.TOOL },
         spanId,
@@ -423,9 +465,15 @@ class EveProviderBridge {
   }
 
   async handleActionTerminal(
-    event: EveProviderActionTerminalEvent,
+    event: EveProviderActionTerminalEvent | EveProviderToolCallTerminalEvent,
     context: EveProviderContext,
   ): Promise<void> {
+    if (
+      this.useLegacyActions &&
+      (event.type === "tool.call.completed" ||
+        event.type === "tool.call.failed")
+    )
+      return;
     await this.contain("action terminal", async () => {
       if (this.settledOperations.has(event.idempotencyKey)) {
         context.state.set(undefined);
@@ -437,14 +485,25 @@ class EveProviderBridge {
         return;
       }
       const active = this.activeActions.get(event.idempotencyKey);
-      const end = finiteTimestamp(event.acceptedAtMs) ?? Date.now();
+      const end =
+        finiteTimestamp(event.acceptedAtMs) ??
+        (event.type === "tool.call.completed" ||
+        event.type === "tool.call.failed"
+          ? finiteTimestamp(event.completedAtMs)
+          : undefined) ??
+        Date.now();
       if (active) {
         const span = active.span;
-        if (event.type === "action.failed") {
+        if (
+          event.type === "action.failed" ||
+          event.type === "tool.call.failed"
+        ) {
           span.log({
             error:
               event.error ??
-              new Error(event.errorCode ?? `Eve action ${event.outcome}`),
+              new Error(
+                event.errorCode ?? `Eve action ${event.outcome ?? "failed"}`,
+              ),
           });
         } else if (event.output.type === "error") {
           span.log({
@@ -460,11 +519,15 @@ class EveProviderBridge {
         if (stored && "exported" in stored) {
           updateSpan({
             exported: stored.exported,
-            ...(event.type === "action.failed"
+            ...(event.type === "action.failed" ||
+            event.type === "tool.call.failed"
               ? {
                   error:
                     event.error ??
-                    new Error(event.errorCode ?? `Eve action ${event.outcome}`),
+                    new Error(
+                      event.errorCode ??
+                        `Eve action ${event.outcome ?? "failed"}`,
+                    ),
                 }
               : event.output.type === "error"
                 ? {
@@ -794,6 +857,29 @@ function isEveProviderEvent<TType extends EveProviderEvent["type"]>(
     );
   }
   if (type === "model.call.failed") {
+    return true;
+  }
+  if (type === "tool.call.started") {
+    return (
+      typeof event["callId"] === "string" &&
+      typeof event["toolName"] === "string" &&
+      (event["parentCallId"] === undefined ||
+        typeof event["parentCallId"] === "string") &&
+      (event["kind"] === undefined ||
+        event["kind"] === "load-skill" ||
+        event["kind"] === "remote-agent-call" ||
+        event["kind"] === "subagent-call" ||
+        event["kind"] === "tool-call")
+    );
+  }
+  if (type === "tool.call.completed") {
+    const output = event["output"];
+    return (
+      isObject(output) &&
+      (output["type"] === "result" || output["type"] === "error")
+    );
+  }
+  if (type === "tool.call.failed") {
     return true;
   }
   if (type === "action.started") {
