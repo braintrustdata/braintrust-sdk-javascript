@@ -2001,19 +2001,22 @@ function aggregateGenerateContentChunks(
   const otherParts: Record<string, unknown>[] = [];
   let groundingMetadata: unknown = undefined;
   let usageMetadata: GoogleGenAIUsageMetadata | null = null;
-  let lastResponse: GoogleGenAIGenerateContentResponse | null = null;
+  let promptFeedback: GoogleGenAIGenerateContentResponse["promptFeedback"];
+  let lastCandidates: GoogleGenAIGenerateContentResponse["candidates"];
 
   for (const chunk of chunks) {
-    lastResponse = chunk;
-
     if (chunk.usageMetadata) {
       usageMetadata = chunk.usageMetadata;
+    }
+    if (chunk.promptFeedback) {
+      promptFeedback = chunk.promptFeedback;
     }
     if (chunk.groundingMetadata !== undefined) {
       groundingMetadata = chunk.groundingMetadata;
     }
 
     if (chunk.candidates && Array.isArray(chunk.candidates)) {
+      lastCandidates = chunk.candidates;
       for (const candidate of chunk.candidates) {
         if (candidate.content?.parts) {
           for (const part of candidate.content.parts) {
@@ -2054,9 +2057,9 @@ function aggregateGenerateContentChunks(
   }
   parts.push(...otherParts);
 
-  if (lastResponse?.candidates) {
+  if (lastCandidates) {
     const candidates: Record<string, unknown>[] = [];
-    for (const candidate of lastResponse.candidates) {
+    for (const candidate of lastCandidates) {
       // A stream can end without content (for example a SAFETY block), but its
       // finish reason and ratings still belong in the output.
       const candidateDict: Record<string, unknown> = {};
@@ -2092,6 +2095,9 @@ function aggregateGenerateContentChunks(
   if (usageMetadata) {
     aggregated.usageMetadata = usageMetadata;
     populateUsageMetrics(metrics, usageMetadata);
+  }
+  if (promptFeedback) {
+    aggregated.promptFeedback = promptFeedback;
   }
   if (groundingMetadata !== undefined) {
     aggregated.groundingMetadata = groundingMetadata;

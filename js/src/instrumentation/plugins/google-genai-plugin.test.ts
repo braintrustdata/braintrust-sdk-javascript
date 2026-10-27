@@ -547,7 +547,9 @@ describe("GoogleGenAIPlugin", () => {
       plugin.enable();
       const handlers = subscribeSpy.mock.calls[1][0];
       const event: any = {
-        arguments: [{ contents: "something blocked", model: "gemini-3.8-flash" }],
+        arguments: [
+          { contents: "something blocked", model: "gemini-3.8-flash" },
+        ],
       };
 
       async function* stream() {
@@ -563,8 +565,8 @@ describe("GoogleGenAIPlugin", () => {
               ],
             },
           ],
-          usageMetadata: { promptTokenCount: 3, totalTokenCount: 3 },
         };
+        yield { usageMetadata: { promptTokenCount: 3, totalTokenCount: 3 } };
       }
 
       handlers.begin(event);
@@ -591,6 +593,42 @@ describe("GoogleGenAIPlugin", () => {
                 ],
               },
             ],
+            usageMetadata: { promptTokenCount: 3, totalTokenCount: 3 },
+          },
+        }),
+      );
+    });
+
+    it("keeps the prompt feedback of a stream whose prompt was blocked", async () => {
+      plugin.enable();
+      const handlers = subscribeSpy.mock.calls[1][0];
+      const event: any = {
+        arguments: [
+          { contents: "something blocked", model: "gemini-3.8-flash" },
+        ],
+      };
+
+      async function* stream() {
+        yield {
+          promptFeedback: { blockReason: "SAFETY" },
+          usageMetadata: { promptTokenCount: 3, totalTokenCount: 3 },
+        };
+      }
+
+      handlers.begin(event);
+      event.result = stream();
+      handlers.resolve(event);
+      for await (const _chunk of event.result) {
+        // Consume the provider stream so the instrumentation finalizes it.
+      }
+
+      const span = mockStartSpan.mock.results.at(-1)?.value as {
+        log: ReturnType<typeof vi.fn>;
+      };
+      expect(span.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          output: {
+            promptFeedback: { blockReason: "SAFETY" },
             usageMetadata: { promptTokenCount: 3, totalTokenCount: 3 },
           },
         }),
