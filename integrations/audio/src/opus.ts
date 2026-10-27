@@ -2,7 +2,7 @@ import type { AudioMiddleware } from "./types";
 import type { EncodedPacket, EncodedPackets } from "./packets";
 
 export interface OpusOptions {
-  /** Target bitrate in bits per second. Defaults to 64000. */
+  /** Target bitrate in bits per second, from 500 to 512000. Defaults to 64000. */
   bitrate?: number;
   /** Encoder effort from 0 (fastest) to 10. Defaults to 5. */
   complexity?: number;
@@ -11,6 +11,7 @@ export interface OpusOptions {
 }
 
 const OPUS_RATE = 48000;
+const APPLICATIONS = ["audio", "voip", "lowdelay"] as const;
 /** Frames (20 ms each) encoded between yields to the event loop: 1 s of audio. */
 const FRAMES_PER_YIELD = 50;
 
@@ -19,22 +20,27 @@ let codec: Promise<Codec> | undefined;
 
 /**
  * Encodes raw PCM segments into Opus packets for a container such as `ogg()`.
- * Accepts 1 or 2 channels of s16le PCM at 24 or 48 kHz. Encoding runs in
- * 20 ms frames and yields to the event loop after each second of audio.
+ * Accepts 1 or 2 channels of interleaved s16le PCM at 24 or 48 kHz. Encoding
+ * runs in 20 ms frames and yields to the event loop after each second of audio.
+ * Throws if an option is invalid.
  */
 export function opus(
   options: OpusOptions = {},
 ): AudioMiddleware<Uint8Array, EncodedPackets> {
-  const settings = {
-    bitrate: 64_000,
-    complexity: 5,
-    application: "audio" as const,
-    ...options,
-  };
+  const settings = validate({
+    bitrate: options.bitrate ?? 64_000,
+    complexity: options.complexity ?? 5,
+    application: options.application ?? "audio",
+  });
   return async function opus(segment, meta, next) {
-    if (meta.mimeType !== "audio/pcm" || meta.encoding !== "s16le")
-      throw new Error("opus requires s16le PCM input");
-    const channels = meta.channelCount;
+    if (
+      meta.mimeType !== "audio/pcm" ||
+      meta.encoding !== "pcm" ||
+      meta.attributes?.["pcm.sample_format"] !== "s16le" ||
+      meta.attributes?.["pcm.channel_layout"] !== "interleaved"
+    )
+      throw new Error("opus requires interleaved s16le PCM input");
+    const channels = meta.channels.length;
     if (channels !== 1 && channels !== 2)
       throw new Error("opus supports 1 or 2 channels");
     const { createOpusEncoder, toOpusRate, FRAME } = await (codec ??=
@@ -100,9 +106,35 @@ export function opus(
         sampleRate: OPUS_RATE,
         mimeType: "audio/opus",
         encoding: "opus",
+        attributes: {
+          // PCM details no longer describe the file; other attributes do.
+          ...Object.fromEntries(
+            Object.entries(meta.attributes ?? {}).filter(
+              ([key]) => !key.startsWith("pcm."),
+            ),
+          ),
+          "opus.bitrate_bps": settings.bitrate,
+          "opus.complexity": settings.complexity,
+          "opus.application": settings.application,
+        },
       },
     );
   };
+}
+
+function validate(settings: Required<OpusOptions>): Required<OpusOptions> {
+  const { bitrate, complexity, application } = settings;
+  if (!Number.isInteger(bitrate) || bitrate < 500 || bitrate > 512_000)
+    throw new Error(
+      "Opus bitrate must be a whole number of bits per second from 500 to 512000",
+    );
+  if (!Number.isInteger(complexity) || complexity < 0 || complexity > 10)
+    throw new Error("Opus complexity must be an integer from 0 to 10");
+  if (!APPLICATIONS.includes(application))
+    throw new Error(
+      `Opus application must be one of ${APPLICATIONS.map((a) => `"${a}"`).join(", ")}`,
+    );
+  return settings;
 }
 
 /** Loads and compiles the codec ahead of the first segment. */

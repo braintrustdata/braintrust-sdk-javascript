@@ -7,13 +7,16 @@ const meta: AudioSegmentMeta = {
   startOffsetMs: 0,
   durationMs: 100,
   sampleRate: 24000,
-  channelCount: 2,
-  sources: [
-    { channel: 0, name: "session_input" },
-    { channel: 1, name: "local_audio_output" },
+  channels: [
+    { sources: ["session_input"] },
+    { sources: ["local_audio_output"] },
   ],
   mimeType: "audio/pcm",
-  encoding: "s16le",
+  encoding: "pcm",
+  attributes: {
+    "pcm.sample_format": "s16le",
+    "pcm.channel_layout": "interleaved",
+  },
 };
 
 /** Runs one segment through the stack, as the SDK does. */
@@ -71,22 +74,13 @@ test.each([
   expect(() => createStack(config)).toThrow(message);
 });
 
-test.each([
-  [{ bitrate: 32 }, "Opus bitrate must be 6000 to 510000 bits per second"],
-  [{ bitrate: "32000" }, "Opus bitrate must be 6000 to 510000 bits per second"],
-  [{ complexity: 11 }, "Opus complexity must be an integer from 0 to 10"],
-  [{ complexity: 2.5 }, "Opus complexity must be an integer from 0 to 10"],
-  [
-    { application: "music" },
-    'Opus application must be one of "audio", "voip", "lowdelay"',
-  ],
-])("rejects opus options %j", (options, message) => {
+test("invalid codec options are rejected by the codec", () => {
   expect(() =>
     createStack({
-      codec: { name: "opus", options },
+      codec: { name: "opus", options: { bitrate: 0 } },
       container: { name: "ogg" },
     }),
-  ).toThrow(message);
+  ).toThrow("Opus bitrate must");
 });
 
 test("importing the package registers it for the SDK; the first copy wins", async () => {

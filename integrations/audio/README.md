@@ -31,13 +31,13 @@ configureInstrumentation({
 });
 ```
 
-| Setting                     | Default   | Meaning                                                 |
-| --------------------------- | --------- | ------------------------------------------------------- |
-| `codec.name`                | `"opus"`  | `"opus"`, or `"pcm"` to record uncompressed audio.      |
-| `codec.options.bitrate`     | `64000`   | Target bitrate in bits per second, from 6000 to 510000. |
-| `codec.options.complexity`  | `5`       | Encoder effort, from 0 (fastest) to 10.                 |
-| `codec.options.application` | `"audio"` | Encoder tuning: `"audio"`, `"voip"`, or `"lowdelay"`.   |
-| `container.name`            | `"ogg"`   | The file format.                                        |
+| Setting                     | Default   | Meaning                                                      |
+| --------------------------- | --------- | ------------------------------------------------------------ |
+| `codec.name`                | `"opus"`  | `"opus"`, or `"pcm"` to record uncompressed audio.           |
+| `codec.options.bitrate`     | `64000`   | Target bitrate in whole bits per second, from 500 to 512000. |
+| `codec.options.complexity`  | `5`       | Encoder effort, from 0 (fastest) to 10.                      |
+| `codec.options.application` | `"audio"` | Encoder tuning: `"audio"`, `"voip"`, or `"lowdelay"`.        |
+| `container.name`            | `"ogg"`   | The file format.                                             |
 
 To turn compression off without code, set `BRAINTRUST_AUDIO_COMPRESSION=false`. Settings in code take precedence.
 

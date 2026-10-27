@@ -11,13 +11,17 @@ const meta = (frames: number): AudioSegmentMeta => ({
   startOffsetMs: 3000,
   durationMs: frames / 24,
   sampleRate: 24000,
-  channelCount: 2,
-  sources: [
-    { channel: 0, name: "session_input" },
-    { channel: 1, name: "local_audio_output" },
+  channels: [
+    { sources: ["session_input"] },
+    { sources: ["local_audio_output"] },
   ],
   mimeType: "audio/pcm",
-  encoding: "s16le",
+  encoding: "pcm",
+  attributes: {
+    "pcm.sample_format": "s16le",
+    "pcm.channel_layout": "interleaved",
+    "acme.call_id": "c-1",
+  },
 });
 
 /** Speech-like tones at 24 kHz, a different pitch per channel. */
@@ -138,14 +142,21 @@ test("pages follow RFC 7845: headers alone, then audio, with valid CRCs", async 
   expect(new TextDecoder().decode(file.subarray(28, 36))).toBe("OpusHead");
 });
 
-test("metadata becomes an Ogg file on the same timeline and sources", async () => {
+test("metadata becomes an Ogg file on the same timeline and channels", async () => {
   const input = meta(2400);
   const { meta: output } = await encodeOgg(tones(2400), input);
+  // The container keeps the codec and its attributes.
   expect(output).toEqual({
     ...input,
     sampleRate: 48000,
     mimeType: "audio/ogg",
     encoding: "opus",
+    attributes: {
+      "acme.call_id": "c-1",
+      "opus.bitrate_bps": 64000,
+      "opus.complexity": 5,
+      "opus.application": "audio",
+    },
   });
 });
 

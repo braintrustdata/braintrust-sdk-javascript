@@ -97,7 +97,7 @@ export interface AudioEncodingConfig {
     | {
         name: "opus";
         options?: {
-          /** Target bitrate in bits per second, from 6000 to 510000. Defaults to 64000. */
+          /** Target bitrate in whole bits per second, from 500 to 512000. Defaults to 64000. */
           bitrate?: number;
           /** Encoder effort from 0 (fastest) to 10. Defaults to 5. */
           complexity?: number;

@@ -8,14 +8,11 @@ export interface AudioSegmentMeta {
   readonly startOffsetMs: number;
   readonly durationMs: number;
   readonly sampleRate: number;
-  readonly channelCount: number;
-  readonly sources: readonly {
-    readonly channel: number;
-    readonly name: string;
-  }[];
-  /** Content type of the segment bytes, such as `audio/pcm`. */
+  /** Every output channel in order, with the sources heard in it. */
+  readonly channels: readonly { readonly sources: readonly string[] }[];
+  /** Media or container type of the segment bytes, such as `audio/pcm`. */
   readonly mimeType: string;
-  /** Sample or codec encoding, such as `s16le`. */
+  /** Audio codec, such as `pcm` or `opus`. */
   readonly encoding: string;
   readonly attributes?: Readonly<Record<string, unknown>>;
   readonly state?: Readonly<Record<string, unknown>>;

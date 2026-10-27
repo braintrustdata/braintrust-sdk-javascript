@@ -9,10 +9,16 @@ const meta = (sampleRate: number, channelCount: number): AudioSegmentMeta => ({
   startOffsetMs: 4000,
   durationMs: 1000,
   sampleRate,
-  channelCount,
-  sources: [{ channel: 0, name: "session_input" }],
+  channels: Array.from({ length: channelCount }, (_, channel) => ({
+    sources: channel === 0 ? ["session_input"] : [],
+  })),
   mimeType: "audio/pcm",
-  encoding: "s16le",
+  encoding: "pcm",
+  attributes: {
+    "pcm.sample_format": "s16le",
+    "pcm.channel_layout": "interleaved",
+    "acme.call_id": "c-1",
+  },
 });
 
 /** Speech-like test tones, a different pitch per channel, as interleaved s16le. */
@@ -133,15 +139,60 @@ test("PCM at an odd byte offset encodes like aligned PCM", async () => {
   expect(down!.packets).toEqual(aligned.segment.packets);
 });
 
-test("metadata describes Opus at 48 kHz on the same timeline and sources", async () => {
+test("metadata describes Opus at 48 kHz on the same timeline and channels", async () => {
   const input = meta(24000, 2);
   const { meta: output } = await encode(tones(2400, 24000, 2), input);
+  // The encoder's settings, defaults included, replace the PCM details.
   expect(output).toEqual({
     ...input,
     sampleRate: 48000,
     mimeType: "audio/opus",
     encoding: "opus",
+    attributes: {
+      "acme.call_id": "c-1",
+      "opus.bitrate_bps": 64000,
+      "opus.complexity": 5,
+      "opus.application": "audio",
+    },
   });
+});
+
+test("attributes report configured settings", async () => {
+  const { meta: output } = await encode(tones(480, 24000, 1), meta(24000, 1), {
+    bitrate: 32_500,
+    complexity: 9,
+    application: "voip",
+  });
+  expect(output.attributes).toMatchObject({
+    "opus.bitrate_bps": 32500,
+    "opus.complexity": 9,
+    "opus.application": "voip",
+  });
+});
+
+test.each([
+  [{ bitrate: 0 }, "bitrate"],
+  [{ bitrate: Number.NaN }, "bitrate"],
+  [{ bitrate: 499 }, "bitrate"],
+  [{ bitrate: 512_001 }, "bitrate"],
+  [{ bitrate: 32_000.5 }, "bitrate"],
+  [{ bitrate: "32000" }, "bitrate"],
+  [{ complexity: 2.5 }, "complexity"],
+  [{ complexity: 11 }, "complexity"],
+  [{ complexity: -1 }, "complexity"],
+  [{ application: "music" }, "application"],
+])("rejects option %j", (options, option) => {
+  expect(() => opus(options as OpusOptions)).toThrow(`Opus ${option} must`);
+});
+
+test.each([
+  [{ bitrate: 500 }],
+  [{ bitrate: 512_000 }],
+  [{ complexity: 0 }],
+  [{ complexity: 10 }],
+  [{ bitrate: undefined }],
+])("accepts option %j", (options) => {
+  expect(() => opus(options)).not.toThrow();
 });
 
 test("options change the encoding", async () => {
@@ -156,6 +207,10 @@ test("options change the encoding", async () => {
 
 test.each([
   ["non-PCM input", { ...meta(24000, 2), mimeType: "audio/ogg" }],
+  [
+    "another sample format",
+    { ...meta(24000, 2), attributes: { "pcm.sample_format": "f32le" } },
+  ],
   ["more than two channels", meta(24000, 3)],
   ["an unsupported sample rate", meta(16000, 2)],
 ])("rejects %s", async (_name, input) => {
