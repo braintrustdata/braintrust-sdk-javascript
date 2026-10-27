@@ -41,9 +41,9 @@
                 "langgraph.thread_id": null
               },
               "metrics": {
-                "completion_tokens": 4,
-                "prompt_tokens": 15,
-                "tokens": 19
+                "completion_tokens": 7,
+                "prompt_tokens": 14,
+                "tokens": 21
               }
             }
           ],
@@ -101,9 +101,9 @@
                 "langgraph.thread_id": "<uuid:1>"
               },
               "metrics": {
-                "completion_tokens": 4,
-                "prompt_tokens": 15,
-                "tokens": 19
+                "completion_tokens": 7,
+                "prompt_tokens": 14,
+                "tokens": 21
               }
             }
           ],
@@ -148,10 +148,10 @@
                 "streamSubgraphs": true
               },
               "metrics": {
-                "completion_tokens": 4,
-                "prompt_tokens": 15,
+                "completion_tokens": 7,
+                "prompt_tokens": 14,
                 "time_to_first_token": 0,
-                "tokens": 19
+                "tokens": 21
               }
             }
           ],
@@ -194,10 +194,10 @@
                 "streamSubgraphs": true
               },
               "metrics": {
-                "completion_tokens": 4,
-                "prompt_tokens": 15,
+                "completion_tokens": 7,
+                "prompt_tokens": 14,
                 "time_to_first_token": 0,
-                "tokens": 19
+                "tokens": 21
               }
             }
           ],
@@ -240,10 +240,10 @@
                 "streamSubgraphs": true
               },
               "metrics": {
-                "completion_tokens": 4,
-                "prompt_tokens": 15,
+                "completion_tokens": 7,
+                "prompt_tokens": 14,
                 "time_to_first_token": 0,
-                "tokens": 19
+                "tokens": 21
               }
             }
           ],
@@ -450,9 +450,9 @@
                 "langgraph.thread_id": null
               },
               "metrics": {
-                "completion_tokens": 1,
-                "prompt_tokens": 12,
-                "tokens": 13
+                "completion_tokens": 4,
+                "prompt_tokens": 11,
+                "tokens": 15
               }
             },
             {
@@ -476,9 +476,9 @@
                 "langgraph.thread_id": null
               },
               "metrics": {
-                "completion_tokens": 1,
-                "prompt_tokens": 12,
-                "tokens": 13
+                "completion_tokens": 4,
+                "prompt_tokens": 11,
+                "tokens": 15
               }
             }
           ],
