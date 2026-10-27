@@ -8,12 +8,35 @@
           "name": "mcp-http-session-operation",
           "children": [
             {
+              "name": "initialize",
+              "type": "function",
+              "children": [],
+              "metadata": {
+                "mcp.method": "initialize",
+                "mcp.request_id": 0,
+                "mcp.session_id": "<uuid:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
+              }
+            },
+            {
               "name": "get_weather",
               "type": "tool",
               "children": [
                 {
                   "name": "weather-lookup",
-                  "children": []
+                  "children": [],
+                  "metrics": {
+                    "end": 0,
+                    "start": 0
+                  },
+                  "context": {
+                    "caller_filename": "<caller>",
+                    "caller_functionname": "<caller>",
+                    "caller_lineno": 0
+                  }
                 }
               ],
               "input": {
@@ -25,12 +48,23 @@
                     "text": "Sunny in Vienna",
                     "type": "text"
                   }
-                ]
+                ],
+                "structuredContent": {
+                  "_meta": {
+                    "application": "preserved"
+                  }
+                }
               },
               "metadata": {
                 "mcp.method": "tools/call",
                 "mcp.request_id": 1,
+                "mcp.server.name": "braintrust-e2e-weather",
+                "mcp.server.version": "1.0.0",
                 "mcp.session_id": "<uuid:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
               }
             },
             {
@@ -39,7 +73,16 @@
               "children": [
                 {
                   "name": "weather-lookup",
-                  "children": []
+                  "children": [],
+                  "metrics": {
+                    "end": 0,
+                    "start": 0
+                  },
+                  "context": {
+                    "caller_filename": "<caller>",
+                    "caller_functionname": "<caller>",
+                    "caller_lineno": 0
+                  }
                 }
               ],
               "input": {
@@ -51,12 +94,23 @@
                     "text": "Sunny in Paris",
                     "type": "text"
                   }
-                ]
+                ],
+                "structuredContent": {
+                  "_meta": {
+                    "application": "preserved"
+                  }
+                }
               },
               "metadata": {
                 "mcp.method": "tools/call",
                 "mcp.request_id": 2,
+                "mcp.server.name": "braintrust-e2e-weather",
+                "mcp.server.version": "1.0.0",
                 "mcp.session_id": "<uuid:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
               }
             },
             {
@@ -79,6 +133,10 @@
                 "mcp.request_id": 3,
                 "mcp.resource_uri": "notes://forecast",
                 "mcp.session_id": "<uuid:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
               }
             },
             {
@@ -104,24 +162,60 @@
                 "mcp.prompt_name": "forecast",
                 "mcp.request_id": 4,
                 "mcp.session_id": "<uuid:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
               }
             }
           ],
           "metadata": {
             "operation": "http-session",
             "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "context": {
+            "caller_filename": "<caller>",
+            "caller_functionname": "<caller>",
+            "caller_lineno": 0
           }
         },
         {
           "name": "mcp-in-memory-session-operation",
           "children": [
             {
+              "name": "initialize",
+              "type": "function",
+              "children": [],
+              "metadata": {
+                "mcp.method": "initialize",
+                "mcp.request_id": 0,
+                "mcp.session_id": "<uuid:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
+              }
+            },
+            {
               "name": "get_weather",
               "type": "tool",
               "children": [
                 {
                   "name": "weather-lookup",
-                  "children": []
+                  "children": [],
+                  "metrics": {
+                    "end": 0,
+                    "start": 0
+                  },
+                  "context": {
+                    "caller_filename": "<caller>",
+                    "caller_functionname": "<caller>",
+                    "caller_lineno": 0
+                  }
                 }
               ],
               "input": {
@@ -133,12 +227,25 @@
                     "text": "Sunny in Tokyo",
                     "type": "text"
                   }
-                ]
+                ],
+                "structuredContent": {
+                  "_meta": {
+                    "application": "preserved"
+                  }
+                }
               },
               "metadata": {
+                "mcp.client.name": "trace-client",
+                "mcp.client.version": "1.0.0",
                 "mcp.method": "tools/call",
                 "mcp.request_id": 1,
+                "mcp.server.name": "braintrust-e2e-weather",
+                "mcp.server.version": "1.0.0",
                 "mcp.session_id": "<uuid:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
               }
             },
             {
@@ -158,6 +265,10 @@
                 "mcp.method": "tools/call",
                 "mcp.request_id": 2,
                 "mcp.session_id": "<uuid:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
               }
             },
             {
@@ -178,18 +289,172 @@
                 "mcp.request_id": 3,
                 "mcp.session_id": "<uuid:1>"
               },
+              "metrics": {
+                "end": 0,
+                "start": 0
+              },
               "error": "Alert service unavailable"
             }
           ],
           "metadata": {
             "operation": "in-memory-session",
             "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "context": {
+            "caller_filename": "<caller>",
+            "caller_functionname": "<caller>",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "mcp-lifecycle-operation",
+          "children": [
+            {
+              "name": "initialize",
+              "type": "function",
+              "children": [],
+              "metadata": {
+                "mcp.method": "initialize",
+                "mcp.request_id": 0,
+                "mcp.session_id": "<uuid:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
+              }
+            },
+            {
+              "name": "ping",
+              "type": "function",
+              "children": [],
+              "metadata": {
+                "mcp.method": "ping",
+                "mcp.request_id": 100,
+                "mcp.session_id": "<uuid:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
+              }
+            },
+            {
+              "name": "tools/list",
+              "type": "function",
+              "children": [],
+              "metadata": {
+                "mcp.method": "tools/list",
+                "mcp.request_id": 101,
+                "mcp.session_id": "<uuid:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
+              }
+            },
+            {
+              "name": "acme/missing",
+              "type": "function",
+              "children": [],
+              "metadata": {
+                "mcp.method": "acme/missing",
+                "mcp.request_id": 102,
+                "mcp.session_id": "<uuid:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
+              },
+              "error": "MCP error -32601: Method not found"
+            },
+            {
+              "name": "get_weather",
+              "type": "tool",
+              "children": [],
+              "input": {
+                "city": 42
+              },
+              "output": {
+                "content": [
+                  {
+                    "text": "Input validation error: Invalid arguments for tool get_weather: city: Invalid input: expected string, received number",
+                    "type": "text"
+                  }
+                ],
+                "isError": true
+              },
+              "metadata": {
+                "mcp.method": "tools/call",
+                "mcp.request_id": 103,
+                "mcp.session_id": "<uuid:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
+              },
+              "error": "Input validation error: Invalid arguments for tool get_weather: city: Invalid input: expected string, received number"
+            },
+            {
+              "name": "wait_for_cancel",
+              "type": "tool",
+              "children": [],
+              "metadata": {
+                "mcp.cancelled": true,
+                "mcp.method": "tools/call",
+                "mcp.request_id": 104,
+                "mcp.session_id": "<uuid:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
+              }
+            },
+            {
+              "name": "acme/cancel",
+              "type": "function",
+              "children": [],
+              "metadata": {
+                "mcp.cancelled": true,
+                "mcp.method": "acme/cancel",
+                "mcp.request_id": 105,
+                "mcp.session_id": "<uuid:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "lifecycle",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "context": {
+            "caller_filename": "<caller>",
+            "caller_functionname": "<caller>",
+            "caller_lineno": 0
           }
         }
       ],
       "metadata": {
         "scenario": "mcp-instrumentation",
         "testRunId": "<run:1>"
+      },
+      "metrics": {
+        "end": 0,
+        "start": 0
+      },
+      "context": {
+        "caller_filename": "<caller>",
+        "caller_functionname": "<caller>",
+        "caller_lineno": 0
       }
     }
   ]

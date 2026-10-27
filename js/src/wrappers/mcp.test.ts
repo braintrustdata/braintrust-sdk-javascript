@@ -11,7 +11,12 @@ import {
 import { _exportsForTestingOnly, initLogger } from "../logger";
 import { configureNode } from "../node/config";
 import { mcpSDKChannels } from "../instrumentation/plugins/mcp-interceptors";
-import type { MCPProtocol, MCPRequestHandler } from "../vendor-sdk-types/mcp";
+import type {
+  MCPProtocol,
+  MCPRequestHandler,
+  MCPTransport,
+  MCPRequest,
+} from "../vendor-sdk-types/mcp";
 import { wrapMCPServer } from "./mcp";
 
 try {
@@ -22,14 +27,26 @@ try {
 
 class FakeProtocol implements MCPProtocol {
   _requestHandlers = new Map<string, MCPRequestHandler>();
-  transport = {};
+  transport?: MCPTransport;
+  async connect(transport: MCPTransport) {
+    this.transport = transport;
+    transport.onmessage = async (message) => {
+      const request = message as MCPRequest;
+      const result = await this._requestHandlers.get(request.method)!(request, {
+        requestId: request.id,
+      });
+      await transport.send({ jsonrpc: "2.0", id: request.id, result });
+    };
+    transport.onclose = () => {};
+    await transport.start();
+  }
 
   setRequestHandler(method: unknown, handler: unknown): void {
     this._requestHandlers.set(method as string, handler as MCPRequestHandler);
   }
 
   handle(method: string, params: Record<string, unknown> = {}) {
-    return this._requestHandlers.get(method)!({ method, params }, {});
+    return this.transport!.onmessage!({ id: 0, method, params });
   }
 }
 
@@ -68,7 +85,9 @@ describe("MCP server wrapper", () => {
     expect(wrapMCPServer(mcpServer)).toBe(mcpServer);
     protocol.setRequestHandler("prompts/get", async () => ({ messages: [] }));
 
+    if (!protocol.transport) await protocol.connect({ start() {}, send() {} });
     await protocol.handle("tools/call", { name: "early" });
+    if (!protocol.transport) await protocol.connect({ start() {}, send() {} });
     await protocol.handle("prompts/get", { name: "late" });
 
     expect(await spanNames()).toEqual(["early", "prompts/get"]);
@@ -80,6 +99,7 @@ describe("MCP server wrapper", () => {
     wrapMCPServer(protocol);
     wrapMCPServer(protocol);
     protocol.setRequestHandler("tools/call", async () => ({ content: [] }));
+    if (!protocol.transport) await protocol.connect({ start() {}, send() {} });
     await protocol.handle("tools/call", { name: "once" });
 
     expect(await spanNames()).toEqual(["once"]);
@@ -100,6 +120,7 @@ describe("MCP server wrapper", () => {
     );
 
     wrapMCPServer({ server: protocol });
+    if (!protocol.transport) await protocol.connect({ start() {}, send() {} });
     await protocol.handle("tools/call", { name: "deduplicated" });
 
     expect(await spanNames()).toEqual(["deduplicated"]);

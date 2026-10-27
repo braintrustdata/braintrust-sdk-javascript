@@ -74,7 +74,21 @@ function createServer(mcp, decorateServer) {
     async ({ city }) =>
       traced(
         async () => ({
-          content: [{ type: "text", text: `Sunny in ${city}` }],
+          content: [
+            {
+              type: "text",
+              text: `Sunny in ${city}`,
+              _meta: { private: "omitted" },
+            },
+          ],
+          structuredContent: { _meta: { application: "preserved" } },
+          _meta: {
+            "io.modelcontextprotocol/serverInfo": {
+              name: "braintrust-e2e-weather",
+              version: "1.0.0",
+            },
+            private: "omitted",
+          },
         }),
         { name: "weather-lookup" },
       ),
@@ -161,10 +175,122 @@ async function runInMemorySession(mcp, decorateServer) {
   const client = createClient(mcp);
   await client.connect(clientTransport);
 
-  await client.callTool({ name: "get_weather", arguments: { city: "Tokyo" } });
+  await client.callTool({
+    name: "get_weather",
+    arguments: { city: "Tokyo" },
+    _meta: {
+      "io.modelcontextprotocol/clientInfo": {
+        name: "trace-client",
+        version: "1.0.0",
+        private: "omitted",
+      },
+      private: "omitted",
+    },
+  });
   await client.callTool({ name: "render_map", arguments: {} });
   await client.callTool({ name: "get_alerts", arguments: {} });
 
+  await client.close();
+  await server.close();
+}
+
+async function runLifecycleSession(mcp, decorateServer) {
+  const server = createServer(mcp, decorateServer);
+  let handlerStarted;
+  let handlerCancelled;
+  const started = new Promise((resolve) => {
+    handlerStarted = resolve;
+  });
+  const cancelled = new Promise((resolve) => {
+    handlerCancelled = resolve;
+  });
+  server.registerTool(
+    "wait_for_cancel",
+    { description: "Wait for cancellation", inputSchema: mcp.schema({}) },
+    async (_args, extra) => {
+      handlerStarted();
+      const signal = extra.mcpReq?.signal ?? extra.signal;
+      await new Promise((resolve) =>
+        signal.addEventListener("abort", resolve, { once: true }),
+      );
+      handlerCancelled();
+      return { content: [] };
+    },
+  );
+  const [clientTransport, serverTransport] =
+    mcp.InMemoryTransport.createLinkedPair();
+  await server.connect(serverTransport);
+  const client = createClient(mcp);
+  await client.connect(clientTransport);
+
+  // Exercise actual protocol dispatch and validation with raw wire requests,
+  // including requests rejected before a registered handler can run.
+  const responses = new Map();
+  clientTransport.onmessage = (message) => {
+    responses.get(message.id)?.(message);
+  };
+  for (const request of [
+    { id: 100, method: "ping" },
+    { id: 101, method: "tools/list" },
+    { id: 102, method: "acme/missing" },
+    {
+      id: 103,
+      method: "tools/call",
+      params: { name: "get_weather", arguments: { city: 42 } },
+    },
+  ]) {
+    const response = new Promise((resolve) =>
+      responses.set(request.id, resolve),
+    );
+    await clientTransport.send({ jsonrpc: "2.0", ...request });
+    await response;
+    responses.delete(request.id);
+  }
+  await clientTransport.send({
+    jsonrpc: "2.0",
+    id: 104,
+    method: "tools/call",
+    params: { name: "wait_for_cancel", arguments: {} },
+  });
+  await started;
+  await clientTransport.send({
+    jsonrpc: "2.0",
+    method: "notifications/cancelled",
+    params: { requestId: 104, reason: "private cancellation reason" },
+  });
+  await cancelled;
+  // Wait for the handler's settlement before closing its connection.
+  await new Promise((resolve) => setImmediate(resolve));
+
+  const fallbackStarted = new Promise((resolve) => {
+    handlerStarted = resolve;
+  });
+  const fallbackCancelled = new Promise((resolve) => {
+    handlerCancelled = resolve;
+  });
+  // Direct assignments after connect must receive the same lifecycle handling.
+  server.server.fallbackRequestHandler = async (_request, extra) => {
+    handlerStarted();
+    const signal = extra.mcpReq?.signal ?? extra.signal;
+    await new Promise((resolve) =>
+      signal.addEventListener("abort", resolve, { once: true }),
+    );
+    handlerCancelled();
+    return {};
+  };
+  await clientTransport.send({
+    jsonrpc: "2.0",
+    id: 105,
+    method: "acme/cancel",
+  });
+  await fallbackStarted;
+  await clientTransport.send({
+    jsonrpc: "2.0",
+    method: "notifications/cancelled",
+    params: { requestId: 105, reason: "private cancellation reason" },
+  });
+  await fallbackCancelled;
+  await new Promise((resolve) => setImmediate(resolve));
   await client.close();
   await server.close();
 }
@@ -182,6 +308,9 @@ export async function runMCPInstrumentationScenario(
         "mcp-in-memory-session-operation",
         "in-memory-session",
         () => runInMemorySession(mcp, decorateServer),
+      );
+      await runOperation("mcp-lifecycle-operation", "lifecycle", () =>
+        runLifecycleSession(mcp, decorateServer),
       );
     },
     metadata: {

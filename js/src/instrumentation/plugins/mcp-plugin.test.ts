@@ -37,8 +37,9 @@ const PNG_BASE64 =
 
 function createProtocol(transport?: object): MCPProtocol {
   return {
+    connect: () => {},
     setRequestHandler: () => {},
-    transport,
+    transport: Object.assign(transport ?? {}, { start() {}, send() {} }),
   };
 }
 
@@ -48,11 +49,30 @@ function handleRequest(
   extra: MCPRequestHandlerExtra = {},
   protocol: MCPProtocol = createProtocol(),
 ): unknown {
-  return mcpChannels.requestHandler.invoke(
-    handler,
-    undefined,
-    [request, extra],
-    { protocol },
+  const transport = protocol.transport!;
+  transport.sessionId = extra.sessionId;
+  const id = extra.mcpReq?.id ?? extra.requestId ?? request.id ?? 0;
+  return mcpChannels.message.invoke(
+    async () => {
+      const result = await mcpChannels.requestHandler.invoke(
+        handler,
+        undefined,
+        [request, { ...extra, requestId: id }],
+        { protocol },
+      );
+      if (!extra.signal?.aborted && !extra.mcpReq?.signal?.aborted) {
+        await mcpChannels.send.invoke(
+          transport.send,
+          transport,
+          [{ jsonrpc: "2.0", id, result }],
+          { transport },
+        );
+      }
+      return result;
+    },
+    transport,
+    [{ ...request, id }],
+    { transport },
   );
 }
 
@@ -228,14 +248,20 @@ describe("MCPPlugin", () => {
   });
 
   it.each(["tools/list", "initialize", "constructor", "__proto__"])(
-    "does not trace %s requests",
+    "traces %s without capturing arbitrary payloads",
     async (method) => {
       const result = await handleRequest(async () => ({ ok: true }), {
         method,
       });
 
       expect(result).toEqual({ ok: true });
-      expect(await drainSpans()).toEqual([]);
+      const [span] = await drainSpans();
+      expect(span.span_attributes).toMatchObject({
+        name: method,
+        type: "function",
+      });
+      expect(span.input).toBeUndefined();
+      expect(span.output).toBeUndefined();
     },
   );
 
@@ -302,6 +328,7 @@ describe("MCPPlugin", () => {
     async (_, hook) => {
       const handlers = new Map<string, MCPRequestHandler>();
       const protocol: MCPProtocol = {
+        ...createProtocol(),
         setRequestHandler(method: unknown, handler: unknown) {
           handlers.set(method as string, handler as MCPRequestHandler);
         },
@@ -316,8 +343,18 @@ describe("MCPPlugin", () => {
       // v2 re-invokes the handler with the same context for input-required rounds.
       const extra = { sessionId: "session-2" };
       const request = { method: "tools/call", params: { name: "registered" } };
-      await handlers.get("tools/call")!(request, extra);
-      await handlers.get("tools/call")!(request, extra);
+      await handleRequest(
+        handlers.get("tools/call")!,
+        request,
+        extra,
+        protocol,
+      );
+      await handleRequest(
+        handlers.get("tools/call")!,
+        request,
+        extra,
+        protocol,
+      );
 
       const spans = await drainSpans();
       expect(spans.map((span) => span.span_attributes.name)).toEqual([
@@ -328,7 +365,7 @@ describe("MCPPlugin", () => {
     },
   );
 
-  it("leaves custom v2 handlers registered with schemas untouched", () => {
+  it("wraps custom v2 handlers without changing their schemas", () => {
     const schemas = { params: {} };
     const handler = async () => ({});
     const setRequestHandler = vi.fn();
@@ -343,7 +380,479 @@ describe("MCPPlugin", () => {
     expect(setRequestHandler).toHaveBeenCalledWith(
       "acme/search",
       schemas,
-      handler,
+      expect.any(Function),
     );
+  });
+  it("keeps a request open through asynchronous response sending", async () => {
+    let completeSend!: () => void;
+    const sent = new Promise<void>((resolve) => {
+      completeSend = resolve;
+    });
+    const protocol = createProtocol();
+    protocol.transport!.send = () => sent;
+    const result = handleRequest(
+      async () => ({ content: [] }),
+      { method: "tools/call", params: { name: "slow-send" } },
+      {},
+      protocol,
+    );
+    await Promise.resolve();
+    const [started] = await drainSpans();
+    expect(started.metrics.end).toBeUndefined();
+    completeSend();
+    await result;
+    const [ended] = await drainSpans();
+    expect(ended.metrics.end).toEqual(expect.any(Number));
+  });
+
+  it("captures validation errors without a handler and omits error data", async () => {
+    const transport = createProtocol().transport!;
+    await mcpChannels.message.invoke(
+      () =>
+        mcpChannels.send.invoke(
+          transport.send,
+          transport,
+          [
+            {
+              id: 0,
+              error: {
+                code: -32602,
+                message: "Invalid arguments",
+                data: { secret: "hidden" },
+              },
+            },
+          ],
+          { transport },
+        ),
+      transport,
+      [{ id: 0, method: "tools/call", params: { name: "invalid" } }],
+      { transport },
+    );
+    const [span] = await drainSpans();
+    expect(span.error).toContain("-32602");
+    expect(span.error).toContain("Invalid arguments");
+    expect(span.error).not.toContain("hidden");
+    expect(span.input).toBeUndefined();
+    expect(span.output).toBeUndefined();
+    expect(span.metadata["mcp.request_id"]).toBe(0);
+  });
+
+  it("propagates response-send failures and ends the span", async () => {
+    const protocol = createProtocol();
+    const failure = new Error("send failed");
+    protocol.transport!.send = () => Promise.reject(failure);
+    await expect(
+      handleRequest(
+        async () => ({ content: [] }),
+        { method: "tools/call" },
+        {},
+        protocol,
+      ),
+    ).rejects.toBe(failure);
+    const [span] = await drainSpans();
+    expect(span.error).toContain("send failed");
+    expect(span.metrics.end).toEqual(expect.any(Number));
+  });
+
+  it.each(["v1", "v2"])(
+    "ends %s cancellation after processing without an error",
+    async (version) => {
+      const controller = new AbortController();
+      let complete!: () => void;
+      const waiting = new Promise<void>((resolve) => {
+        complete = resolve;
+      });
+      const protocol = createProtocol();
+      const extra =
+        version === "v1"
+          ? { signal: controller.signal }
+          : { mcpReq: { id: 0, signal: controller.signal } };
+      const result = handleRequest(
+        async () => {
+          await waiting;
+          throw new Error("arbitrary cancellation exception");
+        },
+        { method: "tools/call" },
+        extra,
+        protocol,
+      );
+      controller.abort();
+      const [started] = await drainSpans();
+      expect(started.metrics.end).toBeUndefined();
+      complete();
+      await expect(result).rejects.toThrow("arbitrary cancellation exception");
+      const [ended] = await drainSpans();
+      expect(ended.metadata["mcp.cancelled"]).toBe(true);
+      expect(ended.error).toBeUndefined();
+      expect(ended.metrics.end).toEqual(expect.any(Number));
+      mcpChannels.send.invoke(
+        protocol.transport!.send,
+        protocol.transport,
+        [{ id: 0, result: { content: [] } }],
+        { transport: protocol.transport! },
+      );
+      expect(await drainSpans()).toEqual([]);
+    },
+  );
+
+  it("does not mistake an error message for cancellation", async () => {
+    await expect(
+      handleRequest(
+        async () => {
+          throw new Error("request cancelled by upstream");
+        },
+        { method: "tools/call" },
+      ),
+    ).rejects.toThrow();
+    const [span] = await drainSpans();
+    expect(span.error).toContain("cancelled by upstream");
+    expect(span.metadata["mcp.cancelled"]).toBeUndefined();
+  });
+
+  it("ends pending requests once on connection closure, ignoring late responses", async () => {
+    const transport = createProtocol().transport!;
+    mcpChannels.message.invoke(
+      () => {},
+      transport,
+      [{ id: 1, method: "ping" }],
+      { transport },
+    );
+    mcpChannels.close.invoke(() => {}, transport, [], { transport });
+    mcpChannels.close.invoke(() => {}, transport, [], { transport });
+    mcpChannels.send.invoke(
+      transport.send,
+      transport,
+      [{ id: 1, result: {} }],
+      { transport },
+    );
+    const [span] = await drainSpans();
+    expect(span.error).toContain("connection closed");
+    expect(span.output).toBeUndefined();
+    expect(span.metrics.end).toEqual(expect.any(Number));
+  });
+
+  it("keeps numeric and string IDs separate and permits ID reuse after completion", async () => {
+    const protocol = createProtocol();
+    const transports = [protocol.transport!, createProtocol().transport!];
+    for (const transport of transports) {
+      for (const id of [0, "0"]) {
+        mcpChannels.message.invoke(
+          () => {},
+          transport,
+          [{ id, method: "ping" }],
+          { transport },
+        );
+      }
+      for (const id of [0, "0"]) {
+        mcpChannels.send.invoke(
+          transport.send,
+          transport,
+          [{ id, result: {} }],
+          { transport },
+        );
+      }
+    }
+    await handleRequest(
+      async () => ({}),
+      { method: "ping", id: 0 },
+      {},
+      protocol,
+    );
+    const spans = await drainSpans();
+    expect(spans).toHaveLength(5);
+    expect(new Set(spans.map((span) => span.span_id)).size).toBe(5);
+    expect(spans.map((span) => span.metadata["mcp.request_id"])).toEqual([
+      0,
+      "0",
+      0,
+      "0",
+      0,
+    ]);
+    expect(spans.every((span) => typeof span.metrics.end === "number")).toBe(
+      true,
+    );
+  });
+
+  it("translates allowlisted metadata and preserves application _meta", async () => {
+    const result = {
+      _meta: {
+        "io.modelcontextprotocol/serverInfo": {
+          name: "weather",
+          title: "Weather",
+          version: "1",
+          secret: "hidden",
+        },
+        traceparent: "ignored",
+      },
+      structuredContent: { _meta: { app: "preserved" } },
+      content: [
+        { type: "text", text: "sunny", _meta: { token: "hidden" } },
+        {
+          type: "resource",
+          resource: {
+            uri: "notes://forecast",
+            text: "notes",
+            _meta: { private: true },
+          },
+        },
+      ],
+    };
+    const args = { _meta: { application: true } };
+    expect(
+      await handleRequest(async () => result, {
+        method: "tools/call",
+        params: {
+          arguments: args,
+          _meta: {
+            "io.modelcontextprotocol/protocolVersion": "2025-11-25",
+            "io.modelcontextprotocol/clientInfo": {
+              name: "client",
+              title: 12,
+              version: "2",
+              secret: "hidden",
+            },
+            "io.modelcontextprotocol/capabilities": { secret: true },
+            baggage: "private=value",
+          },
+        },
+      }),
+    ).toBe(result);
+    const [span] = await drainSpans();
+    expect(span.input).toEqual(args);
+    expect(span.metadata).toMatchObject({
+      "mcp.protocol_version": "2025-11-25",
+      "mcp.client.name": "client",
+      "mcp.client.version": "2",
+      "mcp.server.name": "weather",
+      "mcp.server.title": "Weather",
+      "mcp.server.version": "1",
+    });
+    expect(span.metadata["mcp.client.title"]).toBeUndefined();
+    expect(span.output.structuredContent).toEqual(result.structuredContent);
+    expect(span.output._meta).toBeUndefined();
+    expect(span.output.content[0]._meta).toBeUndefined();
+    expect(span.output.content[1].resource._meta).toBeUndefined();
+    expect(JSON.stringify(span)).not.toContain("hidden");
+    expect(JSON.stringify(span)).not.toContain("private=value");
+    expect(result.content[0]._meta).toEqual({ token: "hidden" });
+  });
+
+  it("uses incoming trace identity and routing instead of the active parent", async () => {
+    const traceId = "0123456789abcdef0123456789abcdef";
+    const parentId = "0123456789abcdef";
+    await traced(
+      async () =>
+        handleRequest(
+          async () => ({
+            content: [],
+            _meta: {
+              traceparent:
+                "00-ffffffffffffffffffffffffffffffff-ffffffffffffffff-01",
+            },
+          }),
+          {
+            method: "tools/call",
+            params: {
+              _meta: {
+                traceparent: `00-${traceId}-${parentId}-01`,
+                baggage: "braintrust.parent=project_id:remote-project",
+              },
+            },
+          },
+        ),
+      { name: "local-parent" },
+    );
+    const span = (await drainSpans()).find(
+      (span) => span.span_attributes.name === "tools/call",
+    )!;
+    expect(span.root_span_id).toBe(traceId);
+    expect(span.span_parents).toEqual([parentId]);
+    expect(span.project_id).toBe("remote-project");
+    expect(JSON.stringify(span.output)).not.toContain("traceparent");
+  });
+
+  it("falls back to the active parent for invalid trace context", async () => {
+    await traced(
+      async () =>
+        handleRequest(async () => ({ content: [] }), {
+          method: "tools/call",
+          params: { _meta: { traceparent: "invalid" } },
+        }),
+      { name: "parent" },
+    );
+    const spans = await drainSpans();
+    const parent = spans.find(
+      (span) => span.span_attributes.name === "parent",
+    )!;
+    const child = spans.find(
+      (span) => span.span_attributes.name === "tools/call",
+    )!;
+    expect(child.span_parents).toEqual([parent.span_id]);
+  });
+
+  it("does not trace notifications, responses, or detached task lifecycles", async () => {
+    const transport = createProtocol().transport!;
+    for (const message of [
+      {
+        method: "notifications/cancelled",
+        params: { requestId: 100, reason: "hidden" },
+      },
+      { id: 100, result: {} },
+      { id: 100, method: "tasks/get" },
+      { id: 100, method: "tools/call", params: { task: { ttl: 1000 } } },
+      {
+        id: 100,
+        method: "tools/call",
+        params: {
+          _meta: { "io.modelcontextprotocol/related-task": { taskId: "1" } },
+        },
+      },
+    ]) {
+      mcpChannels.message.invoke(() => {}, transport, [message], { transport });
+    }
+    expect(await drainSpans()).toEqual([]);
+  });
+
+  it("retains sanitized results if attachment conversion fails", async () => {
+    vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", "true");
+    await handleRequest(
+      async () => ({
+        _meta: { secret: true },
+        content: [
+          {
+            type: "image",
+            mimeType: "image/png",
+            data: "not base64!",
+            _meta: { secret: true },
+          },
+        ],
+      }),
+      { method: "tools/call" },
+    );
+    const [span] = await drainSpans();
+    expect(span.output).toEqual({
+      content: [{ type: "image", mimeType: "image/png", data: "not base64!" }],
+    });
+  });
+  it("keeps concurrent handler contexts independent across awaits", async () => {
+    const protocol = createProtocol();
+    await Promise.all(
+      ["first", "second"].map((name, id) =>
+        handleRequest(
+          async () => {
+            await Promise.resolve();
+            return traced(async () => ({ content: [] }), {
+              name: `${name}-child`,
+            });
+          },
+          { id, method: "tools/call", params: { name } },
+          {},
+          protocol,
+        ),
+      ),
+    );
+    const spans = await drainSpans();
+    for (const name of ["first", "second"]) {
+      const parent = spans.find((span) => span.span_attributes.name === name)!;
+      const child = spans.find(
+        (span) => span.span_attributes.name === `${name}-child`,
+      )!;
+      expect(child.span_parents).toEqual([parent.span_id]);
+    }
+  });
+
+  it("does not let a cancelled request's late response finish a reused ID", async () => {
+    const protocol = createProtocol();
+    const transport = protocol.transport!;
+    const controller = new AbortController();
+    let sendLate!: () => unknown;
+    await handleRequest(
+      async () => {
+        // Retain the original request's asynchronous context.
+        const late = new Promise<void>((resolve) => {
+          sendLate = resolve;
+        });
+        void late.then(() =>
+          mcpChannels.send.invoke(
+            transport.send,
+            transport,
+            [{ id: 0, result: { content: [{ type: "text", text: "late" }] } }],
+            { transport },
+          ),
+        );
+        controller.abort();
+        return { content: [] };
+      },
+      { method: "tools/call" },
+      { signal: controller.signal },
+      protocol,
+    );
+    await drainSpans();
+    mcpChannels.message.invoke(
+      () => {},
+      transport,
+      [{ id: 0, method: "ping" }],
+      { transport },
+    );
+    sendLate();
+    await Promise.resolve();
+    const [pending] = await drainSpans();
+    expect(pending.span_attributes.name).toBe("ping");
+    expect(pending.metrics.end).toBeUndefined();
+    mcpChannels.send.invoke(
+      transport.send,
+      transport,
+      [{ id: 0, result: {} }],
+      { transport },
+    );
+    const [ended] = await drainSpans();
+    expect(ended.metrics.end).toEqual(expect.any(Number));
+  });
+
+  it("preserves a failure observed before cancellation", async () => {
+    const protocol = createProtocol();
+    const transport = protocol.transport!;
+    const controller = new AbortController();
+    await mcpChannels.message.invoke(
+      async () => {
+        await Promise.resolve(
+          mcpChannels.requestHandler.invoke(
+            async () => {
+              throw new Error("independent failure");
+            },
+            undefined,
+            [
+              { method: "tools/call" },
+              { requestId: 0, signal: controller.signal },
+            ],
+            { protocol },
+          ),
+        ).catch(() => {});
+        controller.abort();
+        await mcpChannels.requestHandler.invoke(
+          async () => ({}),
+          undefined,
+          [
+            { method: "tools/call" },
+            { requestId: 0, signal: controller.signal },
+          ],
+          { protocol },
+        );
+      },
+      transport,
+      [{ id: 0, method: "tools/call" }],
+      { transport },
+    );
+    const [span] = await drainSpans();
+    expect(span.metadata["mcp.cancelled"]).toBe(true);
+    expect(span.error).toContain("independent failure");
+  });
+
+  it("does not instrument client transports", () => {
+    const protocol = createProtocol();
+    const transport = protocol.transport!;
+    const send = transport.send;
+    mcpSDKChannels.connect.invoke(protocol.connect, protocol, [transport], {});
+    expect(transport.send).toBe(send);
   });
 });

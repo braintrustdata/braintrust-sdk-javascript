@@ -5,7 +5,7 @@ import {
   withScenarioHarness,
   type ScenarioRunContext,
 } from "../../helpers/scenario-harness";
-import { matchSpanTreeSnapshot } from "../../helpers/span-tree";
+import { matchSpanTreeSnapshot, spanTreeFields } from "../../helpers/span-tree";
 import {
   findChildSpans,
   findLatestSpan,
@@ -143,10 +143,100 @@ export function defineMCPInstrumentationAssertions(options: {
       expect(alerts?.row.error).toContain("Alert service unavailable");
     });
 
-    test("matches the span tree snapshot", async ({ expect }) => {
-      await matchSpanTreeSnapshot(events, spanSnapshotPath, {
-        snapshotExpect: expect,
+    test("captures dispatch failures, discovery, and honored cancellation", () => {
+      const operation = findLatestSpan(events, "mcp-lifecycle-operation");
+      const [ping] = findChildSpans(events, "ping", operation?.span.id);
+      const [discovery] = findChildSpans(
+        events,
+        "tools/list",
+        operation?.span.id,
+      );
+      const [missing] = findChildSpans(
+        events,
+        "acme/missing",
+        operation?.span.id,
+      );
+      const [invalid] = findChildSpans(
+        events,
+        "get_weather",
+        operation?.span.id,
+      );
+      const [cancelled] = findChildSpans(
+        events,
+        "wait_for_cancel",
+        operation?.span.id,
+      );
+      expect(ping?.span.type).toBe("function");
+      expect(discovery?.input).toBeUndefined();
+      expect(discovery?.output).toBeUndefined();
+      expect(missing?.row.error).toContain("Method not found");
+      expect(invalid?.row.error).toEqual(expect.any(String));
+      expect(cancelled?.row.metadata?.["mcp.cancelled"]).toBe(true);
+      expect(cancelled?.row.error).toBeUndefined();
+      expect(cancelled?.output).toBeUndefined();
+      const [fallback] = findChildSpans(
+        events,
+        "acme/cancel",
+        operation?.span.id,
+      );
+      expect(fallback?.row.metadata?.["mcp.cancelled"]).toBe(true);
+      expect(fallback?.row.error).toBeUndefined();
+      expect(fallback?.output).toBeUndefined();
+      expect(
+        findChildSpans(events, "notifications/cancelled", operation?.span.id),
+      ).toHaveLength(0);
+      expect(JSON.stringify(events)).not.toContain(
+        "private cancellation reason",
+      );
+    });
+
+    test("translates protocol metadata and preserves application metadata", () => {
+      const operation = findLatestSpan(
+        events,
+        "mcp-in-memory-session-operation",
+      );
+      const [weather] = findChildSpans(
+        events,
+        "get_weather",
+        operation?.span.id,
+      );
+      expect(weather?.row.metadata).toMatchObject({
+        "mcp.client.name": "trace-client",
+        "mcp.client.version": "1.0.0",
+        "mcp.server.name": "braintrust-e2e-weather",
       });
+      expect(weather?.output).toMatchObject({
+        structuredContent: { _meta: { application: "preserved" } },
+      });
+      expect(weather?.output).not.toHaveProperty("_meta");
+      expect(weather?.output).not.toHaveProperty("content.0._meta");
+    });
+
+    test("matches the span tree snapshot", async ({ expect }) => {
+      await matchSpanTreeSnapshot(
+        events.map((event) => ({
+          event,
+          fields: {
+            ...spanTreeFields(event),
+            // Manual and generated wrappers have different caller stacks.
+            // Keep the context contract while normalizing those locations.
+            context: event.row.context && {
+              ...event.row.context,
+              ...(event.row.context.caller_filename !== undefined
+                ? { caller_filename: "<caller>" }
+                : {}),
+              ...(event.row.context.caller_functionname !== undefined
+                ? { caller_functionname: "<caller>" }
+                : {}),
+            },
+            metrics: event.metrics,
+          },
+        })),
+        spanSnapshotPath,
+        {
+          snapshotExpect: expect,
+        },
+      );
     });
   });
 }

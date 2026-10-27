@@ -1,26 +1,21 @@
-/**
- * Vendored subset of the Model Context Protocol TypeScript SDK types used by
- * the server instrumentation. Covers `@modelcontextprotocol/sdk` v1 and
- * `@modelcontextprotocol/server` v2, which share the `Protocol` request
- * handler registry.
- */
-
+/** Vendored transport/protocol subset shared by MCP TypeScript SDK v1 and v2. */
 export type MCPRequest = {
+  id?: string | number;
   method: string;
   params?: {
     name?: unknown;
     arguments?: unknown;
     uri?: unknown;
+    _meta?: unknown;
     [key: string]: unknown;
   };
 };
 
 export type MCPRequestHandlerExtra = {
   sessionId?: string;
-  /** v1 JSON-RPC request id. */
   requestId?: string | number;
-  /** v2 request context. */
-  mcpReq?: { id?: string | number };
+  signal?: AbortSignal;
+  mcpReq?: { id?: string | number; signal?: AbortSignal };
   [key: string]: unknown;
 };
 
@@ -29,12 +24,20 @@ export type MCPRequestHandler = (
   extra: MCPRequestHandlerExtra,
 ) => unknown;
 
+export type MCPTransport = {
+  sessionId?: string;
+  start: (...args: unknown[]) => unknown;
+  send: (message: unknown, ...args: unknown[]) => unknown;
+  onmessage?: (message: unknown, ...args: unknown[]) => unknown;
+  onclose?: (...args: unknown[]) => unknown;
+};
+
 export type MCPProtocol = {
-  /**
-   * v1: `(requestSchema, handler)`. v2: `(method, handler)` or
-   * `(method, schemas, handler)` for custom methods.
-   */
+  connect: (transport: MCPTransport, ...args: unknown[]) => unknown;
   setRequestHandler: (...args: unknown[]) => void;
-  readonly transport?: object;
+  readonly transport?: MCPTransport;
+  fallbackRequestHandler?: MCPRequestHandler;
+  _serverInfo?: unknown;
   _requestHandlers?: Map<string, MCPRequestHandler>;
+  _onerror?: (error: unknown) => unknown;
 };
