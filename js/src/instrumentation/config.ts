@@ -63,7 +63,50 @@ export interface InstrumentationIntegrationsConfig {
   typesafe?: boolean;
   workersAI?: boolean;
   elevenlabs?: boolean;
-  livekit?: boolean;
+  /** Set to false to disable, or pass options; options keep LiveKit enabled. */
+  livekit?: boolean | LiveKitIntegrationConfig;
+}
+
+export interface LiveKitIntegrationConfig {
+  /**
+   * How recorded call audio is encoded. Recording itself still requires
+   * BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS or
+   * BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS.
+   *
+   * Defaults to Opus in Ogg when `@braintrust/audio` is installed, and raw
+   * PCM otherwise. Set `codec: { name: "pcm" }`, or
+   * BRAINTRUST_AUDIO_COMPRESSION=false, to always record raw PCM.
+   *
+   * @example
+   * ```ts
+   * configureInstrumentation({
+   *   integrations: {
+   *     livekit: {
+   *       audio: { codec: { name: "opus", options: { bitrate: 32_000 } } },
+   *     },
+   *   },
+   * });
+   * ```
+   */
+  audio?: AudioEncodingConfig;
+}
+
+export interface AudioEncodingConfig {
+  codec?:
+    | { name: "pcm" }
+    | {
+        name: "opus";
+        options?: {
+          /** Target bitrate in bits per second, from 6000 to 510000. Defaults to 64000. */
+          bitrate?: number;
+          /** Encoder effort from 0 (fastest) to 10. Defaults to 5. */
+          complexity?: number;
+          /** Encoder tuning. Defaults to `"audio"`; `"voip"` favors speech. */
+          application?: "audio" | "voip" | "lowdelay";
+        };
+      };
+  /** The file format for encoded audio. Defaults to `ogg` for Opus. */
+  container?: { name: "ogg" };
 }
 
 export const DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES = 4 * 1024 * 1024;
@@ -74,6 +117,8 @@ export interface InstrumentationConfig {
    * Defaults to 4 MiB. Must be a positive safe integer.
    * Instrumentations flush at valid media boundaries and on recording completion.
    * Counts binary bytes after decoding and format conversion, excluding metadata.
+   * Audio recordings count raw PCM before compression, so compressed uploads
+   * are smaller than this size.
    * Whole-file responses remain intact and may exceed this threshold.
    * This is not a total memory limit and does not enable attachment capture.
    * Configure before initializing the SDK or enabling instrumentation.

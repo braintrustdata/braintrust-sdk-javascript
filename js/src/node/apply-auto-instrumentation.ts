@@ -1,5 +1,4 @@
 import * as nodeModule from "node:module";
-import { pathToFileURL } from "node:url";
 import { getDefaultAutoInstrumentationConfigs } from "../auto-instrumentations/configs/all";
 import { patchCommonJS } from "../auto-instrumentations/loader/cjs-patch";
 import {
@@ -8,6 +7,7 @@ import {
   syncTransformedSources,
 } from "../auto-instrumentations/loader/module-hooks.mjs";
 import { debugLogger } from "../debug-logger";
+import { getCurrentModuleUrl } from "./module-url";
 import { GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION } from "../global-instrumentation-hooks";
 
 interface ApplyAutoInstrumentationState {
@@ -94,19 +94,4 @@ export function supportsSyncHooks(): boolean {
   if (major === 24) return minor > 11 || (minor === 11 && patch >= 1);
   if (major === 22) return minor > 22 || (minor === 22 && patch >= 3);
   return false;
-}
-
-function getCurrentModuleUrl(): string {
-  if (typeof __filename !== "undefined") {
-    return pathToFileURL(__filename).href;
-  }
-
-  const stack = new Error().stack ?? "";
-  const match =
-    stack.match(/\((file:\/\/[^)]+)\)/) ?? stack.match(/\s(file:\/\/\S+)/);
-  if (match) {
-    return match[1].replace(/:\d+:\d+$/, "");
-  }
-
-  return pathToFileURL(process.argv[1] ?? process.cwd()).href;
 }

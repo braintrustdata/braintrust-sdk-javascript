@@ -48,6 +48,10 @@ interface Common {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   processOn: (event: string, handler: (code: any) => void) => void;
 
+  // Loads an installed optional package, or returns undefined if it is not
+  // installed. Throws if the package is installed but fails to load.
+  loadOptionalModule?: (name: string) => unknown;
+
   // hash a string. not guaranteed to be crypto safe.
   hash?: (data: string) => string;
 

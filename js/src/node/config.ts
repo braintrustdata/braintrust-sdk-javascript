@@ -1,4 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
+import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
@@ -19,6 +21,7 @@ import {
 } from "../instrumentation/config";
 import { installMastraExporterFactory } from "../auto-instrumentations/loader/mastra-observability-patch";
 import { BraintrustObservabilityExporter } from "../wrappers/mastra";
+import { getCurrentModuleUrl } from "./module-url";
 
 const BRAINTRUST_ENV_SEARCH_PARENT_LIMIT = 64;
 
@@ -149,6 +152,20 @@ export function configureNode() {
   iso.openFile = fs.open;
   iso.gzip = promisify(zlib.gzip);
   iso.gunzip = promisify(zlib.gunzip);
+  iso.loadOptionalModule = (name) => {
+    const url = getCurrentModuleUrl();
+    const load = createRequire(url);
+    let resolved: string;
+    try {
+      // Look beside the SDK, then in the app, for linked or global SDK installs.
+      resolved = load.resolve(name, {
+        paths: [path.dirname(fileURLToPath(url)), process.cwd()],
+      });
+    } catch {
+      return undefined;
+    }
+    return load(resolved);
+  };
   iso.hash = (data) => crypto.createHash("sha256").update(data).digest("hex");
   iso.hmacSha256 = (key, data) =>
     crypto.createHmac("sha256", key).update(data).digest("hex");

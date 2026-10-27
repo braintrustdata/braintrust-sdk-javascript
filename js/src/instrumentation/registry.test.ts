@@ -202,6 +202,26 @@ describe("Plugin Registry", () => {
     },
   );
 
+  it("LiveKit options keep it enabled and pass audio settings across bundles", () => {
+    const bootstrap = new (registry.constructor as any)();
+    const sdk = new (registry.constructor as any)();
+    const audio = { codec: { name: "pcm" } };
+    const received: unknown[] = [];
+    const enable = vi
+      .spyOn(LiveKitPlugin.prototype, "enable")
+      .mockImplementation(function (this: LiveKitPlugin) {
+        received.push(Reflect.get(this, "audio"));
+      });
+    try {
+      bootstrap.configure({ integrations: { livekit: { audio } } });
+      sdk.enable();
+      expect(received).toEqual([audio]);
+    } finally {
+      sdk.disable();
+      enable.mockRestore();
+    }
+  });
+
   it("should allow configuration before enable", () => {
     const testRegistry = new (registry.constructor as any)();
     const warnSpy = vi
@@ -295,6 +315,26 @@ describe("Environment Variable Configuration", () => {
     // OpenAI should be disabled, others enabled by default
     expect(testRegistry.isEnabled()).toBe(true);
     testRegistry.disable();
+  });
+
+  it("BRAINTRUST_DISABLE_INSTRUMENTATION disables LiveKit configured with options", async () => {
+    const iso = (await import("../isomorph")).default;
+    iso.getEnv = (name: string) =>
+      name === "BRAINTRUST_DISABLE_INSTRUMENTATION"
+        ? "livekit"
+        : originalGetEnv(name);
+    const enable = vi.spyOn(LiveKitPlugin.prototype, "enable");
+    const testRegistry = new (registry.constructor as any)();
+    try {
+      testRegistry.configure({
+        integrations: { livekit: { audio: { codec: { name: "pcm" } } } },
+      });
+      testRegistry.enable();
+      expect(enable).not.toHaveBeenCalled();
+    } finally {
+      testRegistry.disable();
+      enable.mockRestore();
+    }
   });
 
   it("should parse BRAINTRUST_DISABLE_INSTRUMENTATION with multiple SDKs", async () => {

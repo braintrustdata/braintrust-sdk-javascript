@@ -763,8 +763,8 @@
       "input": {
         "audio": {
           "call-0000": {
-            "content_type": "audio/pcm",
-            "filename": "call-0000.pcm",
+            "content_type": "audio/ogg",
+            "filename": "call-0000.ogg",
             "key": "<uuid:1>",
             "type": "braintrust_attachment"
           }
@@ -780,10 +780,9 @@
             "channel_count": 2,
             "duration_ms": 0,
             "id": "<span:1>",
-            "mime_type": "audio/pcm",
+            "mime_type": "audio/ogg",
             "recording_group_id": "call",
-            "sample_format": "s16le",
-            "sample_rate_hz": 24000,
+            "sample_rate_hz": 48000,
             "sources": [
               {
                 "boundary": "session_input",
