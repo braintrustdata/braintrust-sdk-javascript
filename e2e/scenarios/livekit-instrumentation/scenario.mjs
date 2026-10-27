@@ -10,7 +10,9 @@ const livekit = await import("@livekit/agents");
 const { voice, llm, telemetry, initializeLogger } =
   process.env.LIVEKIT_WRAP === "1" ? wrapLiveKit(livekit) : livekit;
 initializeLogger({ pretty: false, level: "silent" });
-const recording = process.env.BRAINTRUST_CAPTURE_ATTACHMENTS === "true";
+const recording =
+  process.env.BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS === "true" ||
+  process.env.BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS === "true";
 let provider;
 if (process.env.LIVEKIT_OTEL === "unsampled") {
   // An application provider that samples everything out must stay installed.
@@ -270,6 +272,10 @@ try {
   await session.close();
   await logger.flush();
   if (provider) assert.equal(telemetry.tracer.getProvider(), provider);
+  // LiveKit's job process exits right after its shutdown callbacks, like this;
+  // anything not finished by then is lost.
+  await new Promise((resolve) => process.stdout.write("", resolve));
+  process.exit(0);
 } finally {
   if (streamingStt) await session.input.audio?.close();
   await session.close();

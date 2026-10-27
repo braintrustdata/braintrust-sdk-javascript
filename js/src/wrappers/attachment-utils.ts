@@ -5,7 +5,12 @@ import { automaticAttachmentOriginals } from "../automatic-attachments";
 const CAPTURE_ATTACHMENTS_ENV_VAR = "BRAINTRUST_CAPTURE_ATTACHMENTS";
 
 export function isAutoCaptureAttachmentsEnabled(): boolean {
-  const value = iso.getEnv(CAPTURE_ATTACHMENTS_ENV_VAR);
+  return isEnvFlagEnabled(CAPTURE_ATTACHMENTS_ENV_VAR);
+}
+
+/** Whether a capture environment variable is set to `1` or `true`. */
+export function isEnvFlagEnabled(name: string): boolean {
+  const value = iso.getEnv(name);
   return (
     value !== undefined && ["1", "true"].includes(value.trim().toLowerCase())
   );

@@ -111,7 +111,8 @@ function scenarioOptions(
           ],
     env: {
       LIVEKIT_WRAP: mode === "auto" ? "0" : "1",
-      BRAINTRUST_CAPTURE_ATTACHMENTS: recording ? "true" : "",
+      BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS: recording ? "true" : "",
+      BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS: recording ? "true" : "",
       BRAINTRUST_DISABLE_INSTRUMENTATION: "",
       ...(cassette ? { LIVEKIT_PROVIDER: "1" } : {}),
       ...env,
@@ -187,8 +188,12 @@ for (const variant of variants) {
     `${variant} recording requires attachment capture`,
     async () => {
       await withScenarioHarness(async (harness) => {
+        // The shared attachment flag alone never records calls.
         await harness.runNodeScenarioDir(
-          scenarioOptions(variant, { recording: false }),
+          scenarioOptions(variant, {
+            recording: false,
+            env: { BRAINTRUST_CAPTURE_ATTACHMENTS: "true" },
+          }),
         );
         const events = assertAudioTrace(harness.events());
         expect(
