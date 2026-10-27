@@ -23,7 +23,9 @@ export interface PiAgentSession {
   readonly sessionId?: string;
   readonly sessionName?: string;
   readonly thinkingLevel?: string;
+  readonly isStreaming?: boolean;
   prompt(text: string, options?: PiPromptOptions): Promise<void>;
+  subscribe(listener: (event: PiAgentEvent) => void): () => void;
   getActiveToolNames?: () => string[];
   dispose?: () => void;
   [key: string | symbol]: unknown;
@@ -42,7 +44,6 @@ export interface PiAgent {
   /** @deprecated Renamed to streamFunction in pi-agent-core 0.81.0. */
   streamFn?: PiStreamFunction;
   streamFunction?: PiStreamFunction;
-  subscribe(listener: PiAgentEventListener): () => void;
   readonly state?: {
     model?: PiModel;
     systemPrompt?: string;
@@ -52,11 +53,6 @@ export interface PiAgent {
   readonly sessionId?: string;
   [key: string | symbol]: unknown;
 }
-
-export type PiAgentEventListener = (
-  event: PiAgentEvent,
-  signal: AbortSignal,
-) => Promise<void> | void;
 
 export type PiAgentEvent =
   | { type: "agent_start" }
@@ -80,6 +76,7 @@ export type PiAgentEvent =
       toolCallId: string;
       toolName: string;
       args: unknown;
+      parentToolCallId?: string;
     }
   | {
       type: "tool_execution_update";
@@ -94,6 +91,7 @@ export type PiAgentEvent =
       toolName: string;
       result: unknown;
       isError: boolean;
+      parentToolCallId?: string;
     };
 
 export type PiStreamFunction = (
@@ -105,6 +103,8 @@ export type PiStreamFunction = (
 export interface PiSimpleStreamOptions {
   temperature?: number;
   maxTokens?: number;
+  toolChoice?: "auto" | "none";
+  samplingParams?: Record<string, unknown>;
   signal?: AbortSignal;
   apiKey?: string;
   headers?: Record<string, string>;
@@ -129,6 +129,7 @@ export interface PiModel {
   input?: string[];
   contextWindow?: number;
   maxTokens?: number;
+  samplingParams?: Record<string, unknown>;
   [key: string]: unknown;
 }
 
@@ -203,8 +204,11 @@ export interface PiToolCall {
 export interface PiUsage {
   input?: number;
   output?: number;
+  reasoning?: number;
   cacheRead?: number;
   cacheWrite?: number;
+  cacheWrite1h?: number;
+  cost?: { total?: number };
   totalTokens?: number;
   tokens?: number;
   [key: string]: unknown;
@@ -218,6 +222,8 @@ export interface PiAssistantMessage {
   model?: string;
   responseModel?: string;
   responseId?: string;
+  thinkingLevel?: string;
+  providerThinkingLevel?: string;
   usage?: PiUsage;
   stopReason?: string;
   errorMessage?: string;
