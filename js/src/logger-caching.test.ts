@@ -198,7 +198,7 @@ describe("project metadata caching", () => {
     "shares lookups across SDK copies and invalidates on %s",
     async (action) => {
       vi.resetModules();
-      const otherSdk = await import("./logger");
+      const otherSdk = await import("./logger/core");
       const otherNode = await import("./node/config");
       otherNode.configureNode();
 

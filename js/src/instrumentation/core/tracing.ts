@@ -781,12 +781,3 @@ export function traceSyncStreamCall<TChannel extends AnyAsyncChannel>(
   );
   return result;
 }
-export function unsubscribeAll(
-  unsubscribers: Array<() => void>,
-): Array<() => void> {
-  for (const unsubscribe of unsubscribers) {
-    unsubscribe();
-  }
-
-  return [];
-}

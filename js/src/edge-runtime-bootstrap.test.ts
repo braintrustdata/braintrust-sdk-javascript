@@ -78,7 +78,7 @@ describe.each([
       const platform = await import(entrypoint.replace("/index", "/config"));
       (platform.configureWorkerd ?? platform.configureEdgeLight)();
       const braintrust = await import(entrypoint);
-      const { _exportsForTestingOnly } = await import("./logger");
+      const { _exportsForTestingOnly } = await import("./logger/testing");
 
       _exportsForTestingOnly.setInitialTestState();
       await _exportsForTestingOnly.simulateLoginForTests();
@@ -126,7 +126,7 @@ describe.each([
       const platform = await import(entrypoint.replace("/index", "/config"));
       (platform.configureWorkerd ?? platform.configureEdgeLight)();
       const braintrust = await import(entrypoint);
-      const { _exportsForTestingOnly } = await import("./logger");
+      const { _exportsForTestingOnly } = await import("./logger/testing");
 
       _exportsForTestingOnly.setInitialTestState();
       await _exportsForTestingOnly.simulateLoginForTests();

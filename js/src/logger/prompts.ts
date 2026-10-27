@@ -98,7 +98,7 @@ export type ParametersRow = {
   metadata?: Record<string, unknown> | null;
 };
 
-export type LoadPromptOptions = FullLoginOptions & {
+type LoadPromptOptions = FullLoginOptions & {
   projectName?: string;
   projectId?: string;
   slug?: string;
@@ -114,52 +114,42 @@ type LoadParametersBaseOptions = FullLoginOptions & {
   state?: BraintrustState;
 };
 
-export type LoadParametersByIdOptions = LoadParametersBaseOptions & {
+type LoadParametersByIdOptions = LoadParametersBaseOptions & {
   id: string;
   version?: string;
 };
 
-export type LoadParametersByIdWithEnvOptions = LoadParametersBaseOptions & {
+type LoadParametersByIdWithEnvOptions = LoadParametersBaseOptions & {
   id: string;
   environment: string;
   version?: string;
 };
 
-export type LoadParametersByProjectNameOptions = LoadParametersBaseOptions & {
+type LoadParametersByProjectNameOptions = LoadParametersBaseOptions & {
   projectName: string;
   slug: string;
   version?: string;
 };
 
-export type LoadParametersByProjectNameWithEnvOptions =
-  LoadParametersBaseOptions & {
-    projectName: string;
-    slug: string;
-    environment: string;
-    version?: string;
-  };
+type LoadParametersByProjectNameWithEnvOptions = LoadParametersBaseOptions & {
+  projectName: string;
+  slug: string;
+  environment: string;
+  version?: string;
+};
 
-export type LoadParametersByProjectIdOptions = LoadParametersBaseOptions & {
+type LoadParametersByProjectIdOptions = LoadParametersBaseOptions & {
   projectId: string;
   slug: string;
   version?: string;
 };
 
-export type LoadParametersByProjectIdWithEnvOptions =
-  LoadParametersBaseOptions & {
-    projectId: string;
-    slug: string;
-    environment: string;
-    version?: string;
-  };
-
-export type LoadParametersOptions =
-  | LoadParametersByIdOptions
-  | LoadParametersByIdWithEnvOptions
-  | LoadParametersByProjectNameOptions
-  | LoadParametersByProjectNameWithEnvOptions
-  | LoadParametersByProjectIdOptions
-  | LoadParametersByProjectIdWithEnvOptions;
+type LoadParametersByProjectIdWithEnvOptions = LoadParametersBaseOptions & {
+  projectId: string;
+  slug: string;
+  environment: string;
+  version?: string;
+};
 
 type LoadParametersImplementationOptions = LoadParametersBaseOptions & {
   projectName?: string;
@@ -694,18 +684,6 @@ function expandAttachmentArrayPreTemplate(
   }));
 }
 
-export function renderMessage<T extends Message>(
-  render: (template: string) => string,
-  message: T,
-): T;
-
-export function renderMessage<T extends Message>(
-  render: (template: string) => string,
-  message: T,
-): T {
-  return renderMessageImpl(render, message, {});
-}
-
 export function renderMessageImpl<T extends Message>(
   render: (template: string) => string,
   message: T,
@@ -829,7 +807,7 @@ export type PromptRowWithId<
   (HasId extends true ? { id: string } : { id?: string }) &
   (HasVersion extends true ? { _xact_id: string } : { _xact_id?: string });
 
-export function deserializePlainStringAsJSON(
+function deserializePlainStringAsJSON(
   s: string,
 ): { value: any; error: undefined } | { value: string; error: unknown } {
   if (s.trim() === "") {
@@ -871,7 +849,7 @@ function renderTemplatedObject(
   return obj;
 }
 
-export function renderPromptParams(
+function renderPromptParams(
   params: ModelParams | undefined,
   args: Record<string, unknown>,
   options: { strict?: boolean; templateFormat?: TemplateFormat } = {},
