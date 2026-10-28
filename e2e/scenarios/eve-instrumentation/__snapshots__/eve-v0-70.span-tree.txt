@@ -12,6 +12,11 @@ span_tree:
 │     "scenario": "eve-instrumentation",
 │     "testRunId": "<run:1>"
 │   }
+│   context: {
+│     "caller_filename": "<node-internal>",
+│     "caller_functionname": "<node-internal>",
+│     "caller_lineno": 0
+│   }
 │   ├── eve.step [llm]
 │   │   input: [
 │   │     {
@@ -70,6 +75,11 @@ span_tree:
 │   │     "prompt_tokens": 2605,
 │   │     "tokens": 2989
 │   │   }
+│   │   context: {
+│   │     "caller_filename": "<node-internal>",
+│   │     "caller_functionname": "<node-internal>",
+│   │     "caller_lineno": 0
+│   │   }
 │   ├── researcher [tool]
 │   │   input: {
 │   │     "message": "Run the Braintrust Eve instrumentation e2e scenario"
@@ -80,6 +90,11 @@ span_tree:
 │   │     "eve.session_id": "<eve.session_id:1>",
 │   │     "scenario": "eve-instrumentation",
 │   │     "testRunId": "<run:1>"
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<node-internal>",
+│   │     "caller_functionname": "<node-internal>",
+│   │     "caller_lineno": 0
 │   │   }
 │   │   └── eve.turn [task]
 │   │       input: [
@@ -93,6 +108,11 @@ span_tree:
 │   │         "eve.session_id": "<eve.session_id:1>",
 │   │         "scenario": "eve-instrumentation",
 │   │         "testRunId": "<run:1>"
+│   │       }
+│   │       context: {
+│   │         "caller_filename": "<node-internal>",
+│   │         "caller_functionname": "<node-internal>",
+│   │         "caller_lineno": 0
 │   │       }
 │   │       ├── eve.step [llm]
 │   │       │   input: [
@@ -144,6 +164,11 @@ span_tree:
 │   │       │     "prompt_tokens": 1380,
 │   │       │     "tokens": 1557
 │   │       │   }
+│   │       │   context: {
+│   │       │     "caller_filename": "<node-internal>",
+│   │       │     "caller_functionname": "<node-internal>",
+│   │       │     "caller_lineno": 0
+│   │       │   }
 │   │       ├── search [tool]
 │   │       │   input: {
 │   │       │     "query": "Braintrust Eve instrumentation e2e scenario"
@@ -158,6 +183,11 @@ span_tree:
 │   │       │     "eve.session_id": "<eve.session_id:1>",
 │   │       │     "scenario": "eve-instrumentation",
 │   │       │     "testRunId": "<run:1>"
+│   │       │   }
+│   │       │   context: {
+│   │       │     "caller_filename": "<node-internal>",
+│   │       │     "caller_functionname": "<node-internal>",
+│   │       │     "caller_lineno": 0
 │   │       │   }
 │   │       └── eve.step [llm]
 │   │           input: [
@@ -234,6 +264,11 @@ span_tree:
 │   │             "prompt_tokens": 1600,
 │   │             "tokens": 1760
 │   │           }
+│   │           context: {
+│   │             "caller_filename": "<node-internal>",
+│   │             "caller_functionname": "<node-internal>",
+│   │             "caller_lineno": 0
+│   │           }
 │   ├── read [tool]
 │   │   input: {
 │   │     "url": "https://eve.dev/docs/guides/instrumentation"
@@ -249,6 +284,11 @@ span_tree:
 │   │     "eve.session_id": "<eve.session_id:1>",
 │   │     "scenario": "eve-instrumentation",
 │   │     "testRunId": "<run:1>"
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<node-internal>",
+│   │     "caller_functionname": "<node-internal>",
+│   │     "caller_lineno": 0
 │   │   }
 │   ├── eve.step [llm]
 │   │   input: [
@@ -357,6 +397,11 @@ span_tree:
 │   │     "prompt_tokens": 2796,
 │   │     "tokens": 3188
 │   │   }
+│   │   context: {
+│   │     "caller_filename": "<node-internal>",
+│   │     "caller_functionname": "<node-internal>",
+│   │     "caller_lineno": 0
+│   │   }
 │   ├── task_wait [tool]
 │   │   output: "researcher-<id> completed; its result follows."
 │   │   metadata: {
@@ -364,6 +409,11 @@ span_tree:
 │   │     "eve.session_id": "<eve.session_id:1>",
 │   │     "scenario": "eve-instrumentation",
 │   │     "testRunId": "<run:1>"
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<node-internal>",
+│   │     "caller_functionname": "<node-internal>",
+│   │     "caller_lineno": 0
 │   │   }
 │   └── eve.step [llm]
 │       input: [
@@ -499,6 +549,11 @@ span_tree:
 │         "prompt_tokens": 2922,
 │         "tokens": 3373
 │       }
+│       context: {
+│         "caller_filename": "<node-internal>",
+│         "caller_functionname": "<node-internal>",
+│         "caller_lineno": 0
+│       }
 ├── eve.turn [task]
 │   input: [
 │     {
@@ -511,6 +566,11 @@ span_tree:
 │     "eve.session_id": "<eve.session_id:1>",
 │     "scenario": "eve-instrumentation",
 │     "testRunId": "<run:1>"
+│   }
+│   context: {
+│     "caller_filename": "<node-internal>",
+│     "caller_functionname": "<node-internal>",
+│     "caller_lineno": 0
 │   }
 │   ├── eve.step [llm]
 │   │   input: [
@@ -681,6 +741,11 @@ span_tree:
 │   │     "prompt_tokens": 3007,
 │   │     "tokens": 3443
 │   │   }
+│   │   context: {
+│   │     "caller_filename": "<node-internal>",
+│   │     "caller_functionname": "<node-internal>",
+│   │     "caller_lineno": 0
+│   │   }
 │   ├── researcher [tool]
 │   │   input: {
 │   │     "message": "Run the Braintrust Eve instrumentation e2e scenario again"
@@ -691,6 +756,11 @@ span_tree:
 │   │     "eve.session_id": "<eve.session_id:1>",
 │   │     "scenario": "eve-instrumentation",
 │   │     "testRunId": "<run:1>"
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<node-internal>",
+│   │     "caller_functionname": "<node-internal>",
+│   │     "caller_lineno": 0
 │   │   }
 │   │   └── eve.turn [task]
 │   │       input: [
@@ -704,6 +774,11 @@ span_tree:
 │   │         "eve.session_id": "<eve.session_id:1>",
 │   │         "scenario": "eve-instrumentation",
 │   │         "testRunId": "<run:1>"
+│   │       }
+│   │       context: {
+│   │         "caller_filename": "<node-internal>",
+│   │         "caller_functionname": "<node-internal>",
+│   │         "caller_lineno": 0
 │   │       }
 │   │       ├── eve.step [llm]
 │   │       │   input: [
@@ -755,6 +830,11 @@ span_tree:
 │   │       │     "prompt_tokens": 1381,
 │   │       │     "tokens": 1572
 │   │       │   }
+│   │       │   context: {
+│   │       │     "caller_filename": "<node-internal>",
+│   │       │     "caller_functionname": "<node-internal>",
+│   │       │     "caller_lineno": 0
+│   │       │   }
 │   │       ├── search [tool]
 │   │       │   input: {
 │   │       │     "query": "Braintrust Eve instrumentation e2e scenario"
@@ -769,6 +849,11 @@ span_tree:
 │   │       │     "eve.session_id": "<eve.session_id:1>",
 │   │       │     "scenario": "eve-instrumentation",
 │   │       │     "testRunId": "<run:1>"
+│   │       │   }
+│   │       │   context: {
+│   │       │     "caller_filename": "<node-internal>",
+│   │       │     "caller_functionname": "<node-internal>",
+│   │       │     "caller_lineno": 0
 │   │       │   }
 │   │       └── eve.step [llm]
 │   │           input: [
@@ -845,6 +930,11 @@ span_tree:
 │   │             "prompt_tokens": 1615,
 │   │             "tokens": 1771
 │   │           }
+│   │           context: {
+│   │             "caller_filename": "<node-internal>",
+│   │             "caller_functionname": "<node-internal>",
+│   │             "caller_lineno": 0
+│   │           }
 │   ├── read [tool]
 │   │   input: {
 │   │     "url": "https://eve.dev/docs/guides/instrumentation"
@@ -860,6 +950,11 @@ span_tree:
 │   │     "eve.session_id": "<eve.session_id:1>",
 │   │     "scenario": "eve-instrumentation",
 │   │     "testRunId": "<run:1>"
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<node-internal>",
+│   │     "caller_functionname": "<node-internal>",
+│   │     "caller_lineno": 0
 │   │   }
 │   ├── eve.step [llm]
 │   │   input: [
@@ -1079,6 +1174,11 @@ span_tree:
 │   │     "prompt_tokens": 3222,
 │   │     "tokens": 3516
 │   │   }
+│   │   context: {
+│   │     "caller_filename": "<node-internal>",
+│   │     "caller_functionname": "<node-internal>",
+│   │     "caller_lineno": 0
+│   │   }
 │   ├── task_wait [tool]
 │   │   output: "researcher-<id> completed; its result follows."
 │   │   metadata: {
@@ -1086,6 +1186,11 @@ span_tree:
 │   │     "eve.session_id": "<eve.session_id:1>",
 │   │     "scenario": "eve-instrumentation",
 │   │     "testRunId": "<run:1>"
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<node-internal>",
+│   │     "caller_functionname": "<node-internal>",
+│   │     "caller_lineno": 0
 │   │   }
 │   └── eve.step [llm]
 │       input: [
@@ -1332,10 +1437,20 @@ span_tree:
 │         "prompt_tokens": 3365,
 │         "tokens": 3655
 │       }
+│       context: {
+│         "caller_filename": "<node-internal>",
+│         "caller_functionname": "<node-internal>",
+│         "caller_lineno": 0
+│       }
 └── eve.caller [task]
     metadata: {
       "scenario": "eve-instrumentation",
       "testRunId": "<run:1>"
+    }
+    context: {
+      "caller_filename": "<repo>/e2e/scenarios/eve-instrumentation/scenario.ts",
+      "caller_functionname": "runTracedCallerSession",
+      "caller_lineno": 0
     }
     └── eve.turn [task]
         input: [
@@ -1349,6 +1464,11 @@ span_tree:
           "eve.session_id": "<eve.session_id:1>",
           "scenario": "eve-instrumentation",
           "testRunId": "<run:1>"
+        }
+        context: {
+          "caller_filename": "<node-internal>",
+          "caller_functionname": "<node-internal>",
+          "caller_lineno": 0
         }
         ├── eve.step [llm]
         │   input: [
@@ -1408,6 +1528,11 @@ span_tree:
         │     "prompt_tokens": 2574,
         │     "tokens": 2994
         │   }
+        │   context: {
+        │     "caller_filename": "<node-internal>",
+        │     "caller_functionname": "<node-internal>",
+        │     "caller_lineno": 0
+        │   }
         ├── researcher [tool]
         │   input: {
         │     "message": "Run the Braintrust Eve instrumentation e2e scenario from a traced caller"
@@ -1418,6 +1543,11 @@ span_tree:
         │     "eve.session_id": "<eve.session_id:1>",
         │     "scenario": "eve-instrumentation",
         │     "testRunId": "<run:1>"
+        │   }
+        │   context: {
+        │     "caller_filename": "<node-internal>",
+        │     "caller_functionname": "<node-internal>",
+        │     "caller_lineno": 0
         │   }
         │   └── eve.turn [task]
         │       input: [
@@ -1431,6 +1561,11 @@ span_tree:
         │         "eve.session_id": "<eve.session_id:1>",
         │         "scenario": "eve-instrumentation",
         │         "testRunId": "<run:1>"
+        │       }
+        │       context: {
+        │         "caller_filename": "<node-internal>",
+        │         "caller_functionname": "<node-internal>",
+        │         "caller_lineno": 0
         │       }
         │       ├── eve.step [llm]
         │       │   input: [
@@ -1482,6 +1617,11 @@ span_tree:
         │       │     "prompt_tokens": 1384,
         │       │     "tokens": 1547
         │       │   }
+        │       │   context: {
+        │       │     "caller_filename": "<node-internal>",
+        │       │     "caller_functionname": "<node-internal>",
+        │       │     "caller_lineno": 0
+        │       │   }
         │       ├── search [tool]
         │       │   input: {
         │       │     "query": "Run the Braintrust Eve instrumentation e2e scenario from a traced caller"
@@ -1496,6 +1636,11 @@ span_tree:
         │       │     "eve.session_id": "<eve.session_id:1>",
         │       │     "scenario": "eve-instrumentation",
         │       │     "testRunId": "<run:1>"
+        │       │   }
+        │       │   context: {
+        │       │     "caller_filename": "<node-internal>",
+        │       │     "caller_functionname": "<node-internal>",
+        │       │     "caller_lineno": 0
         │       │   }
         │       └── eve.step [llm]
         │           input: [
@@ -1572,6 +1717,11 @@ span_tree:
         │             "prompt_tokens": 1596,
         │             "tokens": 1731
         │           }
+        │           context: {
+        │             "caller_filename": "<node-internal>",
+        │             "caller_functionname": "<node-internal>",
+        │             "caller_lineno": 0
+        │           }
         ├── read [tool]
         │   input: {
         │     "url": "https://eve.dev/docs/guides/instrumentation"
@@ -1587,6 +1737,11 @@ span_tree:
         │     "eve.session_id": "<eve.session_id:1>",
         │     "scenario": "eve-instrumentation",
         │     "testRunId": "<run:1>"
+        │   }
+        │   context: {
+        │     "caller_filename": "<node-internal>",
+        │     "caller_functionname": "<node-internal>",
+        │     "caller_lineno": 0
         │   }
         ├── eve.step [llm]
         │   input: [
@@ -1695,6 +1850,11 @@ span_tree:
         │     "prompt_tokens": 2772,
         │     "tokens": 3592
         │   }
+        │   context: {
+        │     "caller_filename": "<node-internal>",
+        │     "caller_functionname": "<node-internal>",
+        │     "caller_lineno": 0
+        │   }
         ├── task_wait [tool]
         │   output: "researcher-<id> completed; its result follows."
         │   metadata: {
@@ -1702,6 +1862,11 @@ span_tree:
         │     "eve.session_id": "<eve.session_id:1>",
         │     "scenario": "eve-instrumentation",
         │     "testRunId": "<run:1>"
+        │   }
+        │   context: {
+        │     "caller_filename": "<node-internal>",
+        │     "caller_functionname": "<node-internal>",
+        │     "caller_lineno": 0
         │   }
         └── eve.step [llm]
             input: [
@@ -1836,4 +2001,9 @@ span_tree:
               "prompt_cached_tokens": 0,
               "prompt_tokens": 2901,
               "tokens": 3240
+            }
+            context: {
+              "caller_filename": "<node-internal>",
+              "caller_functionname": "<node-internal>",
+              "caller_lineno": 0
             }

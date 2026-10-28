@@ -219,6 +219,9 @@ export class BraintrustPlugin extends BasePlugin {
     if (integrations.livekit !== false) {
       this.liveKitPlugin = new LiveKitPlugin(
         this.config.streamingAttachmentBufferBytes,
+        typeof integrations.livekit === "object"
+          ? integrations.livekit?.audio
+          : undefined,
       );
       this.liveKitPlugin.enable();
     }

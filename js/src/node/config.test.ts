@@ -148,3 +148,44 @@ describe("configureNode .env.braintrust API key lookup", () => {
     await expect(iso.getBraintrustApiKey()).resolves.toBe("file-key");
   });
 });
+
+describe("configureNode optional module loading", () => {
+  let originalCwd: string;
+  let app: string;
+
+  async function installPackage(name: string, source: string) {
+    const dir = path.join(app, "node_modules", name);
+    await mkdir(dir, { recursive: true });
+    await writeFile(
+      path.join(dir, "package.json"),
+      JSON.stringify({ name, main: "index.js" }),
+    );
+    await writeFile(path.join(dir, "index.js"), source);
+  }
+
+  beforeEach(async () => {
+    configureNode();
+    originalCwd = process.cwd();
+    app = await mkdtemp(path.join(tmpdir(), "bt-optional-"));
+    process.chdir(app);
+  });
+
+  afterEach(async () => {
+    process.chdir(originalCwd);
+    await rm(app, { force: true, recursive: true });
+  });
+
+  test("loads a package the app installed", async () => {
+    await installPackage("@bt-test/installed", "module.exports = 'loaded';");
+    expect(iso.loadOptionalModule!("@bt-test/installed")).toBe("loaded");
+  });
+
+  test("returns undefined for a package that is not installed", () => {
+    expect(iso.loadOptionalModule!("@bt-test/missing")).toBeUndefined();
+  });
+
+  test("throws when an installed package fails to load", async () => {
+    await installPackage("@bt-test/broken", "throw new Error('broken');");
+    expect(() => iso.loadOptionalModule!("@bt-test/broken")).toThrow("broken");
+  });
+});

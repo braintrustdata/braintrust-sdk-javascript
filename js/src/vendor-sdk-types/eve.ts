@@ -654,6 +654,47 @@ export type EveProviderActionTerminalEvent =
       readonly type: "action.failed";
     };
 
+/** Eve 0.72+ replaces action events with tool.call events. */
+export interface EveProviderToolCallStartedEvent {
+  readonly callId: string;
+  readonly idempotencyKey: string;
+  readonly input?: unknown;
+  readonly kind?: EveProviderActionKind;
+  readonly parentCallId?: string;
+  readonly startedAtMs?: number;
+  readonly scope: EveInstrumentationAttemptScope;
+  readonly toolName: string;
+  readonly type: "tool.call.started";
+}
+
+export type EveProviderToolCallTerminalEvent =
+  | {
+      readonly acceptedAtMs?: number;
+      readonly completedAtMs?: number;
+      readonly idempotencyKey: string;
+      readonly outcome?:
+        | "completed"
+        | "abandoned"
+        | "cancelled"
+        | "failed"
+        | "rejected";
+      readonly output:
+        | { readonly output?: unknown; readonly type: "result" }
+        | { readonly error?: unknown; readonly type: "error" };
+      readonly scope: EveInstrumentationAttemptScope;
+      readonly type: "tool.call.completed";
+    }
+  | {
+      readonly acceptedAtMs?: number;
+      readonly completedAtMs?: number;
+      readonly error?: unknown;
+      readonly errorCode?: string;
+      readonly idempotencyKey: string;
+      readonly outcome?: "abandoned" | "cancelled" | "failed" | "rejected";
+      readonly scope: EveInstrumentationAttemptScope;
+      readonly type: "tool.call.failed";
+    };
+
 export type EveProviderStepAttemptTerminalEvent = {
   readonly error?: unknown;
   readonly idempotencyKey: string;
@@ -697,6 +738,9 @@ export interface EveProviderDefinition {
     readonly "model.call.started"?: EveProviderHandler<EveProviderModelCallStartedEvent>;
     readonly "step.attempt.completed"?: EveProviderHandler<EveProviderStepAttemptTerminalEvent>;
     readonly "step.attempt.failed"?: EveProviderHandler<EveProviderStepAttemptTerminalEvent>;
+    readonly "tool.call.started"?: EveProviderHandler<EveProviderToolCallStartedEvent>;
+    readonly "tool.call.completed"?: EveProviderHandler<EveProviderToolCallTerminalEvent>;
+    readonly "tool.call.failed"?: EveProviderHandler<EveProviderToolCallTerminalEvent>;
     readonly "turn.cancelled"?: EveProviderHandler<EveProviderTurnTerminalEvent>;
     readonly "turn.completed"?: EveProviderHandler<EveProviderTurnTerminalEvent>;
     readonly "turn.failed"?: EveProviderHandler<EveProviderTurnTerminalEvent>;

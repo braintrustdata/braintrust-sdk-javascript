@@ -3,7 +3,14 @@ configureInstrumentation({
   ...(process.env.LIVEKIT_SEGMENTS === "1"
     ? { streamingAttachmentBufferBytes: 19200 } // 200 ms of 24 kHz stereo s16le.
     : {}),
-  integrations: { livekit: process.env.LIVEKIT_INTEGRATION !== "off" },
+  integrations: {
+    livekit:
+      process.env.LIVEKIT_INTEGRATION === "off"
+        ? false
+        : process.env.LIVEKIT_AUDIO
+          ? { audio: JSON.parse(process.env.LIVEKIT_AUDIO) }
+          : true,
+  },
   spanCustomizers: [
     {
       onSpanExport(data) {

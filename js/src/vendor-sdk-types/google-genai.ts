@@ -237,6 +237,7 @@ export interface GoogleGenAIGenerateContentResponse {
     safetyRatings?: Record<string, unknown>[];
   }[];
   groundingMetadata?: GoogleGenAIGroundingMetadata;
+  promptFeedback?: Record<string, unknown>;
   usageMetadata?: GoogleGenAIUsageMetadata;
   text?: string;
   [key: string]: unknown;

@@ -17,6 +17,7 @@ import {
   initLogger,
 } from "../../logger";
 import type { LiveKitSpan, SpanTime } from "../../vendor-sdk-types/livekit";
+import type { AudioMiddleware } from "../../audio-middleware";
 import { DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES } from "../config";
 import { channel, defineInterceptor } from "../core/interceptor-definitions";
 import { traceAsyncCall } from "../core/tracing";
@@ -1005,6 +1006,154 @@ describe("recording", () => {
     expect(recordings).toBeDefined();
   });
 
+  /** Replaces the default tracing with one that runs the given middleware. */
+  async function withMiddleware(
+    middleware: AudioMiddleware,
+    chunkBytes = DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES,
+  ) {
+    await tracing.shutdown();
+    tracing = new LiveKitTracing(chunkBytes, () => [middleware]);
+  }
+  /** One agent frame played for 20 ms starting 10 ms into the call. */
+  async function playOneFrame(sink: EventEmitter & any, origin: number) {
+    await sink.captureFrame(frame());
+    sink.emit("playbackStarted", { createdAt: origin + 10 });
+    sink.emit("playbackFinished", {
+      playbackPosition: 0.02,
+      interrupted: false,
+    });
+  }
+
+  test("disabled audio capture never runs middleware", async () => {
+    vi.stubEnv("BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS", "");
+    vi.stubEnv("BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS", "");
+    const middleware = vi.fn<AudioMiddleware>();
+    await withMiddleware(middleware);
+    const { sink, origin, close } = session();
+    await playOneFrame(sink, origin);
+    expect((await close()).recordings).toBeUndefined();
+    expect(middleware).not.toHaveBeenCalled();
+  });
+
+  test("middleware output is uploaded with its format; selections are unchanged", async () => {
+    await withMiddleware(async (segment, meta, next) => {
+      const framed = new Uint8Array(segment.length + 4);
+      framed.set([0x54, 0x45, 0x53, 0x54]);
+      framed.set(segment, 4);
+      return next(framed, {
+        ...meta,
+        mimeType: "audio/x-test",
+        encoding: "test",
+        attributes: { "acme.framing": "test" },
+        state: { "acme.header": framed.subarray(0, 4) },
+      });
+    });
+    const { sink, origin, close } = session();
+    await playOneFrame(sink, origin);
+    const { recordings, selections, named } = await close();
+    expect(recordings).toMatchObject([
+      {
+        id: "call-0000",
+        state: "ready",
+        mime_type: "audio/x-test",
+        duration_ms: 30, // Includes the 10 ms before playout started.
+        sources: [{ channel_index: 1 }],
+      },
+    ]);
+    // Only raw PCM publishes a sample format.
+    expect(recordings[0]).not.toHaveProperty("sample_format");
+    // Pipeline attributes and state are not published in the recording descriptor.
+    expect(JSON.stringify(recordings)).not.toContain("acme.");
+    expect(selections("agent_turn")).toEqual([["call-0000", 10, 30]]);
+    expect([...uploads[0].slice(0, 4)]).toEqual([0x54, 0x45, 0x53, 0x54]);
+    expect(channelSamples(uploads[0].slice(4), 1)[300]).toBe(1234);
+    const audio = named("session").find((row) => row.input?.audio)?.input.audio[
+      "call-0000"
+    ];
+    expect(audio).toMatchObject({
+      filename: "call-0000.x-test",
+      content_type: "audio/x-test",
+    });
+  });
+
+  test("failing middleware omits its file without changing sink I/O", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    await withMiddleware(() => {
+      throw new Error("encoder unavailable");
+    });
+    const { sink, origin, close } = session();
+    await expect(playOneFrame(sink, origin)).resolves.toBeUndefined();
+    const { recordings, selections } = await close();
+    expect(recordings).toEqual([
+      expect.objectContaining({
+        id: "call-0000",
+        state: "omitted",
+        reason: "recording_transform_failed",
+        gaps: [
+          {
+            start_offset_ms: 0,
+            end_offset_ms: 30,
+            reason: "recording_transform_failed",
+          },
+        ],
+      }),
+      {
+        id: "call",
+        recording_group_id: "call",
+        state: "omitted",
+        reason: "recording_transform_failed",
+        truncated: true,
+      },
+    ]);
+    expect(selections("agent_turn")).toEqual([]);
+    expect(uploads).toEqual([]);
+  });
+
+  test("slow middleware never delays playback; close waits for it", async () => {
+    let entered = 0;
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    // 100 ms segments of 24 kHz stereo s16le.
+    await withMiddleware(async (segment, meta, next) => {
+      entered++;
+      await gate;
+      return next(segment, meta);
+    }, 9600);
+    const { sink, origin, close } = session();
+    const play = async (startedAt: number) => {
+      await sink.captureFrame(frame(2400));
+      sink.emit("playbackStarted", { createdAt: startedAt });
+      sink.emit("playbackFinished", {
+        playbackPosition: 0.1,
+        interrupted: false,
+      });
+    };
+    await play(origin);
+    now = origin + 2000; // The first 100 ms are now safe to cut.
+    await play(origin + 1500);
+    expect(entered).toBe(1);
+    // Later playback completes while that segment is held in middleware.
+    await play(origin + 1700);
+    expect(uploads).toEqual([]);
+    const closing = close();
+    release();
+    const { recordings } = await closing;
+    // The empty interval between playouts is skipped, not uploaded as silence.
+    expect(
+      recordings.map((r: any) => [
+        r.state,
+        r.timeline.recording_start_offset_ms,
+        r.duration_ms,
+      ]),
+    ).toEqual([
+      ["ready", 0, 100],
+      ["ready", 1500, 100],
+      ["ready", 1700, 100],
+    ]);
+  });
+
   test("interruption records only confirmed progress ranges, excluding the queued tail and pauses", async () => {
     const { sink, origin, close } = session();
     await sink.captureFrame(frame(2400)); // 100 ms generated
@@ -1282,12 +1431,16 @@ describe("recording", () => {
 });
 
 describe("recording files", () => {
-  const packet = (at: number, length = 24000, channel = 0) => ({
+  const packet = (
+    at: number,
+    length = 24000,
+    source: "session_input" | "local_audio_output" = "session_input",
+  ) => ({
     pcm: Int16Array.from({ length }, (_, i) => ((i * 31) % 30000) - 15000),
     at,
     rate: 24000,
     channels: 1,
-    channel,
+    source,
   });
   /** A recording whose wall-clock hold no longer limits uploads. */
   function recording(chunkBytes = DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES) {
@@ -1330,11 +1483,14 @@ describe("recording files", () => {
       return { upload_status: "done" };
     });
     const { r, log, files, selections } = recording(96000);
-    r.select("turn", 0, 1000, 0);
+    r.select("turn", 0, 1000, "session_input");
     r.publish(["turn"]);
     r.record(packet(0));
     r.advance();
-    expect(files()).toEqual([["call-0000", "pending", 0, undefined]]);
+    // Pending once the segment leaves the (empty) middleware stack.
+    await vi.waitFor(() =>
+      expect(files()).toEqual([["call-0000", "pending", 0, undefined]]),
+    );
     expect(log.mock.calls.some(([event]) => event.input)).toBe(false);
     expect(selections()).toEqual([]);
     complete();
@@ -1357,7 +1513,13 @@ describe("recording files", () => {
           (_, i) => (((i + at) * (channel ? 31 : 17)) % 30001) - 15000,
         );
         expect(
-          r.record({ pcm, at: at / 24, rate: 24000, channels: 1, channel }),
+          r.record({
+            pcm,
+            at: at / 24,
+            rate: 24000,
+            channels: 1,
+            source: channel ? "local_audio_output" : "session_input",
+          }),
         ).toBe(true);
         for (let i = 0; i < pcm.length; i++)
           expected.writeInt16LE(pcm[i], ((at + i) * 2 + channel) * 2);
@@ -1409,7 +1571,7 @@ describe("recording files", () => {
         error_message: "offline",
       });
     const { r, files, selections } = recording(96000);
-    r.select("turn", 0, 2000, 0);
+    r.select("turn", 0, 2000, "session_input");
     for (let i = 0; i < 2; i++) {
       r.record(packet(i * 1000));
       r.advance();
@@ -1429,10 +1591,10 @@ describe("recording files", () => {
 
   test("late selections split across ready files and merge adjacent intervals", async () => {
     const { r, selections } = recording(96000);
-    r.record(packet(0, 48000));
+    r.record(packet(0, 48000, "local_audio_output"));
     await r.finish();
-    r.select("turn", 500, 1000, 1);
-    r.select("turn", 1000, 1500, 1);
+    r.select("turn", 500, 1000, "local_audio_output");
+    r.select("turn", 1000, 1500, "local_audio_output");
     r.publish(["turn"]);
     expect(selections()).toEqual([
       ["call-0000", 500, 1000],
