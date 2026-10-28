@@ -1,5 +1,20 @@
 # braintrust
 
+## 3.41.0
+
+### Minor Changes
+
+- feat(mcp): Add MCP server tracing (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2679)
+- feat(audio): Compressed voice recordings with `@braintrust/audio` Thanks @delner! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2658)
+- feat(livekit): Record caller and agent audio with explicit per-direction flags Thanks @delner! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2656)
+
+### Patch Changes
+
+- fix(eve): Restore tool tracing on Eve 0.72+ (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2678)
+- fix(google-genai): Keep the finish reason of a streamed response that has no content Thanks @pcbeingused333! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2650)
+- refactor(livekit): Record audio through shared audio pipeline Thanks @delner! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2657)
+- fix(livekit): Finish uploading recordings before `session.close()` resolves, so they are not lost when the job process exits Thanks @delner! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2656)
+
 ## 3.40.0
 
 ### Minor Changes
