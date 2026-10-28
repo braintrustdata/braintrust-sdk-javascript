@@ -37,8 +37,8 @@
                 "gen_ai.agent.name": "default_agent",
                 "gen_ai.operation.name": "create_agent",
                 "gen_ai.provider.name": "<provider-host>",
-                "gen_ai.request.model": "gpt-4.1-nano",
-                "model": "gpt-4.1-nano",
+                "gen_ai.request.model": "gpt-5.4-nano",
+                "model": "gpt-5.4-nano",
                 "provider": "<provider-host>",
                 "scenario": "livekit-instrumentation",
                 "testRunId": "<run:1>"
@@ -64,7 +64,7 @@
                   "children": [],
                   "metadata": {
                     "contrib.livekit.provider_request_ids": [
-                      "chatcmpl-EbQ33vnpSdicxLqiXBASajWZWkfSk"
+                      "chatcmpl-EdgRCBoFDeXDxNO34aoUzk1EaqhKD"
                     ],
                     "contrib.livekit.retry_count": 0,
                     "scenario": "livekit-instrumentation",
@@ -108,7 +108,7 @@
                   "tool_call"
                 ],
                 "gen_ai.response.time_to_first_chunk": 0,
-                "model": "gpt-4.1-nano",
+                "model": "gpt-5.4-nano",
                 "provider": "<provider-host>",
                 "scenario": "livekit-instrumentation",
                 "testRunId": "<run:1>",
@@ -137,10 +137,10 @@
                 "turn.id": "<span:1>"
               },
               "metrics": {
-                "completion_tokens": 16,
-                "prompt_tokens": 84,
+                "completion_tokens": 19,
+                "prompt_tokens": 168,
                 "time_to_first_token": 0,
-                "tokens": 100
+                "tokens": 187
               }
             },
             {
@@ -153,7 +153,7 @@
                   "children": [],
                   "metadata": {
                     "contrib.livekit.provider_request_ids": [
-                      "chatcmpl-EbQ33zsZHAx0dWm14mwJFOOZQp7k9"
+                      "chatcmpl-EdgRDSvWgqGPcsy7joZRQ49p9am1U"
                     ],
                     "contrib.livekit.retry_count": 0,
                     "scenario": "livekit-instrumentation",
@@ -188,12 +188,12 @@
                 {
                   "content": "{\"order_id\":\"1042\",\"status\":\"in_transit\",\"delivery\":\"Friday\"}",
                   "role": "tool",
-                  "tool_call_id": "call_HQLmJqXQjluw8pUu5jho6X49"
+                  "tool_call_id": "call_WZVJct693QHHFbwlEpCgLZJZ"
                 }
               ],
               "output": [
                 {
-                  "content": "Your order 1042 is scheduled for delivery on Friday.",
+                  "content": "Order 1042 is scheduled for delivery on Friday.",
                   "role": "assistant"
                 }
               ],
@@ -218,7 +218,7 @@
                     }
                   }
                 ],
-                "model": "gpt-4.1-nano",
+                "model": "gpt-5.4-nano",
                 "provider": "<provider-host>",
                 "scenario": "livekit-instrumentation",
                 "testRunId": "<run:1>",
@@ -248,10 +248,10 @@
                 "turn.id": "<span:1>"
               },
               "metrics": {
-                "completion_tokens": 13,
-                "prompt_tokens": 125,
+                "completion_tokens": 14,
+                "prompt_tokens": 215,
                 "time_to_first_token": 0,
-                "tokens": 138
+                "tokens": 229
               }
             },
             {
@@ -271,7 +271,7 @@
                 "contrib.livekit.function_tool.name": "lookup_order",
                 "gen_ai.agent.name": "default_agent",
                 "gen_ai.operation.name": "execute_tool",
-                "gen_ai.tool.call.id": "call_HQLmJqXQjluw8pUu5jho6X49",
+                "gen_ai.tool.call.id": "call_WZVJct693QHHFbwlEpCgLZJZ",
                 "gen_ai.tool.name": "lookup_order",
                 "gen_ai.tool.type": "function",
                 "links": [
@@ -325,7 +325,7 @@
                             "contrib.livekit.tts_metrics": {
                               "audioDurationMs": 0,
                               "cancelled": false,
-                              "charactersCount": 52,
+                              "charactersCount": 47,
                               "durationMs": 0,
                               "inputTokens": 0,
                               "label": "openai.TTS",
@@ -395,7 +395,7 @@
               "children": [],
               "output": [
                 {
-                  "content": "Your order 1042 is scheduled for delivery on Friday.",
+                  "content": "Order 1042 is scheduled for delivery on Friday.",
                   "role": "assistant"
                 }
               ],

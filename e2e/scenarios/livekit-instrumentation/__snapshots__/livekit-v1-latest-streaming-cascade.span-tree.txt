@@ -120,8 +120,8 @@ span_tree:
     │         "gen_ai.agent.name": "default_agent",
     │         "gen_ai.operation.name": "create_agent",
     │         "gen_ai.provider.name": "<provider-host>",
-    │         "gen_ai.request.model": "gpt-4.1-nano",
-    │         "model": "gpt-4.1-nano",
+    │         "gen_ai.request.model": "gpt-5.4-nano",
+    │         "model": "gpt-5.4-nano",
     │         "provider": "<provider-host>",
     │         "scenario": "livekit-instrumentation",
     │         "testRunId": "<run:1>"
@@ -418,7 +418,7 @@ span_tree:
     │   │         }
     │   │       }
     │   │     ],
-    │   │     "model": "gpt-4.1-nano",
+    │   │     "model": "gpt-5.4-nano",
     │   │     "provider": "<provider-host>",
     │   │     "scenario": "livekit-instrumentation",
     │   │     "testRunId": "<run:1>",
@@ -448,15 +448,15 @@ span_tree:
     │   │     "turn.reply_to": "<span:2>"
     │   │   }
     │   │   metrics: {
-    │   │     "completion_tokens": 18,
-    │   │     "prompt_tokens": 82,
+    │   │     "completion_tokens": 21,
+    │   │     "prompt_tokens": 166,
     │   │     "time_to_first_token": 0,
-    │   │     "tokens": 100
+    │   │     "tokens": 187
     │   │   }
     │   │   └── livekit.llm_request_run [task]
     │   │       metadata: {
     │   │         "contrib.livekit.provider_request_ids": [
-    │   │           "chatcmpl-EbQEGx9qvAolwmw2OKDmG8zxtQrSs"
+    │   │           "chatcmpl-EdgQmSmoydQe2nSoYkIRGOZ0VbnDY"
     │   │         ],
     │   │         "contrib.livekit.retry_count": 0,
     │   │         "scenario": "livekit-instrumentation",
@@ -491,7 +491,7 @@ span_tree:
     │   │     {
     │   │       "content": "{\"order_id\":\"DMO1042\",\"status\":\"in_transit\",\"delivery\":\"Friday\"}",
     │   │       "role": "tool",
-    │   │       "tool_call_id": "call_Ie5qm8NbeCNBc2WpfJcc08G4"
+    │   │       "tool_call_id": "call_tzoOX0ka09FBYYandIItJXc4"
     │   │     }
     │   │   ]
     │   │   output: [
@@ -531,7 +531,7 @@ span_tree:
     │   │         }
     │   │       }
     │   │     ],
-    │   │     "model": "gpt-4.1-nano",
+    │   │     "model": "gpt-5.4-nano",
     │   │     "provider": "<provider-host>",
     │   │     "scenario": "livekit-instrumentation",
     │   │     "testRunId": "<run:1>",
@@ -562,15 +562,15 @@ span_tree:
     │   │     "turn.reply_to": "<span:2>"
     │   │   }
     │   │   metrics: {
-    │   │     "completion_tokens": 13,
-    │   │     "prompt_tokens": 127,
+    │   │     "completion_tokens": 15,
+    │   │     "prompt_tokens": 217,
     │   │     "time_to_first_token": 0,
-    │   │     "tokens": 140
+    │   │     "tokens": 232
     │   │   }
     │   │   └── livekit.llm_request_run [task]
     │   │       metadata: {
     │   │         "contrib.livekit.provider_request_ids": [
-    │   │           "chatcmpl-EbQEH6dJm07uapqZ4AZTyC137cqAe"
+    │   │           "chatcmpl-EdgQo2FpRUcbvsvGREcYrXyQa5nQH"
     │   │         ],
     │   │         "contrib.livekit.retry_count": 0,
     │   │         "scenario": "livekit-instrumentation",
@@ -592,7 +592,7 @@ span_tree:
     │   │     "contrib.livekit.function_tool.name": "lookup_order",
     │   │     "gen_ai.agent.name": "default_agent",
     │   │     "gen_ai.operation.name": "execute_tool",
-    │   │     "gen_ai.tool.call.id": "call_Ie5qm8NbeCNBc2WpfJcc08G4",
+    │   │     "gen_ai.tool.call.id": "call_tzoOX0ka09FBYYandIItJXc4",
     │   │     "gen_ai.tool.name": "lookup_order",
     │   │     "gen_ai.tool.type": "function",
     │   │     "links": [

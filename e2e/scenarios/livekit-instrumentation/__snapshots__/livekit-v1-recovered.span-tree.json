@@ -37,8 +37,8 @@
                 "gen_ai.agent.name": "default_agent",
                 "gen_ai.operation.name": "create_agent",
                 "gen_ai.provider.name": "<provider-host>",
-                "gen_ai.request.model": "gpt-4.1-nano",
-                "model": "gpt-4.1-nano",
+                "gen_ai.request.model": "gpt-5.4-nano",
+                "model": "gpt-5.4-nano",
                 "provider": "<provider-host>",
                 "scenario": "livekit-instrumentation",
                 "testRunId": "<run:1>"
@@ -64,7 +64,7 @@
                   "children": [],
                   "metadata": {
                     "contrib.livekit.provider_request_ids": [
-                      "chatcmpl-EWxPrvKBxueebW5JrZlsERCUdjodi"
+                      "chatcmpl-EdgPwlfXD99rRcaUiNjaAQHnniHow"
                     ],
                     "contrib.livekit.retry_count": 0,
                     "scenario": "livekit-instrumentation",
@@ -108,7 +108,7 @@
                   "tool_call"
                 ],
                 "gen_ai.response.time_to_first_chunk": 0,
-                "model": "gpt-4.1-nano",
+                "model": "gpt-5.4-nano",
                 "provider": "<provider-host>",
                 "scenario": "livekit-instrumentation",
                 "testRunId": "<run:1>",
@@ -137,10 +137,10 @@
                 "turn.id": "<span:1>"
               },
               "metrics": {
-                "completion_tokens": 16,
-                "prompt_tokens": 84,
+                "completion_tokens": 19,
+                "prompt_tokens": 168,
                 "time_to_first_token": 0,
-                "tokens": 100
+                "tokens": 187
               }
             },
             {
@@ -153,7 +153,7 @@
                   "children": [],
                   "metadata": {
                     "contrib.livekit.provider_request_ids": [
-                      "chatcmpl-EWxPr0jV0ul1QEAgihHGXxlleYYC7"
+                      "chatcmpl-EdgPx5Yzc5l69Vwsbeo2x6321cPXi"
                     ],
                     "contrib.livekit.retry_count": 0,
                     "scenario": "livekit-instrumentation",
@@ -188,12 +188,12 @@
                 {
                   "content": "{\"order_id\":\"1042\",\"status\":\"in_transit\",\"delivery\":\"Friday\"}",
                   "role": "tool",
-                  "tool_call_id": "call_ThLD0enkAFrFk7EcZVLFKRvh"
+                  "tool_call_id": "call_cXcKMTItfBdrhF4Z8qbPon7C"
                 }
               ],
               "output": [
                 {
-                  "content": "Your order 1042 will be delivered on Friday.",
+                  "content": "Order 1042 is scheduled for delivery on Friday.",
                   "role": "assistant"
                 }
               ],
@@ -218,7 +218,7 @@
                     }
                   }
                 ],
-                "model": "gpt-4.1-nano",
+                "model": "gpt-5.4-nano",
                 "provider": "<provider-host>",
                 "scenario": "livekit-instrumentation",
                 "testRunId": "<run:1>",
@@ -248,10 +248,10 @@
                 "turn.id": "<span:1>"
               },
               "metrics": {
-                "completion_tokens": 12,
-                "prompt_tokens": 125,
+                "completion_tokens": 14,
+                "prompt_tokens": 215,
                 "time_to_first_token": 0,
-                "tokens": 137
+                "tokens": 229
               }
             },
             {
@@ -271,7 +271,7 @@
                 "contrib.livekit.function_tool.name": "lookup_order",
                 "gen_ai.agent.name": "default_agent",
                 "gen_ai.operation.name": "execute_tool",
-                "gen_ai.tool.call.id": "call_ThLD0enkAFrFk7EcZVLFKRvh",
+                "gen_ai.tool.call.id": "call_cXcKMTItfBdrhF4Z8qbPon7C",
                 "gen_ai.tool.name": "lookup_order",
                 "gen_ai.tool.type": "function",
                 "links": [
@@ -325,7 +325,7 @@
                             "contrib.livekit.tts_metrics": {
                               "audioDurationMs": 0,
                               "cancelled": false,
-                              "charactersCount": 44,
+                              "charactersCount": 47,
                               "durationMs": 0,
                               "inputTokens": 0,
                               "label": "openai.TTS",
@@ -334,7 +334,7 @@
                                 "modelProvider": "<provider-host>"
                               },
                               "outputTokens": 0,
-                              "requestId": "<native:8>",
+                              "requestId": "<native:9>",
                               "streamed": false,
                               "timestamp": 0,
                               "ttfbMs": 0,
@@ -348,7 +348,7 @@
                       ],
                       "metadata": {
                         "contrib.livekit.provider_request_ids": [
-                          "<native:8>"
+                          "<native:9>"
                         ],
                         "contrib.livekit.retry_count": 0,
                         "scenario": "livekit-instrumentation",
@@ -363,7 +363,7 @@
                     "contrib.livekit.tts_metrics": {
                       "audioDurationMs": 0,
                       "cancelled": false,
-                      "charactersCount": 44,
+                      "charactersCount": 47,
                       "durationMs": 0,
                       "inputTokens": 0,
                       "label": "openai.TTS",
@@ -372,7 +372,7 @@
                         "modelProvider": "<provider-host>"
                       },
                       "outputTokens": 0,
-                      "requestId": "<native:8>",
+                      "requestId": "<native:9>",
                       "streamed": true,
                       "timestamp": 0,
                       "ttfbMs": 0,
@@ -423,7 +423,7 @@
                 ],
                 "contrib.livekit.interrupted": true,
                 "contrib.livekit.message_ids": [
-                  "<native:10>"
+                  "<native:11>"
                 ],
                 "links": [
                   {
@@ -506,7 +506,7 @@
                   "children": [],
                   "metadata": {
                     "contrib.livekit.provider_request_ids": [
-                      "chatcmpl-EWxPtJdfplAU1ympVdsF0yzLIWquO"
+                      "chatcmpl-EdgQ0K3sq8zAkZnIULoGUxTTD6alg"
                     ],
                     "contrib.livekit.retry_count": 0,
                     "scenario": "livekit-instrumentation",
@@ -541,10 +541,10 @@
                 {
                   "content": "{\"order_id\":\"1042\",\"status\":\"in_transit\",\"delivery\":\"Friday\"}",
                   "role": "tool",
-                  "tool_call_id": "call_ThLD0enkAFrFk7EcZVLFKRvh"
+                  "tool_call_id": "call_cXcKMTItfBdrhF4Z8qbPon7C"
                 },
                 {
-                  "content": "Your order 1042 will be delivered on Friday.",
+                  "content": "Order 1042 is scheduled for delivery on Friday.",
                   "role": "assistant"
                 },
                 {
@@ -554,7 +554,164 @@
               ],
               "output": [
                 {
-                  "content": "Your order 1042 will be delivered on Friday.",
+                  "content": null,
+                  "role": "assistant",
+                  "tool_calls": [
+                    {
+                      "function": {
+                        "arguments": "{\"order_id\":\"1042\"}",
+                        "name": "lookup_order"
+                      },
+                      "id": "<span:1>",
+                      "type": "function"
+                    }
+                  ]
+                }
+              ],
+              "metadata": {
+                "contrib.livekit.function_tools": "[\"lookup_order\"]",
+                "contrib.livekit.response.ttft": 0,
+                "gen_ai.operation.name": "chat",
+                "gen_ai.request.stream": true,
+                "gen_ai.response.finish_reasons": [
+                  "tool_call"
+                ],
+                "gen_ai.response.time_to_first_chunk": 0,
+                "links": [
+                  {
+                    "attributes": {
+                      "braintrust.relationship.type": "consumes_tool_result"
+                    },
+                    "context": {
+                      "spanId": "<span:3>",
+                      "traceFlags": 1,
+                      "traceId": "<span:2>"
+                    }
+                  },
+                  {
+                    "attributes": {
+                      "braintrust.relationship.type": "input_context"
+                    },
+                    "context": {
+                      "spanId": "<span:4>",
+                      "traceFlags": 1,
+                      "traceId": "<span:2>"
+                    }
+                  }
+                ],
+                "model": "gpt-5.4-nano",
+                "provider": "<provider-host>",
+                "scenario": "livekit-instrumentation",
+                "testRunId": "<run:1>",
+                "tools": [
+                  {
+                    "function": {
+                      "description": "Look up an order delivery status.",
+                      "name": "lookup_order",
+                      "parameters": {
+                        "$schema": "http://json-schema.org/draft-07/schema#",
+                        "additionalProperties": false,
+                        "properties": {
+                          "order_id": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "order_id"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "type": "function"
+                  }
+                ],
+                "turn.id": "<span:1>"
+              },
+              "metrics": {
+                "completion_tokens": 19,
+                "prompt_tokens": 244,
+                "time_to_first_token": 0,
+                "tokens": 263
+              }
+            },
+            {
+              "name": "llm_response",
+              "type": "llm",
+              "children": [
+                {
+                  "name": "livekit.llm_request_run",
+                  "type": "task",
+                  "children": [],
+                  "metadata": {
+                    "contrib.livekit.provider_request_ids": [
+                      "chatcmpl-EdgQ0y5MOpTg949KlsU3SJl11SNvJ"
+                    ],
+                    "contrib.livekit.retry_count": 0,
+                    "scenario": "livekit-instrumentation",
+                    "testRunId": "<run:1>",
+                    "turn.id": "<span:1>"
+                  }
+                }
+              ],
+              "input": [
+                {
+                  "content": "You help customers check orders. Always call lookup_order when an order number is supplied. Answer with one short sentence giving the delivery day.",
+                  "role": "system"
+                },
+                {
+                  "content": "Hi, could you check order 1042 for me?",
+                  "role": "user"
+                },
+                {
+                  "content": null,
+                  "role": "assistant",
+                  "tool_calls": [
+                    {
+                      "function": {
+                        "arguments": "{\"order_id\":\"1042\"}",
+                        "name": "lookup_order"
+                      },
+                      "id": "<span:1>",
+                      "type": "function"
+                    }
+                  ]
+                },
+                {
+                  "content": "{\"order_id\":\"1042\",\"status\":\"in_transit\",\"delivery\":\"Friday\"}",
+                  "role": "tool",
+                  "tool_call_id": "call_cXcKMTItfBdrhF4Z8qbPon7C"
+                },
+                {
+                  "content": "Order 1042 is scheduled for delivery on Friday.",
+                  "role": "assistant"
+                },
+                {
+                  "content": "Sorry, please repeat the delivery day.",
+                  "role": "user"
+                },
+                {
+                  "content": null,
+                  "role": "assistant",
+                  "tool_calls": [
+                    {
+                      "function": {
+                        "arguments": "{\"order_id\":\"1042\"}",
+                        "name": "lookup_order"
+                      },
+                      "id": "<span:2>",
+                      "type": "function"
+                    }
+                  ]
+                },
+                {
+                  "content": "{\"order_id\":\"1042\",\"status\":\"in_transit\",\"delivery\":\"Friday\"}",
+                  "role": "tool",
+                  "tool_call_id": "call_oq3Sp64wL5Cdxf1N4nriLQgA"
+                }
+              ],
+              "output": [
+                {
+                  "content": "Friday.",
                   "role": "assistant"
                 }
               ],
@@ -587,12 +744,23 @@
                       "traceFlags": 1,
                       "traceId": "<span:2>"
                     }
+                  },
+                  {
+                    "attributes": {
+                      "braintrust.relationship.type": "consumes_tool_result"
+                    },
+                    "context": {
+                      "spanId": "<span:5>",
+                      "traceFlags": 1,
+                      "traceId": "<span:2>"
+                    }
                   }
                 ],
-                "model": "gpt-4.1-nano",
+                "model": "gpt-5.4-nano",
                 "provider": "<provider-host>",
                 "scenario": "livekit-instrumentation",
                 "testRunId": "<run:1>",
+                "tool_choice": "auto",
                 "tools": [
                   {
                     "function": {
@@ -618,10 +786,47 @@
                 "turn.id": "<span:1>"
               },
               "metrics": {
-                "completion_tokens": 12,
-                "prompt_tokens": 152,
+                "completion_tokens": 5,
+                "prompt_tokens": 291,
                 "time_to_first_token": 0,
-                "tokens": 164
+                "tokens": 296
+              }
+            },
+            {
+              "name": "lookup_order",
+              "type": "tool",
+              "children": [],
+              "input": {
+                "order_id": "1042"
+              },
+              "output": {
+                "delivery": "Friday",
+                "order_id": "1042",
+                "status": "in_transit"
+              },
+              "metadata": {
+                "contrib.livekit.function_tool.is_error": false,
+                "contrib.livekit.function_tool.name": "lookup_order",
+                "gen_ai.agent.name": "default_agent",
+                "gen_ai.operation.name": "execute_tool",
+                "gen_ai.tool.call.id": "call_oq3Sp64wL5Cdxf1N4nriLQgA",
+                "gen_ai.tool.name": "lookup_order",
+                "gen_ai.tool.type": "function",
+                "links": [
+                  {
+                    "attributes": {
+                      "braintrust.relationship.type": "requested_by"
+                    },
+                    "context": {
+                      "spanId": "<span:3>",
+                      "traceFlags": 1,
+                      "traceId": "<span:2>"
+                    }
+                  }
+                ],
+                "scenario": "livekit-instrumentation",
+                "testRunId": "<run:1>",
+                "turn.id": "<span:1>"
               }
             },
             {
@@ -658,7 +863,7 @@
                             "contrib.livekit.tts_metrics": {
                               "audioDurationMs": 0,
                               "cancelled": false,
-                              "charactersCount": 44,
+                              "charactersCount": 7,
                               "durationMs": 0,
                               "inputTokens": 0,
                               "label": "openai.TTS",
@@ -667,7 +872,7 @@
                                 "modelProvider": "<provider-host>"
                               },
                               "outputTokens": 0,
-                              "requestId": "<native:9>",
+                              "requestId": "<native:10>",
                               "streamed": false,
                               "timestamp": 0,
                               "ttfbMs": 0,
@@ -681,7 +886,7 @@
                       ],
                       "metadata": {
                         "contrib.livekit.provider_request_ids": [
-                          "<native:9>"
+                          "<native:10>"
                         ],
                         "contrib.livekit.retry_count": 0,
                         "scenario": "livekit-instrumentation",
@@ -696,7 +901,7 @@
                     "contrib.livekit.tts_metrics": {
                       "audioDurationMs": 0,
                       "cancelled": false,
-                      "charactersCount": 44,
+                      "charactersCount": 7,
                       "durationMs": 0,
                       "inputTokens": 0,
                       "label": "openai.TTS",
@@ -705,7 +910,7 @@
                         "modelProvider": "<provider-host>"
                       },
                       "outputTokens": 0,
-                      "requestId": "<native:9>",
+                      "requestId": "<native:10>",
                       "streamed": true,
                       "timestamp": 0,
                       "ttfbMs": 0,
@@ -746,7 +951,7 @@
               "children": [],
               "output": [
                 {
-                  "content": "Your order 1042 will be delivered on Friday.",
+                  "content": "Friday.",
                   "role": "assistant"
                 }
               ],
@@ -761,7 +966,7 @@
                   }
                 ],
                 "contrib.livekit.message_ids": [
-                  "<native:11>"
+                  "<native:12>"
                 ],
                 "links": [
                   {
@@ -794,13 +999,21 @@
             "contrib.livekit.events": [
               {
                 "attributes": {
-                  "contrib.livekit.generation_id": "<native:7>"
+                  "contrib.livekit.generation_id": "<native:8>"
+                },
+                "name": "generation",
+                "time_unix_ms": 0
+              },
+              {
+                "attributes": {
+                  "contrib.livekit.generation_id": "<native:7>",
+                  "contrib.livekit.parent_generation_id": "<native:8>"
                 },
                 "name": "generation",
                 "time_unix_ms": 0
               }
             ],
-            "contrib.livekit.generation_count": 1,
+            "contrib.livekit.generation_count": 2,
             "contrib.livekit.generation_id": "<native:7>",
             "contrib.livekit.interrupted": false,
             "contrib.livekit.playback_events": [

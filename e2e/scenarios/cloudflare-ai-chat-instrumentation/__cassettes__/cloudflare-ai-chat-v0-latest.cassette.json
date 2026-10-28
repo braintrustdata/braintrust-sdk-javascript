@@ -2,17 +2,18 @@
   "entries": [
     {
       "callIndex": 0,
-      "id": "59ffe088275bf9a2",
+      "id": "a27a134e1cefc57e",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-08-03T10:58:39.244Z",
+      "recordedAt": "2026-10-27T18:41:17.085Z",
       "request": {
         "body": {
           "kind": "json",
           "value": {
+            "include": ["reasoning.encrypted_content"],
             "input": [
               {
                 "content": "Call lookup_weather exactly once with city Vienna. After the tool returns, reply with exactly CLOUDFLARE_AI_CHAT_TOOL_OK and no other text.",
-                "role": "system"
+                "role": "developer"
               },
               {
                 "content": [
@@ -24,9 +25,9 @@
                 "role": "user"
               }
             ],
-            "max_output_tokens": 32,
-            "model": "gpt-4.1-nano",
-            "temperature": 0,
+            "max_output_tokens": 512,
+            "model": "gpt-5.4-nano",
+            "store": false,
             "tool_choice": "auto",
             "tools": [
               {
@@ -56,28 +57,29 @@
         "body": {
           "kind": "json",
           "value": {
+            "access_programs": null,
             "background": false,
             "billing": {
               "payer": "developer"
             },
-            "completed_at": 1785754719,
-            "created_at": 1785754716,
+            "completed_at": 1793126477,
+            "created_at": 1793126476,
             "error": null,
             "frequency_penalty": 0,
-            "id": "resp_03679ecbc14f5e6c006a70745cb394819f87ce503c3c1b2697",
+            "id": "resp_058d43b3280f3c4a016ae0f04c6cc087d1b53bd28180853810",
             "incomplete_details": null,
             "instructions": null,
-            "max_output_tokens": 32,
+            "max_output_tokens": 512,
             "max_tool_calls": null,
             "metadata": {},
-            "model": "gpt-4.1-nano-2025-04-14",
+            "model": "gpt-5.4-nano-2026-03-17",
             "moderation": null,
             "object": "response",
             "output": [
               {
                 "arguments": "{\"city\":\"Vienna\"}",
-                "call_id": "call_yUEHX2Q9qgeKr2BeAPijRNLp",
-                "id": "fc_03679ecbc14f5e6c006a70745f12a8819f8352fee902925815",
+                "call_id": "call_mgkdT48qMG9rYahEyBKdg3SV",
+                "id": "fc_058d43b3280f3c4a016ae0f04cebb887d18f2735fde1f8bc52",
                 "name": "lookup_weather",
                 "status": "completed",
                 "type": "function_call"
@@ -89,15 +91,16 @@
             "prompt_cache_key": "[REDACTED]",
             "prompt_cache_retention": "in_memory",
             "reasoning": {
-              "context": null,
-              "effort": null,
+              "context": "current_turn",
+              "effort": "none",
+              "mode": "standard",
               "summary": null
             },
             "safety_identifier": null,
             "service_tier": "default",
             "status": "completed",
-            "store": true,
-            "temperature": 0,
+            "store": false,
+            "temperature": 1,
             "text": {
               "format": {
                 "type": "text"
@@ -144,66 +147,64 @@
               }
             ],
             "top_logprobs": 0,
-            "top_p": 1,
+            "top_p": 0.98,
             "truncation": "disabled",
             "usage": {
-              "input_tokens": 80,
+              "input_tokens": 85,
               "input_tokens_details": {
                 "cache_write_tokens": 0,
                 "cached_tokens": 0
               },
-              "output_tokens": 32,
+              "output_tokens": 19,
               "output_tokens_details": {
                 "reasoning_tokens": 0
               },
-              "total_tokens": 112
+              "total_tokens": 104
             },
             "user": null
           }
         },
         "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "access-control-expose-headers": "X-Request-ID, Server-Timing-Total, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a254cee31d03c975-IAD",
-          "connection": "keep-alive",
+          "cf-ray": "a513d57cfc45000e-ORD",
           "content-encoding": "br",
           "content-type": "application/json",
-          "date": "Mon, 03 Aug 2026 10:58:39 GMT",
+          "date": "Tue, 27 Oct 2026 18:41:17 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "2577",
+          "openai-processing-ms": "677",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-          "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
           "x-ratelimit-limit-requests": "30000",
-          "x-ratelimit-limit-tokens": "150000000",
+          "x-ratelimit-limit-tokens": "180000000",
           "x-ratelimit-remaining-requests": "29999",
-          "x-ratelimit-remaining-tokens": "149999702",
+          "x-ratelimit-remaining-tokens": "180000000",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "req_32f05e1e8f6a44a298d93f0dcdd85cdf"
+          "x-request-id": "req_57ff9598e0a84809bd7c5f8b5e784139"
         },
-        "status": 200,
-        "statusText": "OK"
+        "status": 200
       }
     },
     {
       "callIndex": 1,
-      "id": "186c4e55b18cc3ae",
+      "id": "37d760641c3923dd",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-08-03T10:58:40.647Z",
+      "recordedAt": "2026-10-27T18:41:17.934Z",
       "request": {
         "body": {
           "kind": "json",
           "value": {
+            "include": ["reasoning.encrypted_content"],
             "input": [
               {
                 "content": "Call lookup_weather exactly once with city Vienna. After the tool returns, reply with exactly CLOUDFLARE_AI_CHAT_TOOL_OK and no other text.",
-                "role": "system"
+                "role": "developer"
               },
               {
                 "content": [
@@ -215,18 +216,21 @@
                 "role": "user"
               },
               {
-                "id": "fc_03679ecbc14f5e6c006a70745f12a8819f8352fee902925815",
-                "type": "item_reference"
+                "arguments": "{\"city\":\"Vienna\"}",
+                "call_id": "call_mgkdT48qMG9rYahEyBKdg3SV",
+                "id": "fc_058d43b3280f3c4a016ae0f04cebb887d18f2735fde1f8bc52",
+                "name": "lookup_weather",
+                "type": "function_call"
               },
               {
-                "call_id": "call_yUEHX2Q9qgeKr2BeAPijRNLp",
+                "call_id": "call_mgkdT48qMG9rYahEyBKdg3SV",
                 "output": "{\"city\":\"Vienna\",\"condition\":\"sunny\",\"marker\":\"WEATHER_TOOL_EXECUTED\"}",
                 "type": "function_call_output"
               }
             ],
-            "max_output_tokens": 32,
-            "model": "gpt-4.1-nano",
-            "temperature": 0,
+            "max_output_tokens": 512,
+            "model": "gpt-5.4-nano",
+            "store": false,
             "tool_choice": "auto",
             "tools": [
               {
@@ -256,21 +260,22 @@
         "body": {
           "kind": "json",
           "value": {
+            "access_programs": null,
             "background": false,
             "billing": {
               "payer": "developer"
             },
-            "completed_at": 1785754720,
-            "created_at": 1785754719,
+            "completed_at": 1793126477,
+            "created_at": 1793126477,
             "error": null,
             "frequency_penalty": 0,
-            "id": "resp_03679ecbc14f5e6c006a70745f55f8819f96fe0e8222e69fe6",
+            "id": "resp_058d43b3280f3c4a016ae0f04d3f1087d189ef9dd5b7e0ed60",
             "incomplete_details": null,
             "instructions": null,
-            "max_output_tokens": 32,
+            "max_output_tokens": 512,
             "max_tool_calls": null,
             "metadata": {},
-            "model": "gpt-4.1-nano-2025-04-14",
+            "model": "gpt-5.4-nano-2026-03-17",
             "moderation": null,
             "object": "response",
             "output": [
@@ -283,7 +288,8 @@
                     "type": "output_text"
                   }
                 ],
-                "id": "msg_03679ecbc14f5e6c006a7074602d18819f919ecd86920fab79",
+                "id": "msg_058d43b3280f3c4a016ae0f04db3ac87d1bb44224f6de0e9c2",
+                "phase": "final_answer",
                 "role": "assistant",
                 "status": "completed",
                 "type": "message"
@@ -295,15 +301,16 @@
             "prompt_cache_key": "[REDACTED]",
             "prompt_cache_retention": "in_memory",
             "reasoning": {
-              "context": null,
-              "effort": null,
+              "context": "current_turn",
+              "effort": "none",
+              "mode": "standard",
               "summary": null
             },
             "safety_identifier": null,
             "service_tier": "default",
             "status": "completed",
-            "store": true,
-            "temperature": 0,
+            "store": false,
+            "temperature": 1,
             "text": {
               "format": {
                 "type": "text"
@@ -350,51 +357,48 @@
               }
             ],
             "top_logprobs": 0,
-            "top_p": 1,
+            "top_p": 0.98,
             "truncation": "disabled",
             "usage": {
-              "input_tokens": 121,
+              "input_tokens": 135,
               "input_tokens_details": {
                 "cache_write_tokens": 0,
                 "cached_tokens": 0
               },
-              "output_tokens": 12,
+              "output_tokens": 14,
               "output_tokens_details": {
                 "reasoning_tokens": 0
               },
-              "total_tokens": 133
+              "total_tokens": 149
             },
             "user": null
           }
         },
         "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "access-control-expose-headers": "X-Request-ID, Server-Timing-Total, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a254cef39968c975-IAD",
-          "connection": "keep-alive",
+          "cf-ray": "a513d5820d54000e-ORD",
           "content-encoding": "br",
           "content-type": "application/json",
-          "date": "Mon, 03 Aug 2026 10:58:40 GMT",
+          "date": "Tue, 27 Oct 2026 18:41:17 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "1345",
+          "openai-processing-ms": "705",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-          "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
           "x-ratelimit-limit-requests": "30000",
-          "x-ratelimit-limit-tokens": "150000000",
+          "x-ratelimit-limit-tokens": "180000000",
           "x-ratelimit-remaining-requests": "29999",
-          "x-ratelimit-remaining-tokens": "149999662",
+          "x-ratelimit-remaining-tokens": "180000000",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "req_3c958d0d61bd4505826b9de689724dec"
+          "x-request-id": "req_f5de63d3b8c34f9099ea00a456f6c875"
         },
-        "status": 200,
-        "statusText": "OK"
+        "status": 200
       }
     }
   ],

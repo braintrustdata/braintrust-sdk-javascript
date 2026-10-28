@@ -18,7 +18,7 @@ const SUCCESS_ROOT_NAME = "cloudflare-ai-chat-success-root";
 const ERROR_ROOT_NAME = "cloudflare-ai-chat-error-root";
 const ERROR_MARKER = "CLOUDFLARE_AI_CHAT_STREAM_ERROR";
 const SUCCESS_MARKER = "CLOUDFLARE_AI_CHAT_TOOL_OK";
-const MODEL = "gpt-4.1-nano";
+const MODEL = "gpt-5.4-nano";
 
 Object.assign(process.env, {
   BRAINTRUST_API_KEY: __BRAINTRUST_API_KEY__,
@@ -66,13 +66,17 @@ export class ChatAgent extends aiChat.AIChatAgent {
       apiKey: __OPENAI_API_KEY__,
       baseURL: __OPENAI_BASE_URL__,
     });
+    // GPT-5 models only support the default temperature, and their output
+    // budget includes reasoning tokens.
     const result = await ai.generateText({
-      maxOutputTokens: 32,
+      maxOutputTokens: 512,
       messages: await ai.convertToModelMessages(this.messages),
       model: openai(MODEL),
+      // Send earlier items inline; Zero Data Retention organizations can't
+      // reference stored ones.
+      providerOptions: { openai: { store: false } },
       stopWhen: ai.stepCountIs(2),
       system: `Call lookup_weather exactly once with city Vienna. After the tool returns, reply with exactly ${SUCCESS_MARKER} and no other text.`,
-      temperature: 0,
       tools: {
         lookup_weather: ai.tool({
           description: "Return deterministic weather for one city.",

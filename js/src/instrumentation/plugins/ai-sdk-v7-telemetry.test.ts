@@ -1203,17 +1203,25 @@ describe("braintrustAISDKTelemetry", () => {
   it("keeps concurrent direct WorkflowAgent telemetry separated without dispatcher keys", async () => {
     const telemetry = braintrustAISDKTelemetry();
     const callId = "workflow-agent";
-    const sleep = (ms: number) =>
-      new Promise<void>((resolve) => setTimeout(resolve, ms));
+    // Both runs start before either continues; the second then finishes
+    // first. Direct telemetry routes by recency, so the order must not depend
+    // on timer scheduling.
+    let releaseFirst!: () => void;
+    const firstMayContinue = new Promise<void>((resolve) => {
+      releaseFirst = resolve;
+    });
 
-    const runWorkflow = async (label: "First" | "Second", delayMs: number) => {
+    const runWorkflow = async (
+      label: "First" | "Second",
+      mayContinue: Promise<void>,
+    ) => {
       telemetry.onStart?.({
         callId,
         messages: [{ role: "user", content: `${label} workflow run` }],
         operationId: "ai.workflowAgent.stream",
       });
 
-      await sleep(delayMs);
+      await mayContinue;
 
       telemetry.onLanguageModelCallStart?.({
         callId,
@@ -1246,7 +1254,10 @@ describe("braintrustAISDKTelemetry", () => {
       });
     };
 
-    await Promise.all([runWorkflow("First", 20), runWorkflow("Second", 0)]);
+    await Promise.all([
+      runWorkflow("First", firstMayContinue),
+      runWorkflow("Second", Promise.resolve()).then(releaseFirst),
+    ]);
 
     const spans = (await backgroundLogger.drain()) as Array<
       Record<string, any>

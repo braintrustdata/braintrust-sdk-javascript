@@ -148,9 +148,9 @@ const streamingStt = process.env.LIVEKIT_STREAMING_STT === "1";
 let ws;
 if (providerMode) {
   const { LLM, TTS } = await import("@livekit/agents-plugin-openai");
+  // GPT-5 models only support the default temperature.
   options.llm = new LLM({
-    model: "gpt-4.1-nano",
-    temperature: 0,
+    model: "gpt-5.4-nano",
     baseURL: process.env.OPENAI_BASE_URL,
   });
   options.tts = new TTS({
@@ -303,6 +303,10 @@ try {
   await session.close();
   await logger.flush();
   if (provider) assert.equal(telemetry.tracer.getProvider(), provider);
+  // Save or verify the websocket cassette before exiting, which skips `finally`.
+  const cassette = ws;
+  ws = undefined;
+  await cassette?.close();
   // LiveKit's job process exits right after its shutdown callbacks, like this;
   // anything not finished by then is lost.
   await new Promise((resolve) => process.stdout.write("", resolve));
