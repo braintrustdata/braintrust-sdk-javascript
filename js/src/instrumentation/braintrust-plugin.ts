@@ -29,6 +29,7 @@ import { PiCodingAgentPlugin } from "./plugins/pi-coding-agent-plugin";
 import { StrandsAgentSDKPlugin } from "./plugins/strands-agent-sdk-plugin";
 import { ElevenLabsPlugin } from "./plugins/elevenlabs-plugin";
 import { LiveKitPlugin } from "./plugins/livekit-plugin";
+import { MCPPlugin } from "./plugins/mcp-plugin";
 import { VoyageAIPlugin } from "./plugins/voyageai-plugin";
 import { WorkersAIPlugin } from "./plugins/workers-ai-plugin";
 import { TypeSafePlugin } from "./plugins/typesafe-plugin";
@@ -56,6 +57,7 @@ export interface BraintrustPluginConfig {
  * - Ollama SDK
  * - Cohere SDK
  * - Voyage AI SDK
+ * - Model Context Protocol servers
  *
  * The plugin is automatically enabled when the Braintrust library is loaded.
  * Individual integrations can be disabled via configuration.
@@ -94,6 +96,7 @@ export class BraintrustPlugin extends BasePlugin {
   private elevenLabsPlugin: ElevenLabsPlugin | null = null;
   private liveKitPlugin: LiveKitPlugin | null = null;
   private voyageAIPlugin: VoyageAIPlugin | null = null;
+  private mcpPlugin: MCPPlugin | null = null;
   private workersAIPlugin: WorkersAIPlugin | null = null;
   private typeSafePlugin: TypeSafePlugin | null = null;
   private cloudflareAIChatPlugin: CloudflareAIChatPlugin | null = null;
@@ -226,6 +229,13 @@ export class BraintrustPlugin extends BasePlugin {
     if (integrations.voyageai !== false) {
       this.voyageAIPlugin = new VoyageAIPlugin();
       this.voyageAIPlugin.enable();
+    }
+
+    if (integrations.mcp !== false) {
+      this.mcpPlugin = new MCPPlugin(
+        typeof integrations.mcp === "object" ? integrations.mcp : {},
+      );
+      this.mcpPlugin.enable();
     }
 
     if (integrations.workersAI !== false) {
@@ -414,6 +424,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.voyageAIPlugin) {
       this.voyageAIPlugin.disable();
       this.voyageAIPlugin = null;
+    }
+
+    if (this.mcpPlugin) {
+      this.mcpPlugin.disable();
+      this.mcpPlugin = null;
     }
 
     if (this.workersAIPlugin) {

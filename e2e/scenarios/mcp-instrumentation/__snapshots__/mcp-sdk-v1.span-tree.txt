@@ -1,0 +1,695 @@
+span_tree:
+├── mcp-instrumentation-root [task]
+│   metadata: {
+│     "scenario": "mcp-instrumentation",
+│     "testRunId": "<run:1>"
+│   }
+│   metrics: {
+│     "end": 0,
+│     "start": 0
+│   }
+│   context: {
+│     "caller_filename": "<caller>",
+│     "caller_functionname": "<caller>",
+│     "caller_lineno": 0
+│   }
+│   ├── mcp-http-session-operation
+│   │   metadata: {
+│   │     "operation": "http-session",
+│   │     "scenario": "mcp-instrumentation",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   │   metrics: {
+│   │     "end": 0,
+│   │     "start": 0
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<caller>",
+│   │     "caller_functionname": "<caller>",
+│   │     "caller_lineno": 0
+│   │   }
+│   │   ├── initialize [function]
+│   │   │   metadata: {
+│   │   │     "jsonrpc.request.id": "0",
+│   │   │     "mcp.method.name": "initialize",
+│   │   │     "mcp.protocol.version": "<timestamp>",
+│   │   │     "mcp.session.id": "<uuid:1>",
+│   │   │     "network.protocol.name": "http",
+│   │   │     "scenario": "mcp-instrumentation",
+│   │   │     "testRunId": "<run:1>"
+│   │   │   }
+│   │   │   metrics: {
+│   │   │     "end": 0,
+│   │   │     "start": 0
+│   │   │   }
+│   │   │   context: {
+│   │   │     "caller_filename": "<caller>",
+│   │   │     "caller_functionname": "<caller>",
+│   │   │     "caller_lineno": 0
+│   │   │   }
+│   │   ├── notifications/initialized [function]
+│   │   │   metadata: {
+│   │   │     "mcp.method.name": "notifications/initialized",
+│   │   │     "mcp.protocol.version": "<timestamp>",
+│   │   │     "mcp.session.id": "<uuid:1>",
+│   │   │     "network.protocol.name": "http",
+│   │   │     "scenario": "mcp-instrumentation",
+│   │   │     "testRunId": "<run:1>"
+│   │   │   }
+│   │   │   metrics: {
+│   │   │     "end": 0,
+│   │   │     "start": 0
+│   │   │   }
+│   │   │   context: {
+│   │   │     "caller_filename": "<caller>",
+│   │   │     "caller_functionname": "<caller>",
+│   │   │     "caller_lineno": 0
+│   │   │   }
+│   │   ├── tools/call get_weather [tool]
+│   │   │   input: {
+│   │   │     "city": "Vienna"
+│   │   │   }
+│   │   │   output: {
+│   │   │     "content": [
+│   │   │       {
+│   │   │         "text": "Sunny in Vienna",
+│   │   │         "type": "text"
+│   │   │       }
+│   │   │     ],
+│   │   │     "structuredContent": {
+│   │   │       "_meta": {
+│   │   │         "application": "preserved"
+│   │   │       }
+│   │   │     }
+│   │   │   }
+│   │   │   metadata: {
+│   │   │     "gen_ai.operation.name": "execute_tool",
+│   │   │     "gen_ai.tool.name": "get_weather",
+│   │   │     "jsonrpc.request.id": "1",
+│   │   │     "mcp.method.name": "tools/call",
+│   │   │     "mcp.protocol.version": "<timestamp>",
+│   │   │     "mcp.server.name": "braintrust-e2e-weather",
+│   │   │     "mcp.server.version": "1.0.0",
+│   │   │     "mcp.session.id": "<uuid:1>",
+│   │   │     "network.protocol.name": "http",
+│   │   │     "scenario": "mcp-instrumentation",
+│   │   │     "testRunId": "<run:1>"
+│   │   │   }
+│   │   │   metrics: {
+│   │   │     "end": 0,
+│   │   │     "start": 0
+│   │   │   }
+│   │   │   context: {
+│   │   │     "caller_filename": "<caller>",
+│   │   │     "caller_functionname": "<caller>",
+│   │   │     "caller_lineno": 0
+│   │   │   }
+│   │   │   └── weather-lookup
+│   │   │       metadata: {
+│   │   │         "scenario": "mcp-instrumentation",
+│   │   │         "testRunId": "<run:1>"
+│   │   │       }
+│   │   │       metrics: {
+│   │   │         "end": 0,
+│   │   │         "start": 0
+│   │   │       }
+│   │   │       context: {
+│   │   │         "caller_filename": "<caller>",
+│   │   │         "caller_functionname": "<caller>",
+│   │   │         "caller_lineno": 0
+│   │   │       }
+│   │   ├── tools/call get_weather [tool]
+│   │   │   input: {
+│   │   │     "city": "Paris"
+│   │   │   }
+│   │   │   output: {
+│   │   │     "content": [
+│   │   │       {
+│   │   │         "text": "Sunny in Paris",
+│   │   │         "type": "text"
+│   │   │       }
+│   │   │     ],
+│   │   │     "structuredContent": {
+│   │   │       "_meta": {
+│   │   │         "application": "preserved"
+│   │   │       }
+│   │   │     }
+│   │   │   }
+│   │   │   metadata: {
+│   │   │     "gen_ai.operation.name": "execute_tool",
+│   │   │     "gen_ai.tool.name": "get_weather",
+│   │   │     "jsonrpc.request.id": "2",
+│   │   │     "mcp.method.name": "tools/call",
+│   │   │     "mcp.protocol.version": "<timestamp>",
+│   │   │     "mcp.server.name": "braintrust-e2e-weather",
+│   │   │     "mcp.server.version": "1.0.0",
+│   │   │     "mcp.session.id": "<uuid:1>",
+│   │   │     "network.protocol.name": "http",
+│   │   │     "scenario": "mcp-instrumentation",
+│   │   │     "testRunId": "<run:1>"
+│   │   │   }
+│   │   │   metrics: {
+│   │   │     "end": 0,
+│   │   │     "start": 0
+│   │   │   }
+│   │   │   context: {
+│   │   │     "caller_filename": "<caller>",
+│   │   │     "caller_functionname": "<caller>",
+│   │   │     "caller_lineno": 0
+│   │   │   }
+│   │   │   └── weather-lookup
+│   │   │       metadata: {
+│   │   │         "scenario": "mcp-instrumentation",
+│   │   │         "testRunId": "<run:1>"
+│   │   │       }
+│   │   │       metrics: {
+│   │   │         "end": 0,
+│   │   │         "start": 0
+│   │   │       }
+│   │   │       context: {
+│   │   │         "caller_filename": "<caller>",
+│   │   │         "caller_functionname": "<caller>",
+│   │   │         "caller_lineno": 0
+│   │   │       }
+│   │   ├── resources/read [function]
+│   │   │   input: {
+│   │   │     "uri": "notes://forecast"
+│   │   │   }
+│   │   │   output: {
+│   │   │     "contents": [
+│   │   │       {
+│   │   │         "text": "Bring an umbrella.",
+│   │   │         "uri": "notes://forecast"
+│   │   │       }
+│   │   │     ]
+│   │   │   }
+│   │   │   metadata: {
+│   │   │     "jsonrpc.request.id": "3",
+│   │   │     "mcp.method.name": "resources/read",
+│   │   │     "mcp.protocol.version": "<timestamp>",
+│   │   │     "mcp.resource.uri": "notes://forecast",
+│   │   │     "mcp.session.id": "<uuid:1>",
+│   │   │     "network.protocol.name": "http",
+│   │   │     "scenario": "mcp-instrumentation",
+│   │   │     "testRunId": "<run:1>"
+│   │   │   }
+│   │   │   metrics: {
+│   │   │     "end": 0,
+│   │   │     "start": 0
+│   │   │   }
+│   │   │   context: {
+│   │   │     "caller_filename": "<caller>",
+│   │   │     "caller_functionname": "<caller>",
+│   │   │     "caller_lineno": 0
+│   │   │   }
+│   │   └── prompts/get forecast [function]
+│   │       input: {
+│   │         "city": "Vienna"
+│   │       }
+│   │       output: {
+│   │         "messages": [
+│   │           {
+│   │             "content": {
+│   │               "text": "What is the forecast for Vienna?",
+│   │               "type": "text"
+│   │             },
+│   │             "role": "user"
+│   │           }
+│   │         ]
+│   │       }
+│   │       metadata: {
+│   │         "gen_ai.prompt.name": "forecast",
+│   │         "jsonrpc.request.id": "4",
+│   │         "mcp.method.name": "prompts/get",
+│   │         "mcp.protocol.version": "<timestamp>",
+│   │         "mcp.session.id": "<uuid:1>",
+│   │         "network.protocol.name": "http",
+│   │         "scenario": "mcp-instrumentation",
+│   │         "testRunId": "<run:1>"
+│   │       }
+│   │       metrics: {
+│   │         "end": 0,
+│   │         "start": 0
+│   │       }
+│   │       context: {
+│   │         "caller_filename": "<caller>",
+│   │         "caller_functionname": "<caller>",
+│   │         "caller_lineno": 0
+│   │       }
+│   ├── mcp-in-memory-session-operation
+│   │   metadata: {
+│   │     "operation": "in-memory-session",
+│   │     "scenario": "mcp-instrumentation",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   │   metrics: {
+│   │     "end": 0,
+│   │     "start": 0
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<caller>",
+│   │     "caller_functionname": "<caller>",
+│   │     "caller_lineno": 0
+│   │   }
+│   │   ├── initialize [function]
+│   │   │   metadata: {
+│   │   │     "jsonrpc.request.id": "0",
+│   │   │     "mcp.method.name": "initialize",
+│   │   │     "mcp.protocol.version": "<timestamp>",
+│   │   │     "scenario": "mcp-instrumentation",
+│   │   │     "testRunId": "<run:1>"
+│   │   │   }
+│   │   │   metrics: {
+│   │   │     "end": 0,
+│   │   │     "start": 0
+│   │   │   }
+│   │   │   context: {
+│   │   │     "caller_filename": "<caller>",
+│   │   │     "caller_functionname": "<caller>",
+│   │   │     "caller_lineno": 0
+│   │   │   }
+│   │   ├── notifications/initialized [function]
+│   │   │   metadata: {
+│   │   │     "mcp.method.name": "notifications/initialized",
+│   │   │     "mcp.protocol.version": "<timestamp>",
+│   │   │     "scenario": "mcp-instrumentation",
+│   │   │     "testRunId": "<run:1>"
+│   │   │   }
+│   │   │   metrics: {
+│   │   │     "end": 0,
+│   │   │     "start": 0
+│   │   │   }
+│   │   │   context: {
+│   │   │     "caller_filename": "<caller>",
+│   │   │     "caller_functionname": "<caller>",
+│   │   │     "caller_lineno": 0
+│   │   │   }
+│   │   ├── tools/call get_weather [tool]
+│   │   │   input: {
+│   │   │     "city": "Tokyo"
+│   │   │   }
+│   │   │   output: {
+│   │   │     "content": [
+│   │   │       {
+│   │   │         "text": "Sunny in Tokyo",
+│   │   │         "type": "text"
+│   │   │       }
+│   │   │     ],
+│   │   │     "structuredContent": {
+│   │   │       "_meta": {
+│   │   │         "application": "preserved"
+│   │   │       }
+│   │   │     }
+│   │   │   }
+│   │   │   metadata: {
+│   │   │     "gen_ai.operation.name": "execute_tool",
+│   │   │     "gen_ai.tool.name": "get_weather",
+│   │   │     "jsonrpc.request.id": "1",
+│   │   │     "mcp.client.name": "trace-client",
+│   │   │     "mcp.client.version": "1.0.0",
+│   │   │     "mcp.method.name": "tools/call",
+│   │   │     "mcp.protocol.version": "<timestamp>",
+│   │   │     "mcp.server.name": "braintrust-e2e-weather",
+│   │   │     "mcp.server.version": "1.0.0",
+│   │   │     "scenario": "mcp-instrumentation",
+│   │   │     "testRunId": "<run:1>"
+│   │   │   }
+│   │   │   metrics: {
+│   │   │     "end": 0,
+│   │   │     "start": 0
+│   │   │   }
+│   │   │   context: {
+│   │   │     "caller_filename": "<caller>",
+│   │   │     "caller_functionname": "<caller>",
+│   │   │     "caller_lineno": 0
+│   │   │   }
+│   │   │   └── weather-lookup
+│   │   │       metadata: {
+│   │   │         "scenario": "mcp-instrumentation",
+│   │   │         "testRunId": "<run:1>"
+│   │   │       }
+│   │   │       metrics: {
+│   │   │         "end": 0,
+│   │   │         "start": 0
+│   │   │       }
+│   │   │       context: {
+│   │   │         "caller_filename": "<caller>",
+│   │   │         "caller_functionname": "<caller>",
+│   │   │         "caller_lineno": 0
+│   │   │       }
+│   │   ├── tools/call render_map [tool]
+│   │   │   output: {
+│   │   │     "content": [
+│   │   │       {
+│   │   │         "data": "<omitted>",
+│   │   │         "mimeType": "image/png",
+│   │   │         "type": "image"
+│   │   │       }
+│   │   │     ]
+│   │   │   }
+│   │   │   metadata: {
+│   │   │     "gen_ai.operation.name": "execute_tool",
+│   │   │     "gen_ai.tool.name": "render_map",
+│   │   │     "jsonrpc.request.id": "2",
+│   │   │     "mcp.method.name": "tools/call",
+│   │   │     "mcp.protocol.version": "<timestamp>",
+│   │   │     "scenario": "mcp-instrumentation",
+│   │   │     "testRunId": "<run:1>"
+│   │   │   }
+│   │   │   metrics: {
+│   │   │     "end": 0,
+│   │   │     "start": 0
+│   │   │   }
+│   │   │   context: {
+│   │   │     "caller_filename": "<caller>",
+│   │   │     "caller_functionname": "<caller>",
+│   │   │     "caller_lineno": 0
+│   │   │   }
+│   │   └── tools/call get_alerts [tool]
+│   │       output: {
+│   │         "content": [
+│   │           {
+│   │             "text": "Alert service unavailable",
+│   │             "type": "text"
+│   │           }
+│   │         ],
+│   │         "isError": true
+│   │       }
+│   │       metadata: {
+│   │         "error.type": "tool_error",
+│   │         "gen_ai.operation.name": "execute_tool",
+│   │         "gen_ai.tool.name": "get_alerts",
+│   │         "jsonrpc.request.id": "3",
+│   │         "mcp.method.name": "tools/call",
+│   │         "mcp.protocol.version": "<timestamp>",
+│   │         "scenario": "mcp-instrumentation",
+│   │         "testRunId": "<run:1>"
+│   │       }
+│   │       metrics: {
+│   │         "end": 0,
+│   │         "start": 0
+│   │       }
+│   │       error: "Alert service unavailable"
+│   │       context: {
+│   │         "caller_filename": "<caller>",
+│   │         "caller_functionname": "<caller>",
+│   │         "caller_lineno": 0
+│   │       }
+│   └── mcp-lifecycle-operation
+│       metadata: {
+│         "operation": "lifecycle",
+│         "scenario": "mcp-instrumentation",
+│         "testRunId": "<run:1>"
+│       }
+│       metrics: {
+│         "end": 0,
+│         "start": 0
+│       }
+│       context: {
+│         "caller_filename": "<caller>",
+│         "caller_functionname": "<caller>",
+│         "caller_lineno": 0
+│       }
+│       ├── initialize [function]
+│       │   metadata: {
+│       │     "jsonrpc.request.id": "0",
+│       │     "mcp.method.name": "initialize",
+│       │     "mcp.protocol.version": "<timestamp>",
+│       │     "scenario": "mcp-instrumentation",
+│       │     "testRunId": "<run:1>"
+│       │   }
+│       │   metrics: {
+│       │     "end": 0,
+│       │     "start": 0
+│       │   }
+│       │   context: {
+│       │     "caller_filename": "<caller>",
+│       │     "caller_functionname": "<caller>",
+│       │     "caller_lineno": 0
+│       │   }
+│       ├── notifications/initialized [function]
+│       │   metadata: {
+│       │     "mcp.method.name": "notifications/initialized",
+│       │     "mcp.protocol.version": "<timestamp>",
+│       │     "scenario": "mcp-instrumentation",
+│       │     "testRunId": "<run:1>"
+│       │   }
+│       │   metrics: {
+│       │     "end": 0,
+│       │     "start": 0
+│       │   }
+│       │   context: {
+│       │     "caller_filename": "<caller>",
+│       │     "caller_functionname": "<caller>",
+│       │     "caller_lineno": 0
+│       │   }
+│       ├── ping [function]
+│       │   metadata: {
+│       │     "jsonrpc.request.id": "100",
+│       │     "mcp.method.name": "ping",
+│       │     "mcp.protocol.version": "<timestamp>",
+│       │     "scenario": "mcp-instrumentation",
+│       │     "testRunId": "<run:1>"
+│       │   }
+│       │   metrics: {
+│       │     "end": 0,
+│       │     "start": 0
+│       │   }
+│       │   context: {
+│       │     "caller_filename": "<caller>",
+│       │     "caller_functionname": "<caller>",
+│       │     "caller_lineno": 0
+│       │   }
+│       ├── tools/list [function]
+│       │   metadata: {
+│       │     "jsonrpc.request.id": "101",
+│       │     "mcp.method.name": "tools/list",
+│       │     "mcp.protocol.version": "<timestamp>",
+│       │     "scenario": "mcp-instrumentation",
+│       │     "testRunId": "<run:1>"
+│       │   }
+│       │   metrics: {
+│       │     "end": 0,
+│       │     "start": 0
+│       │   }
+│       │   context: {
+│       │     "caller_filename": "<caller>",
+│       │     "caller_functionname": "<caller>",
+│       │     "caller_lineno": 0
+│       │   }
+│       ├── acme/missing [function]
+│       │   metadata: {
+│       │     "jsonrpc.request.id": "102",
+│       │     "mcp.method.name": "acme/missing",
+│       │     "mcp.protocol.version": "<timestamp>",
+│       │     "rpc.response.status_code": "-32601",
+│       │     "scenario": "mcp-instrumentation",
+│       │     "testRunId": "<run:1>"
+│       │   }
+│       │   metrics: {
+│       │     "end": 0,
+│       │     "start": 0
+│       │   }
+│       │   context: {
+│       │     "caller_filename": "<caller>",
+│       │     "caller_functionname": "<caller>",
+│       │     "caller_lineno": 0
+│       │   }
+│       ├── tools/call get_weather [tool]
+│       │   input: {
+│       │     "city": 42
+│       │   }
+│       │   output: {
+│       │     "content": [
+│       │       {
+│       │         "text": "MCP error -32602: Input validation error: Invalid arguments for tool get_weather: [\n  {\n    \"expected\": \"string\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      \"city\"\n    ],\n    \"message\": \"Invalid input: expected string, received number\"\n  }\n]",
+│       │         "type": "text"
+│       │       }
+│       │     ],
+│       │     "isError": true
+│       │   }
+│       │   metadata: {
+│       │     "error.type": "tool_error",
+│       │     "gen_ai.operation.name": "execute_tool",
+│       │     "gen_ai.tool.name": "get_weather",
+│       │     "jsonrpc.request.id": "103",
+│       │     "mcp.method.name": "tools/call",
+│       │     "mcp.protocol.version": "<timestamp>",
+│       │     "scenario": "mcp-instrumentation",
+│       │     "testRunId": "<run:1>"
+│       │   }
+│       │   metrics: {
+│       │     "end": 0,
+│       │     "start": 0
+│       │   }
+│       │   error: "MCP error -32602: Input validation error: Invalid arguments for tool get_weather: [\n  {\n    \"expected\": \"string\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      \"city\"\n    ],\n    \"message\": \"Invalid input: expected string, received number\"\n  }\n]"
+│       │   context: {
+│       │     "caller_filename": "<caller>",
+│       │     "caller_functionname": "<caller>",
+│       │     "caller_lineno": 0
+│       │   }
+│       ├── acme/validated [function]
+│       │   metadata: {
+│       │     "mcp.method.name": "acme/validated",
+│       │     "mcp.protocol.version": "<timestamp>",
+│       │     "scenario": "mcp-instrumentation",
+│       │     "testRunId": "<run:1>"
+│       │   }
+│       │   metrics: {
+│       │     "end": 0,
+│       │     "start": 0
+│       │   }
+│       │   context: {
+│       │     "caller_filename": "<caller>",
+│       │     "caller_functionname": "<caller>",
+│       │     "caller_lineno": 0
+│       │   }
+│       │   └── validated-notice-work
+│       │       metadata: {
+│       │         "scenario": "mcp-instrumentation",
+│       │         "testRunId": "<run:1>"
+│       │       }
+│       │       metrics: {
+│       │         "end": 0,
+│       │         "start": 0
+│       │       }
+│       │       context: {
+│       │         "caller_filename": "<caller>",
+│       │         "caller_functionname": "<caller>",
+│       │         "caller_lineno": 0
+│       │       }
+│       ├── acme/validated [function]
+│       │   metadata: {
+│       │     "error.type": "$ZodError",
+│       │     "mcp.method.name": "acme/validated",
+│       │     "mcp.protocol.version": "<timestamp>",
+│       │     "scenario": "mcp-instrumentation",
+│       │     "testRunId": "<run:1>"
+│       │   }
+│       │   metrics: {
+│       │     "end": 0,
+│       │     "start": 0
+│       │   }
+│       │   error: "[\n  {\n    \"expected\": \"string\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      \"params\",\n      \"value\"\n    ],\n    \"message\": \"Invalid input: expected string, received number\"\n  }\n]"
+│       │   context: {
+│       │     "caller_filename": "<caller>",
+│       │     "caller_functionname": "<caller>",
+│       │     "caller_lineno": 0
+│       │   }
+│       ├── acme/notice [function]
+│       │   metadata: {
+│       │     "mcp.method.name": "acme/notice",
+│       │     "mcp.protocol.version": "<timestamp>",
+│       │     "scenario": "mcp-instrumentation",
+│       │     "testRunId": "<run:1>"
+│       │   }
+│       │   metrics: {
+│       │     "end": 0,
+│       │     "start": 0
+│       │   }
+│       │   context: {
+│       │     "caller_filename": "<caller>",
+│       │     "caller_functionname": "<caller>",
+│       │     "caller_lineno": 0
+│       │   }
+│       │   └── notice-work
+│       │       metadata: {
+│       │         "scenario": "mcp-instrumentation",
+│       │         "testRunId": "<run:1>"
+│       │       }
+│       │       metrics: {
+│       │         "end": 0,
+│       │         "start": 0
+│       │       }
+│       │       context: {
+│       │         "caller_filename": "<caller>",
+│       │         "caller_functionname": "<caller>",
+│       │         "caller_lineno": 0
+│       │       }
+│       ├── tools/call wait_for_cancel [tool]
+│       │   metadata: {
+│       │     "gen_ai.operation.name": "execute_tool",
+│       │     "gen_ai.tool.name": "wait_for_cancel",
+│       │     "jsonrpc.request.id": "104",
+│       │     "mcp.cancelled": true,
+│       │     "mcp.method.name": "tools/call",
+│       │     "mcp.protocol.version": "<timestamp>",
+│       │     "scenario": "mcp-instrumentation",
+│       │     "testRunId": "<run:1>"
+│       │   }
+│       │   metrics: {
+│       │     "end": 0,
+│       │     "start": 0
+│       │   }
+│       │   context: {
+│       │     "caller_filename": "<caller>",
+│       │     "caller_functionname": "<caller>",
+│       │     "caller_lineno": 0
+│       │   }
+│       ├── notifications/cancelled [function]
+│       │   metadata: {
+│       │     "mcp.method.name": "notifications/cancelled",
+│       │     "mcp.protocol.version": "<timestamp>",
+│       │     "scenario": "mcp-instrumentation",
+│       │     "testRunId": "<run:1>"
+│       │   }
+│       │   metrics: {
+│       │     "end": 0,
+│       │     "start": 0
+│       │   }
+│       │   context: {
+│       │     "caller_filename": "<caller>",
+│       │     "caller_functionname": "<caller>",
+│       │     "caller_lineno": 0
+│       │   }
+│       ├── acme/cancel [function]
+│       │   metadata: {
+│       │     "jsonrpc.request.id": "105",
+│       │     "mcp.cancelled": true,
+│       │     "mcp.method.name": "acme/cancel",
+│       │     "mcp.protocol.version": "<timestamp>",
+│       │     "scenario": "mcp-instrumentation",
+│       │     "testRunId": "<run:1>"
+│       │   }
+│       │   metrics: {
+│       │     "end": 0,
+│       │     "start": 0
+│       │   }
+│       │   context: {
+│       │     "caller_filename": "<caller>",
+│       │     "caller_functionname": "<caller>",
+│       │     "caller_lineno": 0
+│       │   }
+│       └── notifications/cancelled [function]
+│           metadata: {
+│             "mcp.method.name": "notifications/cancelled",
+│             "mcp.protocol.version": "<timestamp>",
+│             "scenario": "mcp-instrumentation",
+│             "testRunId": "<run:1>"
+│           }
+│           metrics: {
+│             "end": 0,
+│             "start": 0
+│           }
+│           context: {
+│             "caller_filename": "<caller>",
+│             "caller_functionname": "<caller>",
+│             "caller_lineno": 0
+│           }
+└── ping [function]
+    metadata: {
+      "jsonrpc.request.id": "106",
+      "mcp.method.name": "ping",
+      "mcp.protocol.version": "<timestamp>",
+      "scenario": "mcp-instrumentation",
+      "testRunId": "<run:1>"
+    }
+    metrics: {
+      "end": 0,
+      "start": 0
+    }
+    context: {
+      "caller_filename": "<caller>",
+      "caller_functionname": "<caller>",
+      "caller_lineno": 0
+    }

@@ -593,6 +593,29 @@
     ]
   },
   {
+    "scenarioDirName": "mcp-instrumentation",
+    "label": "MCP Instrumentation",
+    "metadataScenario": "mcp-instrumentation",
+    "variants": [
+      {
+        "variantKey": "mcp-sdk-v1",
+        "label": "sdk v1 pinned"
+      },
+      {
+        "variantKey": "mcp-sdk-v1-latest",
+        "label": "sdk v1 latest"
+      },
+      {
+        "variantKey": "mcp-server-v2",
+        "label": "server v2 pinned"
+      },
+      {
+        "variantKey": "mcp-server-v2-latest",
+        "label": "server v2 latest"
+      }
+    ]
+  },
+  {
     "scenarioDirName": "typesafe-instrumentation",
     "label": "TypeSafe Instrumentation",
     "metadataScenario": "typesafe-instrumentation",

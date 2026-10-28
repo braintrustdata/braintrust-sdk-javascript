@@ -65,6 +65,13 @@ export interface InstrumentationIntegrationsConfig {
   elevenlabs?: boolean;
   /** Set to false to disable, or pass options; options keep LiveKit enabled. */
   livekit?: boolean | LiveKitIntegrationConfig;
+  /** Set to false to disable, or pass options; options keep MCP enabled. */
+  mcp?: boolean | MCPIntegrationConfig;
+}
+
+export interface MCPIntegrationConfig {
+  /** Capture MCP arguments and results. Disabled by default. */
+  captureContent?: boolean;
 }
 
 export interface LiveKitIntegrationConfig {
@@ -231,6 +238,10 @@ const envIntegrationAliases: Record<
   "@elevenlabs/elevenlabs-js": "elevenlabs",
   livekit: "livekit",
   "@livekit/agents": "livekit",
+  mcp: "mcp",
+  modelcontextprotocol: "mcp",
+  "@modelcontextprotocol/sdk": "mcp",
+  "@modelcontextprotocol/server": "mcp",
 };
 
 export function getDefaultInstrumentationIntegrations(): Record<
@@ -276,6 +287,7 @@ export function getDefaultInstrumentationIntegrations(): Record<
     workersAI: true,
     elevenlabs: true,
     livekit: true,
+    mcp: true,
     piCodingAgent: true,
     strandsAgentSDK: true,
     cloudflareAgents: true,

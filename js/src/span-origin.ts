@@ -32,6 +32,7 @@ export const INSTRUMENTATION_NAMES = {
   LANGSMITH: "langsmith",
   LIVEKIT: "livekit",
   MASTRA: "mastra",
+  MCP: "mcp",
   MISTRAL: "mistral",
   LANGGRAPH_SDK: "langgraph-sdk",
   OLLAMA: "ollama",
