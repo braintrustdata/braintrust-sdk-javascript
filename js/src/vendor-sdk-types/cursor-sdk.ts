@@ -112,11 +112,14 @@ export type CursorSDKRunOperation =
 
 export interface CursorSDKRun {
   readonly id?: string;
+  readonly requestId?: string;
   readonly agentId?: string;
   readonly status?: CursorSDKRunStatus;
   readonly result?: string;
+  readonly error?: CursorSDKRunError;
   readonly model?: CursorSDKModelSelection;
   readonly durationMs?: number;
+  readonly usage?: CursorSDKUsage;
   readonly git?: CursorSDKRunGitInfo;
   readonly createdAt?: number;
   stream(): AsyncGenerator<CursorSDKMessage, void>;
@@ -131,12 +134,21 @@ export interface CursorSDKRun {
   [key: string]: unknown;
 }
 
+export interface CursorSDKRunError {
+  message?: string;
+  code?: string;
+}
+
 export interface CursorSDKRunResult {
   id?: string;
+  requestId?: string;
   status?: Exclude<CursorSDKRunStatus, "running">;
   result?: string;
+  error?: CursorSDKRunError;
   model?: CursorSDKModelSelection;
   durationMs?: number;
+  /** Cumulative usage for this run when the SDK reported it. */
+  usage?: CursorSDKUsage;
   git?: CursorSDKRunGitInfo;
   [key: string]: unknown;
 }
@@ -154,6 +166,7 @@ export type CursorSDKMessage =
   | CursorSDKStatusMessage
   | CursorSDKTaskMessage
   | CursorSDKRequestMessage
+  | CursorSDKUsageMessage
   | { type?: string; [key: string]: unknown };
 
 export interface CursorSDKSystemMessage {
@@ -218,6 +231,13 @@ export interface CursorSDKTaskMessage {
   text?: string;
 }
 
+export interface CursorSDKUsageMessage {
+  type: "usage";
+  agent_id?: string;
+  run_id?: string;
+  usage?: CursorSDKUsage;
+}
+
 export interface CursorSDKRequestMessage {
   type: "request";
   agent_id?: string;
@@ -267,6 +287,12 @@ export type CursorSDKInteractionUpdate =
       [key: string]: unknown;
     }
   | {
+      type: "tool-call-delta";
+      callId?: string;
+      taskUpdate?: CursorSDKInteractionUpdate;
+      [key: string]: unknown;
+    }
+  | {
       type:
         | "step-started"
         | "step-completed"
@@ -280,10 +306,22 @@ export type CursorSDKInteractionUpdate =
   | { type?: string; [key: string]: unknown };
 
 export interface CursorSDKUsage {
+  /**
+   * Uncached input tokens. Cache read and cache write are disjoint from this
+   * field; Cursor's billing total adds them on top.
+   */
   inputTokens?: number;
+  /** Output tokens. Already includes `reasoningTokens` when that subset is reported. */
   outputTokens?: number;
   cacheReadTokens?: number;
   cacheWriteTokens?: number;
+  /** Subset of `outputTokens`. Omitted when the runtime did not report it. */
+  reasoningTokens?: number;
+  /**
+   * `inputTokens + outputTokens + cacheReadTokens + cacheWriteTokens`.
+   * Reasoning tokens are not added again.
+   */
+  totalTokens?: number;
 }
 
 export interface CursorSDKToolCall {

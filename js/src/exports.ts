@@ -225,6 +225,7 @@ export { wrapClaudeAgentSDK } from "./wrappers/claude-agent-sdk/claude-agent-sdk
 export { wrapCloudflareThink } from "./wrappers/cloudflare-think";
 export { wrapOpenAICodexSDK } from "./wrappers/openai-codex";
 export { wrapCursorSDK } from "./wrappers/cursor-sdk";
+export { cursorAgentSDKHookEvents } from "./instrumentation/plugins/cursor-agent-sdk-context";
 export { wrapPiCodingAgentSDK } from "./wrappers/pi-coding-agent";
 export { wrapCloudflareAgent } from "./wrappers/cloudflare-agent";
 export { wrapStrandsAgentSDK } from "./wrappers/strands-agent-sdk";

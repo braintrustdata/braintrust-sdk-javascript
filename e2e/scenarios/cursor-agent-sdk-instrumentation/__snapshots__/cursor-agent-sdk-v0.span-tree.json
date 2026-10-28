@@ -1,0 +1,364 @@
+{
+  "span_tree": [
+    {
+      "name": "cursor-agent-sdk-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "Cursor Agent",
+          "type": "task",
+          "children": [
+            {
+              "name": "tool: stamp",
+              "type": "tool",
+              "children": [],
+              "input": {
+                "text": "BRAINTRUST_STAMP_OK"
+              },
+              "output": "STAMP:BRAINTRUST_STAMP_OK",
+              "metadata": {
+                "agent_sdk.session_id": "<agent_sdk.session_id>",
+                "agent_sdk.turn_id": "<agent_sdk.turn_id>",
+                "cursor_sdk.tool.status": "completed",
+                "gen_ai.tool.name": "stamp"
+              }
+            }
+          ],
+          "input": "<length 253>",
+          "output": "STAMP:BRAINTRUST_STAMP_OK",
+          "metadata": {
+            "agent_sdk.session_id": "<agent_sdk.session_id>",
+            "agent_sdk.turn_id": "<agent_sdk.turn_id>",
+            "cursor_sdk.agent_id": "<cursor_sdk.agent_id>",
+            "cursor_sdk.delta_tokens": 60,
+            "cursor_sdk.model": "composer-2.5",
+            "cursor_sdk.request_id": "<cursor_sdk.request_id>",
+            "cursor_sdk.run_id": "<cursor_sdk.run_id>",
+            "cursor_sdk.status": "finished",
+            "cursor_sdk.step_duration_ms": 0,
+            "cursor_sdk.steps": 5,
+            "cursor_sdk.usage_scope": "run",
+            "model": "composer-2.5",
+            "provider": "cursor"
+          },
+          "metrics": {
+            "completion_tokens": 172,
+            "duration": 0,
+            "prompt_cache_creation_tokens": 0,
+            "prompt_cached_tokens": 0,
+            "prompt_tokens": 11766,
+            "time_to_first_token": 0,
+            "tokens": 11938
+          }
+        },
+        {
+          "name": "Cursor Agent",
+          "type": "task",
+          "children": [],
+          "input": "Do not call any tool. Reply with exactly FOLLOWUP_OK and no other text.",
+          "output": "FOLLOWUP_OK",
+          "metadata": {
+            "agent_sdk.session_id": "<agent_sdk.session_id>",
+            "agent_sdk.turn_id": "<agent_sdk.turn_id>",
+            "cursor_sdk.agent_id": "<cursor_sdk.agent_id>",
+            "cursor_sdk.delta_tokens": 18,
+            "cursor_sdk.model": "composer-2.5",
+            "cursor_sdk.request_id": "<cursor_sdk.request_id>",
+            "cursor_sdk.run_id": "<cursor_sdk.run_id>",
+            "cursor_sdk.status": "finished",
+            "cursor_sdk.step_duration_ms": 0,
+            "cursor_sdk.steps": 3,
+            "cursor_sdk.usage_scope": "run",
+            "model": "composer-2.5",
+            "provider": "cursor"
+          },
+          "metrics": {
+            "completion_tokens": 141,
+            "duration": 0,
+            "prompt_cache_creation_tokens": 0,
+            "prompt_cached_tokens": 0,
+            "prompt_tokens": 6051,
+            "time_to_first_token": 0,
+            "tokens": 6192
+          }
+        },
+        {
+          "name": "Cursor Agent",
+          "type": "task",
+          "children": [
+            {
+              "name": "tool: task",
+              "type": "tool",
+              "children": [
+                {
+                  "name": "Agent: echoer",
+                  "type": "task",
+                  "children": [],
+                  "input": {
+                    "description": "SUBAGENT_OK",
+                    "subagentType": "echoer"
+                  },
+                  "output": "<length 426>",
+                  "metadata": {
+                    "agent_sdk.session_id": "<agent_sdk.session_id>",
+                    "agent_sdk.turn_id": "<agent_sdk.turn_id>",
+                    "cursor_sdk.tool.status": "completed",
+                    "gen_ai.tool.name": "task"
+                  },
+                  "metrics": {
+                    "time_to_first_token": 0
+                  }
+                }
+              ],
+              "input": {
+                "description": "SUBAGENT_OK",
+                "subagentType": "echoer"
+              },
+              "output": "<length 426>",
+              "metadata": {
+                "agent_sdk.session_id": "<agent_sdk.session_id>",
+                "agent_sdk.turn_id": "<agent_sdk.turn_id>",
+                "cursor_sdk.tool.status": "completed",
+                "gen_ai.tool.name": "task"
+              }
+            }
+          ],
+          "input": "<length 235>",
+          "output": "SUBAGENT_OK",
+          "metadata": {
+            "agent_sdk.session_id": "<agent_sdk.session_id>",
+            "agent_sdk.turn_id": "<agent_sdk.turn_id>",
+            "cursor_sdk.agent_id": "<cursor_sdk.agent_id>",
+            "cursor_sdk.delta_tokens": 1505,
+            "cursor_sdk.model": "composer-2.5",
+            "cursor_sdk.request_id": "<cursor_sdk.request_id>",
+            "cursor_sdk.run_id": "<cursor_sdk.run_id>",
+            "cursor_sdk.status": "finished",
+            "cursor_sdk.step_duration_ms": 0,
+            "cursor_sdk.steps": 7,
+            "cursor_sdk.usage_scope": "run",
+            "model": "composer-2.5",
+            "provider": "cursor"
+          },
+          "metrics": {
+            "completion_tokens": 298,
+            "duration": 0,
+            "prompt_cache_creation_tokens": 0,
+            "prompt_cached_tokens": 5888,
+            "prompt_tokens": 26057,
+            "time_to_first_token": 0,
+            "tokens": 26355
+          }
+        },
+        {
+          "name": "Cursor Agent",
+          "type": "task",
+          "children": [
+            {
+              "name": "tool: fail_tool",
+              "type": "tool",
+              "children": [],
+              "output": "Tool \"fail_tool\" failed: fail_tool exploded",
+              "metadata": {
+                "agent_sdk.session_id": "<agent_sdk.session_id>",
+                "agent_sdk.turn_id": "<agent_sdk.turn_id>",
+                "cursor_sdk.tool.status": "error",
+                "gen_ai.tool.name": "fail_tool"
+              },
+              "error": "Tool \"fail_tool\" failed: fail_tool exploded"
+            }
+          ],
+          "input": "<length 231>",
+          "output": "The `fail_tool` call ran once and failed on purpose with: **fail_tool exploded**. Per your instructions, nothing was retried and no other tools were used.",
+          "metadata": {
+            "agent_sdk.session_id": "<agent_sdk.session_id>",
+            "agent_sdk.turn_id": "<agent_sdk.turn_id>",
+            "cursor_sdk.agent_id": "<cursor_sdk.agent_id>",
+            "cursor_sdk.delta_tokens": 162,
+            "cursor_sdk.model": "composer-2.5",
+            "cursor_sdk.request_id": "<cursor_sdk.request_id>",
+            "cursor_sdk.run_id": "<cursor_sdk.run_id>",
+            "cursor_sdk.status": "finished",
+            "cursor_sdk.step_duration_ms": 0,
+            "cursor_sdk.steps": 7,
+            "cursor_sdk.usage_scope": "run",
+            "model": "composer-2.5",
+            "provider": "cursor"
+          },
+          "metrics": {
+            "completion_tokens": 214,
+            "duration": 0,
+            "prompt_cache_creation_tokens": 0,
+            "prompt_cached_tokens": 0,
+            "prompt_tokens": 17749,
+            "time_to_first_token": 0,
+            "tokens": 17963
+          }
+        },
+        {
+          "name": "Cursor Agent",
+          "type": "task",
+          "children": [
+            {
+              "name": "tool: long_text",
+              "type": "tool",
+              "children": [],
+              "output": "<length 3012>",
+              "metadata": {
+                "agent_sdk.session_id": "<agent_sdk.session_id>",
+                "agent_sdk.turn_id": "<agent_sdk.turn_id>",
+                "cursor_sdk.tool.status": "completed",
+                "gen_ai.tool.name": "long_text"
+              }
+            }
+          ],
+          "input": "<length 231>",
+          "output": "LONG_DONE",
+          "metadata": {
+            "agent_sdk.session_id": "<agent_sdk.session_id>",
+            "agent_sdk.turn_id": "<agent_sdk.turn_id>",
+            "cursor_sdk.agent_id": "<cursor_sdk.agent_id>",
+            "cursor_sdk.delta_tokens": 910,
+            "cursor_sdk.model": "composer-2.5",
+            "cursor_sdk.request_id": "<cursor_sdk.request_id>",
+            "cursor_sdk.run_id": "<cursor_sdk.run_id>",
+            "cursor_sdk.status": "finished",
+            "cursor_sdk.step_duration_ms": 0,
+            "cursor_sdk.steps": 7,
+            "cursor_sdk.usage_scope": "run",
+            "model": "composer-2.5",
+            "provider": "cursor"
+          },
+          "metrics": {
+            "completion_tokens": 201,
+            "duration": 0,
+            "prompt_cache_creation_tokens": 0,
+            "prompt_cached_tokens": 0,
+            "prompt_tokens": 18172,
+            "time_to_first_token": 0,
+            "tokens": 18373
+          }
+        },
+        {
+          "name": "Cursor Agent",
+          "type": "task",
+          "children": [
+            {
+              "name": "tool: hang",
+              "type": "tool",
+              "children": [],
+              "metadata": {
+                "agent_sdk.session_id": "<agent_sdk.session_id>",
+                "agent_sdk.turn_id": "<agent_sdk.turn_id>",
+                "cursor_sdk.tool.status": "cancelled",
+                "gen_ai.tool.name": "hang"
+              }
+            }
+          ],
+          "input": "<length 231>",
+          "output": "Calling `hang` once per your instructions.\n",
+          "metadata": {
+            "agent_sdk.session_id": "<agent_sdk.session_id>",
+            "agent_sdk.turn_id": "<agent_sdk.turn_id>",
+            "agent_sdk.turn_status": "cancelled",
+            "cursor_sdk.agent_id": "<cursor_sdk.agent_id>",
+            "cursor_sdk.delta_tokens": 42,
+            "cursor_sdk.model": "composer-2.5",
+            "cursor_sdk.request_id": "<cursor_sdk.request_id>",
+            "cursor_sdk.run_id": "<cursor_sdk.run_id>",
+            "cursor_sdk.status": "cancelled",
+            "cursor_sdk.steps": 2,
+            "model": "composer-2.5",
+            "provider": "cursor"
+          },
+          "metrics": {
+            "duration": 0,
+            "time_to_first_token": 0
+          },
+          "error": "turn interrupted"
+        },
+        {
+          "name": "Cursor Agent",
+          "type": "task",
+          "children": [],
+          "input": "<length 243>",
+          "output": "STAMP:SESSION_A",
+          "metadata": {
+            "agent_sdk.session_id": "<agent_sdk.session_id>",
+            "agent_sdk.turn_id": "<agent_sdk.turn_id>",
+            "cursor_sdk.agent_id": "<cursor_sdk.agent_id>",
+            "cursor_sdk.delta_tokens": 178,
+            "cursor_sdk.model": "composer-2.5",
+            "cursor_sdk.request_id": "<cursor_sdk.request_id>",
+            "cursor_sdk.run_id": "<cursor_sdk.run_id>",
+            "cursor_sdk.status": "finished",
+            "cursor_sdk.step_duration_ms": 0,
+            "cursor_sdk.steps": 7,
+            "cursor_sdk.usage_scope": "run",
+            "model": "composer-2.5",
+            "provider": "cursor"
+          },
+          "metrics": {
+            "completion_tokens": 202,
+            "duration": 0,
+            "prompt_cache_creation_tokens": 0,
+            "prompt_cached_tokens": 0,
+            "prompt_tokens": 17783,
+            "time_to_first_token": 0,
+            "tokens": 17985
+          }
+        },
+        {
+          "name": "Cursor Agent",
+          "type": "task",
+          "children": [
+            {
+              "name": "tool: stamp",
+              "type": "tool",
+              "children": [],
+              "input": {
+                "text": "SESSION_B"
+              },
+              "output": "STAMP:SESSION_B",
+              "metadata": {
+                "agent_sdk.session_id": "<agent_sdk.session_id>",
+                "agent_sdk.turn_id": "<agent_sdk.turn_id>",
+                "cursor_sdk.tool.status": "completed",
+                "gen_ai.tool.name": "stamp"
+              }
+            }
+          ],
+          "input": "<length 243>",
+          "output": "STAMP:SESSION_B",
+          "metadata": {
+            "agent_sdk.session_id": "<agent_sdk.session_id>",
+            "agent_sdk.turn_id": "<agent_sdk.turn_id>",
+            "cursor_sdk.agent_id": "<cursor_sdk.agent_id>",
+            "cursor_sdk.delta_tokens": 124,
+            "cursor_sdk.model": "composer-2.5",
+            "cursor_sdk.request_id": "<cursor_sdk.request_id>",
+            "cursor_sdk.run_id": "<cursor_sdk.run_id>",
+            "cursor_sdk.status": "finished",
+            "cursor_sdk.step_duration_ms": 0,
+            "cursor_sdk.steps": 5,
+            "cursor_sdk.usage_scope": "run",
+            "model": "composer-2.5",
+            "provider": "cursor"
+          },
+          "metrics": {
+            "completion_tokens": 212,
+            "duration": 0,
+            "prompt_cache_creation_tokens": 0,
+            "prompt_cached_tokens": 0,
+            "prompt_tokens": 17838,
+            "time_to_first_token": 0,
+            "tokens": 18050
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "cursor-agent-sdk-instrumentation"
+      }
+    }
+  ]
+}

@@ -24,7 +24,8 @@
     "build": "tsup",
     "check:typings": "tsc --noEmit",
     "dev": "tsup --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "zod": "^3.23.8"
@@ -32,6 +33,7 @@
   "devDependencies": {
     "@types/node": "^22.10.0",
     "tsup": "^8.5.1",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "4.1.11"
   }
 }

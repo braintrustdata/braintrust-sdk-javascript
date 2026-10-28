@@ -746,6 +746,21 @@
     ]
   },
   {
+    "scenarioDirName": "cursor-agent-sdk-instrumentation",
+    "label": "Cursor Agent SDK Instrumentation",
+    "metadataScenario": "cursor-agent-sdk-instrumentation",
+    "variants": [
+      {
+        "variantKey": "agent-sdk-v0",
+        "label": "v0 pinned"
+      },
+      {
+        "variantKey": "agent-sdk-v0-latest",
+        "label": "v0 latest"
+      }
+    ]
+  },
+  {
     "scenarioDirName": "flue-instrumentation",
     "label": "Flue Instrumentation",
     "metadataScenario": "flue-instrumentation",

@@ -215,6 +215,7 @@ export function defineCursorSDKInstrumentationAssertions(options: {
           expect(task?.span.parentIds).toEqual([operation?.span.id ?? ""]);
           expect(task?.row.metadata).toMatchObject({
             provider: "cursor",
+            "cursor_sdk.status": "finished",
           });
         }
       },
@@ -288,9 +289,13 @@ export function defineCursorSDKInstrumentationAssertions(options: {
 
         expect(deltaSpan).toBeDefined();
         expect(stepSpan).toBeDefined();
-        expect(waitTask?.metrics?.["cursor_sdk.step_duration_ms"]).toEqual(
+        // Step counts are Cursor-specific, so they are metadata, not metrics.
+        expect(waitTask?.metadata?.["cursor_sdk.step_duration_ms"]).toEqual(
           expect.any(Number),
         );
+        expect(
+          waitTask?.metrics?.["cursor_sdk.step_duration_ms"],
+        ).toBeUndefined();
       },
     );
 

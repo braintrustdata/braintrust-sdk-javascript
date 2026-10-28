@@ -49,6 +49,12 @@ export interface RecordedResponse {
   statusText?: string;
   headers: Record<string, string>;
   body: BodyPayload;
+  /**
+   * The client closed this streaming response before upstream finished.
+   * Replay sends the recorded bytes, then keeps the stream open until the
+   * client closes it, as the live upstream did.
+   */
+  incomplete?: true;
 }
 
 /** A normalized request representation used internally for matching. */

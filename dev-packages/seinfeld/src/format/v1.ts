@@ -33,6 +33,7 @@ const recordedResponseSchema = z.object({
   statusText: z.string().optional(),
   headers: z.record(z.string()),
   body: bodyPayloadSchema,
+  incomplete: z.literal(true).optional(),
 });
 
 const cassetteEntrySchema = z

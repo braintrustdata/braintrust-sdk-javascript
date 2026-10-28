@@ -97,4 +97,57 @@ describe("orchestrion transforms", () => {
       value: "constructor",
     });
   });
+
+  describe("export aliases", () => {
+    const agentConfig = (filePath: string) => ({
+      channelName: "Agent.create",
+      module: { name: "example", versionRange: ">=1.0.0", filePath },
+      functionQuery: {
+        className: "Agent",
+        methodName: "create",
+        isExportAlias: true,
+      },
+    });
+
+    async function expectIntercepted(create: () => Promise<unknown>) {
+      const remove = newGlobalInvocationHook(
+        "orchestrion:example:Agent.create",
+      ).intercept(async () => "intercepted");
+      try {
+        await expect(create()).resolves.toBe("intercepted");
+      } finally {
+        remove();
+      }
+    }
+
+    it("resolves a minified ESM class re-exported under another name", async () => {
+      const transformed = new Transformer("example", "1.0.0", "index.mjs", [
+        agentConfig("index.mjs"),
+      ]).transform(
+        `class Fe { static async create() { return "original"; } }
+         export { Fe as Agent };`,
+        "esm",
+      ).code;
+      const module = await import(
+        `data:text/javascript;base64,${Buffer.from(transformed).toString("base64")}`
+      );
+      await expectIntercepted(() => module.Agent.create());
+    });
+
+    it("resolves a webpack CommonJS getter export", async () => {
+      const transformed = new Transformer("example", "1.0.0", "index.js", [
+        agentConfig("index.js"),
+      ]).transform(
+        `var r = { d(target, getters) {
+           for (const key in getters) Object.defineProperty(target, key, { enumerable: true, get: getters[key] });
+         } };
+         r.d(exports, { Agent: () => te });
+         class te { static async create() { return "original"; } }`,
+        "cjs",
+      ).code;
+      const moduleExports: Record<string, any> = {};
+      new Function("exports", "require", transformed)(moduleExports, require);
+      await expectIntercepted(() => moduleExports.Agent.create());
+    });
+  });
 });

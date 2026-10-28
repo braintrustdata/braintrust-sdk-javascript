@@ -81,8 +81,14 @@ export function encodeBody(
   const ct = (contentType ?? "").toLowerCase();
 
   if (ct.startsWith("text/event-stream")) {
-    const text = decodeBytesAsText(bytes, contentType ?? "");
-    return { kind: "sse", chunks: splitSseChunks(text) };
+    // Connect and protobuf streams advertise text/event-stream but are not
+    // UTF-8 SSE. Decoding them as text replaces invalid bytes, and splitting
+    // on blank lines inserts extra separators on replay.
+    if (isStrictUtf8(bytes) && looksLikeSse(bytes)) {
+      const text = decodeBytesAsText(bytes, contentType ?? "");
+      return { kind: "sse", chunks: splitSseChunks(text) };
+    }
+    return base64Body(bytes, contentType);
   }
 
   if (isJsonContentType(ct)) {
@@ -102,12 +108,50 @@ export function encodeBody(
     return { kind: "text", value: decodeBytesAsText(bytes, contentType ?? "") };
   }
 
-  const base64Body: BodyPayload = {
+  return base64Body(bytes, contentType);
+}
+
+function base64Body(
+  bytes: Uint8Array,
+  contentType: string | undefined,
+): BodyPayload {
+  const body: BodyPayload = {
     kind: "base64",
     value: encodeBase64(bytes),
   };
-  if (contentType) base64Body.contentType = contentType;
-  return base64Body;
+  if (contentType) body.contentType = contentType;
+  return body;
+}
+
+function isStrictUtf8(bytes: Uint8Array): boolean {
+  try {
+    new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * True when the body begins like an SSE event (`data:`, `event:`, `id:`,
+ * `retry:`, or a comment). Leading blank lines are ignored.
+ */
+function looksLikeSse(bytes: Uint8Array): boolean {
+  let index = 0;
+  while (
+    index < bytes.length &&
+    (bytes[index] === 0x0a || bytes[index] === 0x0d || bytes[index] === 0x20)
+  ) {
+    index += 1;
+  }
+  const head = Buffer.from(bytes.subarray(index, index + 6)).toString("utf8");
+  return (
+    head.startsWith("data:") ||
+    head.startsWith("event:") ||
+    head.startsWith("id:") ||
+    head.startsWith("retry:") ||
+    head.startsWith(":")
+  );
 }
 
 /**

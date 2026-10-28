@@ -1,12 +1,22 @@
 import { createHash } from "node:crypto";
 
-export const streamingRequests = [/\/agent\.v1\.AgentService\/Run(?:\?|$)/];
+// @cursor/sdk 1.0.38 serves agent turns on RunSSE and sends client messages
+// separately. The stream has to be proxied live or the turn never finishes.
+export const streamingRequests = [
+  /\/agent\.v1\.AgentService\/Run(?:SSE|Poll)?(?:\?|$)/,
+];
 
 export const filter = [
   "default",
   {
     normalizeRequest(req) {
-      if (req.url.includes("/agent.v1.AgentService/Run")) {
+      // RunSSE carries the turn. BidiAppend is the client's ack stream: the
+      // protobuf includes fresh session ids, and every recorded response is
+      // an empty 200. Match those in call order instead of by bytes.
+      if (
+        req.url.includes("/agent.v1.AgentService/Run") ||
+        req.url.includes("/aiserver.v1.BidiService/BidiAppend")
+      ) {
         return {
           ...req,
           body: { kind: "empty" },
@@ -50,6 +60,14 @@ export const redact = [
         return res;
       }
 
+      // Statsig can include third-party access tokens in dynamic configs.
+      // They are not needed by these scenarios and must not reach cassettes.
+      for (const entry of Object.values(config.dynamic_configs)) {
+        if (entry?.value && typeof entry.value === "object") {
+          delete entry.value.mapbox_access_token;
+        }
+      }
+
       config.user = {
         appVersion: config.user.appVersion,
         country: "[REDACTED]",
@@ -69,6 +87,12 @@ export const redact = [
       };
       config.evaluated_keys = {
         ...config.evaluated_keys,
+        customIDs: Object.fromEntries(
+          Object.keys(config.evaluated_keys?.customIDs ?? {}).map((key) => [
+            key,
+            "[REDACTED]",
+          ]),
+        ),
         teamID: "[REDACTED]",
         userID: "[REDACTED]",
       };

@@ -134,14 +134,26 @@ async function handleReplayWithoutRequestBody(
   // Some duplex APIs keep the request body open while waiting for response
   // messages. For opted-in URLs, replay can respond immediately because the
   // cassette match is configured to ignore the request body.
+  // A duplex client keeps writing after the recorded response is sent.
+  // Ending the response first makes those writes fail, so wait for the
+  // client to finish its side before ending ours, with a bounded grace period.
+  // Some clients wait for the response to end before closing their request.
+  const requestDone = new Promise<void>((resolve) => {
+    if (req.readableEnded) resolve();
+    req.once("end", resolve);
+    req.once("close", resolve);
+  });
   req.resume();
-  const response = await handleReplay(ctx, {
+  const { entry, response } = replayMatch(ctx, {
     method: req.method ?? "GET",
     url: upstreamUrl,
     headers: headersToRecord(req.headers),
     body: { kind: "empty" },
   });
-  await writeFetchResponse(res, response);
+  await writeFetchResponse(res, await response, {
+    holdOpen: entry?.response.incomplete === true,
+    waitBeforeEnd: { request: req, done: requestDone },
+  });
 }
 
 async function handleStreamingRecord(
@@ -155,6 +167,25 @@ async function handleStreamingRecord(
   let responseHeaders: IncomingHttpHeaders = {};
   let responseStatus = 502;
   let responseStatusText: string | undefined;
+  let receivedResponse = false;
+  let upstreamEnded = false;
+  let clientClosed = false;
+  // Reserve the call index when the request starts. Concurrent streams end
+  // in any order, and replay hands them out in request order.
+  const callIndex = bumpCallCount(
+    ctx,
+    asNormalized(
+      applyFilters(
+        {
+          method: req.method ?? "GET",
+          url: upstreamUrl,
+          headers: headersToRecord(req.headers),
+          body: { kind: "empty" },
+        },
+        ctx.filters,
+      ),
+    ).matchKey,
+  );
 
   await new Promise<void>((resolve, reject) => {
     const upstreamReq = (
@@ -172,9 +203,16 @@ async function handleStreamingRecord(
       else resolve();
     };
 
-    req.on("aborted", () => {
+    // A client that cancels mid-stream still got a real response. Keep
+    // the bytes it saw and mark the entry incomplete.
+    const onClientClose = () => {
+      if (upstreamEnded) return;
+      clientClosed = true;
       upstreamReq.destroy();
-    });
+      if (receivedResponse) settle();
+    };
+    req.on("aborted", onClientClose);
+    res.on("close", onClientClose);
     req.on("error", (err) => {
       upstreamReq.destroy(err);
     });
@@ -183,23 +221,57 @@ async function handleStreamingRecord(
       if (!res.headersSent) {
         res.writeHead(502, { "content-type": "application/json" });
         res.end(JSON.stringify({ error: err.message }));
+      } else if (!res.writableEnded) {
+        res.destroy(err);
       }
       settle(err);
     });
 
     upstreamReq.on("response", (upstreamRes) => {
+      receivedResponse = true;
       responseHeaders = upstreamRes.headers;
       responseStatus = upstreamRes.statusCode ?? 502;
       responseStatusText = upstreamRes.statusMessage;
+      // The client has to read this stream before it can send the next
+      // append. Buffering until upstream end deadlocks that exchange.
+      if (responseStatusText) {
+        res.writeHead(
+          responseStatus,
+          responseStatusText,
+          headersForDownstream(upstreamRes.headers),
+        );
+      } else {
+        res.writeHead(
+          responseStatus,
+          headersForDownstream(upstreamRes.headers),
+        );
+      }
+      res.flushHeaders();
+
+      const resumeUpstream = () => {
+        if (!upstreamRes.readableEnded) upstreamRes.resume();
+      };
+      res.on("drain", resumeUpstream);
 
       upstreamRes.on("data", (chunk) => {
         const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
         responseChunks.push(buffer);
+        if (!res.write(buffer)) upstreamRes.pause();
       });
       upstreamRes.on("end", () => {
+        upstreamEnded = true;
+        res.off("drain", resumeUpstream);
+        res.end();
         settle();
       });
       upstreamRes.on("error", (err) => {
+        res.off("drain", resumeUpstream);
+        if (!res.headersSent) {
+          res.writeHead(502, { "content-type": "application/json" });
+          res.end(JSON.stringify({ error: err.message }));
+        } else if (!res.writableEnded) {
+          res.destroy(err);
+        }
         settle(err);
       });
     });
@@ -207,7 +279,9 @@ async function handleStreamingRecord(
     req.pipe(upstreamReq);
   });
 
-  const capturedResponse = pushStreamingEntry(ctx, {
+  pushStreamingEntry(ctx, {
+    callIndex,
+    incomplete: clientClosed && !upstreamEnded,
     requestHeaders: req.headers,
     requestMethod: req.method ?? "GET",
     responseBody: Buffer.concat(responseChunks),
@@ -216,16 +290,13 @@ async function handleStreamingRecord(
     responseStatusText,
     upstreamUrl,
   });
-  const response = await buildResponse(capturedResponse, {
-    store: ctx.store,
-    name: ctx.name,
-  });
-  await writeFetchResponse(res, response);
 }
 
 function pushStreamingEntry(
   ctx: CassetteContext,
   args: {
+    callIndex: number;
+    incomplete: boolean;
     requestHeaders: Record<string, number | string | string[] | undefined>;
     requestMethod: string;
     responseBody: Uint8Array;
@@ -250,9 +321,10 @@ function pushStreamingEntry(
       headerValue(args.responseHeaders["content-type"]),
       ctx.threshold,
     ),
+    ...(args.incomplete ? { incomplete: true as const } : {}),
   };
 
-  pushRecordEntry(ctx, recorded, captured);
+  pushRecordEntry(ctx, recorded, captured, args.callIndex);
   return captured;
 }
 
@@ -260,6 +332,13 @@ function handleReplay(
   ctx: CassetteContext,
   recorded: RecordedRequest,
 ): Promise<Response> {
+  return replayMatch(ctx, recorded).response;
+}
+
+function replayMatch(
+  ctx: CassetteContext,
+  recorded: RecordedRequest,
+): { entry?: CassetteEntry; response: Promise<Response> } {
   const filtered = asNormalized(applyFilters(recorded, ctx.filters));
   const matchKey = filtered.matchKey;
   const callIndex = bumpCallCount(ctx, matchKey);
@@ -277,15 +356,23 @@ function handleReplay(
       matchKey,
     });
     ctx.misses.push(error);
-    return Promise.resolve(
-      new Response(JSON.stringify({ error: error.message }), {
-        status: 599,
-        headers: { "content-type": "application/json" },
-      }),
-    );
+    return {
+      response: Promise.resolve(
+        new Response(JSON.stringify({ error: error.message }), {
+          status: 599,
+          headers: { "content-type": "application/json" },
+        }),
+      ),
+    };
   }
 
-  return buildResponse(match.response, { store: ctx.store, name: ctx.name });
+  return {
+    entry: match,
+    response: buildResponse(match.response, {
+      store: ctx.store,
+      name: ctx.name,
+    }),
+  };
 }
 
 async function handleRecord(
@@ -310,10 +397,11 @@ function pushRecordEntry(
   ctx: CassetteContext,
   recorded: RecordedRequestOrDraft,
   captured: RecordedResponseOrDraft,
+  reservedCallIndex?: number,
 ): RecordedResponseOrDraft {
   const filtered = asNormalized(applyFilters(recorded, ctx.filters));
   const matchKey = filtered.matchKey;
-  const callIndex = bumpCallCount(ctx, matchKey);
+  const callIndex = reservedCallIndex ?? bumpCallCount(ctx, matchKey);
 
   const redactedRequest = applyRequestRedaction(recorded, ctx.redact);
   const redactedResponse = applyResponseRedaction(
@@ -566,6 +654,9 @@ export function createCassetteServer(
     if (!activeServer) return;
     await new Promise<void>((resolve, reject) => {
       activeServer.close((err) => (err ? reject(err) : resolve()));
+      // Replayed incomplete streams stay open until their client closes.
+      // Do not let one the client abandoned keep the server alive.
+      activeServer.closeAllConnections();
     });
     server = undefined;
     serverUrl = undefined;
@@ -599,6 +690,7 @@ export function createCassetteServer(
 
       server = createServer((req, res) => {
         const work = handleIncoming(req, res).catch((err: unknown) => {
+          if (res.writableEnded || res.destroyed) return;
           if (!res.headersSent) {
             res.writeHead(500, { "content-type": "application/json" });
           }
@@ -723,6 +815,28 @@ function sanitizeIncomingHeaders(headers: IncomingHttpHeaders): Headers {
   return result;
 }
 
+function headersForDownstream(
+  headers: IncomingHttpHeaders,
+): Record<string, string | string[]> {
+  const result: Record<string, string | string[]> = {};
+  const skipped = new Set([
+    "connection",
+    "keep-alive",
+    "proxy-authenticate",
+    "proxy-authorization",
+    "te",
+    "trailer",
+    "transfer-encoding",
+    "upgrade",
+  ]);
+
+  for (const [key, value] of Object.entries(headers)) {
+    if (value === undefined || skipped.has(key.toLowerCase())) continue;
+    result[key] = value;
+  }
+  return result;
+}
+
 function headersForProxy(
   headers: IncomingHttpHeaders,
 ): Record<string, string | string[]> {
@@ -786,6 +900,10 @@ function bodyFromBytes(
 async function writeFetchResponse(
   res: ServerResponse,
   response: Response,
+  options: {
+    holdOpen?: boolean;
+    waitBeforeEnd?: { request: IncomingMessage; done: Promise<void> };
+  } = {},
 ): Promise<void> {
   res.statusCode = response.status;
   if (response.statusText) res.statusMessage = response.statusText;
@@ -824,6 +942,41 @@ async function writeFetchResponse(
       }
     }
   } finally {
+    if (options.holdOpen && !res.destroyed) {
+      // The recorded client cancelled this stream. Wait for it to do so again.
+      await new Promise<void>((resolve) => res.once("close", resolve));
+    } else if (options.waitBeforeEnd && !res.destroyed) {
+      // Wait for the request to finish or become idle. Reset the grace period
+      // when a slow client sends more data, and cap it so replay cannot hang.
+      const { request, done } = options.waitBeforeEnd;
+      let idleTimer: ReturnType<typeof setTimeout> | undefined;
+      let deadlineTimer: ReturnType<typeof setTimeout> | undefined;
+      let onClose: (() => void) | undefined;
+      let onData: (() => void) | undefined;
+      const closed = new Promise<void>((resolve) => {
+        onClose = resolve;
+        res.once("close", resolve);
+      });
+      const idle = new Promise<void>((resolve) => {
+        onData = () => {
+          clearTimeout(idleTimer);
+          idleTimer = setTimeout(resolve, 3000);
+        };
+        request.on("data", onData);
+        onData();
+      });
+      const deadline = new Promise<void>((resolve) => {
+        deadlineTimer = setTimeout(resolve, 15000);
+      });
+      try {
+        await Promise.race([done, closed, idle, deadline]);
+      } finally {
+        clearTimeout(idleTimer);
+        clearTimeout(deadlineTimer);
+        if (onClose) res.off("close", onClose);
+        if (onData) request.off("data", onData);
+      }
+    }
     res.end();
     if (res.destroyed) await reader.cancel();
     else reader.releaseLock();

@@ -17,6 +17,10 @@ export const cursorSDKConfigs: InstrumentationConfig[] =
       functionQuery: {
         className: "Agent",
         methodName: "create",
+        // Published builds minify the class and re-export it, as
+        // `export { Fe as Agent }` in ESM and `r.d(exports, { Agent: () => te })`
+        // in CommonJS. The alias resolves that local name.
+        isExportAlias: true,
       },
     },
     {
@@ -29,6 +33,7 @@ export const cursorSDKConfigs: InstrumentationConfig[] =
       functionQuery: {
         className: "Agent",
         methodName: "resume",
+        isExportAlias: true,
       },
     },
     {
@@ -41,6 +46,7 @@ export const cursorSDKConfigs: InstrumentationConfig[] =
       functionQuery: {
         className: "Agent",
         methodName: "prompt",
+        isExportAlias: true,
       },
     },
   ]);

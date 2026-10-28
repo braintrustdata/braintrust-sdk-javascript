@@ -1,0 +1,20 @@
+{
+  "name": "@braintrust/e2e-cursor-agent-sdk-instrumentation",
+  "private": true,
+  "type": "module",
+  "braintrustScenario": {
+    "bump": {
+      "dependencies": {
+        "agent-sdk-v0-latest": {
+          "package": "@grok/agent-sdk",
+          "range": ">=0.2.29 <0.4.0"
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "agent-sdk-v0": "npm:@grok/agent-sdk@0.2.29",
+    "agent-sdk-v0-latest": "npm:@grok/agent-sdk@0.2.29",
+    "zod": "4.3.6"
+  }
+}

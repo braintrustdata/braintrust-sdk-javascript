@@ -62,7 +62,10 @@ export class Transformer {
     } catch {
       ast = parse(code, { ...options, module: !options.module });
     }
-    const aliases = moduleType === "esm" ? this.collectExportAliases(ast) : {};
+    const aliases =
+      moduleType === "esm"
+        ? this.collectExportAliases(ast)
+        : this.collectWebpackExportAliases(ast);
     let injectionCount = 0;
 
     for (const config of this.configs) {
@@ -133,6 +136,35 @@ export class Transformer {
               aliases[exportedName] = localName;
             }
           }
+        }
+      }
+    }
+    return aliases;
+  }
+
+  /**
+   * Webpack CommonJS bundles export through getters:
+   * `r.d(exports, { Agent: () => te })`. Map each exported name to the local
+   * identifier its getter returns.
+   */
+  private collectWebpackExportAliases(ast: AnyNode): ExportAliases {
+    const aliases: ExportAliases = {};
+    const calls = esquery.query(
+      ast,
+      'CallExpression[callee.type="MemberExpression"][callee.property.name="d"][arguments.length=2][arguments.1.type="ObjectExpression"]',
+    );
+    for (const call of calls as AnyNode[]) {
+      for (const property of call.arguments[1].properties) {
+        if (property.type !== "Property" || property.computed) continue;
+        const exportedName = property.key.name ?? property.key.value;
+        const getter = property.value;
+        if (
+          typeof exportedName === "string" &&
+          getter?.type === "ArrowFunctionExpression" &&
+          getter.params.length === 0 &&
+          getter.body?.type === "Identifier"
+        ) {
+          aliases[exportedName] = getter.body.name;
         }
       }
     }

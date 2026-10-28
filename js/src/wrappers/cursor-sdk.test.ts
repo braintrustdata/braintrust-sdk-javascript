@@ -63,6 +63,28 @@ describe("wrapCursorSDK", () => {
     expect(invoke).toHaveBeenCalledTimes(2);
   });
 
+  it("does not wrap a different module object's Agent.create", async () => {
+    const create = vi.fn(async () => ({ send: vi.fn() }));
+    const appSdk: any = {
+      Agent: class {
+        static create = create;
+      },
+    };
+    const frameworkSdk: any = {
+      Agent: class {
+        static create = create;
+      },
+    };
+
+    const wrapped = wrapCursorSDK(appSdk as any) as any;
+    await wrapped.Agent.create({});
+    expect(invoke).toHaveBeenCalledTimes(1);
+
+    invoke.mockClear();
+    await frameworkSdk.Agent.create({});
+    expect(invoke).not.toHaveBeenCalled();
+  });
+
   it("does not wrap send twice when the plugin already patched the returned agent", async () => {
     const run = makeRun();
     const agent = {
