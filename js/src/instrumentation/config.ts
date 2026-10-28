@@ -70,7 +70,7 @@ export interface InstrumentationIntegrationsConfig {
 }
 
 export interface MCPIntegrationConfig {
-  /** Capture MCP arguments and results. Disabled by default. */
+  /** Capture MCP arguments and results. Enabled by default; set to false to omit them. */
   captureContent?: boolean;
 }
 

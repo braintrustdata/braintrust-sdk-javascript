@@ -889,9 +889,32 @@ describe("MCPPlugin", () => {
     expect(span.error).toContain("independent failure");
   });
 
-  it("does not capture arguments, results, or tool error text by default", async () => {
+  it("captures arguments, results, and tool error text by default", async () => {
     registry.disable();
     registry.configure({ integrations: { mcp: true } });
+    registry.enable();
+    await handleRequest(
+      async () => ({
+        content: [{ type: "text", text: "City not found" }],
+        isError: true,
+      }),
+      {
+        method: "tools/call",
+        params: { name: "lookup", arguments: { city: "Atlantis" } },
+      },
+    );
+    const [span] = await drainSpans();
+    expect(span.input).toEqual({ city: "Atlantis" });
+    expect(span.output).toEqual({
+      content: [{ type: "text", text: "City not found" }],
+      isError: true,
+    });
+    expect(span.error).toBe("City not found");
+  });
+
+  it("does not capture arguments, results, or tool error text when captureContent is false", async () => {
+    registry.disable();
+    registry.configure({ integrations: { mcp: { captureContent: false } } });
     registry.enable();
     vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", "true");
     const result = {

@@ -277,7 +277,7 @@ export function traceMCPMessage<T>(
         parent: parent ?? "",
         event: {
           metadata,
-          ...(config.captureContent === true && typeof id !== "symbol"
+          ...(config.captureContent !== false && typeof id !== "symbol"
             ? method === "tools/call" || method === "prompts/get"
               ? { input: params.arguments }
               : method === "resources/read" && params.uri !== undefined
@@ -294,7 +294,7 @@ export function traceMCPMessage<T>(
       transport,
       id,
       message,
-      captureContent: config.captureContent === true,
+      captureContent: config.captureContent !== false,
       acknowledgementDone: http?.transport !== transport || http.done,
       method,
       ended: false,
