@@ -90,7 +90,7 @@ describe("MCP server wrapper", () => {
     if (!protocol.transport) await protocol.connect({ start() {}, send() {} });
     await protocol.handle("prompts/get", { name: "late" });
 
-    expect(await spanNames()).toEqual(["early", "prompts/get"]);
+    expect(await spanNames()).toEqual(["tools/call early", "prompts/get late"]);
   });
 
   it("wraps a low-level server idempotently", async () => {
@@ -102,7 +102,7 @@ describe("MCP server wrapper", () => {
     if (!protocol.transport) await protocol.connect({ start() {}, send() {} });
     await protocol.handle("tools/call", { name: "once" });
 
-    expect(await spanNames()).toEqual(["once"]);
+    expect(await spanNames()).toEqual(["tools/call once"]);
   });
 
   it("creates one span when auto-instrumentation also wrapped the handler", async () => {
@@ -123,7 +123,7 @@ describe("MCP server wrapper", () => {
     if (!protocol.transport) await protocol.connect({ start() {}, send() {} });
     await protocol.handle("tools/call", { name: "deduplicated" });
 
-    expect(await spanNames()).toEqual(["deduplicated"]);
+    expect(await spanNames()).toEqual(["tools/call deduplicated"]);
   });
 
   it("returns unsupported values unchanged", () => {

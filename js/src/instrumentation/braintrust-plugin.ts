@@ -232,7 +232,9 @@ export class BraintrustPlugin extends BasePlugin {
     }
 
     if (integrations.mcp !== false) {
-      this.mcpPlugin = new MCPPlugin();
+      this.mcpPlugin = new MCPPlugin(
+        typeof integrations.mcp === "object" ? integrations.mcp : {},
+      );
       this.mcpPlugin.enable();
     }
 

@@ -65,7 +65,13 @@ export interface InstrumentationIntegrationsConfig {
   elevenlabs?: boolean;
   /** Set to false to disable, or pass options; options keep LiveKit enabled. */
   livekit?: boolean | LiveKitIntegrationConfig;
-  mcp?: boolean;
+  /** Set to false to disable, or pass options; options keep MCP enabled. */
+  mcp?: boolean | MCPIntegrationConfig;
+}
+
+export interface MCPIntegrationConfig {
+  /** Capture MCP arguments and results. Disabled by default. */
+  captureContent?: boolean;
 }
 
 export interface LiveKitIntegrationConfig {

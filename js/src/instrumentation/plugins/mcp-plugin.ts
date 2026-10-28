@@ -3,6 +3,7 @@ import type {
   MCPRequestHandler,
 } from "../../vendor-sdk-types/mcp";
 import { BasePlugin } from "../core";
+import type { MCPIntegrationConfig } from "../config";
 import { unsubscribeAll } from "../core/tracing";
 import { runInstrumentation } from "../core/observe-result";
 import {
@@ -19,9 +20,15 @@ import {
   traceMCPClose,
   traceMCPHandler,
   traceMCPProtocolError,
+  traceMCPNotificationHandler,
+  traceMCPHttpRequest,
 } from "./mcp-tracing";
 
 export class MCPPlugin extends BasePlugin {
+  constructor(private readonly config: MCPIntegrationConfig = {}) {
+    super();
+  }
+
   protected onEnable(): void {
     this.unsubscribers.push(
       ...[
@@ -66,6 +73,7 @@ export class MCPPlugin extends BasePlugin {
           () => Reflect.apply(target, receiver, args),
           transport,
           args[0],
+          this.config,
         ),
       ),
       mcpChannels.send.intercept((target, receiver, args, { transport }) =>
@@ -92,6 +100,21 @@ export class MCPPlugin extends BasePlugin {
           () => Reflect.apply(target, receiver, args),
           args[0],
         ),
+      ),
+      mcpChannels.notificationHandler.intercept(
+        (target, receiver, args, { protocol }) =>
+          traceMCPNotificationHandler(
+            () => Reflect.apply(target, receiver, args),
+            protocol,
+          ),
+      ),
+      mcpChannels.httpRequest.intercept(
+        (target, receiver, args, { transport }) =>
+          traceMCPHttpRequest(
+            () => Reflect.apply(target, receiver, args),
+            transport,
+            args[0],
+          ),
       ),
     );
   }

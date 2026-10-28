@@ -24,6 +24,11 @@ export type MCPRequestHandler = (
   extra: MCPRequestHandlerExtra,
 ) => unknown;
 
+export type MCPNotificationHandler = (
+  notification: MCPRequest,
+  ...args: unknown[]
+) => unknown;
+
 export type MCPTransport = {
   sessionId?: string;
   start: (...args: unknown[]) => unknown;
@@ -35,9 +40,12 @@ export type MCPTransport = {
 export type MCPProtocol = {
   connect: (transport: MCPTransport, ...args: unknown[]) => unknown;
   setRequestHandler: (...args: unknown[]) => void;
+  setNotificationHandler?: (...args: unknown[]) => void;
   readonly transport?: MCPTransport;
   fallbackRequestHandler?: MCPRequestHandler;
+  fallbackNotificationHandler?: MCPNotificationHandler;
   _serverInfo?: unknown;
   _requestHandlers?: Map<string, MCPRequestHandler>;
+  _notificationHandlers?: Map<string, MCPNotificationHandler>;
   _onerror?: (error: unknown) => unknown;
 };

@@ -12,7 +12,9 @@ import {
   _exportsForTestingOnly,
   initLogger,
   traced,
+  withParent,
 } from "../../logger";
+import { registry } from "../registry";
 import { configureNode } from "../../node/config";
 import type {
   MCPProtocol,
@@ -86,6 +88,9 @@ describe("MCPPlugin", () => {
   });
 
   beforeEach(() => {
+    registry.disable();
+    registry.configure({ integrations: { mcp: { captureContent: true } } });
+    registry.enable();
     backgroundLogger = _exportsForTestingOnly.useTestBackgroundLogger();
     initLogger({
       projectName: "mcp-plugin.test.ts",
@@ -124,7 +129,7 @@ describe("MCPPlugin", () => {
 
     const [span] = await drainSpans();
     expect(span.span_attributes).toMatchObject({
-      name: "get_weather",
+      name: "tools/call get_weather",
       type: "tool",
     });
     expect(span.input).toEqual({ city: "Vienna" });
@@ -133,14 +138,16 @@ describe("MCPPlugin", () => {
       structuredContent: { forecast: "sunny" },
     });
     expect(span.metadata).toEqual({
-      "mcp.method": "tools/call",
-      "mcp.request_id": 7,
-      "mcp.session_id": "session-1",
+      "mcp.method.name": "tools/call",
+      "jsonrpc.request.id": "7",
+      "gen_ai.tool.name": "get_weather",
+      "gen_ai.operation.name": "execute_tool",
+      "mcp.session.id": "session-1",
     });
     expect(span.error).toBeUndefined();
   });
 
-  it("synthesizes a stable session ID per transport", async () => {
+  it("omits session IDs when no MCP session exists", async () => {
     const firstConnection = createProtocol({});
     const secondConnection = createProtocol({});
     const request = { method: "tools/call", params: { name: "noop" } };
@@ -166,13 +173,13 @@ describe("MCPPlugin", () => {
     );
 
     const spans = await drainSpans();
-    const sessionIds = spans.map((span) => span.metadata["mcp.session_id"]);
-    expect(spans.map((span) => span.metadata["mcp.request_id"])).toEqual([
-      1, 2, 1,
+    const sessionIds = spans.map((span) => span.metadata["mcp.session.id"]);
+    expect(spans.map((span) => span.metadata["jsonrpc.request.id"])).toEqual([
+      "1",
+      "2",
+      "1",
     ]);
-    expect(sessionIds[0]).toEqual(expect.any(String));
-    expect(sessionIds[1]).toBe(sessionIds[0]);
-    expect(sessionIds[2]).not.toBe(sessionIds[0]);
+    expect(sessionIds).toEqual([undefined, undefined, undefined]);
   });
 
   it("logs tool error results and thrown errors", async () => {
@@ -200,11 +207,11 @@ describe("MCPPlugin", () => {
       content: [{ type: "text", text: "City not found" }],
       isError: true,
     });
-    expect(thrown.span_attributes.name).toBe("missing");
+    expect(thrown.span_attributes.name).toBe("tools/call missing");
     expect(thrown.error).toContain("Tool missing not found");
   });
 
-  it("traces prompts and resources without dynamic span names", async () => {
+  it("names prompts by target and keeps resource URIs out of names", async () => {
     await handleRequest(
       async () => ({
         messages: [
@@ -225,13 +232,13 @@ describe("MCPPlugin", () => {
 
     const [prompt, resource] = await drainSpans();
     expect(prompt.span_attributes).toMatchObject({
-      name: "prompts/get",
+      name: "prompts/get review",
       type: "function",
     });
     expect(prompt.input).toEqual({ language: "ts" });
     expect(prompt.metadata).toMatchObject({
-      "mcp.method": "prompts/get",
-      "mcp.prompt_name": "review",
+      "mcp.method.name": "prompts/get",
+      "gen_ai.prompt.name": "review",
     });
     expect(resource.span_attributes).toMatchObject({
       name: "resources/read",
@@ -239,8 +246,8 @@ describe("MCPPlugin", () => {
     });
     expect(resource.input).toEqual({ uri: "file:///notes.txt" });
     expect(resource.metadata).toMatchObject({
-      "mcp.method": "resources/read",
-      "mcp.resource_uri": "file:///notes.txt",
+      "mcp.method.name": "resources/read",
+      "mcp.resource.uri": "file:///notes.txt",
     });
     expect(resource.output).toEqual({
       contents: [{ uri: "file:///notes.txt", text: "notes" }],
@@ -273,7 +280,9 @@ describe("MCPPlugin", () => {
     );
 
     const spans = await drainSpans();
-    const tool = spans.find((span) => span.span_attributes.name === "lookup");
+    const tool = spans.find(
+      (span) => span.span_attributes.name === "tools/call lookup",
+    );
     const child = spans.find(
       (span) => span.span_attributes.name === "tool-internals",
     );
@@ -358,10 +367,10 @@ describe("MCPPlugin", () => {
 
       const spans = await drainSpans();
       expect(spans.map((span) => span.span_attributes.name)).toEqual([
-        "registered",
-        "registered",
+        "tools/call registered",
+        "tools/call registered",
       ]);
-      expect(spans[0].metadata["mcp.session_id"]).toBe("session-2");
+      expect(spans[0].metadata["mcp.session.id"]).toBe("session-2");
     },
   );
 
@@ -429,12 +438,12 @@ describe("MCPPlugin", () => {
       { transport },
     );
     const [span] = await drainSpans();
-    expect(span.error).toContain("-32602");
-    expect(span.error).toContain("Invalid arguments");
-    expect(span.error).not.toContain("hidden");
+    expect(span.error).toBeUndefined();
+    expect(span.metadata["error.type"]).toBeUndefined();
+    expect(span.metadata["rpc.response.status_code"]).toBe("-32602");
     expect(span.input).toBeUndefined();
     expect(span.output).toBeUndefined();
-    expect(span.metadata["mcp.request_id"]).toBe(0);
+    expect(span.metadata["jsonrpc.request.id"]).toBe("0");
   });
 
   it("propagates response-send failures and ends the span", async () => {
@@ -561,12 +570,12 @@ describe("MCPPlugin", () => {
     const spans = await drainSpans();
     expect(spans).toHaveLength(5);
     expect(new Set(spans.map((span) => span.span_id)).size).toBe(5);
-    expect(spans.map((span) => span.metadata["mcp.request_id"])).toEqual([
-      0,
+    expect(spans.map((span) => span.metadata["jsonrpc.request.id"])).toEqual([
       "0",
-      0,
       "0",
-      0,
+      "0",
+      "0",
+      "0",
     ]);
     expect(spans.every((span) => typeof span.metrics.end === "number")).toBe(
       true,
@@ -620,7 +629,7 @@ describe("MCPPlugin", () => {
     const [span] = await drainSpans();
     expect(span.input).toEqual(args);
     expect(span.metadata).toMatchObject({
-      "mcp.protocol_version": "2025-11-25",
+      "mcp.protocol.version": "2025-11-25",
       "mcp.client.name": "client",
       "mcp.client.version": "2",
       "mcp.server.name": "weather",
@@ -671,26 +680,50 @@ describe("MCPPlugin", () => {
     expect(JSON.stringify(span.output)).not.toContain("traceparent");
   });
 
-  it("falls back to the active parent for invalid trace context", async () => {
+  it.each([undefined, "invalid"])(
+    "starts a new trace for MCP context %s despite an active parent",
+    async (traceparent) => {
+      await traced(
+        async () =>
+          handleRequest(async () => ({ content: [] }), {
+            method: "tools/call",
+            params: { _meta: { traceparent } },
+          }),
+        { name: "parent" },
+      );
+      const spans = await drainSpans();
+      const parent = spans.find(
+        (span) => span.span_attributes.name === "parent",
+      )!;
+      const child = spans.find(
+        (span) => span.span_attributes.name === "tools/call",
+      )!;
+      expect(child.span_parents ?? []).toEqual([]);
+      expect(child.root_span_id).not.toBe(parent.root_span_id);
+      expect(child.root_span_id).toMatch(/^[0-9a-f]{32}$/);
+    },
+  );
+
+  it("starts a new trace without MCP context despite withParent context", async () => {
     await traced(
-      async () =>
-        handleRequest(async () => ({ content: [] }), {
-          method: "tools/call",
-          params: { _meta: { traceparent: "invalid" } },
-        }),
+      async (parent) => {
+        await withParent(await parent.export(), () =>
+          handleRequest(async () => ({}), { method: "ping" }),
+        );
+      },
       { name: "parent" },
     );
     const spans = await drainSpans();
     const parent = spans.find(
       (span) => span.span_attributes.name === "parent",
     )!;
-    const child = spans.find(
-      (span) => span.span_attributes.name === "tools/call",
-    )!;
-    expect(child.span_parents).toEqual([parent.span_id]);
+    const child = spans.find((span) => span.span_attributes.name === "ping")!;
+    expect(child.span_parents ?? []).toEqual([]);
+    expect(child.root_span_id).not.toBe(parent.root_span_id);
+    expect(child.root_span_id).toMatch(/^[0-9a-f]{32}$/);
   });
 
-  it("does not trace notifications, responses, or detached task lifecycles", async () => {
+  it("traces notifications but excludes responses and detached tasks", async () => {
     const transport = createProtocol().transport!;
     for (const message of [
       {
@@ -710,7 +743,13 @@ describe("MCPPlugin", () => {
     ]) {
       mcpChannels.message.invoke(() => {}, transport, [message], { transport });
     }
-    expect(await drainSpans()).toEqual([]);
+    await Promise.resolve();
+    const [span] = await drainSpans();
+    expect(span.span_attributes.name).toBe("notifications/cancelled");
+    expect(span.metadata["jsonrpc.request.id"]).toBeUndefined();
+    expect(span.metadata["mcp.cancelled"]).toBeUndefined();
+    expect(span.metrics.end).toEqual(expect.any(Number));
+    expect(JSON.stringify(span)).not.toContain("hidden");
   });
 
   it("retains sanitized results if attachment conversion fails", async () => {
@@ -753,7 +792,9 @@ describe("MCPPlugin", () => {
     );
     const spans = await drainSpans();
     for (const name of ["first", "second"]) {
-      const parent = spans.find((span) => span.span_attributes.name === name)!;
+      const parent = spans.find(
+        (span) => span.span_attributes.name === `tools/call ${name}`,
+      )!;
       const child = spans.find(
         (span) => span.span_attributes.name === `${name}-child`,
       )!;
@@ -846,6 +887,277 @@ describe("MCPPlugin", () => {
     const [span] = await drainSpans();
     expect(span.metadata["mcp.cancelled"]).toBe(true);
     expect(span.error).toContain("independent failure");
+  });
+
+  it("does not capture arguments, results, or tool error text by default", async () => {
+    registry.disable();
+    registry.configure({ integrations: { mcp: true } });
+    registry.enable();
+    vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", "true");
+    const result = {
+      content: [{ type: "text", text: "private error text" }],
+      isError: true,
+    };
+    const returned = await handleRequest(async () => result, {
+      method: "tools/call",
+      params: { name: "lookup", arguments: { secret: "private argument" } },
+    });
+    expect(returned).toBe(result);
+    const [span] = await drainSpans();
+    expect(span.input).toBeUndefined();
+    expect(span.output).toBeUndefined();
+    expect(span.error).toBe("Tool returned an error result");
+    expect(span.metadata["error.type"]).toBe("tool_error");
+    expect(span.metadata["rpc.response.status_code"]).toBeUndefined();
+    expect(JSON.stringify(span)).not.toContain("private");
+  });
+
+  it.each([-32700, -32600, -32601, -32602, -32002, -32603, -32000])(
+    "classifies the final JSON-RPC response %s instead of a caught handler exception",
+    async (code) => {
+      const protocol = createProtocol();
+      const transport = protocol.transport!;
+      await mcpChannels.message.invoke(
+        async () => {
+          await Promise.resolve(
+            mcpChannels.requestHandler.invoke(
+              async () => {
+                throw new TypeError("caught validation exception");
+              },
+              undefined,
+              [{ method: "tools/call" }, { requestId: 0 }],
+              { protocol },
+            ),
+          ).catch(() => {});
+          mcpChannels.send.invoke(
+            transport.send,
+            transport,
+            [
+              {
+                id: 0,
+                error: {
+                  code,
+                  message: "protocol failure",
+                  data: "private data",
+                },
+              },
+            ],
+            { transport },
+          );
+        },
+        transport,
+        [{ id: 0, method: "tools/call" }],
+        { transport },
+      );
+      const [span] = await drainSpans();
+      expect(span.metadata["rpc.response.status_code"]).toBe(String(code));
+      if ([-32603, -32000].includes(code)) {
+        expect(span.error).toContain("protocol failure");
+        expect(span.metadata["error.type"]).toBe(String(code));
+      } else {
+        expect(span.error).toBeUndefined();
+        expect(span.metadata["error.type"]).toBeUndefined();
+      }
+      expect(JSON.stringify(span)).not.toContain("caught validation exception");
+      expect(JSON.stringify(span)).not.toContain("private data");
+      expect(span.metrics.end).toEqual(expect.any(Number));
+    },
+  );
+
+  it("keeps notification processing and transport acknowledgement in the span lifetime", async () => {
+    const protocol = createProtocol();
+    const transport = protocol.transport!;
+    let completeHandler!: () => void;
+    let acknowledge!: () => void;
+    const processing = new Promise<void>((resolve) => {
+      completeHandler = resolve;
+    });
+    const ack = new Promise<void>((resolve) => {
+      acknowledge = resolve;
+    });
+    const result = mcpChannels.message.invoke(
+      () => {
+        void Promise.resolve().then(() =>
+          mcpChannels.notificationHandler.invoke(
+            async () => {
+              await processing;
+              await traced(async () => {}, {
+                name: "nested-notification-work",
+              });
+            },
+            undefined,
+            [{ method: "notifications/resources/updated" }],
+            { protocol },
+          ),
+        );
+        return ack;
+      },
+      transport,
+      [
+        {
+          method: "notifications/resources/updated",
+          params: { uri: "notes://updated", secret: "private" },
+        },
+      ],
+      { transport },
+    );
+    expect(result).toBe(ack);
+    await Promise.resolve();
+    const [started] = await drainSpans();
+    expect(started.metrics.end).toBeUndefined();
+    completeHandler();
+    await new Promise((resolve) => setImmediate(resolve));
+    const interim = await drainSpans();
+    const nested = interim.find(
+      (span) => span.span_attributes.name === "nested-notification-work",
+    )!;
+    expect(nested.span_parents).toEqual([started.span_id]);
+    expect(
+      interim.find((span) => span.span_id === started.span_id)?.metrics?.end,
+    ).toBeUndefined();
+    acknowledge();
+    await result;
+    await Promise.resolve();
+    const [ended] = await drainSpans();
+    expect(ended.metrics.end).toEqual(expect.any(Number));
+    expect(started.metadata["mcp.resource.uri"]).toBe("notes://updated");
+    expect(started.metadata["jsonrpc.request.id"]).toBeUndefined();
+    expect(started.input).toBeUndefined();
+    expect(JSON.stringify([started, ended])).not.toContain("private");
+  });
+
+  it("waits for HTTP acknowledgement after an asynchronous notification handler", async () => {
+    const protocol = createProtocol();
+    const transport = protocol.transport!;
+    let acknowledge!: () => void;
+    const ack = new Promise<void>((resolve) => {
+      acknowledge = resolve;
+    });
+    const result = mcpChannels.httpRequest.invoke(
+      () => {
+        mcpChannels.message.invoke(
+          () => {
+            void Promise.resolve().then(() =>
+              mcpChannels.notificationHandler.invoke(
+                async () => {
+                  await Promise.resolve();
+                },
+                undefined,
+                [{ method: "acme/notice" }],
+                { protocol },
+              ),
+            );
+          },
+          transport,
+          [{ method: "acme/notice" }],
+          { transport },
+        );
+        return ack;
+      },
+      transport,
+      [{ httpVersion: "1.1" }],
+      { transport },
+    );
+    expect(result).toBe(ack);
+    await new Promise((resolve) => setImmediate(resolve));
+    const [started] = await drainSpans();
+    expect(started.metrics.end).toBeUndefined();
+    acknowledge();
+    await result;
+    const [ended] = await drainSpans();
+    expect(ended.metrics.end).toEqual(expect.any(Number));
+  });
+
+  it("records notification failure without changing the handler promise", async () => {
+    const protocol = createProtocol();
+    const transport = protocol.transport!;
+    const error = new TypeError("notification failed");
+    let task!: Promise<unknown>;
+    mcpChannels.message.invoke(
+      () => {
+        task = Promise.resolve().then(() =>
+          mcpChannels.notificationHandler.invoke(
+            () => Promise.reject(error),
+            undefined,
+            [{ method: "acme/notice" }],
+            { protocol },
+          ),
+        );
+      },
+      transport,
+      [{ method: "acme/notice" }],
+      { transport },
+    );
+    await expect(task).rejects.toBe(error);
+    const [span] = await drainSpans();
+    expect(span.error).toContain("notification failed");
+    expect(span.metadata["error.type"]).toBe("TypeError");
+    expect(span.metrics.end).toEqual(expect.any(Number));
+  });
+
+  it("records only known HTTP transport and client fields", async () => {
+    const protocol = createProtocol();
+    const transport = protocol.transport!;
+    await mcpChannels.httpRequest.invoke(
+      () =>
+        handleRequest(
+          async () => ({}),
+          {
+            method: "resources/subscribe",
+            params: { uri: "notes://forecast" },
+          },
+          {},
+          protocol,
+        ),
+      transport,
+      [
+        {
+          httpVersion: "2",
+          socket: { remoteAddress: "127.0.0.1", remotePort: 4321 },
+          headers: { authorization: "private" },
+        },
+      ],
+      { transport },
+    );
+    const [span] = await drainSpans();
+    expect(span.metadata).toMatchObject({
+      "network.transport": "tcp",
+      "network.protocol.name": "http",
+      "network.protocol.version": "2",
+      "client.address": "127.0.0.1",
+      "client.port": 4321,
+      "mcp.resource.uri": "notes://forecast",
+    });
+    expect(span.input).toBeUndefined();
+    expect(JSON.stringify(span)).not.toContain("private");
+  });
+
+  it("uses the negotiated protocol version on subsequent operations", async () => {
+    const protocol = createProtocol();
+    await handleRequest(
+      async () => ({ protocolVersion: "2025-11-25" }),
+      { method: "initialize" },
+      {},
+      protocol,
+    );
+    await handleRequest(
+      async () => ({}),
+      {
+        method: "ping",
+        params: {
+          _meta: { "io.modelcontextprotocol/protocolVersion": "2026-07-28" },
+        },
+      },
+      {},
+      protocol,
+    );
+    await handleRequest(async () => ({}), { method: "ping" }, {}, protocol);
+    const spans = await drainSpans();
+    expect(spans.map((span) => span.metadata["mcp.protocol.version"])).toEqual([
+      "2025-11-25",
+      "2026-07-28",
+      "2025-11-25",
+    ]);
   });
 
   it("does not instrument client transports", () => {

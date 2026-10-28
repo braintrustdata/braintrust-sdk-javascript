@@ -5,6 +5,7 @@ import type {
   MCPRequestHandler,
   MCPRequestHandlerExtra,
   MCPTransport,
+  MCPNotificationHandler,
 } from "../../vendor-sdk-types/mcp";
 
 const protocolChannels = {
@@ -38,12 +39,24 @@ export const mcpChannels = defineInterceptor("mcp", {
   close: channel<unknown[], unknown, { transport: MCPTransport }>({
     channelName: "close",
   }),
+  httpRequest: channel<
+    [unknown, ...unknown[]],
+    unknown,
+    { transport: MCPTransport }
+  >({
+    channelName: "httpRequest",
+  }),
   protocolError: channel<[unknown], unknown>({ channelName: "protocolError" }),
   requestHandler: channel<
     [MCPRequest, MCPRequestHandlerExtra],
     unknown,
     { protocol: MCPProtocol }
   >({ channelName: "requestHandler" }),
+  notificationHandler: channel<
+    [MCPRequest, ...unknown[]],
+    unknown,
+    { protocol: MCPProtocol }
+  >({ channelName: "notificationHandler" }),
 });
 
 const wrapped = Symbol.for("braintrust.mcp.transport-wrapper");
@@ -66,6 +79,19 @@ export function wrapMCPTransport(
   transport: MCPTransport,
   protocol: MCPProtocol,
 ): void {
+  wrapMethod(
+    transport,
+    "handleRequest",
+    (original) =>
+      function (this: unknown, ...args) {
+        return mcpChannels.httpRequest.invoke(
+          original,
+          this,
+          args as [unknown, ...unknown[]],
+          { transport },
+        );
+      },
+  );
   const wrapCallbacks = () => {
     wrapMethod(
       transport,
@@ -76,6 +102,12 @@ export function wrapMCPTransport(
           if (protocol.fallbackRequestHandler) {
             protocol.fallbackRequestHandler = wrapMCPRequestHandler(
               protocol.fallbackRequestHandler,
+              protocol,
+            );
+          }
+          if (protocol.fallbackNotificationHandler) {
+            protocol.fallbackNotificationHandler = wrapMCPNotificationHandler(
+              protocol.fallbackNotificationHandler,
               protocol,
             );
           }
@@ -171,6 +203,22 @@ export function wrapMCPProtocol(protocol: MCPProtocol): void {
   );
   wrapMethod(
     protocol,
+    "setNotificationHandler",
+    (original) =>
+      function (this: unknown, ...args) {
+        const result = Reflect.apply(original, this, args);
+        // Observe the SDK's validation wrapper as well as the user callback.
+        for (const [method, handler] of protocol._notificationHandlers ?? []) {
+          protocol._notificationHandlers!.set(
+            method,
+            wrapMCPNotificationHandler(handler, protocol),
+          );
+        }
+        return result;
+      },
+  );
+  wrapMethod(
+    protocol,
     "_onerror",
     (original) =>
       function (this: unknown, error) {
@@ -183,5 +231,28 @@ export function wrapMCPProtocol(protocol: MCPProtocol): void {
       wrapMCPRequestHandler(handler, protocol),
     );
   }
+  for (const [method, handler] of protocol._notificationHandlers ?? []) {
+    protocol._notificationHandlers!.set(
+      method,
+      wrapMCPNotificationHandler(handler, protocol),
+    );
+  }
   if (protocol.transport) wrapMCPTransport(protocol.transport, protocol);
+}
+
+function wrapMCPNotificationHandler(
+  handler: MCPNotificationHandler,
+  protocol: MCPProtocol,
+): MCPNotificationHandler {
+  if (Reflect.get(handler, wrapped) === protocol) return handler;
+  const replacement: MCPNotificationHandler = function (
+    this: unknown,
+    ...args
+  ) {
+    return mcpChannels.notificationHandler.invoke(handler, this, args, {
+      protocol,
+    });
+  };
+  Object.defineProperty(replacement, wrapped, { value: protocol });
+  return replacement;
 }

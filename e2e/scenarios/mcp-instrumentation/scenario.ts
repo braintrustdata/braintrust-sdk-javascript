@@ -1,3 +1,4 @@
+import "./configure.mjs";
 import { runMain } from "../../helpers/scenario-runtime";
 import {
   loadMCPModules,

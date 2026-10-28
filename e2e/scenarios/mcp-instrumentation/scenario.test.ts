@@ -53,45 +53,58 @@ const scenarios = await Promise.all(
 
 describe.concurrent("variants", () => {
   for (const scenario of scenarios) {
-    describeVariant(`mcp ${scenario.line} ${scenario.version}`, () => {
-      const env = {
-        MCP_SDK_LINE: scenario.line,
-        MCP_SERVER_PACKAGE_NAME: scenario.dependencyName,
-      };
-      const runContext = {
-        cassette: false,
-        originalScenarioDir,
-        variantKey: scenario.snapshotName,
-      };
+    for (const captureContent of [false, true]) {
+      describeVariant(
+        `mcp ${scenario.line} ${scenario.version}, captureContent=${captureContent}`,
+        () => {
+          const env = {
+            MCP_CAPTURE_CONTENT: captureContent ? "1" : "0",
+            MCP_SDK_LINE: scenario.line,
+            MCP_SERVER_PACKAGE_NAME: scenario.dependencyName,
+          };
+          const runContext = {
+            cassette: false,
+            originalScenarioDir,
+            variantKey: scenario.snapshotName,
+          };
 
-      defineMCPInstrumentationAssertions({
-        name: "wrapped instrumentation",
-        runScenario: async ({ runScenarioDir }) => {
-          await runScenarioDir({
-            entry: scenario.wrapperEntry,
-            env,
-            runContext,
-            scenarioDir,
+          defineMCPInstrumentationAssertions({
+            captureContent,
+            name: "wrapped instrumentation",
+            runScenario: async ({ runScenarioDir }) => {
+              await runScenarioDir({
+                entry: scenario.wrapperEntry,
+                env,
+                runContext,
+                scenarioDir,
+              });
+            },
+            snapshotName: `${scenario.snapshotName}${captureContent ? "" : "-no-content"}`,
+            testFileUrl: import.meta.url,
+          });
+
+          defineMCPInstrumentationAssertions({
+            captureContent,
+            name: "auto-hook instrumentation",
+            runScenario: async ({ runNodeScenarioDir }) => {
+              await runNodeScenarioDir({
+                entry: scenario.autoEntry,
+                env,
+                nodeArgs: [
+                  "--import",
+                  `${scenarioDir}/configure.mjs`,
+                  "--import",
+                  "braintrust/hook.mjs",
+                ],
+                runContext,
+                scenarioDir,
+              });
+            },
+            snapshotName: `${scenario.snapshotName}${captureContent ? "" : "-no-content"}`,
+            testFileUrl: import.meta.url,
           });
         },
-        snapshotName: scenario.snapshotName,
-        testFileUrl: import.meta.url,
-      });
-
-      defineMCPInstrumentationAssertions({
-        name: "auto-hook instrumentation",
-        runScenario: async ({ runNodeScenarioDir }) => {
-          await runNodeScenarioDir({
-            entry: scenario.autoEntry,
-            env,
-            nodeArgs: ["--import", "braintrust/hook.mjs"],
-            runContext,
-            scenarioDir,
-          });
-        },
-        snapshotName: scenario.snapshotName,
-        testFileUrl: import.meta.url,
-      });
-    });
+      );
+    }
   }
 });

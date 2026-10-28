@@ -1,3 +1,4 @@
+import "./configure.mjs";
 import { createRequire } from "node:module";
 import { runMain } from "../../helpers/scenario-runtime";
 import {

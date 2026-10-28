@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { traced, wrapMCPServer } from "braintrust";
+import { traced, wrapMCPServer, injectTraceContext } from "braintrust";
 import { z } from "zod";
 import { MINIMAL_PNG_BASE64 } from "../../helpers/media-fixtures.mjs";
 import {
@@ -140,6 +140,23 @@ function createClient(mcp) {
   return new mcp.Client({ name: "braintrust-e2e-client", version: "1.0.0" });
 }
 
+function withTraceContext(transport) {
+  const send = transport.send;
+  transport.send = function (message, ...args) {
+    if (typeof message.method === "string") {
+      message = {
+        ...message,
+        params: {
+          ...message.params,
+          _meta: { ...injectTraceContext(), ...message.params?._meta },
+        },
+      };
+    }
+    return send.call(this, message, ...args);
+  };
+  return transport;
+}
+
 async function runHttpSession(mcp, decorateServer) {
   const server = createServer(mcp, decorateServer);
   const serverTransport = new mcp.WebStandardStreamableHTTPServerTransport({
@@ -148,13 +165,15 @@ async function runHttpSession(mcp, decorateServer) {
   });
   await server.connect(serverTransport);
 
-  // Serve requests in-process so server spans share the client's trace.
+  // Explicit MCP propagation links requests to the client operation.
   const client = createClient(mcp);
   await client.connect(
-    new mcp.StreamableHTTPClientTransport(new URL("http://mcp.test/mcp"), {
-      fetch: (url, init) =>
-        serverTransport.handleRequest(new Request(url, init)),
-    }),
+    withTraceContext(
+      new mcp.StreamableHTTPClientTransport(new URL("http://mcp.test/mcp"), {
+        fetch: (url, init) =>
+          serverTransport.handleRequest(new Request(url, init)),
+      }),
+    ),
   );
 
   await client.callTool({ name: "get_weather", arguments: { city: "Vienna" } });
@@ -170,6 +189,7 @@ async function runInMemorySession(mcp, decorateServer) {
   const server = createServer(mcp, decorateServer);
   const [clientTransport, serverTransport] =
     mcp.InMemoryTransport.createLinkedPair();
+  withTraceContext(clientTransport);
   await server.connect(serverTransport);
 
   const client = createClient(mcp);
@@ -219,6 +239,7 @@ async function runLifecycleSession(mcp, decorateServer) {
   );
   const [clientTransport, serverTransport] =
     mcp.InMemoryTransport.createLinkedPair();
+  withTraceContext(clientTransport);
   await server.connect(serverTransport);
   const client = createClient(mcp);
   await client.connect(clientTransport);
@@ -233,6 +254,7 @@ async function runLifecycleSession(mcp, decorateServer) {
     { id: 100, method: "ping" },
     { id: 101, method: "tools/list" },
     { id: 102, method: "acme/missing" },
+    { id: 106, method: "ping", params: { _meta: { traceparent: "invalid" } } },
     {
       id: 103,
       method: "tools/call",
@@ -246,6 +268,53 @@ async function runLifecycleSession(mcp, decorateServer) {
     await response;
     responses.delete(request.id);
   }
+  let noticeFinished;
+  const noticed = new Promise((resolve) => {
+    noticeFinished = resolve;
+  });
+  server.server.fallbackNotificationHandler = async () => {
+    await Promise.resolve();
+    await traced(async () => {}, { name: "notice-work" });
+    noticeFinished();
+  };
+  let validatedNoticeFinished;
+  const validatedNotice = new Promise((resolve) => {
+    validatedNoticeFinished = resolve;
+  });
+  const onValidatedNotice = async () => {
+    await traced(async () => {}, { name: "validated-notice-work" });
+    validatedNoticeFinished();
+  };
+  if (process.env.MCP_SDK_LINE === "v1") {
+    server.server.setNotificationHandler(
+      z.object({
+        method: z.literal("acme/validated"),
+        params: z.object({ value: z.string() }),
+      }),
+      onValidatedNotice,
+    );
+  } else {
+    server.server.setNotificationHandler(
+      "acme/validated",
+      { params: z.object({ value: z.string() }) },
+      onValidatedNotice,
+    );
+  }
+  await clientTransport.send({
+    jsonrpc: "2.0",
+    method: "acme/validated",
+    params: { value: "valid" },
+  });
+  await validatedNotice;
+  await clientTransport.send({
+    jsonrpc: "2.0",
+    method: "acme/validated",
+    params: { value: 42 },
+  });
+  await new Promise((resolve) => setImmediate(resolve));
+  await clientTransport.send({ jsonrpc: "2.0", method: "acme/notice" });
+  await noticed;
+  await new Promise((resolve) => setImmediate(resolve));
   await clientTransport.send({
     jsonrpc: "2.0",
     id: 104,

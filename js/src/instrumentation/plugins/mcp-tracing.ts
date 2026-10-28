@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from "uuid";
 import { automaticAttachmentOriginals } from "../../automatic-attachments";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
 import iso, { type IsoAsyncLocalStorage } from "../../isomorph";
@@ -25,13 +24,21 @@ import {
   getExtensionFromMediaType,
   isAutoCaptureAttachmentsEnabled,
 } from "../../wrappers/attachment-utils";
+import type { MCPIntegrationConfig } from "../config";
 import { isAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
 import { observeResult, runInstrumentation } from "../core/observe-result";
 
 type PendingRequest = {
   span: Span;
   transport: MCPTransport;
-  id: string | number;
+  id: string | number | symbol;
+  message: object;
+  captureContent: boolean;
+  messageDone?: boolean;
+  acknowledgementDone: boolean;
+  handlerDone?: boolean;
+  handlerFailure?: unknown;
+  errorType?: string;
   method: string;
   ended: boolean;
   handlerStarted?: boolean;
@@ -39,10 +46,73 @@ type PendingRequest = {
 };
 const connections = new WeakMap<
   MCPTransport,
-  Map<string | number, PendingRequest>
+  Map<string | number | symbol, PendingRequest>
 >();
-const sessionIds = new WeakMap<MCPTransport, string>();
+const protocolVersions = new WeakMap<MCPTransport, string>();
 let requestContext: IsoAsyncLocalStorage<PendingRequest> | undefined;
+
+let httpContext:
+  | IsoAsyncLocalStorage<{
+      transport: MCPTransport;
+      metadata: Record<string, string | number>;
+      notifications: Set<PendingRequest>;
+      done: boolean;
+    }>
+  | undefined;
+
+export function traceMCPHttpRequest<T>(
+  call: () => T,
+  transport: MCPTransport,
+  request: unknown,
+): T {
+  const metadata: Record<string, string | number> = {
+    "network.protocol.name": "http",
+  };
+  if (isObject(request)) {
+    if (typeof request.httpVersion === "string") {
+      metadata["network.protocol.version"] = request.httpVersion;
+      metadata["network.transport"] = request.httpVersion.startsWith("3")
+        ? "quic"
+        : "tcp";
+    }
+    if (
+      isObject(request.socket) &&
+      typeof request.socket.remoteAddress === "string"
+    ) {
+      metadata["client.address"] = request.socket.remoteAddress;
+      if (typeof request.socket.remotePort === "number")
+        metadata["client.port"] = request.socket.remotePort;
+    }
+  }
+  httpContext ??= iso.newAsyncLocalStorage();
+  const context = {
+    transport,
+    metadata,
+    notifications: new Set<PendingRequest>(),
+    done: false,
+  };
+  const settled = (error?: unknown) => {
+    context.done = true;
+    for (const notification of context.notifications) {
+      notification.acknowledgementDone = true;
+      if (
+        error !== undefined ||
+        (notification.messageDone && notification.handlerDone)
+      ) {
+        finish(notification, error);
+      }
+    }
+    context.notifications.clear();
+  };
+  return httpContext.run(context, () => {
+    try {
+      return observeResult(call(), () => settled(), settled);
+    } catch (error) {
+      settled(error);
+      throw error;
+    }
+  });
+}
 
 function finish(
   request: PendingRequest,
@@ -54,10 +124,19 @@ function finish(
   if (connections.get(request.transport)?.get(request.id) === request) {
     connections.get(request.transport)!.delete(request.id);
   }
-  const failure = request.failure ?? error;
+  const failure = request.failure ?? error ?? request.handlerFailure;
   request.span.log({
     ...(failure !== undefined ? { error: failure } : {}),
-    ...(cancelled ? { metadata: { "mcp.cancelled": true } } : {}),
+    metadata: {
+      ...(failure !== undefined
+        ? {
+            "error.type":
+              request.errorType ??
+              (failure instanceof Error ? failure.constructor.name : "_OTHER"),
+          }
+        : {}),
+      ...(cancelled ? { "mcp.cancelled": true } : {}),
+    },
   });
   request.span.end();
 }
@@ -72,7 +151,7 @@ function protocolMetadata(
     direction === "request" &&
     typeof meta["io.modelcontextprotocol/protocolVersion"] === "string"
   ) {
-    metadata["mcp.protocol_version"] =
+    metadata["mcp.protocol.version"] =
       meta["io.modelcontextprotocol/protocolVersion"];
   }
   const side = direction === "request" ? "client" : "server";
@@ -91,13 +170,16 @@ export function traceMCPMessage<T>(
   call: () => T,
   transport: MCPTransport,
   message: unknown,
+  config: MCPIntegrationConfig = {},
 ): T {
   const request = runInstrumentation(() => {
     if (
       isAutoInstrumentationSuppressed() ||
       !isObject(message) ||
       typeof message.method !== "string" ||
-      (typeof message.id !== "string" && typeof message.id !== "number")
+      (message.id !== undefined &&
+        typeof message.id !== "string" &&
+        typeof message.id !== "number")
     )
       return;
     const params = isObject(message.params) ? message.params : {};
@@ -117,22 +199,59 @@ export function traceMCPMessage<T>(
       active &&
       !active.ended &&
       active.transport === transport &&
-      active.id === message.id
+      active.message === message
     )
       return;
-    let sessionId = transport.sessionId || sessionIds.get(transport);
-    if (!sessionId) sessionIds.set(transport, (sessionId = uuidv4()));
     const method = message.method;
+    const id = message.id === undefined ? Symbol("notification") : message.id;
+    const protocolVersion = protocolVersions.get(transport);
+    const http = httpContext?.getStore();
+    // Only known SDK transports identify a transport here. HTTP details exposed
+    // by Node are collected separately around handleRequest, never from headers.
+    const transportName = transport.constructor.name;
     const metadata = {
-      "mcp.method": method,
-      "mcp.request_id": message.id,
-      "mcp.session_id": sessionId,
-      ...(method === "prompts/get" && typeof params.name === "string"
-        ? { "mcp.prompt_name": params.name }
+      "mcp.method.name": method,
+      ...(typeof id !== "symbol" ? { "jsonrpc.request.id": String(id) } : {}),
+      ...(transport.sessionId ? { "mcp.session.id": transport.sessionId } : {}),
+      ...(typeof id !== "symbol" && method === "tools/call"
+        ? {
+            "gen_ai.operation.name": "execute_tool",
+            ...(typeof params.name === "string"
+              ? { "gen_ai.tool.name": params.name }
+              : {}),
+          }
         : {}),
-      ...(method === "resources/read" && typeof params.uri === "string"
-        ? { "mcp.resource_uri": params.uri }
+      ...(typeof id !== "symbol" &&
+      method === "prompts/get" &&
+      typeof params.name === "string"
+        ? { "gen_ai.prompt.name": params.name }
         : {}),
+      ...([
+        "resources/read",
+        "resources/subscribe",
+        "resources/unsubscribe",
+        "notifications/resources/updated",
+      ].includes(method) && typeof params.uri === "string"
+        ? { "mcp.resource.uri": params.uri }
+        : {}),
+      ...(protocolVersion ? { "mcp.protocol.version": protocolVersion } : {}),
+      ...(typeof message.jsonrpc === "string" && message.jsonrpc !== "2.0"
+        ? { "jsonrpc.protocol.version": message.jsonrpc }
+        : {}),
+      ...(transportName === "StdioServerTransport"
+        ? { "network.transport": "pipe" }
+        : {}),
+      ...([
+        "StreamableHTTPServerTransport",
+        "WebStandardStreamableHTTPServerTransport",
+        "SSEServerTransport",
+      ].includes(transportName)
+        ? { "network.protocol.name": "http" }
+        : {}),
+      ...(transportName === "WebSocketServerTransport"
+        ? { "network.protocol.name": "websocket" }
+        : {}),
+      ...(http?.transport === transport ? http.metadata : {}),
       ...protocolMetadata(meta, "request"),
     };
     const carrier: Record<string, string> = {};
@@ -144,38 +263,46 @@ export function traceMCPMessage<T>(
     const spanArgs = withSpanInstrumentationName(
       {
         name:
-          method === "tools/call" &&
+          typeof id !== "symbol" &&
+          (method === "tools/call" || method === "prompts/get") &&
           typeof params.name === "string" &&
           params.name
-            ? params.name
+            ? `${method} ${params.name}`
             : method,
         type:
-          method === "tools/call"
+          typeof id !== "symbol" && method === "tools/call"
             ? SpanTypeAttribute.TOOL
             : SpanTypeAttribute.FUNCTION,
-        parent,
+        // An explicit empty parent also prevents inheriting withParent context.
+        parent: parent ?? "",
         event: {
           metadata,
-          ...(method === "tools/call" || method === "prompts/get"
-            ? { input: params.arguments }
-            : method === "resources/read" && params.uri !== undefined
-              ? { input: { uri: params.uri } }
-              : {}),
+          ...(config.captureContent === true && typeof id !== "symbol"
+            ? method === "tools/call" || method === "prompts/get"
+              ? { input: params.arguments }
+              : method === "resources/read" && params.uri !== undefined
+                ? { input: { uri: params.uri } }
+                : {}
+            : {}),
         },
       },
       INSTRUMENTATION_NAMES.MCP,
     );
-    const span = parent
-      ? withCurrent(NOOP_SPAN, () => startSpan(spanArgs))
-      : startSpan(spanArgs);
+    const span = withCurrent(NOOP_SPAN, () => startSpan(spanArgs));
     const state: PendingRequest = {
       span,
       transport,
-      id: message.id,
+      id,
+      message,
+      captureContent: config.captureContent === true,
+      acknowledgementDone: http?.transport !== transport || http.done,
       method,
       ended: false,
     };
-    pending.set(message.id, state);
+    pending.set(id, state);
+    if (typeof id === "symbol" && http?.transport === transport && !http.done) {
+      http.notifications.add(state);
+    }
     return state;
   });
   if (!request) return call();
@@ -185,7 +312,18 @@ export function traceMCPMessage<T>(
       try {
         return observeResult(
           call(),
-          () => {},
+          () => {
+            request.messageDone = true;
+            if (typeof request.id === "symbol") {
+              // MCP dispatches notification handlers in a microtask. Observe
+              // after that dispatch, including notifications with no handler.
+              void Promise.resolve().then(() => {
+                if (!request.handlerStarted) request.handlerDone = true;
+                if (request.handlerDone && request.acknowledgementDone)
+                  finish(request);
+              });
+            }
+          },
           (error) => finish(request, error),
         );
       } catch (error) {
@@ -217,24 +355,54 @@ export function traceMCPSend<T>(
     if (!state || state.ended) return;
     runInstrumentation(() => {
       if (isObject(message.error)) {
-        state.failure ??= new Error(
-          `MCP error ${message.error.code}: ${message.error.message}`,
-        );
+        const code = message.error.code;
+        state.span.log({
+          metadata: { "rpc.response.status_code": String(code) },
+        });
+        // The response classifies the outcome; a caught validation exception
+        // from a handler is not an independent server failure.
+        state.handlerFailure = undefined;
+        if (
+          !(
+            typeof code === "number" &&
+            [-32700, -32600, -32601, -32602, -32002].includes(code)
+          )
+        ) {
+          state.failure = new Error(
+            `MCP error ${code}: ${message.error.message}`,
+          );
+          state.errorType = String(code);
+        }
       } else if ("result" in message) {
         const result = message.result;
+        if (
+          state.method === "initialize" &&
+          isObject(result) &&
+          typeof result.protocolVersion === "string"
+        ) {
+          protocolVersions.set(transport, result.protocolVersion);
+          state.span.log({
+            metadata: { "mcp.protocol.version": result.protocolVersion },
+          });
+        }
         state.span.log({
           metadata: protocolMetadata(
             isObject(result) ? result._meta : undefined,
             "response",
           ),
-          ...(["tools/call", "prompts/get", "resources/read"].includes(
-            state.method,
-          )
+          ...(state.captureContent &&
+          ["tools/call", "prompts/get", "resources/read"].includes(state.method)
             ? { output: sanitizeResult(result) }
             : {}),
         });
-        if (state.method === "tools/call")
-          state.failure ??= extractToolError(result);
+        if (
+          state.method === "tools/call" &&
+          isObject(result) &&
+          result.isError === true
+        ) {
+          state.failure ??= extractToolError(result, state.captureContent);
+          state.errorType ??= "tool_error";
+        }
       }
     });
     return state;
@@ -271,18 +439,53 @@ export function traceMCPHandler<T>(
   const settled = (error?: unknown) => {
     if (state.ended) return;
     if (signal?.aborted) finish(state, undefined, true);
-    else if (error !== undefined) state.failure ??= error;
+    else if (error !== undefined) state.handlerFailure ??= error;
   };
   try {
     return observeResult(
       call(),
       (result) => {
-        if (!state.ended && !signal?.aborted && state.method === "tools/call")
-          state.failure ??= extractToolError(result);
+        if (
+          !state.ended &&
+          !signal?.aborted &&
+          state.method === "tools/call" &&
+          isObject(result) &&
+          result.isError === true
+        ) {
+          state.failure ??= extractToolError(result, state.captureContent);
+          state.errorType ??= "tool_error";
+        }
         settled();
       },
       (error) => settled(error),
     );
+  } catch (error) {
+    settled(error);
+    throw error;
+  }
+}
+
+/** Observe the actual handler promise; transport dispatch often returns void. */
+export function traceMCPNotificationHandler<T>(
+  call: () => T,
+  protocol: MCPProtocol,
+): T {
+  const state = requestContext?.getStore();
+  if (
+    !state ||
+    state.ended ||
+    typeof state.id !== "symbol" ||
+    state.transport !== protocol.transport
+  )
+    return call();
+  state.handlerStarted = true;
+  const settled = (error?: unknown) => {
+    state.handlerDone = true;
+    state.failure ??= error;
+    if (state.messageDone && state.acknowledgementDone) finish(state);
+  };
+  try {
+    return observeResult(call(), () => settled(), settled);
   } catch (error) {
     settled(error);
     throw error;
@@ -297,7 +500,7 @@ export function traceMCPClose<T>(call: () => T, transport: MCPTransport): T {
     );
   }
   connections.delete(transport);
-  sessionIds.delete(transport);
+  protocolVersions.delete(transport);
   return call();
 }
 
@@ -312,22 +515,23 @@ export function traceMCPProtocolError<T>(call: () => T, error: unknown): T {
   return call();
 }
 
-function extractToolError(result: unknown): unknown {
+function extractToolError(result: unknown, captureContent: boolean): unknown {
   if (!isObject(result) || result.isError !== true) {
     return undefined;
   }
 
-  const text = Array.isArray(result.content)
-    ? result.content
-        .flatMap((block) =>
-          isObject(block) &&
-          block.type === "text" &&
-          typeof block.text === "string"
-            ? [block.text]
-            : [],
-        )
-        .join("\n")
-    : "";
+  const text =
+    captureContent && Array.isArray(result.content)
+      ? result.content
+          .flatMap((block) =>
+            isObject(block) &&
+            block.type === "text" &&
+            typeof block.text === "string"
+              ? [block.text]
+              : [],
+          )
+          .join("\n")
+      : "";
   return text || "Tool returned an error result";
 }
 
