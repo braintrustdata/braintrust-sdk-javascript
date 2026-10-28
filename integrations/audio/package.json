@@ -1,6 +1,6 @@
 {
   "name": "@braintrust/audio",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Audio codecs for Braintrust voice recordings",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
