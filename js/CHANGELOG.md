@@ -6,7 +6,7 @@
 
 - feat(mcp): Add MCP server tracing (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2679)
 - feat(audio): Compressed voice recordings with `@braintrust/audio` Thanks @delner! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2658)
-- feat(livekit): Record caller and agent audio with explicit per-direction flags Set `BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS` and `BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS` to record each side of a call. Thanks @delner! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2656)
+- feat(livekit): Record caller and agent audio with explicit per-direction flags Thanks @delner! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2656)
 
 ### Patch Changes
 
