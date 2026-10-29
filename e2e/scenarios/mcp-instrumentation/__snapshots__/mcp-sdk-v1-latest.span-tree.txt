@@ -31,8 +31,12 @@ span_tree:
 │   │   ├── initialize [function]
 │   │   │   metadata: {
 │   │   │     "jsonrpc.request.id": "0",
+│   │   │     "mcp.client.name": "braintrust-e2e-client",
+│   │   │     "mcp.client.version": "1.0.0",
 │   │   │     "mcp.method.name": "initialize",
 │   │   │     "mcp.protocol.version": "<timestamp>",
+│   │   │     "mcp.server.name": "braintrust-e2e-weather",
+│   │   │     "mcp.server.version": "1.0.0",
 │   │   │     "mcp.session.id": "<uuid:1>",
 │   │   │     "network.protocol.name": "http",
 │   │   │     "scenario": "mcp-instrumentation",
@@ -49,8 +53,15 @@ span_tree:
 │   │   │   }
 │   │   ├── notifications/initialized [function]
 │   │   │   metadata: {
+│   │   │     "mcp.client.name": "braintrust-e2e-client",
+│   │   │     "mcp.client.version": "1.0.0",
+│   │   │     "mcp.lifecycle.phase": "initialization_complete",
 │   │   │     "mcp.method.name": "notifications/initialized",
+│   │   │     "mcp.notification.direction": "incoming",
+│   │   │     "mcp.protocol.ready": 1,
 │   │   │     "mcp.protocol.version": "<timestamp>",
+│   │   │     "mcp.server.name": "braintrust-e2e-weather",
+│   │   │     "mcp.server.version": "1.0.0",
 │   │   │     "mcp.session.id": "<uuid:1>",
 │   │   │     "network.protocol.name": "http",
 │   │   │     "scenario": "mcp-instrumentation",
@@ -86,6 +97,8 @@ span_tree:
 │   │   │     "gen_ai.operation.name": "execute_tool",
 │   │   │     "gen_ai.tool.name": "get_weather",
 │   │   │     "jsonrpc.request.id": "1",
+│   │   │     "mcp.client.name": "braintrust-e2e-client",
+│   │   │     "mcp.client.version": "1.0.0",
 │   │   │     "mcp.method.name": "tools/call",
 │   │   │     "mcp.protocol.version": "<timestamp>",
 │   │   │     "mcp.server.name": "braintrust-e2e-weather",
@@ -139,6 +152,8 @@ span_tree:
 │   │   │     "gen_ai.operation.name": "execute_tool",
 │   │   │     "gen_ai.tool.name": "get_weather",
 │   │   │     "jsonrpc.request.id": "2",
+│   │   │     "mcp.client.name": "braintrust-e2e-client",
+│   │   │     "mcp.client.version": "1.0.0",
 │   │   │     "mcp.method.name": "tools/call",
 │   │   │     "mcp.protocol.version": "<timestamp>",
 │   │   │     "mcp.server.name": "braintrust-e2e-weather",
@@ -185,9 +200,13 @@ span_tree:
 │   │   │   }
 │   │   │   metadata: {
 │   │   │     "jsonrpc.request.id": "3",
+│   │   │     "mcp.client.name": "braintrust-e2e-client",
+│   │   │     "mcp.client.version": "1.0.0",
 │   │   │     "mcp.method.name": "resources/read",
 │   │   │     "mcp.protocol.version": "<timestamp>",
 │   │   │     "mcp.resource.uri": "notes://forecast",
+│   │   │     "mcp.server.name": "braintrust-e2e-weather",
+│   │   │     "mcp.server.version": "1.0.0",
 │   │   │     "mcp.session.id": "<uuid:1>",
 │   │   │     "network.protocol.name": "http",
 │   │   │     "scenario": "mcp-instrumentation",
@@ -220,8 +239,12 @@ span_tree:
 │   │       metadata: {
 │   │         "gen_ai.prompt.name": "forecast",
 │   │         "jsonrpc.request.id": "4",
+│   │         "mcp.client.name": "braintrust-e2e-client",
+│   │         "mcp.client.version": "1.0.0",
 │   │         "mcp.method.name": "prompts/get",
 │   │         "mcp.protocol.version": "<timestamp>",
+│   │         "mcp.server.name": "braintrust-e2e-weather",
+│   │         "mcp.server.version": "1.0.0",
 │   │         "mcp.session.id": "<uuid:1>",
 │   │         "network.protocol.name": "http",
 │   │         "scenario": "mcp-instrumentation",
@@ -254,8 +277,12 @@ span_tree:
 │   │   ├── initialize [function]
 │   │   │   metadata: {
 │   │   │     "jsonrpc.request.id": "0",
+│   │   │     "mcp.client.name": "braintrust-e2e-client",
+│   │   │     "mcp.client.version": "1.0.0",
 │   │   │     "mcp.method.name": "initialize",
 │   │   │     "mcp.protocol.version": "<timestamp>",
+│   │   │     "mcp.server.name": "braintrust-e2e-weather",
+│   │   │     "mcp.server.version": "1.0.0",
 │   │   │     "scenario": "mcp-instrumentation",
 │   │   │     "testRunId": "<run:1>"
 │   │   │   }
@@ -270,8 +297,10 @@ span_tree:
 │   │   │   }
 │   │   ├── notifications/initialized [function]
 │   │   │   metadata: {
+│   │   │     "mcp.lifecycle.phase": "initialization_complete",
 │   │   │     "mcp.method.name": "notifications/initialized",
-│   │   │     "mcp.protocol.version": "<timestamp>",
+│   │   │     "mcp.notification.direction": "incoming",
+│   │   │     "mcp.protocol.ready": 1,
 │   │   │     "scenario": "mcp-instrumentation",
 │   │   │     "testRunId": "<run:1>"
 │   │   │   }
@@ -337,6 +366,100 @@ span_tree:
 │   │   │         "caller_functionname": "<caller>",
 │   │   │         "caller_lineno": 0
 │   │   │       }
+│   │   ├── tools/call report_progress [tool]
+│   │   │   output: {
+│   │   │     "content": [
+│   │   │       {
+│   │   │         "text": "done",
+│   │   │         "type": "text"
+│   │   │       }
+│   │   │     ]
+│   │   │   }
+│   │   │   metadata: {
+│   │   │     "gen_ai.operation.name": "execute_tool",
+│   │   │     "gen_ai.tool.name": "report_progress",
+│   │   │     "jsonrpc.request.id": "2",
+│   │   │     "mcp.client.name": "braintrust-e2e-client",
+│   │   │     "mcp.client.version": "1.0.0",
+│   │   │     "mcp.method.name": "tools/call",
+│   │   │     "mcp.protocol.version": "<timestamp>",
+│   │   │     "mcp.server.name": "braintrust-e2e-weather",
+│   │   │     "mcp.server.version": "1.0.0",
+│   │   │     "scenario": "mcp-instrumentation",
+│   │   │     "testRunId": "<run:1>"
+│   │   │   }
+│   │   │   metrics: {
+│   │   │     "end": 0,
+│   │   │     "start": 0
+│   │   │   }
+│   │   │   context: {
+│   │   │     "caller_filename": "<caller>",
+│   │   │     "caller_functionname": "<caller>",
+│   │   │     "caller_lineno": 0
+│   │   │   }
+│   │   │   ├── notifications/progress [function]
+│   │   │   │   output: {
+│   │   │   │     "message": "working",
+│   │   │   │     "progress": 1,
+│   │   │   │     "progressToken": 0,
+│   │   │   │     "total": 2
+│   │   │   │   }
+│   │   │   │   metadata: {
+│   │   │   │     "mcp.client.name": "braintrust-e2e-client",
+│   │   │   │     "mcp.client.version": "1.0.0",
+│   │   │   │     "mcp.method.name": "notifications/progress",
+│   │   │   │     "mcp.notification.direction": "outgoing",
+│   │   │   │     "mcp.progress.current": 1,
+│   │   │   │     "mcp.progress.message": "working",
+│   │   │   │     "mcp.progress.percentage": 50,
+│   │   │   │     "mcp.progress.token": "0",
+│   │   │   │     "mcp.progress.total": 2,
+│   │   │   │     "mcp.protocol.version": "<timestamp>",
+│   │   │   │     "mcp.server.name": "braintrust-e2e-weather",
+│   │   │   │     "mcp.server.version": "1.0.0",
+│   │   │   │     "scenario": "mcp-instrumentation",
+│   │   │   │     "testRunId": "<run:1>"
+│   │   │   │   }
+│   │   │   │   metrics: {
+│   │   │   │     "end": 0,
+│   │   │   │     "start": 0
+│   │   │   │   }
+│   │   │   │   context: {
+│   │   │   │     "caller_filename": "<caller>",
+│   │   │   │     "caller_functionname": "<caller>",
+│   │   │   │     "caller_lineno": 0
+│   │   │   │   }
+│   │   │   └── notifications/message [function]
+│   │   │       output: {
+│   │   │         "data": {
+│   │   │           "data": "<omitted>",
+│   │   │           "mimeType": "image/png",
+│   │   │           "type": "image"
+│   │   │         },
+│   │   │         "level": "info"
+│   │   │       }
+│   │   │       metadata: {
+│   │   │         "mcp.client.name": "braintrust-e2e-client",
+│   │   │         "mcp.client.version": "1.0.0",
+│   │   │         "mcp.logging.data_type": "object",
+│   │   │         "mcp.logging.level": "info",
+│   │   │         "mcp.method.name": "notifications/message",
+│   │   │         "mcp.notification.direction": "outgoing",
+│   │   │         "mcp.protocol.version": "<timestamp>",
+│   │   │         "mcp.server.name": "braintrust-e2e-weather",
+│   │   │         "mcp.server.version": "1.0.0",
+│   │   │         "scenario": "mcp-instrumentation",
+│   │   │         "testRunId": "<run:1>"
+│   │   │       }
+│   │   │       metrics: {
+│   │   │         "end": 0,
+│   │   │         "start": 0
+│   │   │       }
+│   │   │       context: {
+│   │   │         "caller_filename": "<caller>",
+│   │   │         "caller_functionname": "<caller>",
+│   │   │         "caller_lineno": 0
+│   │   │       }
 │   │   ├── tools/call render_map [tool]
 │   │   │   output: {
 │   │   │     "content": [
@@ -350,9 +473,13 @@ span_tree:
 │   │   │   metadata: {
 │   │   │     "gen_ai.operation.name": "execute_tool",
 │   │   │     "gen_ai.tool.name": "render_map",
-│   │   │     "jsonrpc.request.id": "2",
+│   │   │     "jsonrpc.request.id": "3",
+│   │   │     "mcp.client.name": "braintrust-e2e-client",
+│   │   │     "mcp.client.version": "1.0.0",
 │   │   │     "mcp.method.name": "tools/call",
 │   │   │     "mcp.protocol.version": "<timestamp>",
+│   │   │     "mcp.server.name": "braintrust-e2e-weather",
+│   │   │     "mcp.server.version": "1.0.0",
 │   │   │     "scenario": "mcp-instrumentation",
 │   │   │     "testRunId": "<run:1>"
 │   │   │   }
@@ -379,9 +506,13 @@ span_tree:
 │   │         "error.type": "tool_error",
 │   │         "gen_ai.operation.name": "execute_tool",
 │   │         "gen_ai.tool.name": "get_alerts",
-│   │         "jsonrpc.request.id": "3",
+│   │         "jsonrpc.request.id": "4",
+│   │         "mcp.client.name": "braintrust-e2e-client",
+│   │         "mcp.client.version": "1.0.0",
 │   │         "mcp.method.name": "tools/call",
 │   │         "mcp.protocol.version": "<timestamp>",
+│   │         "mcp.server.name": "braintrust-e2e-weather",
+│   │         "mcp.server.version": "1.0.0",
 │   │         "scenario": "mcp-instrumentation",
 │   │         "testRunId": "<run:1>"
 │   │       }
@@ -395,9 +526,359 @@ span_tree:
 │   │         "caller_functionname": "<caller>",
 │   │         "caller_lineno": 0
 │   │       }
-│   └── mcp-lifecycle-operation
+│   ├── mcp-lifecycle-operation
+│   │   metadata: {
+│   │     "operation": "lifecycle",
+│   │     "scenario": "mcp-instrumentation",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   │   metrics: {
+│   │     "end": 0,
+│   │     "start": 0
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<caller>",
+│   │     "caller_functionname": "<caller>",
+│   │     "caller_lineno": 0
+│   │   }
+│   │   ├── initialize [function]
+│   │   │   metadata: {
+│   │   │     "jsonrpc.request.id": "0",
+│   │   │     "mcp.client.name": "braintrust-e2e-client",
+│   │   │     "mcp.client.version": "1.0.0",
+│   │   │     "mcp.method.name": "initialize",
+│   │   │     "mcp.protocol.version": "<timestamp>",
+│   │   │     "mcp.server.name": "braintrust-e2e-weather",
+│   │   │     "mcp.server.version": "1.0.0",
+│   │   │     "scenario": "mcp-instrumentation",
+│   │   │     "testRunId": "<run:1>"
+│   │   │   }
+│   │   │   metrics: {
+│   │   │     "end": 0,
+│   │   │     "start": 0
+│   │   │   }
+│   │   │   context: {
+│   │   │     "caller_filename": "<caller>",
+│   │   │     "caller_functionname": "<caller>",
+│   │   │     "caller_lineno": 0
+│   │   │   }
+│   │   ├── notifications/initialized [function]
+│   │   │   metadata: {
+│   │   │     "mcp.lifecycle.phase": "initialization_complete",
+│   │   │     "mcp.method.name": "notifications/initialized",
+│   │   │     "mcp.notification.direction": "incoming",
+│   │   │     "mcp.protocol.ready": 1,
+│   │   │     "scenario": "mcp-instrumentation",
+│   │   │     "testRunId": "<run:1>"
+│   │   │   }
+│   │   │   metrics: {
+│   │   │     "end": 0,
+│   │   │     "start": 0
+│   │   │   }
+│   │   │   context: {
+│   │   │     "caller_filename": "<caller>",
+│   │   │     "caller_functionname": "<caller>",
+│   │   │     "caller_lineno": 0
+│   │   │   }
+│   │   ├── ping [function]
+│   │   │   metadata: {
+│   │   │     "jsonrpc.request.id": "100",
+│   │   │     "mcp.client.name": "braintrust-e2e-client",
+│   │   │     "mcp.client.version": "1.0.0",
+│   │   │     "mcp.method.name": "ping",
+│   │   │     "mcp.protocol.version": "<timestamp>",
+│   │   │     "mcp.server.name": "braintrust-e2e-weather",
+│   │   │     "mcp.server.version": "1.0.0",
+│   │   │     "scenario": "mcp-instrumentation",
+│   │   │     "testRunId": "<run:1>"
+│   │   │   }
+│   │   │   metrics: {
+│   │   │     "end": 0,
+│   │   │     "start": 0
+│   │   │   }
+│   │   │   context: {
+│   │   │     "caller_filename": "<caller>",
+│   │   │     "caller_functionname": "<caller>",
+│   │   │     "caller_lineno": 0
+│   │   │   }
+│   │   ├── tools/list [function]
+│   │   │   metadata: {
+│   │   │     "jsonrpc.request.id": "101",
+│   │   │     "mcp.client.name": "braintrust-e2e-client",
+│   │   │     "mcp.client.version": "1.0.0",
+│   │   │     "mcp.method.name": "tools/list",
+│   │   │     "mcp.protocol.version": "<timestamp>",
+│   │   │     "mcp.server.name": "braintrust-e2e-weather",
+│   │   │     "mcp.server.version": "1.0.0",
+│   │   │     "scenario": "mcp-instrumentation",
+│   │   │     "testRunId": "<run:1>"
+│   │   │   }
+│   │   │   metrics: {
+│   │   │     "end": 0,
+│   │   │     "start": 0
+│   │   │   }
+│   │   │   context: {
+│   │   │     "caller_filename": "<caller>",
+│   │   │     "caller_functionname": "<caller>",
+│   │   │     "caller_lineno": 0
+│   │   │   }
+│   │   ├── acme/missing [function]
+│   │   │   metadata: {
+│   │   │     "jsonrpc.request.id": "102",
+│   │   │     "mcp.client.name": "braintrust-e2e-client",
+│   │   │     "mcp.client.version": "1.0.0",
+│   │   │     "mcp.method.name": "acme/missing",
+│   │   │     "mcp.protocol.version": "<timestamp>",
+│   │   │     "mcp.server.name": "braintrust-e2e-weather",
+│   │   │     "mcp.server.version": "1.0.0",
+│   │   │     "rpc.response.status_code": "-32601",
+│   │   │     "scenario": "mcp-instrumentation",
+│   │   │     "testRunId": "<run:1>"
+│   │   │   }
+│   │   │   metrics: {
+│   │   │     "end": 0,
+│   │   │     "start": 0
+│   │   │   }
+│   │   │   context: {
+│   │   │     "caller_filename": "<caller>",
+│   │   │     "caller_functionname": "<caller>",
+│   │   │     "caller_lineno": 0
+│   │   │   }
+│   │   ├── tools/call get_weather [tool]
+│   │   │   input: {
+│   │   │     "city": 42
+│   │   │   }
+│   │   │   output: {
+│   │   │     "content": [
+│   │   │       {
+│   │   │         "text": "MCP error -32602: Input validation error: Invalid arguments for tool get_weather: Invalid input: expected string, received number at city",
+│   │   │         "type": "text"
+│   │   │       }
+│   │   │     ],
+│   │   │     "isError": true
+│   │   │   }
+│   │   │   metadata: {
+│   │   │     "error.type": "tool_error",
+│   │   │     "gen_ai.operation.name": "execute_tool",
+│   │   │     "gen_ai.tool.name": "get_weather",
+│   │   │     "jsonrpc.request.id": "103",
+│   │   │     "mcp.client.name": "braintrust-e2e-client",
+│   │   │     "mcp.client.version": "1.0.0",
+│   │   │     "mcp.method.name": "tools/call",
+│   │   │     "mcp.protocol.version": "<timestamp>",
+│   │   │     "mcp.server.name": "braintrust-e2e-weather",
+│   │   │     "mcp.server.version": "1.0.0",
+│   │   │     "scenario": "mcp-instrumentation",
+│   │   │     "testRunId": "<run:1>"
+│   │   │   }
+│   │   │   metrics: {
+│   │   │     "end": 0,
+│   │   │     "start": 0
+│   │   │   }
+│   │   │   error: "MCP error -32602: Input validation error: Invalid arguments for tool get_weather: Invalid input: expected string, received number at city"
+│   │   │   context: {
+│   │   │     "caller_filename": "<caller>",
+│   │   │     "caller_functionname": "<caller>",
+│   │   │     "caller_lineno": 0
+│   │   │   }
+│   │   ├── acme/validated [function]
+│   │   │   input: {
+│   │   │     "value": "valid"
+│   │   │   }
+│   │   │   metadata: {
+│   │   │     "mcp.client.name": "braintrust-e2e-client",
+│   │   │     "mcp.client.version": "1.0.0",
+│   │   │     "mcp.method.name": "acme/validated",
+│   │   │     "mcp.notification.direction": "incoming",
+│   │   │     "mcp.protocol.version": "<timestamp>",
+│   │   │     "mcp.server.name": "braintrust-e2e-weather",
+│   │   │     "mcp.server.version": "1.0.0",
+│   │   │     "scenario": "mcp-instrumentation",
+│   │   │     "testRunId": "<run:1>"
+│   │   │   }
+│   │   │   metrics: {
+│   │   │     "end": 0,
+│   │   │     "start": 0
+│   │   │   }
+│   │   │   context: {
+│   │   │     "caller_filename": "<caller>",
+│   │   │     "caller_functionname": "<caller>",
+│   │   │     "caller_lineno": 0
+│   │   │   }
+│   │   │   └── validated-notice-work
+│   │   │       metadata: {
+│   │   │         "scenario": "mcp-instrumentation",
+│   │   │         "testRunId": "<run:1>"
+│   │   │       }
+│   │   │       metrics: {
+│   │   │         "end": 0,
+│   │   │         "start": 0
+│   │   │       }
+│   │   │       context: {
+│   │   │         "caller_filename": "<caller>",
+│   │   │         "caller_functionname": "<caller>",
+│   │   │         "caller_lineno": 0
+│   │   │       }
+│   │   ├── acme/validated [function]
+│   │   │   input: {
+│   │   │     "value": 42
+│   │   │   }
+│   │   │   metadata: {
+│   │   │     "error.type": "$ZodError",
+│   │   │     "mcp.client.name": "braintrust-e2e-client",
+│   │   │     "mcp.client.version": "1.0.0",
+│   │   │     "mcp.method.name": "acme/validated",
+│   │   │     "mcp.notification.direction": "incoming",
+│   │   │     "mcp.protocol.version": "<timestamp>",
+│   │   │     "mcp.server.name": "braintrust-e2e-weather",
+│   │   │     "mcp.server.version": "1.0.0",
+│   │   │     "scenario": "mcp-instrumentation",
+│   │   │     "testRunId": "<run:1>"
+│   │   │   }
+│   │   │   metrics: {
+│   │   │     "end": 0,
+│   │   │     "start": 0
+│   │   │   }
+│   │   │   error: "[\n  {\n    \"expected\": \"string\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      \"params\",\n      \"value\"\n    ],\n    \"message\": \"Invalid input: expected string, received number\"\n  }\n]"
+│   │   │   context: {
+│   │   │     "caller_filename": "<caller>",
+│   │   │     "caller_functionname": "<caller>",
+│   │   │     "caller_lineno": 0
+│   │   │   }
+│   │   ├── acme/notice [function]
+│   │   │   metadata: {
+│   │   │     "mcp.client.name": "braintrust-e2e-client",
+│   │   │     "mcp.client.version": "1.0.0",
+│   │   │     "mcp.method.name": "acme/notice",
+│   │   │     "mcp.notification.direction": "incoming",
+│   │   │     "mcp.protocol.version": "<timestamp>",
+│   │   │     "mcp.server.name": "braintrust-e2e-weather",
+│   │   │     "mcp.server.version": "1.0.0",
+│   │   │     "scenario": "mcp-instrumentation",
+│   │   │     "testRunId": "<run:1>"
+│   │   │   }
+│   │   │   metrics: {
+│   │   │     "end": 0,
+│   │   │     "start": 0
+│   │   │   }
+│   │   │   context: {
+│   │   │     "caller_filename": "<caller>",
+│   │   │     "caller_functionname": "<caller>",
+│   │   │     "caller_lineno": 0
+│   │   │   }
+│   │   │   └── notice-work
+│   │   │       metadata: {
+│   │   │         "scenario": "mcp-instrumentation",
+│   │   │         "testRunId": "<run:1>"
+│   │   │       }
+│   │   │       metrics: {
+│   │   │         "end": 0,
+│   │   │         "start": 0
+│   │   │       }
+│   │   │       context: {
+│   │   │         "caller_filename": "<caller>",
+│   │   │         "caller_functionname": "<caller>",
+│   │   │         "caller_lineno": 0
+│   │   │       }
+│   │   ├── tools/call wait_for_cancel [tool]
+│   │   │   metadata: {
+│   │   │     "gen_ai.operation.name": "execute_tool",
+│   │   │     "gen_ai.tool.name": "wait_for_cancel",
+│   │   │     "jsonrpc.request.id": "104",
+│   │   │     "mcp.cancelled": true,
+│   │   │     "mcp.client.name": "braintrust-e2e-client",
+│   │   │     "mcp.client.version": "1.0.0",
+│   │   │     "mcp.method.name": "tools/call",
+│   │   │     "mcp.protocol.version": "<timestamp>",
+│   │   │     "mcp.server.name": "braintrust-e2e-weather",
+│   │   │     "mcp.server.version": "1.0.0",
+│   │   │     "scenario": "mcp-instrumentation",
+│   │   │     "testRunId": "<run:1>"
+│   │   │   }
+│   │   │   metrics: {
+│   │   │     "end": 0,
+│   │   │     "start": 0
+│   │   │   }
+│   │   │   context: {
+│   │   │     "caller_filename": "<caller>",
+│   │   │     "caller_functionname": "<caller>",
+│   │   │     "caller_lineno": 0
+│   │   │   }
+│   │   ├── notifications/cancelled [function]
+│   │   │   input: {
+│   │   │     "requestId": 104
+│   │   │   }
+│   │   │   metadata: {
+│   │   │     "mcp.cancelled.request_id": "104",
+│   │   │     "mcp.client.name": "braintrust-e2e-client",
+│   │   │     "mcp.client.version": "1.0.0",
+│   │   │     "mcp.method.name": "notifications/cancelled",
+│   │   │     "mcp.notification.direction": "incoming",
+│   │   │     "mcp.protocol.version": "<timestamp>",
+│   │   │     "mcp.server.name": "braintrust-e2e-weather",
+│   │   │     "mcp.server.version": "1.0.0",
+│   │   │     "scenario": "mcp-instrumentation",
+│   │   │     "testRunId": "<run:1>"
+│   │   │   }
+│   │   │   metrics: {
+│   │   │     "end": 0,
+│   │   │     "start": 0
+│   │   │   }
+│   │   │   context: {
+│   │   │     "caller_filename": "<caller>",
+│   │   │     "caller_functionname": "<caller>",
+│   │   │     "caller_lineno": 0
+│   │   │   }
+│   │   ├── acme/cancel [function]
+│   │   │   metadata: {
+│   │   │     "jsonrpc.request.id": "105",
+│   │   │     "mcp.cancelled": true,
+│   │   │     "mcp.client.name": "braintrust-e2e-client",
+│   │   │     "mcp.client.version": "1.0.0",
+│   │   │     "mcp.method.name": "acme/cancel",
+│   │   │     "mcp.protocol.version": "<timestamp>",
+│   │   │     "mcp.server.name": "braintrust-e2e-weather",
+│   │   │     "mcp.server.version": "1.0.0",
+│   │   │     "scenario": "mcp-instrumentation",
+│   │   │     "testRunId": "<run:1>"
+│   │   │   }
+│   │   │   metrics: {
+│   │   │     "end": 0,
+│   │   │     "start": 0
+│   │   │   }
+│   │   │   context: {
+│   │   │     "caller_filename": "<caller>",
+│   │   │     "caller_functionname": "<caller>",
+│   │   │     "caller_lineno": 0
+│   │   │   }
+│   │   └── notifications/cancelled [function]
+│   │       input: {
+│   │         "requestId": 105
+│   │       }
+│   │       metadata: {
+│   │         "mcp.cancelled.request_id": "105",
+│   │         "mcp.client.name": "braintrust-e2e-client",
+│   │         "mcp.client.version": "1.0.0",
+│   │         "mcp.method.name": "notifications/cancelled",
+│   │         "mcp.notification.direction": "incoming",
+│   │         "mcp.protocol.version": "<timestamp>",
+│   │         "mcp.server.name": "braintrust-e2e-weather",
+│   │         "mcp.server.version": "1.0.0",
+│   │         "scenario": "mcp-instrumentation",
+│   │         "testRunId": "<run:1>"
+│   │       }
+│   │       metrics: {
+│   │         "end": 0,
+│   │         "start": 0
+│   │       }
+│   │       context: {
+│   │         "caller_filename": "<caller>",
+│   │         "caller_functionname": "<caller>",
+│   │         "caller_lineno": 0
+│   │       }
+│   └── mcp-stdio-error-operation
 │       metadata: {
-│         "operation": "lifecycle",
+│         "operation": "stdio-error",
 │         "scenario": "mcp-instrumentation",
 │         "testRunId": "<run:1>"
 │       }
@@ -410,260 +891,21 @@ span_tree:
 │         "caller_functionname": "<caller>",
 │         "caller_lineno": 0
 │       }
-│       ├── initialize [function]
-│       │   metadata: {
-│       │     "jsonrpc.request.id": "0",
-│       │     "mcp.method.name": "initialize",
-│       │     "mcp.protocol.version": "<timestamp>",
-│       │     "scenario": "mcp-instrumentation",
-│       │     "testRunId": "<run:1>"
-│       │   }
-│       │   metrics: {
-│       │     "end": 0,
-│       │     "start": 0
-│       │   }
-│       │   context: {
-│       │     "caller_filename": "<caller>",
-│       │     "caller_functionname": "<caller>",
-│       │     "caller_lineno": 0
-│       │   }
-│       ├── notifications/initialized [function]
-│       │   metadata: {
-│       │     "mcp.method.name": "notifications/initialized",
-│       │     "mcp.protocol.version": "<timestamp>",
-│       │     "scenario": "mcp-instrumentation",
-│       │     "testRunId": "<run:1>"
-│       │   }
-│       │   metrics: {
-│       │     "end": 0,
-│       │     "start": 0
-│       │   }
-│       │   context: {
-│       │     "caller_filename": "<caller>",
-│       │     "caller_functionname": "<caller>",
-│       │     "caller_lineno": 0
-│       │   }
-│       ├── ping [function]
-│       │   metadata: {
-│       │     "jsonrpc.request.id": "100",
-│       │     "mcp.method.name": "ping",
-│       │     "mcp.protocol.version": "<timestamp>",
-│       │     "scenario": "mcp-instrumentation",
-│       │     "testRunId": "<run:1>"
-│       │   }
-│       │   metrics: {
-│       │     "end": 0,
-│       │     "start": 0
-│       │   }
-│       │   context: {
-│       │     "caller_filename": "<caller>",
-│       │     "caller_functionname": "<caller>",
-│       │     "caller_lineno": 0
-│       │   }
-│       ├── tools/list [function]
-│       │   metadata: {
-│       │     "jsonrpc.request.id": "101",
-│       │     "mcp.method.name": "tools/list",
-│       │     "mcp.protocol.version": "<timestamp>",
-│       │     "scenario": "mcp-instrumentation",
-│       │     "testRunId": "<run:1>"
-│       │   }
-│       │   metrics: {
-│       │     "end": 0,
-│       │     "start": 0
-│       │   }
-│       │   context: {
-│       │     "caller_filename": "<caller>",
-│       │     "caller_functionname": "<caller>",
-│       │     "caller_lineno": 0
-│       │   }
-│       ├── acme/missing [function]
-│       │   metadata: {
-│       │     "jsonrpc.request.id": "102",
-│       │     "mcp.method.name": "acme/missing",
-│       │     "mcp.protocol.version": "<timestamp>",
-│       │     "rpc.response.status_code": "-32601",
-│       │     "scenario": "mcp-instrumentation",
-│       │     "testRunId": "<run:1>"
-│       │   }
-│       │   metrics: {
-│       │     "end": 0,
-│       │     "start": 0
-│       │   }
-│       │   context: {
-│       │     "caller_filename": "<caller>",
-│       │     "caller_functionname": "<caller>",
-│       │     "caller_lineno": 0
-│       │   }
-│       ├── tools/call get_weather [tool]
-│       │   input: {
-│       │     "city": 42
-│       │   }
-│       │   output: {
-│       │     "content": [
-│       │       {
-│       │         "text": "MCP error -32602: Input validation error: Invalid arguments for tool get_weather: Invalid input: expected string, received number at city",
-│       │         "type": "text"
-│       │       }
-│       │     ],
-│       │     "isError": true
-│       │   }
-│       │   metadata: {
-│       │     "error.type": "tool_error",
-│       │     "gen_ai.operation.name": "execute_tool",
-│       │     "gen_ai.tool.name": "get_weather",
-│       │     "jsonrpc.request.id": "103",
-│       │     "mcp.method.name": "tools/call",
-│       │     "mcp.protocol.version": "<timestamp>",
-│       │     "scenario": "mcp-instrumentation",
-│       │     "testRunId": "<run:1>"
-│       │   }
-│       │   metrics: {
-│       │     "end": 0,
-│       │     "start": 0
-│       │   }
-│       │   error: "MCP error -32602: Input validation error: Invalid arguments for tool get_weather: Invalid input: expected string, received number at city"
-│       │   context: {
-│       │     "caller_filename": "<caller>",
-│       │     "caller_functionname": "<caller>",
-│       │     "caller_lineno": 0
-│       │   }
-│       ├── acme/validated [function]
-│       │   metadata: {
-│       │     "mcp.method.name": "acme/validated",
-│       │     "mcp.protocol.version": "<timestamp>",
-│       │     "scenario": "mcp-instrumentation",
-│       │     "testRunId": "<run:1>"
-│       │   }
-│       │   metrics: {
-│       │     "end": 0,
-│       │     "start": 0
-│       │   }
-│       │   context: {
-│       │     "caller_filename": "<caller>",
-│       │     "caller_functionname": "<caller>",
-│       │     "caller_lineno": 0
-│       │   }
-│       │   └── validated-notice-work
-│       │       metadata: {
-│       │         "scenario": "mcp-instrumentation",
-│       │         "testRunId": "<run:1>"
-│       │       }
-│       │       metrics: {
-│       │         "end": 0,
-│       │         "start": 0
-│       │       }
-│       │       context: {
-│       │         "caller_filename": "<caller>",
-│       │         "caller_functionname": "<caller>",
-│       │         "caller_lineno": 0
-│       │       }
-│       ├── acme/validated [function]
-│       │   metadata: {
-│       │     "error.type": "$ZodError",
-│       │     "mcp.method.name": "acme/validated",
-│       │     "mcp.protocol.version": "<timestamp>",
-│       │     "scenario": "mcp-instrumentation",
-│       │     "testRunId": "<run:1>"
-│       │   }
-│       │   metrics: {
-│       │     "end": 0,
-│       │     "start": 0
-│       │   }
-│       │   error: "[\n  {\n    \"expected\": \"string\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      \"params\",\n      \"value\"\n    ],\n    \"message\": \"Invalid input: expected string, received number\"\n  }\n]"
-│       │   context: {
-│       │     "caller_filename": "<caller>",
-│       │     "caller_functionname": "<caller>",
-│       │     "caller_lineno": 0
-│       │   }
-│       ├── acme/notice [function]
-│       │   metadata: {
-│       │     "mcp.method.name": "acme/notice",
-│       │     "mcp.protocol.version": "<timestamp>",
-│       │     "scenario": "mcp-instrumentation",
-│       │     "testRunId": "<run:1>"
-│       │   }
-│       │   metrics: {
-│       │     "end": 0,
-│       │     "start": 0
-│       │   }
-│       │   context: {
-│       │     "caller_filename": "<caller>",
-│       │     "caller_functionname": "<caller>",
-│       │     "caller_lineno": 0
-│       │   }
-│       │   └── notice-work
-│       │       metadata: {
-│       │         "scenario": "mcp-instrumentation",
-│       │         "testRunId": "<run:1>"
-│       │       }
-│       │       metrics: {
-│       │         "end": 0,
-│       │         "start": 0
-│       │       }
-│       │       context: {
-│       │         "caller_filename": "<caller>",
-│       │         "caller_functionname": "<caller>",
-│       │         "caller_lineno": 0
-│       │       }
-│       ├── tools/call wait_for_cancel [tool]
-│       │   metadata: {
-│       │     "gen_ai.operation.name": "execute_tool",
-│       │     "gen_ai.tool.name": "wait_for_cancel",
-│       │     "jsonrpc.request.id": "104",
-│       │     "mcp.cancelled": true,
-│       │     "mcp.method.name": "tools/call",
-│       │     "mcp.protocol.version": "<timestamp>",
-│       │     "scenario": "mcp-instrumentation",
-│       │     "testRunId": "<run:1>"
-│       │   }
-│       │   metrics: {
-│       │     "end": 0,
-│       │     "start": 0
-│       │   }
-│       │   context: {
-│       │     "caller_filename": "<caller>",
-│       │     "caller_functionname": "<caller>",
-│       │     "caller_lineno": 0
-│       │   }
-│       ├── notifications/cancelled [function]
-│       │   metadata: {
-│       │     "mcp.method.name": "notifications/cancelled",
-│       │     "mcp.protocol.version": "<timestamp>",
-│       │     "scenario": "mcp-instrumentation",
-│       │     "testRunId": "<run:1>"
-│       │   }
-│       │   metrics: {
-│       │     "end": 0,
-│       │     "start": 0
-│       │   }
-│       │   context: {
-│       │     "caller_filename": "<caller>",
-│       │     "caller_functionname": "<caller>",
-│       │     "caller_lineno": 0
-│       │   }
-│       ├── acme/cancel [function]
-│       │   metadata: {
-│       │     "jsonrpc.request.id": "105",
-│       │     "mcp.cancelled": true,
-│       │     "mcp.method.name": "acme/cancel",
-│       │     "mcp.protocol.version": "<timestamp>",
-│       │     "scenario": "mcp-instrumentation",
-│       │     "testRunId": "<run:1>"
-│       │   }
-│       │   metrics: {
-│       │     "end": 0,
-│       │     "start": 0
-│       │   }
-│       │   context: {
-│       │     "caller_filename": "<caller>",
-│       │     "caller_functionname": "<caller>",
-│       │     "caller_lineno": 0
-│       │   }
-│       └── notifications/cancelled [function]
+│       └── tools/call wait_for_parse_error [tool]
+│           output: {
+│             "content": [
+│               {
+│                 "text": "completed",
+│                 "type": "text"
+│               }
+│             ]
+│           }
 │           metadata: {
-│             "mcp.method.name": "notifications/cancelled",
-│             "mcp.protocol.version": "<timestamp>",
+│             "gen_ai.operation.name": "execute_tool",
+│             "gen_ai.tool.name": "wait_for_parse_error",
+│             "jsonrpc.request.id": "43",
+│             "mcp.method.name": "tools/call",
+│             "network.transport": "pipe",
 │             "scenario": "mcp-instrumentation",
 │             "testRunId": "<run:1>"
 │           }
@@ -679,8 +921,12 @@ span_tree:
 └── ping [function]
     metadata: {
       "jsonrpc.request.id": "106",
+      "mcp.client.name": "braintrust-e2e-client",
+      "mcp.client.version": "1.0.0",
       "mcp.method.name": "ping",
       "mcp.protocol.version": "<timestamp>",
+      "mcp.server.name": "braintrust-e2e-weather",
+      "mcp.server.version": "1.0.0",
       "scenario": "mcp-instrumentation",
       "testRunId": "<run:1>"
     }

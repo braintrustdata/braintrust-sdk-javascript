@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { PassThrough } from "node:stream";
 import { traced, wrapMCPServer, injectTraceContext } from "braintrust";
 import { z } from "zod";
 import { MINIMAL_PNG_BASE64 } from "../../helpers/media-fixtures.mjs";
@@ -22,19 +23,21 @@ export async function loadMCPModules(load) {
     process.env.MCP_SERVER_PACKAGE_NAME ?? DEFAULT_PACKAGES[line].server;
 
   if (line === "v1") {
-    const [mcp, http, client, clientHttp, inMemory] = await Promise.all(
+    const [mcp, http, client, clientHttp, inMemory, stdio] = await Promise.all(
       [
         "server/mcp.js",
         "server/webStandardStreamableHttp.js",
         "client/index.js",
         "client/streamableHttp.js",
         "inMemory.js",
+        "server/stdio.js",
       ].map((path) => load(`${serverPackage}/${path}`)),
     );
     return {
       Client: client.Client,
       InMemoryTransport: inMemory.InMemoryTransport,
       McpServer: mcp.McpServer,
+      StdioServerTransport: stdio.StdioServerTransport,
       // v1 accepts Zod raw shapes for tool and prompt arguments.
       schema: (shape) => shape,
       StreamableHTTPClientTransport: clientHttp.StreamableHTTPClientTransport,
@@ -43,14 +46,16 @@ export async function loadMCPModules(load) {
     };
   }
 
-  const [server, client] = await Promise.all([
+  const [server, client, stdio] = await Promise.all([
     load(serverPackage),
     load(DEFAULT_PACKAGES.v2.client),
+    load(`${serverPackage}/stdio`),
   ]);
   return {
     Client: client.Client,
     InMemoryTransport: server.InMemoryTransport,
     McpServer: server.McpServer,
+    StdioServerTransport: stdio.StdioServerTransport,
     schema: (shape) => z.object(shape),
     StreamableHTTPClientTransport: client.StreamableHTTPClientTransport,
     WebStandardStreamableHTTPServerTransport:
@@ -187,6 +192,42 @@ async function runHttpSession(mcp, decorateServer) {
 
 async function runInMemorySession(mcp, decorateServer) {
   const server = createServer(mcp, decorateServer);
+  server.server.registerCapabilities({ logging: {} });
+  server.registerTool(
+    "report_progress",
+    { description: "Report progress", inputSchema: mcp.schema({}) },
+    async (_args, extra) => {
+      const requestId = extra.mcpReq?.id ?? extra.requestId;
+      await server.server.notification(
+        {
+          method: "notifications/progress",
+          params: {
+            progressToken: 0,
+            progress: 1,
+            total: 2,
+            message: "working",
+          },
+        },
+        { relatedRequestId: requestId },
+      );
+      await server.server.notification(
+        {
+          method: "notifications/message",
+          params: {
+            level: "info",
+            data: {
+              type: "image",
+              mimeType: "image/png",
+              data: MINIMAL_PNG_BASE64,
+              _meta: { private: "hidden" },
+            },
+          },
+        },
+        { relatedRequestId: requestId },
+      );
+      return { content: [{ type: "text", text: "done" }] };
+    },
+  );
   const [clientTransport, serverTransport] =
     mcp.InMemoryTransport.createLinkedPair();
   withTraceContext(clientTransport);
@@ -207,6 +248,7 @@ async function runInMemorySession(mcp, decorateServer) {
       private: "omitted",
     },
   });
+  await client.callTool({ name: "report_progress", arguments: {} });
   await client.callTool({ name: "render_map", arguments: {} });
   await client.callTool({ name: "get_alerts", arguments: {} });
 
@@ -364,6 +406,64 @@ async function runLifecycleSession(mcp, decorateServer) {
   await server.close();
 }
 
+async function runStdioErrorSession(mcp, decorateServer) {
+  const server = createServer(mcp, decorateServer);
+  let release;
+  let started;
+  const active = new Promise((resolve) => {
+    started = resolve;
+  });
+  const done = new Promise((resolve) => {
+    release = resolve;
+  });
+  server.registerTool(
+    "wait_for_parse_error",
+    { inputSchema: mcp.schema({}) },
+    async () => {
+      started();
+      await done;
+      return { content: [{ type: "text", text: "completed" }] };
+    },
+  );
+  const input = new PassThrough();
+  const output = new PassThrough();
+  const transport = new mcp.StdioServerTransport(input, output);
+  server.server.onerror = () => {};
+  await server.connect(transport);
+  const response = new Promise((resolve) => {
+    let buffer = "";
+    output.on("data", (chunk) => {
+      buffer += chunk.toString();
+      for (const line of buffer.split("\n").slice(0, -1)) {
+        const message = JSON.parse(line);
+        if (message.id === 43) resolve(message);
+      }
+      buffer = buffer.slice(buffer.lastIndexOf("\n") + 1);
+    });
+  });
+  input.write(
+    JSON.stringify({
+      jsonrpc: "2.0",
+      id: 43,
+      method: "tools/call",
+      params: {
+        name: "wait_for_parse_error",
+        arguments: {},
+        _meta: injectTraceContext(),
+      },
+    }) + "\n",
+  );
+  await active;
+  input.write("{invalid json}\n");
+  await new Promise((resolve) => setImmediate(resolve));
+  release();
+  const result = await response;
+  if (!result.result || result.result.isError)
+    throw new Error("valid request did not succeed after parse error");
+  await new Promise((resolve) => setImmediate(resolve));
+  await server.close();
+}
+
 export async function runMCPInstrumentationScenario(
   mcp,
   { decorateServer } = {},
@@ -380,6 +480,9 @@ export async function runMCPInstrumentationScenario(
       );
       await runOperation("mcp-lifecycle-operation", "lifecycle", () =>
         runLifecycleSession(mcp, decorateServer),
+      );
+      await runOperation("mcp-stdio-error-operation", "stdio-error", () =>
+        runStdioErrorSession(mcp, decorateServer),
       );
     },
     metadata: {

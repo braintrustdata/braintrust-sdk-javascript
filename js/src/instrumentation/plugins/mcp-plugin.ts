@@ -81,6 +81,8 @@ export class MCPPlugin extends BasePlugin {
           () => Reflect.apply(target, receiver, args),
           transport,
           args[0],
+          args[1],
+          this.config,
         ),
       ),
       mcpChannels.close.intercept((target, receiver, args, { transport }) =>

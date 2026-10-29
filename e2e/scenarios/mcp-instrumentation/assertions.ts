@@ -43,6 +43,7 @@ const SESSIONS = [
     operationName: "mcp-in-memory-session-operation",
     spans: [
       "tools/call get_weather",
+      "tools/call report_progress",
       "tools/call render_map",
       "tools/call get_alerts",
     ],
@@ -116,15 +117,6 @@ export function defineMCPInstrumentationAssertions(options: {
       },
     );
 
-    test("omits a session ID for the in-memory transport", () => {
-      const [httpSession, inMemorySession] = SESSIONS.map(
-        ({ operationName }) =>
-          mcpSpans(events, operationName)[0]?.row.metadata?.["mcp.session.id"],
-      );
-      expect(httpSession).toEqual(expect.any(String));
-      expect(inMemorySession).toBeUndefined();
-    });
-
     test("captures tool calls", () => {
       const operation = findLatestSpan(
         events,
@@ -177,6 +169,72 @@ export function defineMCPInstrumentationAssertions(options: {
       expect(
         findChildSpans(events, "weather-lookup", weather?.span.id),
       ).toHaveLength(1);
+    });
+
+    test("traces server progress notifications under their request", () => {
+      const operation = findLatestSpan(
+        events,
+        "mcp-in-memory-session-operation",
+      );
+      const [request] = findChildSpans(
+        events,
+        "tools/call report_progress",
+        operation?.span.id,
+      );
+      const [notice] = findChildSpans(
+        events,
+        "notifications/progress",
+        request?.span.id,
+      );
+      expect(notice?.row.metadata).toMatchObject({
+        "mcp.notification.direction": "outgoing",
+        "mcp.progress.token": "0",
+        "mcp.progress.current": 1,
+        "mcp.progress.total": 2,
+        "mcp.progress.percentage": 50,
+        "mcp.client.name": "braintrust-e2e-client",
+        "mcp.server.name": "braintrust-e2e-weather",
+      });
+      expect(notice?.row.metadata?.["mcp.protocol.version"]).toEqual(
+        expect.any(String),
+      );
+      if (options.captureContent)
+        expect(notice?.output).toMatchObject({
+          progressToken: 0,
+          progress: 1,
+          total: 2,
+          message: "working",
+        });
+      else expect(notice?.output).toBeUndefined();
+      const [log] = findChildSpans(
+        events,
+        "notifications/message",
+        request?.span.id,
+      );
+      expect(log?.row.metadata?.["mcp.logging.data_type"]).toBe("object");
+      expect(log?.row.metadata?.["mcp.logging.message"]).toBeUndefined();
+      if (options.captureContent) {
+        expect(log?.output).toMatchObject({
+          data: { type: "image", mimeType: "image/png", data: "<omitted>" },
+        });
+        expect(JSON.stringify(log?.output)).not.toContain("hidden");
+      } else expect(log?.output).toBeUndefined();
+    });
+
+    test("keeps an active stdio request open after an unrelated parse error", () => {
+      const operation = findLatestSpan(events, "mcp-stdio-error-operation");
+      const [request] = findChildSpans(
+        events,
+        "tools/call wait_for_parse_error",
+        operation?.span.id,
+      );
+      expect(request?.row.error).toBeUndefined();
+      expect(request?.row.metadata?.["error.type"]).toBeUndefined();
+      expect(request?.span.ended).toBe(true);
+      if (options.captureContent)
+        expect(request?.output).toMatchObject({
+          content: [{ type: "text", text: "completed" }],
+        });
     });
 
     test("captures dispatch failures, discovery, and honored cancellation", () => {

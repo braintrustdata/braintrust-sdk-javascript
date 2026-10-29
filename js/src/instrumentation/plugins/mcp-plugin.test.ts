@@ -1045,8 +1045,11 @@ describe("MCPPlugin", () => {
     expect(ended.metrics.end).toEqual(expect.any(Number));
     expect(started.metadata["mcp.resource.uri"]).toBe("notes://updated");
     expect(started.metadata["jsonrpc.request.id"]).toBeUndefined();
-    expect(started.input).toBeUndefined();
-    expect(JSON.stringify([started, ended])).not.toContain("private");
+    expect(started.input).toMatchObject({
+      uri: "notes://updated",
+      secret: "private",
+    });
+    expect(JSON.stringify(started.input)).not.toContain("traceparent");
   });
 
   it("waits for HTTP acknowledgement after an asynchronous notification handler", async () => {
@@ -1116,6 +1119,195 @@ describe("MCPPlugin", () => {
     expect(span.error).toContain("notification failed");
     expect(span.metadata["error.type"]).toBe("TypeError");
     expect(span.metrics.end).toEqual(expect.any(Number));
+  });
+
+  it("records outgoing send errors without changing the rejection", async () => {
+    const transport = createProtocol().transport!;
+    const error = new TypeError("send failed");
+    await expect(
+      mcpChannels.send.invoke(
+        () => Promise.reject(error),
+        transport,
+        [{ method: "notifications/message", params: { level: "error" } }],
+        { transport },
+      ),
+    ).rejects.toBe(error);
+    const [span] = await drainSpans();
+    expect(span.error).toContain("send failed");
+    expect(span.metadata["error.type"]).toBe("TypeError");
+  });
+
+  it("captures legacy initialization identity for a stateful session", async () => {
+    const protocol = createProtocol();
+    await handleRequest(
+      async () => ({
+        protocolVersion: "2025-11-25",
+        serverInfo: { name: "server", version: "2" },
+      }),
+      {
+        method: "initialize",
+        params: {
+          protocolVersion: "2025-03-26",
+          clientInfo: { name: "client", version: "1" },
+        },
+      },
+      { sessionId: "session" },
+      protocol,
+    );
+    await handleRequest(
+      async () => ({}),
+      {
+        method: "tools/call",
+        params: { name: "tool", tool_call_id: "call-1" },
+      },
+      { sessionId: "session" },
+      protocol,
+    );
+    const spans = await drainSpans();
+    expect(spans[0].metadata).toMatchObject({
+      "mcp.client.name": "client",
+      "mcp.server.name": "server",
+    });
+    expect(spans[1].metadata).toMatchObject({
+      "mcp.client.name": "client",
+      "mcp.server.name": "server",
+      "gen_ai.tool.call.id": "call-1",
+    });
+  });
+
+  it("retains initialization identity on sessionless connections", async () => {
+    const protocol = createProtocol();
+    await handleRequest(
+      async () => ({ protocolVersion: "1", serverInfo: { name: "server" } }),
+      { method: "initialize", params: { clientInfo: { name: "client" } } },
+      {},
+      protocol,
+    );
+    await handleRequest(async () => ({}), { method: "ping" }, {}, protocol);
+    const spans = await drainSpans();
+    expect(spans[1].metadata).toMatchObject({
+      "mcp.client.name": "client",
+      "mcp.server.name": "server",
+    });
+    expect(spans[1].metadata["mcp.session.id"]).toBeUndefined();
+  });
+
+  it("does not carry identity between sessionless HTTP requests", async () => {
+    const protocol = createProtocol({ handleRequest() {} });
+    await handleRequest(
+      async () => ({ protocolVersion: "1", serverInfo: { name: "server" } }),
+      { method: "initialize", params: { clientInfo: { name: "client" } } },
+      {},
+      protocol,
+    );
+    await handleRequest(async () => ({}), { method: "ping" }, {}, protocol);
+    await mcpChannels.send.invoke(
+      () => Promise.resolve(),
+      protocol.transport!,
+      [{ method: "notifications/progress", params: { progress: 1 } }],
+      { transport: protocol.transport! },
+    );
+    const spans = await drainSpans();
+    for (const span of spans.slice(1)) {
+      expect(span.metadata["mcp.client.name"]).toBeUndefined();
+      expect(span.metadata["mcp.server.name"]).toBeUndefined();
+      expect(span.metadata["mcp.protocol.version"]).toBeUndefined();
+    }
+  });
+
+  it.each(["error response", "send failure"])(
+    "preserves cached identity after a rejected initialization: %s",
+    async (failure) => {
+      const protocol = createProtocol();
+      const transport = protocol.transport!;
+      await handleRequest(
+        async () => ({
+          protocolVersion: "1",
+          serverInfo: { name: "original-server" },
+        }),
+        {
+          method: "initialize",
+          params: { clientInfo: { name: "original-client" } },
+        },
+        { sessionId: "session" },
+        protocol,
+      );
+      const failed = mcpChannels.message.invoke(
+        () =>
+          mcpChannels.send.invoke(
+            () =>
+              failure === "send failure"
+                ? Promise.reject(new Error("send failed"))
+                : Promise.resolve(),
+            transport,
+            [
+              failure === "send failure"
+                ? {
+                    id: 1,
+                    result: {
+                      protocolVersion: "2",
+                      serverInfo: { name: "wrong-server" },
+                    },
+                  }
+                : { id: 1, error: { code: -32600, message: "invalid" } },
+            ],
+            { transport },
+          ),
+        transport,
+        [
+          {
+            id: 1,
+            method: "initialize",
+            params: { clientInfo: { name: "wrong-client" } },
+          },
+        ],
+        { transport },
+      );
+      if (failure === "send failure")
+        await expect(failed).rejects.toThrow("send failed");
+      else await failed;
+      await handleRequest(
+        async () => ({}),
+        { method: "ping" },
+        { sessionId: "session" },
+        protocol,
+      );
+      const spans = await drainSpans();
+      const ping = spans.find((span) => span.span_attributes.name === "ping");
+      expect(ping?.metadata).toMatchObject({
+        "mcp.client.name": "original-client",
+        "mcp.server.name": "original-server",
+        "mcp.protocol.version": "1",
+      });
+    },
+  );
+
+  it("does not carry initialization identity into an unrelated session", async () => {
+    const protocol = createProtocol();
+    await handleRequest(
+      async () => ({ protocolVersion: "1", serverInfo: { name: "server" } }),
+      { method: "initialize", params: { clientInfo: { name: "client" } } },
+      { sessionId: "first" },
+      protocol,
+    );
+    await handleRequest(
+      async () => ({}),
+      { method: "ping" },
+      { sessionId: "second" },
+      protocol,
+    );
+    await mcpChannels.send.invoke(
+      () => Promise.resolve(),
+      protocol.transport!,
+      [{ method: "notifications/progress", params: { progress: 1 } }],
+      { transport: protocol.transport! },
+    );
+    const spans = await drainSpans();
+    for (const span of spans.slice(1)) {
+      expect(span.metadata["mcp.client.name"]).toBeUndefined();
+      expect(span.metadata["mcp.server.name"]).toBeUndefined();
+      expect(span.metadata["mcp.protocol.version"]).toBeUndefined();
+    }
   });
 
   it("records only known HTTP transport and client fields", async () => {

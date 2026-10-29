@@ -42,13 +42,134 @@ type PendingRequest = {
   method: string;
   ended: boolean;
   handlerStarted?: boolean;
+  initialClient?: Record<string, string>;
   failure?: unknown;
 };
 const connections = new WeakMap<
   MCPTransport,
   Map<string | number | symbol, PendingRequest>
 >();
-const protocolVersions = new WeakMap<MCPTransport, string>();
+const protocolVersions = new WeakMap<
+  MCPTransport,
+  { sessionId?: string; version: string }
+>();
+
+function negotiatedVersion(transport: MCPTransport): string | undefined {
+  const cached = protocolVersions.get(transport);
+  return canCacheTransportIdentity(transport) &&
+    cached?.sessionId === transport.sessionId
+    ? cached?.version
+    : undefined;
+}
+const sessionIdentities = new WeakMap<
+  MCPTransport,
+  {
+    sessionId?: string;
+    client?: Record<string, string>;
+    server?: Record<string, string>;
+  }
+>();
+
+// A sessionless HTTP transport can serve unrelated callers. Other transports
+// represent a single connection and can safely retain its initialization data.
+function canCacheTransportIdentity(transport: MCPTransport): boolean {
+  if (transport.sessionId) return true;
+  return (
+    typeof Reflect.get(transport, "handleRequest") !== "function" &&
+    ![
+      "StreamableHTTPServerTransport",
+      "WebStandardStreamableHTTPServerTransport",
+      "SSEServerTransport",
+    ].includes(transport.constructor.name)
+  );
+}
+
+function identity(
+  info: unknown,
+  side: "client" | "server",
+): Record<string, string> {
+  if (!isObject(info)) return {};
+  const result: Record<string, string> = {};
+  for (const key of ["name", "title", "version"]) {
+    const value = info[key];
+    if (typeof value === "string") result[`mcp.${side}.${key}`] = value;
+  }
+  return result;
+}
+
+function notificationContent(
+  method: string,
+  params: Record<string, unknown>,
+): unknown {
+  if (method === "notifications/cancelled") {
+    const { reason: _reason, ...rest } = params;
+    return sanitizeContent(rest, false, 0);
+  }
+  return sanitizeContent(params, false, 0);
+}
+
+function notificationMetadata(
+  method: string,
+  params: Record<string, unknown>,
+  capture: boolean,
+): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  const put = (source: string, target: string, type: "string" | "number") => {
+    const value = params[source];
+    if (typeof value === type && (type !== "number" || Number.isFinite(value)))
+      result[target] = value;
+  };
+  if (method === "notifications/cancelled") {
+    if (
+      typeof params.requestId === "string" ||
+      typeof params.requestId === "number"
+    )
+      result["mcp.cancelled.request_id"] = String(params.requestId);
+  } else if (method === "notifications/progress") {
+    if (
+      typeof params.progressToken === "string" ||
+      typeof params.progressToken === "number"
+    )
+      result["mcp.progress.token"] = String(params.progressToken);
+    put("progress", "mcp.progress.current", "number");
+    put("total", "mcp.progress.total", "number");
+    if (
+      typeof params.progress === "number" &&
+      Number.isFinite(params.progress) &&
+      typeof params.total === "number" &&
+      Number.isFinite(params.total) &&
+      params.total > 0
+    )
+      result["mcp.progress.percentage"] =
+        (params.progress / params.total) * 100;
+    if (capture) put("message", "mcp.progress.message", "string");
+  } else if (method === "notifications/message") {
+    put("level", "mcp.logging.level", "string");
+    put("logger", "mcp.logging.logger", "string");
+    if (params.data !== undefined) {
+      result["mcp.logging.data_type"] = typeof params.data;
+      if (capture && typeof params.data === "string")
+        result["mcp.logging.message"] = params.data;
+    }
+  } else if (
+    method === "notifications/resources/updated" &&
+    typeof params.uri === "string"
+  ) {
+    result["mcp.resource.uri"] = params.uri;
+    try {
+      result["mcp.resource.protocol"] = new URL(params.uri).protocol.slice(
+        0,
+        -1,
+      );
+    } catch {
+      /* relative URI */
+    }
+  } else if (method === "notifications/initialized") {
+    result["mcp.lifecycle.phase"] = "initialization_complete";
+    result["mcp.protocol.ready"] = 1;
+  }
+  return result;
+}
 let requestContext: IsoAsyncLocalStorage<PendingRequest> | undefined;
 
 let httpContext:
@@ -204,7 +325,13 @@ export function traceMCPMessage<T>(
       return;
     const method = message.method;
     const id = message.id === undefined ? Symbol("notification") : message.id;
-    const protocolVersion = protocolVersions.get(transport);
+    const protocolVersion = negotiatedVersion(transport);
+    const cachedSession = sessionIdentities.get(transport);
+    const canCacheIdentity = canCacheTransportIdentity(transport);
+    const session =
+      canCacheIdentity && cachedSession?.sessionId === transport.sessionId
+        ? cachedSession
+        : undefined;
     const http = httpContext?.getStore();
     // Only known SDK transports identify a transport here. HTTP details exposed
     // by Node are collected separately around handleRequest, never from headers.
@@ -252,6 +379,25 @@ export function traceMCPMessage<T>(
         ? { "network.protocol.name": "websocket" }
         : {}),
       ...(http?.transport === transport ? http.metadata : {}),
+      ...(session?.client ?? {}),
+      ...(session?.server ?? {}),
+      ...(method === "initialize" ? identity(params.clientInfo, "client") : {}),
+      ...(method === "initialize" && typeof params.protocolVersion === "string"
+        ? { "mcp.protocol.version": params.protocolVersion }
+        : {}),
+      ...(method === "tools/call" && typeof params.tool_call_id === "string"
+        ? { "gen_ai.tool.call.id": params.tool_call_id }
+        : {}),
+      ...(typeof id === "symbol"
+        ? {
+            "mcp.notification.direction": "incoming",
+            ...notificationMetadata(
+              method,
+              params,
+              config.captureContent !== false,
+            ),
+          }
+        : {}),
       ...protocolMetadata(meta, "request"),
     };
     const carrier: Record<string, string> = {};
@@ -277,6 +423,9 @@ export function traceMCPMessage<T>(
         parent: parent ?? "",
         event: {
           metadata,
+          ...(config.captureContent !== false && typeof id === "symbol"
+            ? { input: notificationContent(method, params) }
+            : {}),
           ...(config.captureContent !== false && typeof id !== "symbol"
             ? method === "tools/call" || method === "prompts/get"
               ? { input: params.arguments }
@@ -297,6 +446,9 @@ export function traceMCPMessage<T>(
       captureContent: config.captureContent !== false,
       acknowledgementDone: http?.transport !== transport || http.done,
       method,
+      ...(method === "initialize"
+        ? { initialClient: identity(params.clientInfo, "client") }
+        : {}),
       ended: false,
     };
     pending.set(id, state);
@@ -339,7 +491,25 @@ export function traceMCPSend<T>(
   call: () => T,
   transport: MCPTransport,
   message: unknown,
+  options?: unknown,
+  config: MCPIntegrationConfig = {},
 ): T {
+  if (
+    isObject(message) &&
+    typeof message.method === "string" &&
+    message.id === undefined
+  ) {
+    return traceMCPOutgoingNotification(
+      call,
+      transport,
+      message,
+      options,
+      config,
+    );
+  }
+  let initialization:
+    | { version: string; server: Record<string, string> }
+    | undefined;
   const request = runInstrumentation(() => {
     if (
       !isObject(message) ||
@@ -380,16 +550,24 @@ export function traceMCPSend<T>(
           isObject(result) &&
           typeof result.protocolVersion === "string"
         ) {
-          protocolVersions.set(transport, result.protocolVersion);
+          initialization = {
+            version: result.protocolVersion,
+            server: identity(result.serverInfo, "server"),
+          };
           state.span.log({
             metadata: { "mcp.protocol.version": result.protocolVersion },
           });
         }
         state.span.log({
-          metadata: protocolMetadata(
-            isObject(result) ? result._meta : undefined,
-            "response",
-          ),
+          metadata: {
+            ...(state.method === "initialize" && isObject(result)
+              ? identity(result.serverInfo, "server")
+              : {}),
+            ...protocolMetadata(
+              isObject(result) ? result._meta : undefined,
+              "response",
+            ),
+          },
           ...(state.captureContent &&
           ["tools/call", "prompts/get", "resources/read"].includes(state.method)
             ? { output: sanitizeResult(result) }
@@ -411,11 +589,113 @@ export function traceMCPSend<T>(
   try {
     return observeResult(
       call(),
-      () => finish(request),
+      () => {
+        if (initialization) {
+          if (canCacheTransportIdentity(transport)) {
+            protocolVersions.set(transport, {
+              sessionId: transport.sessionId,
+              version: initialization.version,
+            });
+            const prior = sessionIdentities.get(transport);
+            sessionIdentities.set(transport, {
+              sessionId: transport.sessionId,
+              client:
+                request.initialClient ??
+                (prior?.sessionId === transport.sessionId
+                  ? prior?.client
+                  : undefined),
+              server: initialization.server,
+            });
+          }
+        }
+        finish(request);
+      },
       (error) => finish(request, error),
     );
   } catch (error) {
     finish(request, error);
+    throw error;
+  }
+}
+
+function traceMCPOutgoingNotification<T>(
+  call: () => T,
+  transport: MCPTransport,
+  message: Record<string, unknown>,
+  options: unknown,
+  config: MCPIntegrationConfig,
+): T {
+  if (isAutoInstrumentationSuppressed()) return call();
+  const span = runInstrumentation(() => {
+    const method = message.method as string;
+    const params = isObject(message.params) ? message.params : {};
+    const relatedId = isObject(options) ? options.relatedRequestId : undefined;
+    const related =
+      typeof relatedId === "string" || typeof relatedId === "number"
+        ? connections.get(transport)?.get(relatedId)
+        : undefined;
+    const meta = isObject(params._meta) ? params._meta : {};
+    const carrier: Record<string, string> = {};
+    for (const key of ["traceparent", "tracestate", "baggage"]) {
+      const value = meta[key];
+      if (typeof value === "string") carrier[key] = value;
+    }
+    const parent = extractTraceContextFromHeaders(carrier);
+    const cachedSession = sessionIdentities.get(transport);
+    const session =
+      canCacheTransportIdentity(transport) &&
+      cachedSession?.sessionId === transport.sessionId
+        ? cachedSession
+        : undefined;
+    const version = negotiatedVersion(transport);
+    const metadata = {
+      "mcp.method.name": method,
+      "mcp.notification.direction": "outgoing",
+      ...(session?.client ?? {}),
+      ...(session?.server ?? {}),
+      ...(version ? { "mcp.protocol.version": version } : {}),
+      ...(transport.sessionId ? { "mcp.session.id": transport.sessionId } : {}),
+      ...notificationMetadata(method, params, config.captureContent !== false),
+    };
+    return withCurrent(related?.span ?? NOOP_SPAN, () =>
+      startSpan(
+        withSpanInstrumentationName(
+          {
+            name: method,
+            type: SpanTypeAttribute.FUNCTION,
+            ...(parent ? { parent } : related ? {} : { parent: "" }),
+            event: {
+              metadata,
+              ...(config.captureContent !== false
+                ? { output: notificationContent(method, params) }
+                : {}),
+            },
+          },
+          INSTRUMENTATION_NAMES.MCP,
+        ),
+      ),
+    );
+  });
+  if (!span) return call();
+  const finishNotification = (error?: unknown) => {
+    if (error !== undefined)
+      span.log({
+        error,
+        metadata: {
+          "error.type":
+            error instanceof Error ? error.constructor.name : "_OTHER",
+        },
+      });
+    span.end();
+  };
+  try {
+    return observeResult(
+      call(),
+      () => finishNotification(),
+      finishNotification,
+    );
+  } catch (error) {
+    finishNotification(error);
     throw error;
   }
 }
@@ -501,6 +781,7 @@ export function traceMCPClose<T>(call: () => T, transport: MCPTransport): T {
   }
   connections.delete(transport);
   protocolVersions.delete(transport);
+  sessionIdentities.delete(transport);
   return call();
 }
 
