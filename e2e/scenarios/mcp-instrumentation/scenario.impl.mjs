@@ -192,6 +192,7 @@ async function runHttpSession(mcp, decorateServer) {
 
 async function runInMemorySession(mcp, decorateServer) {
   const server = createServer(mcp, decorateServer);
+  server.server.registerCapabilities({ logging: {} });
   server.registerTool(
     "report_progress",
     { description: "Report progress", inputSchema: mcp.schema({}) },
@@ -205,6 +206,21 @@ async function runInMemorySession(mcp, decorateServer) {
             progress: 1,
             total: 2,
             message: "working",
+          },
+        },
+        { relatedRequestId: requestId },
+      );
+      await server.server.notification(
+        {
+          method: "notifications/message",
+          params: {
+            level: "info",
+            data: {
+              type: "image",
+              mimeType: "image/png",
+              data: MINIMAL_PNG_BASE64,
+              _meta: { private: "hidden" },
+            },
           },
         },
         { relatedRequestId: requestId },

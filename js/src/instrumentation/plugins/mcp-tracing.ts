@@ -148,7 +148,8 @@ function notificationMetadata(
     put("logger", "mcp.logging.logger", "string");
     if (params.data !== undefined) {
       result["mcp.logging.data_type"] = typeof params.data;
-      if (capture) result["mcp.logging.message"] = params.data;
+      if (capture && typeof params.data === "string")
+        result["mcp.logging.message"] = params.data;
     }
   } else if (
     method === "notifications/resources/updated" &&

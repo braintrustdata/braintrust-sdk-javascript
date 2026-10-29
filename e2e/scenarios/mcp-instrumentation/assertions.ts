@@ -206,6 +206,19 @@ export function defineMCPInstrumentationAssertions(options: {
           message: "working",
         });
       else expect(notice?.output).toBeUndefined();
+      const [log] = findChildSpans(
+        events,
+        "notifications/message",
+        request?.span.id,
+      );
+      expect(log?.row.metadata?.["mcp.logging.data_type"]).toBe("object");
+      expect(log?.row.metadata?.["mcp.logging.message"]).toBeUndefined();
+      if (options.captureContent) {
+        expect(log?.output).toMatchObject({
+          data: { type: "image", mimeType: "image/png", data: "<omitted>" },
+        });
+        expect(JSON.stringify(log?.output)).not.toContain("hidden");
+      } else expect(log?.output).toBeUndefined();
     });
 
     test("keeps an active stdio request open after an unrelated parse error", () => {

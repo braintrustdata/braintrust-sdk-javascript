@@ -397,23 +397,54 @@ span_tree:
 │   │   │     "caller_functionname": "<caller>",
 │   │   │     "caller_lineno": 0
 │   │   │   }
-│   │   │   └── notifications/progress [function]
+│   │   │   ├── notifications/progress [function]
+│   │   │   │   output: {
+│   │   │   │     "message": "working",
+│   │   │   │     "progress": 1,
+│   │   │   │     "progressToken": 0,
+│   │   │   │     "total": 2
+│   │   │   │   }
+│   │   │   │   metadata: {
+│   │   │   │     "mcp.client.name": "braintrust-e2e-client",
+│   │   │   │     "mcp.client.version": "1.0.0",
+│   │   │   │     "mcp.method.name": "notifications/progress",
+│   │   │   │     "mcp.notification.direction": "outgoing",
+│   │   │   │     "mcp.progress.current": 1,
+│   │   │   │     "mcp.progress.message": "working",
+│   │   │   │     "mcp.progress.percentage": 50,
+│   │   │   │     "mcp.progress.token": "0",
+│   │   │   │     "mcp.progress.total": 2,
+│   │   │   │     "mcp.protocol.version": "<timestamp>",
+│   │   │   │     "mcp.server.name": "braintrust-e2e-weather",
+│   │   │   │     "mcp.server.version": "1.0.0",
+│   │   │   │     "scenario": "mcp-instrumentation",
+│   │   │   │     "testRunId": "<run:1>"
+│   │   │   │   }
+│   │   │   │   metrics: {
+│   │   │   │     "end": 0,
+│   │   │   │     "start": 0
+│   │   │   │   }
+│   │   │   │   context: {
+│   │   │   │     "caller_filename": "<caller>",
+│   │   │   │     "caller_functionname": "<caller>",
+│   │   │   │     "caller_lineno": 0
+│   │   │   │   }
+│   │   │   └── notifications/message [function]
 │   │   │       output: {
-│   │   │         "message": "working",
-│   │   │         "progress": 1,
-│   │   │         "progressToken": 0,
-│   │   │         "total": 2
+│   │   │         "data": {
+│   │   │           "data": "<omitted>",
+│   │   │           "mimeType": "image/png",
+│   │   │           "type": "image"
+│   │   │         },
+│   │   │         "level": "info"
 │   │   │       }
 │   │   │       metadata: {
 │   │   │         "mcp.client.name": "braintrust-e2e-client",
 │   │   │         "mcp.client.version": "1.0.0",
-│   │   │         "mcp.method.name": "notifications/progress",
+│   │   │         "mcp.logging.data_type": "object",
+│   │   │         "mcp.logging.level": "info",
+│   │   │         "mcp.method.name": "notifications/message",
 │   │   │         "mcp.notification.direction": "outgoing",
-│   │   │         "mcp.progress.current": 1,
-│   │   │         "mcp.progress.message": "working",
-│   │   │         "mcp.progress.percentage": 50,
-│   │   │         "mcp.progress.token": "0",
-│   │   │         "mcp.progress.total": 2,
 │   │   │         "mcp.protocol.version": "<timestamp>",
 │   │   │         "mcp.server.name": "braintrust-e2e-weather",
 │   │   │         "mcp.server.version": "1.0.0",

@@ -441,6 +441,41 @@
                     "caller_functionname": "<caller>",
                     "caller_lineno": 0
                   }
+                },
+                {
+                  "name": "notifications/message",
+                  "type": "function",
+                  "children": [],
+                  "output": {
+                    "data": {
+                      "data": "<omitted>",
+                      "mimeType": "image/png",
+                      "type": "image"
+                    },
+                    "level": "info"
+                  },
+                  "metadata": {
+                    "mcp.client.name": "braintrust-e2e-client",
+                    "mcp.client.version": "1.0.0",
+                    "mcp.logging.data_type": "object",
+                    "mcp.logging.level": "info",
+                    "mcp.method.name": "notifications/message",
+                    "mcp.notification.direction": "outgoing",
+                    "mcp.protocol.version": "<timestamp>",
+                    "mcp.server.name": "braintrust-e2e-weather",
+                    "mcp.server.version": "1.0.0",
+                    "scenario": "mcp-instrumentation",
+                    "testRunId": "<run:1>"
+                  },
+                  "metrics": {
+                    "end": 0,
+                    "start": 0
+                  },
+                  "context": {
+                    "caller_filename": "<caller>",
+                    "caller_functionname": "<caller>",
+                    "caller_lineno": 0
+                  }
                 }
               ],
               "output": {
