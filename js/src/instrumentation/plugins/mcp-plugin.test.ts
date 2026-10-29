@@ -1233,6 +1233,37 @@ describe("MCPPlugin", () => {
     });
   });
 
+  it("retains initialization identity on sessionless connections", async () => {
+    const protocol = createProtocol();
+    await handleRequest(
+      async () => ({ protocolVersion: "1", serverInfo: { name: "server" } }),
+      { method: "initialize", params: { clientInfo: { name: "client" } } },
+      {},
+      protocol,
+    );
+    await handleRequest(async () => ({}), { method: "ping" }, {}, protocol);
+    const spans = await drainSpans();
+    expect(spans[1].metadata).toMatchObject({
+      "mcp.client.name": "client",
+      "mcp.server.name": "server",
+    });
+    expect(spans[1].metadata["mcp.session.id"]).toBeUndefined();
+  });
+
+  it("does not carry identity between sessionless HTTP requests", async () => {
+    const protocol = createProtocol({ handleRequest() {} });
+    await handleRequest(
+      async () => ({ protocolVersion: "1", serverInfo: { name: "server" } }),
+      { method: "initialize", params: { clientInfo: { name: "client" } } },
+      {},
+      protocol,
+    );
+    await handleRequest(async () => ({}), { method: "ping" }, {}, protocol);
+    const spans = await drainSpans();
+    expect(spans[1].metadata["mcp.client.name"]).toBeUndefined();
+    expect(spans[1].metadata["mcp.server.name"]).toBeUndefined();
+  });
+
   it("does not capture notification content when disabled", async () => {
     registry.disable();
     registry.configure({ integrations: { mcp: { captureContent: false } } });

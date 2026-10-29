@@ -53,11 +53,25 @@ const protocolVersions = new WeakMap<MCPTransport, string>();
 const sessionIdentities = new WeakMap<
   MCPTransport,
   {
-    sessionId: string;
+    sessionId?: string;
     client?: Record<string, string>;
     server?: Record<string, string>;
   }
 >();
+
+// A sessionless HTTP transport can serve unrelated callers. Other transports
+// represent a single connection and can safely retain its initialization data.
+function canCacheTransportIdentity(transport: MCPTransport): boolean {
+  if (transport.sessionId) return true;
+  return (
+    typeof Reflect.get(transport, "handleRequest") !== "function" &&
+    ![
+      "StreamableHTTPServerTransport",
+      "WebStandardStreamableHTTPServerTransport",
+      "SSEServerTransport",
+    ].includes(transport.constructor.name)
+  );
+}
 
 function identity(
   info: unknown,
@@ -300,12 +314,13 @@ export function traceMCPMessage<T>(
     const method = message.method;
     const id = message.id === undefined ? Symbol("notification") : message.id;
     const protocolVersion = protocolVersions.get(transport);
+    const cachedSession = sessionIdentities.get(transport);
+    const canCacheIdentity = canCacheTransportIdentity(transport);
     const session =
-      transport.sessionId &&
-      sessionIdentities.get(transport)?.sessionId === transport.sessionId
-        ? sessionIdentities.get(transport)
+      canCacheIdentity && cachedSession?.sessionId === transport.sessionId
+        ? cachedSession
         : undefined;
-    if (method === "initialize" && transport.sessionId) {
+    if (method === "initialize" && canCacheIdentity) {
       sessionIdentities.set(transport, {
         sessionId: transport.sessionId,
         client: identity(params.clientInfo, "client"),
@@ -527,12 +542,16 @@ export function traceMCPSend<T>(
           typeof result.protocolVersion === "string"
         ) {
           protocolVersions.set(transport, result.protocolVersion);
-          if (transport.sessionId) {
+          if (canCacheTransportIdentity(transport)) {
             const prior = sessionIdentities.get(transport);
             sessionIdentities.set(transport, {
               sessionId: transport.sessionId,
               ...(prior?.sessionId === transport.sessionId ? prior : {}),
-              client: state.initialClient ?? prior?.client,
+              client:
+                state.initialClient ??
+                (prior?.sessionId === transport.sessionId
+                  ? prior?.client
+                  : undefined),
               server: identity(result.serverInfo, "server"),
             });
           }

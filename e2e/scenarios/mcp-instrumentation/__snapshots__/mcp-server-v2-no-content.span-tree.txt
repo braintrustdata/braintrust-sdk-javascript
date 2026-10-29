@@ -240,11 +240,15 @@ span_tree:
 │   │   │   }
 │   │   ├── notifications/initialized [function]
 │   │   │   metadata: {
+│   │   │     "mcp.client.name": "braintrust-e2e-client",
+│   │   │     "mcp.client.version": "1.0.0",
 │   │   │     "mcp.lifecycle.phase": "initialization_complete",
 │   │   │     "mcp.method.name": "notifications/initialized",
 │   │   │     "mcp.notification.direction": "incoming",
 │   │   │     "mcp.protocol.ready": 1,
 │   │   │     "mcp.protocol.version": "<timestamp>",
+│   │   │     "mcp.server.name": "braintrust-e2e-weather",
+│   │   │     "mcp.server.version": "1.0.0",
 │   │   │     "scenario": "mcp-instrumentation",
 │   │   │     "testRunId": "<run:1>"
 │   │   │   }
@@ -299,8 +303,12 @@ span_tree:
 │   │   │     "gen_ai.operation.name": "execute_tool",
 │   │   │     "gen_ai.tool.name": "render_map",
 │   │   │     "jsonrpc.request.id": "2",
+│   │   │     "mcp.client.name": "braintrust-e2e-client",
+│   │   │     "mcp.client.version": "1.0.0",
 │   │   │     "mcp.method.name": "tools/call",
 │   │   │     "mcp.protocol.version": "<timestamp>",
+│   │   │     "mcp.server.name": "braintrust-e2e-weather",
+│   │   │     "mcp.server.version": "1.0.0",
 │   │   │     "scenario": "mcp-instrumentation",
 │   │   │     "testRunId": "<run:1>"
 │   │   │   }
@@ -319,8 +327,12 @@ span_tree:
 │   │         "gen_ai.operation.name": "execute_tool",
 │   │         "gen_ai.tool.name": "get_alerts",
 │   │         "jsonrpc.request.id": "3",
+│   │         "mcp.client.name": "braintrust-e2e-client",
+│   │         "mcp.client.version": "1.0.0",
 │   │         "mcp.method.name": "tools/call",
 │   │         "mcp.protocol.version": "<timestamp>",
+│   │         "mcp.server.name": "braintrust-e2e-weather",
+│   │         "mcp.server.version": "1.0.0",
 │   │         "scenario": "mcp-instrumentation",
 │   │         "testRunId": "<run:1>"
 │   │       }
@@ -372,11 +384,15 @@ span_tree:
 │       │   }
 │       ├── notifications/initialized [function]
 │       │   metadata: {
+│       │     "mcp.client.name": "braintrust-e2e-client",
+│       │     "mcp.client.version": "1.0.0",
 │       │     "mcp.lifecycle.phase": "initialization_complete",
 │       │     "mcp.method.name": "notifications/initialized",
 │       │     "mcp.notification.direction": "incoming",
 │       │     "mcp.protocol.ready": 1,
 │       │     "mcp.protocol.version": "<timestamp>",
+│       │     "mcp.server.name": "braintrust-e2e-weather",
+│       │     "mcp.server.version": "1.0.0",
 │       │     "scenario": "mcp-instrumentation",
 │       │     "testRunId": "<run:1>"
 │       │   }
@@ -392,8 +408,12 @@ span_tree:
 │       ├── ping [function]
 │       │   metadata: {
 │       │     "jsonrpc.request.id": "100",
+│       │     "mcp.client.name": "braintrust-e2e-client",
+│       │     "mcp.client.version": "1.0.0",
 │       │     "mcp.method.name": "ping",
 │       │     "mcp.protocol.version": "<timestamp>",
+│       │     "mcp.server.name": "braintrust-e2e-weather",
+│       │     "mcp.server.version": "1.0.0",
 │       │     "scenario": "mcp-instrumentation",
 │       │     "testRunId": "<run:1>"
 │       │   }
@@ -409,8 +429,12 @@ span_tree:
 │       ├── tools/list [function]
 │       │   metadata: {
 │       │     "jsonrpc.request.id": "101",
+│       │     "mcp.client.name": "braintrust-e2e-client",
+│       │     "mcp.client.version": "1.0.0",
 │       │     "mcp.method.name": "tools/list",
 │       │     "mcp.protocol.version": "<timestamp>",
+│       │     "mcp.server.name": "braintrust-e2e-weather",
+│       │     "mcp.server.version": "1.0.0",
 │       │     "scenario": "mcp-instrumentation",
 │       │     "testRunId": "<run:1>"
 │       │   }
@@ -426,8 +450,12 @@ span_tree:
 │       ├── acme/missing [function]
 │       │   metadata: {
 │       │     "jsonrpc.request.id": "102",
+│       │     "mcp.client.name": "braintrust-e2e-client",
+│       │     "mcp.client.version": "1.0.0",
 │       │     "mcp.method.name": "acme/missing",
 │       │     "mcp.protocol.version": "<timestamp>",
+│       │     "mcp.server.name": "braintrust-e2e-weather",
+│       │     "mcp.server.version": "1.0.0",
 │       │     "rpc.response.status_code": "-32601",
 │       │     "scenario": "mcp-instrumentation",
 │       │     "testRunId": "<run:1>"
@@ -447,8 +475,12 @@ span_tree:
 │       │     "gen_ai.operation.name": "execute_tool",
 │       │     "gen_ai.tool.name": "get_weather",
 │       │     "jsonrpc.request.id": "103",
+│       │     "mcp.client.name": "braintrust-e2e-client",
+│       │     "mcp.client.version": "1.0.0",
 │       │     "mcp.method.name": "tools/call",
 │       │     "mcp.protocol.version": "<timestamp>",
+│       │     "mcp.server.name": "braintrust-e2e-weather",
+│       │     "mcp.server.version": "1.0.0",
 │       │     "scenario": "mcp-instrumentation",
 │       │     "testRunId": "<run:1>"
 │       │   }
@@ -464,9 +496,13 @@ span_tree:
 │       │   }
 │       ├── acme/validated [function]
 │       │   metadata: {
+│       │     "mcp.client.name": "braintrust-e2e-client",
+│       │     "mcp.client.version": "1.0.0",
 │       │     "mcp.method.name": "acme/validated",
 │       │     "mcp.notification.direction": "incoming",
 │       │     "mcp.protocol.version": "<timestamp>",
+│       │     "mcp.server.name": "braintrust-e2e-weather",
+│       │     "mcp.server.version": "1.0.0",
 │       │     "scenario": "mcp-instrumentation",
 │       │     "testRunId": "<run:1>"
 │       │   }
@@ -496,9 +532,13 @@ span_tree:
 │       ├── acme/validated [function]
 │       │   metadata: {
 │       │     "error.type": "ProtocolError",
+│       │     "mcp.client.name": "braintrust-e2e-client",
+│       │     "mcp.client.version": "1.0.0",
 │       │     "mcp.method.name": "acme/validated",
 │       │     "mcp.notification.direction": "incoming",
 │       │     "mcp.protocol.version": "<timestamp>",
+│       │     "mcp.server.name": "braintrust-e2e-weather",
+│       │     "mcp.server.version": "1.0.0",
 │       │     "scenario": "mcp-instrumentation",
 │       │     "testRunId": "<run:1>"
 │       │   }
@@ -514,9 +554,13 @@ span_tree:
 │       │   }
 │       ├── acme/notice [function]
 │       │   metadata: {
+│       │     "mcp.client.name": "braintrust-e2e-client",
+│       │     "mcp.client.version": "1.0.0",
 │       │     "mcp.method.name": "acme/notice",
 │       │     "mcp.notification.direction": "incoming",
 │       │     "mcp.protocol.version": "<timestamp>",
+│       │     "mcp.server.name": "braintrust-e2e-weather",
+│       │     "mcp.server.version": "1.0.0",
 │       │     "scenario": "mcp-instrumentation",
 │       │     "testRunId": "<run:1>"
 │       │   }
@@ -549,8 +593,12 @@ span_tree:
 │       │     "gen_ai.tool.name": "wait_for_cancel",
 │       │     "jsonrpc.request.id": "104",
 │       │     "mcp.cancelled": true,
+│       │     "mcp.client.name": "braintrust-e2e-client",
+│       │     "mcp.client.version": "1.0.0",
 │       │     "mcp.method.name": "tools/call",
 │       │     "mcp.protocol.version": "<timestamp>",
+│       │     "mcp.server.name": "braintrust-e2e-weather",
+│       │     "mcp.server.version": "1.0.0",
 │       │     "scenario": "mcp-instrumentation",
 │       │     "testRunId": "<run:1>"
 │       │   }
@@ -566,9 +614,13 @@ span_tree:
 │       ├── notifications/cancelled [function]
 │       │   metadata: {
 │       │     "mcp.cancelled.request_id": "104",
+│       │     "mcp.client.name": "braintrust-e2e-client",
+│       │     "mcp.client.version": "1.0.0",
 │       │     "mcp.method.name": "notifications/cancelled",
 │       │     "mcp.notification.direction": "incoming",
 │       │     "mcp.protocol.version": "<timestamp>",
+│       │     "mcp.server.name": "braintrust-e2e-weather",
+│       │     "mcp.server.version": "1.0.0",
 │       │     "scenario": "mcp-instrumentation",
 │       │     "testRunId": "<run:1>"
 │       │   }
@@ -585,8 +637,12 @@ span_tree:
 │       │   metadata: {
 │       │     "jsonrpc.request.id": "105",
 │       │     "mcp.cancelled": true,
+│       │     "mcp.client.name": "braintrust-e2e-client",
+│       │     "mcp.client.version": "1.0.0",
 │       │     "mcp.method.name": "acme/cancel",
 │       │     "mcp.protocol.version": "<timestamp>",
+│       │     "mcp.server.name": "braintrust-e2e-weather",
+│       │     "mcp.server.version": "1.0.0",
 │       │     "scenario": "mcp-instrumentation",
 │       │     "testRunId": "<run:1>"
 │       │   }
@@ -602,9 +658,13 @@ span_tree:
 │       └── notifications/cancelled [function]
 │           metadata: {
 │             "mcp.cancelled.request_id": "105",
+│             "mcp.client.name": "braintrust-e2e-client",
+│             "mcp.client.version": "1.0.0",
 │             "mcp.method.name": "notifications/cancelled",
 │             "mcp.notification.direction": "incoming",
 │             "mcp.protocol.version": "<timestamp>",
+│             "mcp.server.name": "braintrust-e2e-weather",
+│             "mcp.server.version": "1.0.0",
 │             "scenario": "mcp-instrumentation",
 │             "testRunId": "<run:1>"
 │           }
@@ -620,8 +680,12 @@ span_tree:
 └── ping [function]
     metadata: {
       "jsonrpc.request.id": "106",
+      "mcp.client.name": "braintrust-e2e-client",
+      "mcp.client.version": "1.0.0",
       "mcp.method.name": "ping",
       "mcp.protocol.version": "<timestamp>",
+      "mcp.server.name": "braintrust-e2e-weather",
+      "mcp.server.version": "1.0.0",
       "scenario": "mcp-instrumentation",
       "testRunId": "<run:1>"
     }
