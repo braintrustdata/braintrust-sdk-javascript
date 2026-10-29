@@ -13,8 +13,12 @@
               "children": [],
               "metadata": {
                 "jsonrpc.request.id": "0",
+                "mcp.client.name": "braintrust-e2e-client",
+                "mcp.client.version": "1.0.0",
                 "mcp.method.name": "initialize",
                 "mcp.protocol.version": "<timestamp>",
+                "mcp.server.name": "braintrust-e2e-weather",
+                "mcp.server.version": "1.0.0",
                 "mcp.session.id": "<uuid:1>",
                 "network.protocol.name": "http",
                 "scenario": "mcp-instrumentation",
@@ -35,8 +39,15 @@
               "type": "function",
               "children": [],
               "metadata": {
+                "mcp.client.name": "braintrust-e2e-client",
+                "mcp.client.version": "1.0.0",
+                "mcp.lifecycle.phase": "initialization_complete",
                 "mcp.method.name": "notifications/initialized",
+                "mcp.notification.direction": "incoming",
+                "mcp.protocol.ready": 1,
                 "mcp.protocol.version": "<timestamp>",
+                "mcp.server.name": "braintrust-e2e-weather",
+                "mcp.server.version": "1.0.0",
                 "mcp.session.id": "<uuid:1>",
                 "network.protocol.name": "http",
                 "scenario": "mcp-instrumentation",
@@ -94,6 +105,8 @@
                 "gen_ai.operation.name": "execute_tool",
                 "gen_ai.tool.name": "get_weather",
                 "jsonrpc.request.id": "1",
+                "mcp.client.name": "braintrust-e2e-client",
+                "mcp.client.version": "1.0.0",
                 "mcp.method.name": "tools/call",
                 "mcp.protocol.version": "<timestamp>",
                 "mcp.server.name": "braintrust-e2e-weather",
@@ -155,6 +168,8 @@
                 "gen_ai.operation.name": "execute_tool",
                 "gen_ai.tool.name": "get_weather",
                 "jsonrpc.request.id": "2",
+                "mcp.client.name": "braintrust-e2e-client",
+                "mcp.client.version": "1.0.0",
                 "mcp.method.name": "tools/call",
                 "mcp.protocol.version": "<timestamp>",
                 "mcp.server.name": "braintrust-e2e-weather",
@@ -191,9 +206,13 @@
               },
               "metadata": {
                 "jsonrpc.request.id": "3",
+                "mcp.client.name": "braintrust-e2e-client",
+                "mcp.client.version": "1.0.0",
                 "mcp.method.name": "resources/read",
                 "mcp.protocol.version": "<timestamp>",
                 "mcp.resource.uri": "notes://forecast",
+                "mcp.server.name": "braintrust-e2e-weather",
+                "mcp.server.version": "1.0.0",
                 "mcp.session.id": "<uuid:1>",
                 "network.protocol.name": "http",
                 "scenario": "mcp-instrumentation",
@@ -230,8 +249,12 @@
               "metadata": {
                 "gen_ai.prompt.name": "forecast",
                 "jsonrpc.request.id": "4",
+                "mcp.client.name": "braintrust-e2e-client",
+                "mcp.client.version": "1.0.0",
                 "mcp.method.name": "prompts/get",
                 "mcp.protocol.version": "<timestamp>",
+                "mcp.server.name": "braintrust-e2e-weather",
+                "mcp.server.version": "1.0.0",
                 "mcp.session.id": "<uuid:1>",
                 "network.protocol.name": "http",
                 "scenario": "mcp-instrumentation",
@@ -272,8 +295,12 @@
               "children": [],
               "metadata": {
                 "jsonrpc.request.id": "0",
+                "mcp.client.name": "braintrust-e2e-client",
+                "mcp.client.version": "1.0.0",
                 "mcp.method.name": "initialize",
                 "mcp.protocol.version": "<timestamp>",
+                "mcp.server.name": "braintrust-e2e-weather",
+                "mcp.server.version": "1.0.0",
                 "scenario": "mcp-instrumentation",
                 "testRunId": "<run:1>"
               },
@@ -292,7 +319,10 @@
               "type": "function",
               "children": [],
               "metadata": {
+                "mcp.lifecycle.phase": "initialization_complete",
                 "mcp.method.name": "notifications/initialized",
+                "mcp.notification.direction": "incoming",
+                "mcp.protocol.ready": 1,
                 "mcp.protocol.version": "<timestamp>",
                 "scenario": "mcp-instrumentation",
                 "testRunId": "<run:1>"
@@ -459,8 +489,12 @@
               "children": [],
               "metadata": {
                 "jsonrpc.request.id": "0",
+                "mcp.client.name": "braintrust-e2e-client",
+                "mcp.client.version": "1.0.0",
                 "mcp.method.name": "initialize",
                 "mcp.protocol.version": "<timestamp>",
+                "mcp.server.name": "braintrust-e2e-weather",
+                "mcp.server.version": "1.0.0",
                 "scenario": "mcp-instrumentation",
                 "testRunId": "<run:1>"
               },
@@ -479,7 +513,10 @@
               "type": "function",
               "children": [],
               "metadata": {
+                "mcp.lifecycle.phase": "initialization_complete",
                 "mcp.method.name": "notifications/initialized",
+                "mcp.notification.direction": "incoming",
+                "mcp.protocol.ready": 1,
                 "mcp.protocol.version": "<timestamp>",
                 "scenario": "mcp-instrumentation",
                 "testRunId": "<run:1>"
@@ -617,8 +654,12 @@
                   }
                 }
               ],
+              "input": {
+                "value": "valid"
+              },
               "metadata": {
                 "mcp.method.name": "acme/validated",
+                "mcp.notification.direction": "incoming",
                 "mcp.protocol.version": "<timestamp>",
                 "scenario": "mcp-instrumentation",
                 "testRunId": "<run:1>"
@@ -637,9 +678,13 @@
               "name": "acme/validated",
               "type": "function",
               "children": [],
+              "input": {
+                "value": 42
+              },
               "metadata": {
                 "error.type": "$ZodError",
                 "mcp.method.name": "acme/validated",
+                "mcp.notification.direction": "incoming",
                 "mcp.protocol.version": "<timestamp>",
                 "scenario": "mcp-instrumentation",
                 "testRunId": "<run:1>"
@@ -679,6 +724,7 @@
               ],
               "metadata": {
                 "mcp.method.name": "acme/notice",
+                "mcp.notification.direction": "incoming",
                 "mcp.protocol.version": "<timestamp>",
                 "scenario": "mcp-instrumentation",
                 "testRunId": "<run:1>"
@@ -721,8 +767,13 @@
               "name": "notifications/cancelled",
               "type": "function",
               "children": [],
+              "input": {
+                "requestId": 104
+              },
               "metadata": {
+                "mcp.cancelled.request_id": "104",
                 "mcp.method.name": "notifications/cancelled",
+                "mcp.notification.direction": "incoming",
                 "mcp.protocol.version": "<timestamp>",
                 "scenario": "mcp-instrumentation",
                 "testRunId": "<run:1>"
@@ -763,8 +814,13 @@
               "name": "notifications/cancelled",
               "type": "function",
               "children": [],
+              "input": {
+                "requestId": 105
+              },
               "metadata": {
+                "mcp.cancelled.request_id": "105",
                 "mcp.method.name": "notifications/cancelled",
+                "mcp.notification.direction": "incoming",
                 "mcp.protocol.version": "<timestamp>",
                 "scenario": "mcp-instrumentation",
                 "testRunId": "<run:1>"
