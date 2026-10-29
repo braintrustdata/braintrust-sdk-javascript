@@ -59,7 +59,7 @@ export const mcpChannelDefinitions = {
   >({ channelName: "notificationHandler" }),
 };
 export const mcpChannels = defineInterceptor("mcp", mcpChannelDefinitions);
-export type MCPInvocationChannels = typeof mcpChannels;
+type MCPInvocationChannels = typeof mcpChannels;
 
 const wrapped = Symbol.for("braintrust.mcp.transport-wrapper");
 function wrapMethod(
