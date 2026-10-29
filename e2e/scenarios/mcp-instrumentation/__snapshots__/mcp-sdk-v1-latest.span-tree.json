@@ -319,15 +319,10 @@
               "type": "function",
               "children": [],
               "metadata": {
-                "mcp.client.name": "braintrust-e2e-client",
-                "mcp.client.version": "1.0.0",
                 "mcp.lifecycle.phase": "initialization_complete",
                 "mcp.method.name": "notifications/initialized",
                 "mcp.notification.direction": "incoming",
                 "mcp.protocol.ready": 1,
-                "mcp.protocol.version": "<timestamp>",
-                "mcp.server.name": "braintrust-e2e-weather",
-                "mcp.server.version": "1.0.0",
                 "scenario": "mcp-instrumentation",
                 "testRunId": "<run:1>"
               },
@@ -525,15 +520,10 @@
               "type": "function",
               "children": [],
               "metadata": {
-                "mcp.client.name": "braintrust-e2e-client",
-                "mcp.client.version": "1.0.0",
                 "mcp.lifecycle.phase": "initialization_complete",
                 "mcp.method.name": "notifications/initialized",
                 "mcp.notification.direction": "incoming",
                 "mcp.protocol.ready": 1,
-                "mcp.protocol.version": "<timestamp>",
-                "mcp.server.name": "braintrust-e2e-weather",
-                "mcp.server.version": "1.0.0",
                 "scenario": "mcp-instrumentation",
                 "testRunId": "<run:1>"
               },

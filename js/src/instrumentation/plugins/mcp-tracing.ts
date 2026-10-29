@@ -320,12 +320,6 @@ export function traceMCPMessage<T>(
       canCacheIdentity && cachedSession?.sessionId === transport.sessionId
         ? cachedSession
         : undefined;
-    if (method === "initialize" && canCacheIdentity) {
-      sessionIdentities.set(transport, {
-        sessionId: transport.sessionId,
-        client: identity(params.clientInfo, "client"),
-      });
-    }
     const http = httpContext?.getStore();
     // Only known SDK transports identify a transport here. HTTP details exposed
     // by Node are collected separately around handleRequest, never from headers.
@@ -501,6 +495,9 @@ export function traceMCPSend<T>(
       config,
     );
   }
+  let initialization:
+    | { version: string; server: Record<string, string> }
+    | undefined;
   const request = runInstrumentation(() => {
     if (
       !isObject(message) ||
@@ -541,20 +538,10 @@ export function traceMCPSend<T>(
           isObject(result) &&
           typeof result.protocolVersion === "string"
         ) {
-          protocolVersions.set(transport, result.protocolVersion);
-          if (canCacheTransportIdentity(transport)) {
-            const prior = sessionIdentities.get(transport);
-            sessionIdentities.set(transport, {
-              sessionId: transport.sessionId,
-              ...(prior?.sessionId === transport.sessionId ? prior : {}),
-              client:
-                state.initialClient ??
-                (prior?.sessionId === transport.sessionId
-                  ? prior?.client
-                  : undefined),
-              server: identity(result.serverInfo, "server"),
-            });
-          }
+          initialization = {
+            version: result.protocolVersion,
+            server: identity(result.serverInfo, "server"),
+          };
           state.span.log({
             metadata: { "mcp.protocol.version": result.protocolVersion },
           });
@@ -590,7 +577,24 @@ export function traceMCPSend<T>(
   try {
     return observeResult(
       call(),
-      () => finish(request),
+      () => {
+        if (initialization) {
+          protocolVersions.set(transport, initialization.version);
+          if (canCacheTransportIdentity(transport)) {
+            const prior = sessionIdentities.get(transport);
+            sessionIdentities.set(transport, {
+              sessionId: transport.sessionId,
+              client:
+                request.initialClient ??
+                (prior?.sessionId === transport.sessionId
+                  ? prior?.client
+                  : undefined),
+              server: initialization.server,
+            });
+          }
+        }
+        finish(request);
+      },
       (error) => finish(request, error),
     );
   } catch (error) {
@@ -622,9 +626,19 @@ function traceMCPOutgoingNotification<T>(
       if (typeof value === "string") carrier[key] = value;
     }
     const parent = extractTraceContextFromHeaders(carrier);
+    const cachedSession = sessionIdentities.get(transport);
+    const session =
+      canCacheTransportIdentity(transport) &&
+      cachedSession?.sessionId === transport.sessionId
+        ? cachedSession
+        : undefined;
+    const version = protocolVersions.get(transport);
     const metadata = {
       "mcp.method.name": method,
       "mcp.notification.direction": "outgoing",
+      ...(session?.client ?? {}),
+      ...(session?.server ?? {}),
+      ...(version ? { "mcp.protocol.version": version } : {}),
       ...(transport.sessionId ? { "mcp.session.id": transport.sessionId } : {}),
       ...notificationMetadata(method, params, config.captureContent !== false),
     };

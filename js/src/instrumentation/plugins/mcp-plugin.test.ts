@@ -1264,6 +1264,99 @@ describe("MCPPlugin", () => {
     expect(spans[1].metadata["mcp.server.name"]).toBeUndefined();
   });
 
+  it.each(["error response", "send failure"])(
+    "preserves cached identity after a rejected initialization: %s",
+    async (failure) => {
+      const protocol = createProtocol();
+      const transport = protocol.transport!;
+      await handleRequest(
+        async () => ({
+          protocolVersion: "1",
+          serverInfo: { name: "original-server" },
+        }),
+        {
+          method: "initialize",
+          params: { clientInfo: { name: "original-client" } },
+        },
+        { sessionId: "session" },
+        protocol,
+      );
+      const failed = mcpChannels.message.invoke(
+        () =>
+          mcpChannels.send.invoke(
+            () =>
+              failure === "send failure"
+                ? Promise.reject(new Error("send failed"))
+                : Promise.resolve(),
+            transport,
+            [
+              failure === "send failure"
+                ? {
+                    id: 1,
+                    result: {
+                      protocolVersion: "2",
+                      serverInfo: { name: "wrong-server" },
+                    },
+                  }
+                : { id: 1, error: { code: -32600, message: "invalid" } },
+            ],
+            { transport },
+          ),
+        transport,
+        [
+          {
+            id: 1,
+            method: "initialize",
+            params: { clientInfo: { name: "wrong-client" } },
+          },
+        ],
+        { transport },
+      );
+      if (failure === "send failure")
+        await expect(failed).rejects.toThrow("send failed");
+      else await failed;
+      await handleRequest(
+        async () => ({}),
+        { method: "ping" },
+        { sessionId: "session" },
+        protocol,
+      );
+      const spans = await drainSpans();
+      const ping = spans.find((span) => span.span_attributes.name === "ping");
+      expect(ping?.metadata).toMatchObject({
+        "mcp.client.name": "original-client",
+        "mcp.server.name": "original-server",
+        "mcp.protocol.version": "1",
+      });
+    },
+  );
+
+  it("includes cached peer identity and protocol version on outgoing notifications", async () => {
+    const protocol = createProtocol();
+    const transport = protocol.transport!;
+    await handleRequest(
+      async () => ({ protocolVersion: "1", serverInfo: { name: "server" } }),
+      { method: "initialize", params: { clientInfo: { name: "client" } } },
+      { sessionId: "session" },
+      protocol,
+    );
+    await mcpChannels.send.invoke(
+      () => Promise.resolve(),
+      transport,
+      [{ method: "notifications/progress", params: { progress: 1 } }],
+      { transport },
+    );
+    const spans = await drainSpans();
+    const notice = spans.find(
+      (span) => span.span_attributes.name === "notifications/progress",
+    );
+    expect(notice?.metadata).toMatchObject({
+      "mcp.client.name": "client",
+      "mcp.server.name": "server",
+      "mcp.protocol.version": "1",
+    });
+  });
+
   it("does not capture notification content when disabled", async () => {
     registry.disable();
     registry.configure({ integrations: { mcp: { captureContent: false } } });
