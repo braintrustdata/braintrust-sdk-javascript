@@ -33,6 +33,7 @@ export const INSTRUMENTATION_NAMES = {
   LIVEKIT: "livekit",
   MASTRA: "mastra",
   MCP: "mcp",
+  MCP_HANDLER: "mcp-handler",
   MISTRAL: "mistral",
   LANGGRAPH_SDK: "langgraph-sdk",
   OLLAMA: "ollama",
