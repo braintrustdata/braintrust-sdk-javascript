@@ -13,9 +13,7 @@ export default defineConfig({
     ),
   },
   plugins: [
-    ...(manual
-      ? []
-      : [braintrustVitePlugin({ useDiagnosticChannelCompatShim: true })]),
+    ...(manual ? [] : [braintrustVitePlugin({ browser: true })]),
     cloudflare({ inspectorPort: 0 }),
   ],
   resolve: {

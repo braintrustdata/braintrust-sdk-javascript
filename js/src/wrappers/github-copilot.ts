@@ -1,5 +1,6 @@
+import { registerInstrumentation } from "../instrumentation/registrations/gitHubCopilot";
 import { debugLogger } from "../debug-logger";
-import { gitHubCopilotChannels } from "../instrumentation/plugins/github-copilot-interceptors";
+import { gitHubCopilotChannels } from "../instrumentation/providers/github-copilot-interceptors";
 import type {
   GitHubCopilotClient,
   GitHubCopilotResumeSessionConfig,
@@ -37,6 +38,7 @@ function isGitHubCopilotClient(value: unknown): value is GitHubCopilotClient {
  * ```
  */
 export function wrapCopilotClient<T extends object>(client: T): T {
+  registerInstrumentation();
   if (!isGitHubCopilotClient(client)) {
     debugLogger.notice.warn(
       "wrapCopilotClient: argument does not look like a CopilotClient. Not wrapping.",

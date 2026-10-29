@@ -84,16 +84,19 @@ export async function runTypeSafeInstrumentationScenario(
       const bytes = await readFile(
         new URL("./test-image.png", import.meta.url),
       );
-      process.env.BRAINTRUST_CAPTURE_ATTACHMENTS = "false";
-      await runOperation("typesafe-image-operation", "image", async () => {
-        await client.systemOne({
-          model: "jev-preview",
-          state: typesafe.image(bytes),
-          questions: { ship: typesafe.noul("Is there a sailing ship?") },
-        });
-      });
+      await runOperation(
+        "typesafe-image-operation",
+        "image",
+        async () => {
+          await client.systemOne({
+            model: "jev-preview",
+            state: typesafe.image(bytes),
+            questions: { ship: typesafe.noul("Is there a sailing ship?") },
+          });
+        },
+        { autoCaptureAttachments: false },
+      );
 
-      process.env.BRAINTRUST_CAPTURE_ATTACHMENTS = "true";
       await runOperation(
         "typesafe-template-operation",
         "template",
@@ -117,36 +120,47 @@ export async function runTypeSafeInstrumentationScenario(
             })
             .withResponse();
         },
+        { autoCaptureAttachments: true },
       );
 
-      await runOperation("typesafe-box-operation", "box", async () => {
-        const photo = typesafe.image(new Blob([bytes], { type: "image/png" }));
-        const response = await client
-          .systemOne({
-            model: "jev-preview",
-            state: { "photos~/": ["<photo>"], description: "Locate the ship." },
-            assets: { "<photo>": photo },
-            questions: {
-              ship: typesafe.box("The sailing ship"),
-              mast: typesafe.box("The tallest mast on the ship"),
-              present: typesafe.noul("Is there a sailing ship?"),
-              weather: typesafe.choice("What weather is shown?", {
-                stormy: null,
-                clear: null,
-              }),
-              waves: typesafe.score("How rough are the waves?", [
-                "calm",
-                "rough",
-              ]),
-            },
-          })
-          .asResponse();
-        if (response.bodyUsed)
-          throw new Error("Instrumentation consumed the image response");
-        const result = await response.json();
-        if (result.answers.ship.type !== "box")
-          throw new Error("Expected a box answer");
-      });
+      await runOperation(
+        "typesafe-box-operation",
+        "box",
+        async () => {
+          const photo = typesafe.image(
+            new Blob([bytes], { type: "image/png" }),
+          );
+          const response = await client
+            .systemOne({
+              model: "jev-preview",
+              state: {
+                "photos~/": ["<photo>"],
+                description: "Locate the ship.",
+              },
+              assets: { "<photo>": photo },
+              questions: {
+                ship: typesafe.box("The sailing ship"),
+                mast: typesafe.box("The tallest mast on the ship"),
+                present: typesafe.noul("Is there a sailing ship?"),
+                weather: typesafe.choice("What weather is shown?", {
+                  stormy: null,
+                  clear: null,
+                }),
+                waves: typesafe.score("How rough are the waves?", [
+                  "calm",
+                  "rough",
+                ]),
+              },
+            })
+            .asResponse();
+          if (response.bodyUsed)
+            throw new Error("Instrumentation consumed the image response");
+          const result = await response.json();
+          if (result.answers.ship.type !== "box")
+            throw new Error("Expected a box answer");
+        },
+        { autoCaptureAttachments: true },
+      );
     },
     metadata: { scenario: SCENARIO_NAME },
     projectNameBase: "tmp-luca-e2e-typesafe-instrumentation",

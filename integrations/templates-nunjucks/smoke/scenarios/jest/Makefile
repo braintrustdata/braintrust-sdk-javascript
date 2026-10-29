@@ -9,7 +9,7 @@ setup:
 		echo "==> Using BRAINTRUST_TAR: $(BRAINTRUST_TAR)"; \
 	else \
 		echo "==> Building SDK"; \
-		cd ../../../../.. && pnpm exec turbo build --filter=braintrust && mkdir -p js/artifacts && pnpm --filter=braintrust pack --pack-destination js/artifacts; \
+		cd ../../../../.. && pnpm --filter=braintrust run build && mkdir -p js/artifacts && pnpm --filter=braintrust pack --pack-destination js/artifacts; \
 		for f in js/artifacts/braintrust-*.tgz; do \
 			if [ "$$(basename $$f)" != "braintrust-latest.tgz" ] && \
 			   [ "$$(basename $$f)" != "braintrust-otel-latest.tgz" ] && \
@@ -31,7 +31,7 @@ setup:
 		echo "==> Using BRAINTRUST_TEMPLATES_NUNJUCKS_JS_TAR: $(BRAINTRUST_TEMPLATES_NUNJUCKS_JS_TAR)"; \
 	else \
 		echo "==> Building @braintrust/templates-nunjucks-js package"; \
-		cd ../../../../.. && pnpm exec turbo build --filter=@braintrust/templates-nunjucks-js && cd integrations/templates-nunjucks && pnpm pack --pack-destination ../js/artifacts; \
+		cd ../../../../.. && pnpm --filter=@braintrust/templates-nunjucks-js run build && cd integrations/templates-nunjucks && pnpm pack --pack-destination ../../js/artifacts; \
 		for f in ../../js/artifacts/braintrust-templates-nunjucks-*.tgz; do \
 			if [ "$$(basename $$f)" != "braintrust-templates-nunjucks-js-latest.tgz" ]; then \
 				cp "$$f" ../../js/artifacts/braintrust-templates-nunjucks-js-latest.tgz; \
@@ -45,4 +45,4 @@ setup:
 test: setup
 	@echo "==> Running jest tests"
 	@# Run only tests under the local tests/ directory to avoid workspace-wide discovery
-	pnpm exec jest --passWithNoTests --roots ./tests
+	NODE_OPTIONS="--experimental-vm-modules" pnpm exec jest --roots ./tests

@@ -1,75 +1,43 @@
-/**
- * Plugin registry and configuration for auto-instrumentation.
- *
- * Plugins are automatically enabled when the Braintrust library is loaded.
- * Users can disable specific integrations programmatically or via environment variables.
- */
-
 import { debugLogger } from "../debug-logger";
-
-import { BraintrustPlugin } from "./braintrust-plugin";
-import iso from "../isomorph";
+import iso from "#braintrust-platform";
 import {
-  getDefaultInstrumentationIntegrations,
   readDisabledInstrumentationEnvConfig,
   type InstrumentationConfig,
+  type InstrumentationIntegrationsConfig,
 } from "./config";
 import { GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION } from "../global-instrumentation-hooks";
+import { installGlobalHookErrorReporter } from "../debug-logger";
 import { setSpanCustomizers } from "../span-customizer";
 
 export type { InstrumentationConfig } from "./config";
 
-// Key used to stamp the active PluginRegistry instance onto the shared
-// braintrust state object (globalThis[Symbol.for("braintrust-state")]).
-//
-// The braintrust state is already shared across all SDK instances loaded in
-// the same process (see _internalSetInitialState in logger.ts), so using it
-// as the carrier gives us cross-instance deduplication for free:
-//
-// - BT-5139 scenario: two SDK instances share the same state object → the
-//   second instance sees the marker left by the first and skips subscription,
-//   preventing duplicate global hook listeners.
-//
-// - vi.resetModules() test scenario: the test deletes the state from
-//   globalThis between runs, so the next import creates a fresh state with no
-//   marker and can subscribe normally.
-const REGISTRY_STATE_KEY = Symbol.for(
+const REGISTRY_KEY = Symbol.for(
   `braintrust.registry.global-hooks.v${GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION}`,
 );
 
-function getSharedState(): Record<symbol, unknown> | undefined {
-  const state = (globalThis as Record<symbol, unknown>)[
-    Symbol.for("braintrust-state")
-  ];
-  return state && typeof state === "object"
-    ? (state as Record<symbol, unknown>)
-    : undefined;
+type Provider = keyof InstrumentationIntegrationsConfig;
+interface RegistryState {
+  config: InstrumentationConfig;
+  registered: Set<Provider>;
 }
 
-// The standalone instrumentation entrypoint is bundled separately from the SDK.
-// Share startup settings just as we share the active registry and span customizers.
-const CONFIG_KEY = Symbol.for("braintrust.instrumentation.config");
-const sharedConfig: typeof globalThis & {
-  [CONFIG_KEY]?: InstrumentationConfig;
-} = globalThis;
+// Allocate only on explicit configuration or registration, independently of
+// logger state. Multiple SDK copies must agree before either creates a logger.
+function getRegistryState(): RegistryState {
+  const root = globalThis as typeof globalThis & {
+    [REGISTRY_KEY]?: RegistryState;
+  };
+  return (root[REGISTRY_KEY] ??= { config: {}, registered: new Set() });
+}
 
-class PluginRegistry {
-  private braintrustPlugin: BraintrustPlugin | null = null;
-  private enabled = false;
-
-  private get config(): InstrumentationConfig {
-    return sharedConfig[CONFIG_KEY] ?? {};
-  }
-
-  /**
-   * Configure which integrations should be enabled.
-   * This must be called before any SDK imports to take effect.
-   */
+class InstrumentationRegistry {
   configure(config: InstrumentationConfig): void {
-    if (this.enabled) {
+    const state = getRegistryState();
+    if (state.registered.size > 0) {
+      // eslint-disable-next-line no-restricted-properties -- intentional configuration diagnostic.
       debugLogger.notice.warn(
-        "Cannot configure instrumentation after it has been enabled. " +
-          "Call configureInstrumentation() before importing any AI SDKs.",
+        "Braintrust: Cannot configure instrumentation after it has been enabled. " +
+          "Call configureInstrumentation() before registering instrumentation or wrapping an AI SDK.",
       );
       return;
     }
@@ -85,126 +53,53 @@ class PluginRegistry {
     if ("spanCustomizers" in config) {
       setSpanCustomizers(config.spanCustomizers);
     }
-    sharedConfig[CONFIG_KEY] = { ...this.config, ...config };
-  }
-
-  /**
-   * Enable all configured plugins.
-   * Called automatically when the library is loaded.
-   */
-  enable(): void {
-    if (this.enabled) {
-      return;
-    }
-
-    // If another SDK instance in the same process already registered plugins,
-    // skip to avoid duplicate global hook subscriptions.
-    const sharedState = getSharedState();
-    if (sharedState) {
-      if (sharedState[REGISTRY_STATE_KEY] !== undefined) {
-        return;
-      }
-      sharedState[REGISTRY_STATE_KEY] = this;
-    }
-
-    this.enabled = true;
-
-    // Read config from environment variables
-    const envConfig = this.readEnvConfig();
-    const finalConfig = {
-      streamingAttachmentBufferBytes:
-        this.config.streamingAttachmentBufferBytes,
-      integrations: {
-        ...this.getDefaultConfig(),
-        ...this.config.integrations,
-        ...envConfig.integrations,
-      },
+    state.config = {
+      ...state.config,
+      ...config,
+      integrations: { ...state.config.integrations, ...config.integrations },
     };
-
-    // Enable BraintrustPlugin with configuration
-    this.braintrustPlugin = new BraintrustPlugin(finalConfig);
-    this.braintrustPlugin.enable();
   }
 
-  /**
-   * Disable all plugins.
-   * Primarily used for testing.
-   */
-  disable(): void {
-    if (!this.enabled) {
+  register(
+    provider: Provider,
+    subscribe: (
+      integrations: InstrumentationIntegrationsConfig,
+      config: InstrumentationConfig,
+    ) => void,
+  ): void {
+    const state = getRegistryState();
+    if (state.registered.has(provider)) return;
+    const integrations = {
+      ...state.config.integrations,
+      ...readDisabledInstrumentationEnvConfig(
+        iso.getEnv("BRAINTRUST_DISABLE_INSTRUMENTATION"),
+      ).integrations,
+    };
+    if (
+      integrations[provider] === false ||
+      (provider === "langchain" && integrations.langgraph === false)
+    )
       return;
-    }
 
-    this.enabled = false;
-
-    const sharedState = getSharedState();
-    if (sharedState && sharedState[REGISTRY_STATE_KEY] === this) {
-      delete sharedState[REGISTRY_STATE_KEY];
-    }
-
-    if (this.braintrustPlugin) {
-      this.braintrustPlugin.disable();
-      this.braintrustPlugin = null;
-    }
+    installGlobalHookErrorReporter();
+    // Stamp before subscribing, so reentrant setup cannot install twice.
+    state.registered.add(provider);
+    subscribe(integrations, state.config);
   }
 
-  /**
-   * Check if instrumentation is enabled.
-   */
+  isRegistered(provider: Provider): boolean {
+    return getRegistryState().registered.has(provider);
+  }
+
   isEnabled(): boolean {
-    return this.enabled;
-  }
-
-  /**
-   * Get default configuration (all integrations enabled).
-   */
-  private getDefaultConfig(): Record<string, boolean> {
-    return getDefaultInstrumentationIntegrations();
-  }
-
-  /**
-   * Read configuration from environment variables.
-   * Supports: BRAINTRUST_DISABLE_INSTRUMENTATION=openai,anthropic,...
-   */
-  private readEnvConfig(): InstrumentationConfig {
-    return readDisabledInstrumentationEnvConfig(
-      iso.getEnv("BRAINTRUST_DISABLE_INSTRUMENTATION"),
-    );
+    return getRegistryState().registered.size > 0;
   }
 }
 
-/**
- * Global plugin registry instance.
- */
-export const registry = new PluginRegistry();
+export const registry: InstrumentationRegistry =
+  /* @__PURE__ */ new InstrumentationRegistry();
 
-/**
- * Configure auto-instrumentation.
- *
- * This must be called before importing any AI SDKs to take effect.
- *
- * @example
- * ```typescript
- * import { configureInstrumentation } from 'braintrust';
- *
- * // Disable OpenAI instrumentation
- * configureInstrumentation({
- *   integrations: { openai: false }
- * });
- *
- * // Now import SDKs
- * import OpenAI from 'openai';
- * ```
- *
- * Environment variables can also be used:
- * ```bash
- * # Disable single SDK
- * BRAINTRUST_DISABLE_INSTRUMENTATION=openai node app.js
- *
- * # Disable multiple SDKs
- * BRAINTRUST_DISABLE_INSTRUMENTATION=openai,anthropic node app.js
- * ```
- */
+/** Configure consumers before importing braintrust/auto or calling a wrapper. */
 export function configureInstrumentation(config: InstrumentationConfig): void {
   registry.configure(config);
 }

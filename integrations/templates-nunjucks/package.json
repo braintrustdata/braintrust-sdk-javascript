@@ -3,26 +3,24 @@
   "version": "1.0.0",
   "description": "Nunjucks templating support for the Braintrust JS SDK",
   "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "module": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "default": "./dist/index.js"
     }
   },
   "files": [
     "dist/**/*"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "vp run compile",
     "check:typings": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
-    "watch": "tsup --watch",
+    "watch": "vp pack --watch",
     "clean": "rm -r dist/*",
-    "test": "vitest run --exclude 'smoke/scenarios/**'",
+    "test": "vp test run --exclude 'smoke/scenarios/**'",
     "yalc:publish": "yalc publish"
   },
   "author": "Braintrust Data Inc.",
@@ -37,9 +35,9 @@
     "@types/node": "^20.10.5",
     "@types/nunjucks": "^3.2.6",
     "braintrust": "workspace:*",
-    "tsup": "^8.5.1",
     "typescript": "5.5.4",
-    "vitest": "4.1.11"
+    "vitest": "catalog:",
+    "vite-plus": "catalog:"
   },
   "repository": {
     "type": "git",
@@ -51,5 +49,10 @@
     "access": "public",
     "registry": "https://registry.npmjs.org/",
     "provenance": true
-  }
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "sideEffects": false
 }

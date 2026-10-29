@@ -1,3 +1,4 @@
+// Bundler transforms and runtime consumers are enabled independently.
 import { Agent, getAgentByName } from "agents";
 import { initLogger, wrapCloudflareAgent } from "braintrust/workerd";
 
@@ -17,6 +18,9 @@ type StoredRun = {
   started_at: number;
   status: "aborted" | "completed" | "error";
 };
+
+if (__CLOUDFLARE_AGENTS_INSTRUMENTATION_MODE__ === "auto")
+  await import("braintrust/auto");
 
 const BaseParentAgent =
   __CLOUDFLARE_AGENTS_INSTRUMENTATION_MODE__ === "wrapped"

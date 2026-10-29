@@ -5,8 +5,8 @@ import { isObject } from "../util/index";
 // when OpenAI usage data does not include it.
 export const BRAINTRUST_CACHED_STREAM_METRIC = "__braintrust_cached_metric";
 
-export const LEGACY_CACHED_HEADER = "x-cached";
-export const X_CACHED_HEADER = "x-bt-cached";
+const LEGACY_CACHED_HEADER = "x-cached";
+const X_CACHED_HEADER = "x-bt-cached";
 
 /**
  * Token name mappings for OpenAI metrics.
@@ -63,7 +63,7 @@ export function parseMetricsFromUsage(usage: unknown): Record<string, number> {
   return metrics;
 }
 
-export function parseCachedHeader(
+function parseCachedHeader(
   value: string | null | undefined,
 ): number | undefined {
   if (!value) {

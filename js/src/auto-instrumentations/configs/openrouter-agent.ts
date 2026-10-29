@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { openRouterAgentChannels } from "../../instrumentation/plugins/openrouter-agent-interceptors";
+import { openRouterAgentChannels } from "../../instrumentation/providers/openrouter-agent-interceptors";
 
 export const openRouterAgentConfigs: InstrumentationConfig[] = [
   {

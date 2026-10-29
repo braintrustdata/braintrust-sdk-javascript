@@ -8,7 +8,6 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
       "default": "./dist/index.js"
     }
   },
@@ -17,9 +16,9 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "vp run compile",
     "check:typings": "tsc --noEmit",
-    "watch": "tsup --watch",
+    "watch": "vp pack --watch",
     "clean": "rm -rf dist",
     "yalc:publish": "yalc publish"
   },
@@ -29,8 +28,8 @@
   },
   "devDependencies": {
     "@types/node": "^20.10.5",
-    "tsup": "^8.5.1",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vite-plus": "catalog:"
   },
   "peerDependencies": {
     "zod": "^3.25.34 || ^4.0"
@@ -51,5 +50,12 @@
     "access": "public",
     "registry": "https://registry.npmjs.org/",
     "provenance": true
-  }
+  },
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "sideEffects": [
+    "./dist/index.js"
+  ],
+  "main": "./dist/index.js"
 }

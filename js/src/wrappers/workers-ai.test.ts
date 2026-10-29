@@ -1,3 +1,4 @@
+import { resetInstrumentationForTest } from "../instrumentation/test-utils/reset";
 import {
   afterEach,
   beforeAll,
@@ -6,21 +7,14 @@ import {
   expect,
   it,
   vi,
-} from "vitest";
-import {
-  _exportsForTestingOnly,
-  currentSpan,
-  initLogger,
-  traced,
-} from "../logger";
+} from "vite-plus/test";
+import { _exportsForTestingOnly } from "../logger/testing";
+import { currentSpan, initLogger, traced } from "../logger/core";
 import { configureNode } from "../node/config";
-import {
-  configureInstrumentation,
-  registry,
-} from "../instrumentation/registry";
+import { configureInstrumentation } from "../instrumentation/registry";
 import { runWithAutoInstrumentationSuppressed } from "../instrumentation/auto-instrumentation-suppression";
 import { TypedAttachmentProcessor } from "../typed-attachments";
-import { Attachment } from "../logger";
+import { Attachment } from "../logger/core";
 import { wrapWorkersAI } from "./workers-ai";
 import type { LoggingEvent } from "../../util/index";
 
@@ -77,9 +71,8 @@ describe("Workers AI binding", () => {
   });
   afterEach(() => {
     _exportsForTestingOnly.clearTestBackgroundLogger();
-    registry.disable();
+    resetInstrumentationForTest();
     configureInstrumentation({ integrations: { workersAI: true } });
-    registry.enable();
     vi.restoreAllMocks();
     vi.unstubAllEnvs();
   });
@@ -393,7 +386,7 @@ describe("Workers AI binding", () => {
   it.each([false, true])(
     "defers extraction image conversion and preserves the complete input on upload failure (%s)",
     async (fail) => {
-      vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", "true");
+      vi.stubEnv("BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS", "true");
       const upload = vi
         .spyOn(Attachment.prototype, "upload")
         .mockResolvedValueOnce({ upload_status: "done" });
@@ -458,9 +451,8 @@ describe("Workers AI binding", () => {
     await runWithAutoInstrumentationSuppressed(() =>
       ai.run("@cf/cloudflare/clef", input),
     );
-    registry.disable();
+    resetInstrumentationForTest();
     configureInstrumentation({ integrations: { workersAI: false } });
-    registry.enable();
     await ai.run("@cf/cloudflare/clef", input);
     expect(await logger.drain()).toHaveLength(0);
   });
@@ -526,7 +518,7 @@ describe("Workers AI binding", () => {
   it.each(["@cf/cloudflare/clef-omni", "@cf/cloudflare/clairic"])(
     "omits inline media by default for %s",
     async (model) => {
-      vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", "false");
+      vi.stubEnv("BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS", "false");
       const params = {
         ...input,
         fields: { id: { type: "text" } },
@@ -546,7 +538,7 @@ describe("Workers AI binding", () => {
   );
 
   it("defers decision media uploads until export and captures all modalities when opted in", async () => {
-    vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", "true");
+    vi.stubEnv("BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS", "true");
     const upload = vi
       .spyOn(Attachment.prototype, "upload")
       .mockResolvedValue({ upload_status: "done" });

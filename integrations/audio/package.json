@@ -23,7 +23,7 @@
     "check:typings": "tsc --noEmit",
     "watch": "tsup --watch",
     "clean": "rm -r dist/*",
-    "test": "vitest run"
+    "test": "vp test run"
   },
   "author": "Braintrust Data Inc.",
   "license": "MIT",
@@ -36,7 +36,7 @@
     "ogg-opus-decoder": "1.7.5",
     "tsup": "^8.5.1",
     "typescript": "^5.3.3",
-    "vitest": "4.1.11"
+    "vite-plus": "catalog:"
   },
   "peerDependencies": {
     "braintrust": ">=3.41.0"

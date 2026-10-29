@@ -1,4 +1,5 @@
 import { traced } from "braintrust";
+import * as v from "valibot";
 import {
   FLUE_MODEL,
   FLUE_REASONING_MODEL,
@@ -7,10 +8,11 @@ import {
 
 const runtimePackageName =
   process.env.FLUE_RUNTIME_PACKAGE_NAME ?? "@flue/runtime";
-const [{ createAgent, Type }, { local }] = await Promise.all([
-  import(runtimePackageName),
-  import(`${runtimePackageName}/node`),
-]);
+const [{ defineAgent, defineTool, defineWorkflow }, { local }] =
+  await Promise.all([
+    import(runtimePackageName),
+    import(`${runtimePackageName}/node`),
+  ]);
 
 function flueModel() {
   return process.env.FLUE_E2E_MODEL ?? FLUE_MODEL;
@@ -34,7 +36,7 @@ function flueReasoningThinkingLevel() {
   return process.env.FLUE_E2E_REASONING_THINKING_LEVEL ?? "medium";
 }
 
-const flueE2EAgent = createAgent(() => ({
+const flueE2EAgent = defineAgent(() => ({
   compaction: {
     keepRecentTokens: 1,
     reserveTokens: 64,
@@ -51,10 +53,14 @@ const flueE2EAgent = createAgent(() => ({
   thinkingLevel: "off",
 }));
 
-const lookupTool = {
+const lookupTool = defineTool({
   description:
     "Return a deterministic lookup result with an id needed by web_search.",
-  execute: async (args) => {
+  input: v.object({
+    query: v.string(),
+  }),
+  name: "lookup",
+  run: async ({ input }) => {
     await traced(
       async (span) => {
         span.log({ output: "lookup-active" });
@@ -69,109 +75,109 @@ const lookupTool = {
       },
     );
 
-    return JSON.stringify({
+    return {
       id: "flue-session-2026",
-      query: args.query,
+      query: input.query,
       topic: "session instrumentation",
-    });
+    };
   },
-  name: "lookup",
-  parameters: Type.Object({
-    query: Type.String(),
-  }),
-};
+});
 
-const webSearchTool = {
+const webSearchTool = defineTool({
   description:
     "Search a deterministic local web index. Requires the id returned by lookup.",
-  execute: async (args) =>
-    JSON.stringify({
-      lookupId: args.lookupId,
-      query: args.query,
-      results: [
-        {
-          title: "Flue reasoning stream instrumentation",
-          url: "https://example.test/flue/reasoning-streams",
-        },
-      ],
-    }),
-  name: "web_search",
-  parameters: Type.Object({
-    lookupId: Type.String(),
-    query: Type.String(),
+  input: v.object({
+    lookupId: v.string(),
+    query: v.string(),
   }),
-};
+  name: "web_search",
+  run: async ({ input }) => ({
+    lookupId: input.lookupId,
+    query: input.query,
+    results: [
+      {
+        title: "Flue reasoning stream instrumentation",
+        url: "https://example.test/flue/reasoning-streams",
+      },
+    ],
+  }),
+});
 
-const summarizeSourceTool = {
+const summarizeSourceTool = defineTool({
   description:
     "Summarize the selected deterministic source after web_search returns a URL.",
-  execute: async (args) =>
-    JSON.stringify({
-      summary:
-        "Flue emits reasoning, tool execution, and LLM turn events separately.",
-      url: args.url,
-    }),
-  name: "summarize_source",
-  parameters: Type.Object({
-    url: Type.String(),
+  input: v.object({
+    url: v.string(),
   }),
-};
+  name: "summarize_source",
+  run: async ({ input }) => ({
+    summary:
+      "Flue emits reasoning, tool execution, and LLM turn events separately.",
+    url: input.url,
+  }),
+});
 
 export async function route(_ctx, next) {
   await next();
 }
 
-export async function run({ init, payload }) {
-  await traced(
-    async (span) => {
-      span.log({ output: "active" });
-    },
-    {
-      name: "flue.workflowCurrentProbe",
-      event: {
-        metadata: {
-          scenario: SCENARIO_NAME,
+export default defineWorkflow({
+  agent: flueE2EAgent,
+  input: v.object({
+    scenario: v.optional(v.string()),
+    metadata: v.optional(v.record(v.string(), v.unknown())),
+  }),
+  async run({ harness, input }) {
+    await traced(
+      async (span) => {
+        span.log({ output: "active" });
+      },
+      {
+        name: "flue.workflowCurrentProbe",
+        event: {
+          metadata: {
+            scenario: SCENARIO_NAME,
+          },
         },
       },
-    },
-  );
+    );
 
-  const harness = await init(flueE2EAgent, { name: "default" });
-  const session = await harness.session("main");
-  const skillSession = await harness.session("skill");
-  const taskSession = await harness.session("task");
+    const session = await harness.session("main");
+    const skillSession = await harness.session("skill");
+    const taskSession = await harness.session("task");
 
-  await session.prompt(
-    [
-      "Complete this instrumented research flow.",
-      "Call exactly one tool per turn and wait for each tool result before choosing the next tool.",
-      'Step 1: call lookup with query "flue instrumentation".',
-      'Step 2: use the lookup result id as lookupId and call web_search with query "Braintrust Flue reasoning stream instrumentation".',
-      "Step 3: use the first web_search result url and call summarize_source.",
-      "After summarize_source returns, reply with exactly PROMPT_DONE and no other text.",
-    ].join(" "),
-    {
-      model: fluePromptModel(),
-      thinkingLevel: fluePromptThinkingLevel(),
-      tools: [lookupTool, webSearchTool, summarizeSourceTool],
-    },
-  );
+    await session.prompt(
+      [
+        "Complete this instrumented research flow.",
+        "Call exactly one tool per turn and wait for each tool result before choosing the next tool.",
+        'Step 1: call lookup with query "flue instrumentation".',
+        'Step 2: use the lookup result id as lookupId and call web_search with query "Braintrust Flue reasoning stream instrumentation".',
+        "Step 3: use the first web_search result url and call summarize_source.",
+        "After summarize_source returns, reply with exactly PROMPT_DONE and no other text.",
+      ].join(" "),
+      {
+        model: fluePromptModel(),
+        thinkingLevel: fluePromptThinkingLevel(),
+        tools: [lookupTool, webSearchTool, summarizeSourceTool],
+      },
+    );
 
-  await skillSession.skill("e2e-flue-skill", {
-    args: { marker: "SKILL_DONE" },
-    model: flueReasoningModel(),
-    thinkingLevel: "off",
-  });
+    await skillSession.skill("e2e-flue-skill", {
+      args: { marker: "SKILL_DONE" },
+      model: flueReasoningModel(),
+      thinkingLevel: "off",
+    });
 
-  await taskSession.task("Reply with exactly TASK_DONE and no other text.", {
-    model: FLUE_MODEL,
-    thinkingLevel: "off",
-  });
+    await taskSession.task("Reply with exactly TASK_DONE and no other text.", {
+      model: FLUE_MODEL,
+      thinkingLevel: "off",
+    });
 
-  await session.compact();
+    await session.compact();
 
-  return {
-    scenario: payload?.scenario ?? SCENARIO_NAME,
-    status: "done",
-  };
-}
+    return {
+      scenario: input.scenario ?? SCENARIO_NAME,
+      status: "done",
+    };
+  },
+});

@@ -123,12 +123,12 @@ const CLAUDE_AGENT_OUTPUT_FILE_REGEX =
 const PROVIDER_HELPER_CALLER_REGEX = /^<repo>\/e2e\/helpers\/.+-scenario\.mjs$/;
 const ANTHROPIC_MESSAGE_STREAM_PATH_REGEX =
   /([/\\]node_modules[/\\]\.pnpm[/\\]@anthropic-ai\+sdk@[^/\\\s)]+[/\\]node_modules[/\\]@anthropic-ai[/\\]sdk[/\\])(?:src[/\\]lib[/\\]MessageStream\.ts|lib[/\\]MessageStream\.js)/g;
-// tsup's `splitting: true` for our own `dist/` emits content-hashed chunk
+// SDK builds emit content-hashed chunk
 // files (e.g. `<repo>/js/dist/chunk-7DWPOXBX.mjs`) whose names change any
 // time the bundle graph changes. Normalize them to a stable placeholder so
 // stack traces in error snapshots don't churn on unrelated bundle splits.
 const SDK_CHUNK_PATH_REGEX =
-  /(<repo>\/js\/dist\/)chunk-[A-Z0-9]+(\.(?:c?js|cjs|mjs))/g;
+  /(<repo>\/js\/dist\/(?:node\/|browser\/|workerd\/|edge-light\/)?)(?:chunk-[A-Z0-9]+|[\w-]+-[\w-]{8})(\.(?:c?js|cjs|mjs))/g;
 const ANTHROPIC_PNPM_VERSION_REGEX =
   /([/\\]\.pnpm[/\\]@anthropic-ai\+sdk@)[^/\\\s)]+/g;
 const LOCALHOST_HTTP_URL_SUBSTRING_REGEX =
@@ -196,13 +196,16 @@ function normalizeStackLikeString(value: string): string {
     "<tmp>/claude-agent/tasks/<output-file>",
   );
 
-  normalized = normalized.replace(
-    STACK_FRAME_REPO_PATH_REGEX,
-    (_, suffix: string) => `<repo>${suffix.replace(/\\/g, "/")}:0:0`,
-  );
-  normalized = normalized.replace(REPO_PATH_REGEX, (_, suffix: string) => {
-    return `<repo>${suffix.replace(/\\/g, "/")}`;
-  });
+  // Avoid quadratic path matching on large inline media strings.
+  if (normalized.includes("braintrust-sdk-javascript")) {
+    normalized = normalized.replace(
+      STACK_FRAME_REPO_PATH_REGEX,
+      (_, suffix: string) => `<repo>${suffix.replace(/\\/g, "/")}:0:0`,
+    );
+    normalized = normalized.replace(REPO_PATH_REGEX, (_, suffix: string) => {
+      return `<repo>${suffix.replace(/\\/g, "/")}`;
+    });
+  }
   normalized = normalized.replace(SDK_CHUNK_PATH_REGEX, "$1index$2");
   normalized = normalized.replace(
     /(<repo>(?:\/(?:e2e|js)\/[^:\s)\n]+)):\d+:\d+/g,

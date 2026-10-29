@@ -1,4 +1,5 @@
-import { describe, it } from "vitest";
+import { defineAttachmentCaptureTests } from "../../helpers/attachment-capture-assertions";
+import { describe, it } from "vite-plus/test";
 import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
@@ -84,7 +85,12 @@ describe("real HTTP server (undici responses)", () => {
     async () => {
       await runNodeScenarioDir({
         entry: "scenario.real-http.mjs",
-        nodeArgs: ["--import", "braintrust/hook.mjs"],
+        nodeArgs: [
+          "--import",
+          "./configure.mjs",
+          "--import",
+          "braintrust/hook.mjs",
+        ],
         scenarioDir,
         timeoutMs: TIMEOUT_MS,
       });
@@ -106,7 +112,7 @@ describe.concurrent("variants", () => {
           await runScenarioDir({
             entry: scenario.wrapperEntry,
             env: {
-              BRAINTRUST_CAPTURE_ATTACHMENTS: "true",
+              BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "true",
               OPENAI_PACKAGE_NAME: scenario.dependencyName,
             },
             runContext: {
@@ -129,10 +135,15 @@ describe.concurrent("variants", () => {
           await runNodeScenarioDir({
             entry: scenario.autoEntry,
             env: {
-              BRAINTRUST_CAPTURE_ATTACHMENTS: "true",
+              BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "true",
               OPENAI_PACKAGE_NAME: scenario.dependencyName,
             },
-            nodeArgs: ["--import", "braintrust/hook.mjs"],
+            nodeArgs: [
+              "--import",
+              "./configure.mjs",
+              "--import",
+              "braintrust/hook.mjs",
+            ],
             runContext: {
               variantKey: scenario.snapshotName,
               originalScenarioDir,
@@ -149,3 +160,13 @@ describe.concurrent("variants", () => {
     });
   }
 });
+
+for (const scenario of openaiScenarios) {
+  defineAttachmentCaptureTests({
+    scenarioDir,
+    originalScenarioDir,
+    provider: "openai",
+    packageName: scenario.dependencyName,
+    variantKey: scenario.snapshotName,
+  });
+}

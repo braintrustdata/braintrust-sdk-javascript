@@ -1,5 +1,6 @@
+import { registerInstrumentation } from "../instrumentation/registrations/groq";
 import { debugLogger } from "../debug-logger";
-import { groqChannels } from "../instrumentation/plugins/groq-interceptors";
+import { groqChannels } from "../instrumentation/providers/groq-interceptors";
 import type {
   GroqAudio,
   GroqAudioSpeech,
@@ -19,6 +20,7 @@ import type {
  * Wrap a Groq client (created with `new Groq(...)`) with Braintrust tracing.
  */
 export function wrapGroq<T extends object>(groq: T): T {
+  registerInstrumentation();
   if (isSupportedGroqClient(groq)) {
     return groqProxy(groq) as T;
   }

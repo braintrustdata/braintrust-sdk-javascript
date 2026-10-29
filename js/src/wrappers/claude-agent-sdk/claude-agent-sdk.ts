@@ -1,7 +1,8 @@
+import { registerInstrumentation } from "../../instrumentation/registrations/claudeAgentSDK";
 import { debugLogger } from "../../debug-logger";
-import { claudeAgentSDKChannels } from "../../instrumentation/plugins/claude-agent-sdk-interceptors";
-import { CLAUDE_AGENT_SDK_SKIP_LOCAL_TOOL_HOOKS_OPTION } from "../../instrumentation/plugins/claude-agent-sdk-instrumentation-constants";
-import { wrapLocalClaudeToolHandler } from "../../instrumentation/plugins/claude-agent-sdk-local-tool-spans";
+import { claudeAgentSDKChannels } from "../../instrumentation/providers/claude-agent-sdk-interceptors";
+import { CLAUDE_AGENT_SDK_SKIP_LOCAL_TOOL_HOOKS_OPTION } from "../../instrumentation/providers/claude-agent-sdk-instrumentation-constants";
+import { wrapLocalClaudeToolHandler } from "../../instrumentation/providers/claude-agent-sdk-local-tool-spans";
 import type {
   ClaudeAgentSDKModule,
   ClaudeAgentSDKQueryParams,
@@ -21,6 +22,7 @@ type LocalToolMetadata = {
  * @returns Object with wrapped query, tool, and createSdkMcpServer functions
  */
 export function wrapClaudeAgentSDK<T extends object>(sdk: T): T {
+  registerInstrumentation();
   const s: unknown = sdk;
   if (
     s &&

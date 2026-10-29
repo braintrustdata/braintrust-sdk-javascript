@@ -1,10 +1,15 @@
-import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
-import BraintrustVitestEvalsReporter from "./reporter";
 import {
-  _exportsForTestingOnly,
-  type TestBackgroundLogger,
-} from "../../logger";
-import * as logger from "../../logger";
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vite-plus/test";
+import BraintrustVitestEvalsReporter from "./reporter";
+import { _exportsForTestingOnly } from "../../logger/testing";
+import { type TestBackgroundLogger } from "../../logger/core";
+import * as logger from "../../logger/experiments";
 import { configureNode } from "../../node/config";
 
 configureNode();
@@ -16,7 +21,7 @@ beforeAll(async () => {
   await _exportsForTestingOnly.simulateLoginForTests();
   backgroundLogger = _exportsForTestingOnly.useTestBackgroundLogger();
 
-  vi.spyOn(logger, "initExperiment").mockImplementation(
+  vi.spyOn(logger, "init").mockImplementation(
     (projectOrOptions: string | any, options?: any) => {
       const experimentOptions =
         typeof projectOrOptions === "string" ? options : projectOrOptions;

@@ -1,4 +1,4 @@
-import { expect } from "vitest";
+import { expect } from "vite-plus/test";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import { findAllSpans } from "../../helpers/trace-selectors";
 

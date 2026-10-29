@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Braintrust Main Package Browser Build", () => {
-  test("should display informational message when using browser build", async ({
+  test("should expose the curated root API in a browser", async ({
     page,
     baseURL,
   }) => {
@@ -55,7 +55,7 @@ test.describe("Braintrust Main Package Browser Build", () => {
     expect(testResults.completed).toBe(true);
     expect(testResults.importSuccessful).toBe(true);
     expect(testResults.hasInit).toBe(true);
-    expect(testResults.hasNewId).toBe(true);
-    expect(testResults.hasTraceable).toBe(true);
+    expect(testResults.hasFlush).toBe(true);
+    expect(testResults.removedLegacyExports).toBe(true);
   });
 });

@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { ollamaChannels } from "../../instrumentation/plugins/ollama-interceptors";
+import { ollamaChannels } from "../../instrumentation/providers/ollama-interceptors";
 
 const methods = [
   ["chat", ollamaChannels.chat.channelName],

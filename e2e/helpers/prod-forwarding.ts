@@ -31,7 +31,6 @@ export async function initializeProdForwarding(): Promise<void> {
     const logger = initLogger({
       apiKey,
       appUrl: process.env.BRAINTRUST_APP_URL,
-      asyncFlush: false,
       forceLogin: true,
       projectName,
     });

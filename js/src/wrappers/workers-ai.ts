@@ -1,4 +1,5 @@
-import { workersAIChannels } from "../instrumentation/plugins/workers-ai-interceptors";
+import { registerInstrumentation } from "../instrumentation/registrations/workersAI";
+import { workersAIChannels } from "../instrumentation/providers/workers-ai-interceptors";
 import type { WorkersAI } from "../vendor-sdk-types/workers-ai";
 
 const wrappedBindings = new WeakMap<object, object>();
@@ -18,6 +19,7 @@ const wrappedBindings = new WeakMap<object, object>();
  * ```
  */
 export function wrapWorkersAI<T>(binding: T): T {
+  registerInstrumentation();
   if (
     !binding ||
     typeof binding !== "object" ||

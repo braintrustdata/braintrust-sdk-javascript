@@ -8,7 +8,6 @@
     "@std/fs": "jsr:@std/fs@^1.0.14",
     "@std/path": "jsr:@std/path@^1.0.8",
     "autoevals": "npm:autoevals@^0.0.122",
-    "braintrust": "npm:braintrust@^0.0.187",
-    "zod": "npm:zod@^3.24.2"
+    "zod": "npm:zod@^3.25.34"
   }
 }

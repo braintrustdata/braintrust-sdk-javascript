@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { piCodingAgentChannels } from "../../instrumentation/plugins/pi-coding-agent-interceptors";
+import { piCodingAgentChannels } from "../../instrumentation/providers/pi-coding-agent-interceptors";
 
 const piCodingAgentVersionRange = ">=0.79.0 <2.0.0";
 

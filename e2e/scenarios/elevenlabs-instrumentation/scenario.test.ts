@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "vite-plus/test";
 import {
   prepareScenarioDir,
   resolveScenarioDir,
@@ -16,7 +16,7 @@ const scenarioDir = await prepareScenarioDir({
   scenarioDir: originalScenarioDir,
 });
 for (const variant of ["elevenlabs-v2", "elevenlabs-v2-latest"]) {
-  describe.sequential(variant, () => {
+  describe(variant, { concurrent: false }, () => {
     for (const mode of ["wrapped", "auto", "wrapped-auto"]) {
       test(
         mode,
@@ -30,6 +30,7 @@ for (const variant of ["elevenlabs-v2", "elevenlabs-v2-latest"]) {
                 ? ["--import", "braintrust/hook.mjs"]
                 : [],
               env: {
+                BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "true",
                 ELEVENLABS_PACKAGE_NAME: variant.replace(
                   "elevenlabs-",
                   "elevenlabs-sdk-",

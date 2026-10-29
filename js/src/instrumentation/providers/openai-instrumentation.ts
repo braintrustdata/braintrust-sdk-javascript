@@ -1,0 +1,866 @@
+import { _internalCaptureAttachmentsEnabled } from "../../logger/core";
+import { processInputAttachments } from "../../wrappers/attachment-utils";
+import { SpanTypeAttribute, isObject } from "../../../util/index";
+import {
+  BRAINTRUST_CACHED_STREAM_METRIC,
+  getCachedMetricFromHeaders,
+  parseMetricsFromUsage,
+} from "../../openai-utils";
+import { INSTRUMENTATION_NAMES } from "../../span-origin";
+import { getCurrentUnixTimestamp } from "../../util";
+import type {
+  OpenAIChatChoice,
+  OpenAIChatCompletionChunk,
+  OpenAIChatLogprobs,
+  OpenAIResponseStreamEvent,
+} from "../../vendor-sdk-types/openai";
+
+import {
+  traceAsyncCall,
+  traceStreamingCall,
+  traceSyncStreamCall,
+} from "../core/tracing";
+import {
+  interceptOpenAIAgentsTraceCapture,
+  interceptOpenAIAgentsTraceFail,
+  interceptOpenAIAgentsTraceStart,
+} from "./openai-agents-api-instrumentation";
+import {
+  interceptOpenAIBatchTraceComplete,
+  interceptOpenAIBatchesRetrieveTraced,
+  interceptOpenAIFilesCreateTraced,
+} from "./openai-batch-instrumentation";
+import { openAIChannels } from "./openai-interceptors";
+import { traceOpenAIDecisions } from "./openai-decisions";
+import { traceOpenAIMedia } from "./openai-media";
+import {
+  extractOpenAIChatInput,
+  extractOpenAIResponsesInput,
+  extractOpenAIResponsesMetadata,
+  processImagesInOutput,
+} from "./openai-span-data";
+
+/**
+ * Registers OpenAI SDK instrumentation.
+ *
+ * Handles instrumentation for:
+ * - Chat completions (streaming and non-streaming)
+ * - Embeddings
+ * - Moderations
+ * - Beta API (parse, stream)
+ * - Responses API (create, stream, parse, compact)
+ */
+export function registerOpenAIInstrumentation(): void {
+  openAIChannels.decisionsCreate.intercept(
+    (target, receiver, args, additional) =>
+      traceOpenAIDecisions(() => Reflect.apply(target, receiver, args), {
+        arguments: args,
+        self: receiver,
+        additional,
+      }),
+  );
+  openAIChannels.agentsTraceStart.intercept(interceptOpenAIAgentsTraceStart);
+  openAIChannels.agentsTraceCapture.intercept(
+    interceptOpenAIAgentsTraceCapture,
+  );
+  openAIChannels.agentsTraceFail.intercept(interceptOpenAIAgentsTraceFail);
+  openAIChannels.filesCreateTraced.intercept(interceptOpenAIFilesCreateTraced);
+  openAIChannels.batchesRetrieveTraced.intercept(
+    interceptOpenAIBatchesRetrieveTraced,
+  );
+  openAIChannels.batchesCompleteTrace.intercept(
+    interceptOpenAIBatchTraceComplete,
+  );
+
+  openAIChannels.imagesGenerate.intercept(
+    (target, receiver, args, additional) =>
+      traceOpenAIMedia(
+        () => Reflect.apply(target, receiver, args),
+        { arguments: args, self: receiver, additional },
+        openAIChannels.imagesGenerate.channelName,
+        "generate",
+      ),
+  );
+  openAIChannels.imagesEdit.intercept((target, receiver, args, additional) =>
+    traceOpenAIMedia(
+      () => Reflect.apply(target, receiver, args),
+      { arguments: args, self: receiver, additional },
+      openAIChannels.imagesEdit.channelName,
+      "edit",
+    ),
+  );
+  openAIChannels.imagesCreateVariation.intercept(
+    (target, receiver, args, additional) =>
+      traceOpenAIMedia(
+        () => Reflect.apply(target, receiver, args),
+        { arguments: args, self: receiver, additional },
+        openAIChannels.imagesCreateVariation.channelName,
+        "variation",
+      ),
+  );
+  openAIChannels.audioSpeechCreate.intercept(
+    (target, receiver, args, additional) =>
+      traceOpenAIMedia(
+        () => Reflect.apply(target, receiver, args),
+        { arguments: args, self: receiver, additional },
+        openAIChannels.audioSpeechCreate.channelName,
+        "speech",
+      ),
+  );
+  openAIChannels.audioTranscriptionsCreate.intercept(
+    (target, receiver, args, additional) =>
+      traceOpenAIMedia(
+        () => Reflect.apply(target, receiver, args),
+        { arguments: args, self: receiver, additional },
+        openAIChannels.audioTranscriptionsCreate.channelName,
+        "transcribe",
+      ),
+  );
+  openAIChannels.audioTranslationsCreate.intercept(
+    (target, receiver, args, additional) =>
+      traceOpenAIMedia(
+        () => Reflect.apply(target, receiver, args),
+        { arguments: args, self: receiver, additional },
+        openAIChannels.audioTranslationsCreate.channelName,
+        "translate",
+      ),
+  );
+
+  // Chat Completions - supports streaming
+  openAIChannels.chatCompletionsCreate.intercept(
+    (target, receiver, args, additional) =>
+      traceStreamingCall<typeof openAIChannels.chatCompletionsCreate>(
+        () => Reflect.apply(target, receiver, args),
+        {
+          ...additional,
+          arguments: args,
+          self: receiver,
+          get response() {
+            return additional.responseInfo?.response ?? additional.response;
+          },
+        },
+        {
+          instrumentationName: INSTRUMENTATION_NAMES.OPENAI,
+          name: "Chat Completion",
+          type: SpanTypeAttribute.LLM,
+          extractInput: ([params]) => extractOpenAIChatInput(params),
+          extractOutput: (result, event) =>
+            processChatCompletionOutput(
+              result?.choices,
+              event?.arguments?.[0].audio?.format,
+            ),
+          extractMetrics: (result, startTime, endEvent) => {
+            const metrics = withCachedMetric(
+              parseMetricsFromUsage(result?.usage),
+              result,
+              endEvent,
+            );
+            if (startTime) {
+              metrics.time_to_first_token =
+                getCurrentUnixTimestamp() - startTime;
+            }
+            return metrics;
+          },
+          aggregateChunks: aggregateChatCompletionChunks,
+        },
+      ),
+  );
+
+  // Embeddings
+  openAIChannels.embeddingsCreate.intercept(
+    (target, receiver, args, additional) =>
+      traceAsyncCall<typeof openAIChannels.embeddingsCreate>(
+        () => Reflect.apply(target, receiver, args),
+        {
+          ...additional,
+          arguments: args,
+          self: receiver,
+          get response() {
+            return additional.responseInfo?.response ?? additional.response;
+          },
+        },
+        {
+          instrumentationName: INSTRUMENTATION_NAMES.OPENAI,
+          name: "Embedding",
+          type: SpanTypeAttribute.LLM,
+          extractInput: ([params]) => {
+            const { input, ...metadata } = params;
+            return {
+              input,
+              metadata: { ...metadata, provider: "openai" },
+            };
+          },
+          extractOutput: (result) => {
+            const embedding = result?.data?.[0]?.embedding;
+            return Array.isArray(embedding)
+              ? { embedding_length: embedding.length }
+              : undefined;
+          },
+          extractMetrics: (result, _startTime, endEvent) => {
+            return withCachedMetric(
+              parseMetricsFromUsage(result?.usage),
+              result,
+              endEvent,
+            );
+          },
+        },
+      ),
+  );
+
+  // Beta Chat Completions Parse
+  openAIChannels.betaChatCompletionsParse.intercept(
+    (target, receiver, args, additional) =>
+      traceStreamingCall<typeof openAIChannels.betaChatCompletionsParse>(
+        () => Reflect.apply(target, receiver, args),
+        {
+          ...additional,
+          arguments: args,
+          self: receiver,
+          get response() {
+            return additional.responseInfo?.response ?? additional.response;
+          },
+        },
+        {
+          instrumentationName: INSTRUMENTATION_NAMES.OPENAI,
+          name: "Chat Completion",
+          type: SpanTypeAttribute.LLM,
+          extractInput: ([params]) => extractOpenAIChatInput(params),
+          extractOutput: (result, event) =>
+            processChatCompletionOutput(
+              result?.choices,
+              event?.arguments?.[0].audio?.format,
+            ),
+          extractMetrics: (result, startTime, endEvent) => {
+            const metrics = withCachedMetric(
+              parseMetricsFromUsage(result?.usage),
+              result,
+              endEvent,
+            );
+            if (startTime) {
+              metrics.time_to_first_token =
+                getCurrentUnixTimestamp() - startTime;
+            }
+            return metrics;
+          },
+          aggregateChunks: aggregateChatCompletionChunks,
+        },
+      ),
+  );
+
+  // Beta Chat Completions Stream (sync method returning event-based stream)
+  openAIChannels.betaChatCompletionsStream.intercept(
+    (target, receiver, args, additional) =>
+      traceSyncStreamCall<typeof openAIChannels.betaChatCompletionsStream>(
+        () => Reflect.apply(target, receiver, args),
+        {
+          ...additional,
+          arguments: args,
+          self: receiver,
+          get response() {
+            return additional.responseInfo?.response ?? additional.response;
+          },
+        },
+        {
+          instrumentationName: INSTRUMENTATION_NAMES.OPENAI,
+          name: "Chat Completion",
+          type: SpanTypeAttribute.LLM,
+          extractInput: ([params]) => extractOpenAIChatInput(params),
+        },
+      ),
+  );
+
+  // Moderations
+  openAIChannels.moderationsCreate.intercept(
+    (target, receiver, args, additional) =>
+      traceAsyncCall<typeof openAIChannels.moderationsCreate>(
+        () => Reflect.apply(target, receiver, args),
+        {
+          ...additional,
+          arguments: args,
+          self: receiver,
+          get response() {
+            return additional.responseInfo?.response ?? additional.response;
+          },
+        },
+        {
+          instrumentationName: INSTRUMENTATION_NAMES.OPENAI,
+          name: "Moderation",
+          type: SpanTypeAttribute.LLM,
+          extractInput: ([params]) => {
+            const { input, ...metadata } = params;
+            return {
+              input,
+              metadata: { ...metadata, provider: "openai" },
+            };
+          },
+          extractOutput: (result) => {
+            return result?.results;
+          },
+          extractMetrics: (result, _startTime, endEvent) => {
+            return withCachedMetric(
+              parseMetricsFromUsage(result?.usage),
+              result,
+              endEvent,
+            );
+          },
+        },
+      ),
+  );
+
+  // Responses API - create (supports streaming via stream=true param)
+  openAIChannels.responsesCreate.intercept(
+    (target, receiver, args, additional) =>
+      traceStreamingCall<typeof openAIChannels.responsesCreate>(
+        () => Reflect.apply(target, receiver, args),
+        {
+          ...additional,
+          arguments: args,
+          self: receiver,
+          get response() {
+            return additional.responseInfo?.response ?? additional.response;
+          },
+        },
+        {
+          instrumentationName: INSTRUMENTATION_NAMES.OPENAI,
+          name: "openai.responses.create",
+          type: SpanTypeAttribute.LLM,
+          extractInput: ([params]) => extractOpenAIResponsesInput(params),
+          extractOutput: (result) => {
+            return processImagesInOutput(result?.output);
+          },
+          extractMetadata: (result) => extractOpenAIResponsesMetadata(result),
+          extractMetrics: (result, startTime, endEvent) => {
+            const metrics = withCachedMetric(
+              parseMetricsFromUsage(result?.usage),
+              result,
+              endEvent,
+            );
+            if (startTime) {
+              metrics.time_to_first_token =
+                getCurrentUnixTimestamp() - startTime;
+            }
+            return metrics;
+          },
+          aggregateChunks: aggregateResponseStreamEvents,
+        },
+      ),
+  );
+
+  // Responses API - stream (sync method returning event-based stream)
+  openAIChannels.responsesStream.intercept(
+    (target, receiver, args, additional) =>
+      traceSyncStreamCall<typeof openAIChannels.responsesStream>(
+        () => Reflect.apply(target, receiver, args),
+        {
+          ...additional,
+          arguments: args,
+          self: receiver,
+          get response() {
+            return additional.responseInfo?.response ?? additional.response;
+          },
+        },
+        {
+          instrumentationName: INSTRUMENTATION_NAMES.OPENAI,
+          name: "openai.responses.create",
+          type: SpanTypeAttribute.LLM,
+          extractInput: ([params]) => extractOpenAIResponsesInput(params),
+          extractFromEvent: (event) =>
+            TERMINAL_RESPONSE_EVENT_TYPES.has(event.type)
+              ? aggregateResponseStreamEvents([event])
+              : {},
+        },
+      ),
+  );
+
+  // Responses API - parse
+  openAIChannels.responsesParse.intercept(
+    (target, receiver, args, additional) =>
+      traceStreamingCall<typeof openAIChannels.responsesParse>(
+        () => Reflect.apply(target, receiver, args),
+        {
+          ...additional,
+          arguments: args,
+          self: receiver,
+          get response() {
+            return additional.responseInfo?.response ?? additional.response;
+          },
+        },
+        {
+          instrumentationName: INSTRUMENTATION_NAMES.OPENAI,
+          name: "openai.responses.parse",
+          type: SpanTypeAttribute.LLM,
+          extractInput: ([params]) => extractOpenAIResponsesInput(params),
+          extractOutput: (result) => {
+            return processImagesInOutput(result?.output);
+          },
+          extractMetadata: (result) => extractOpenAIResponsesMetadata(result),
+          extractMetrics: (result, startTime, endEvent) => {
+            const metrics = withCachedMetric(
+              parseMetricsFromUsage(result?.usage),
+              result,
+              endEvent,
+            );
+            if (startTime) {
+              metrics.time_to_first_token =
+                getCurrentUnixTimestamp() - startTime;
+            }
+            return metrics;
+          },
+          aggregateChunks: aggregateResponseStreamEvents,
+        },
+      ),
+  );
+
+  // Responses API - compact
+  openAIChannels.responsesCompact.intercept(
+    (target, receiver, args, additional) =>
+      traceAsyncCall<typeof openAIChannels.responsesCompact>(
+        () => Reflect.apply(target, receiver, args),
+        {
+          ...additional,
+          arguments: args,
+          self: receiver,
+          get response() {
+            return additional.responseInfo?.response ?? additional.response;
+          },
+        },
+        {
+          instrumentationName: INSTRUMENTATION_NAMES.OPENAI,
+          name: "openai.responses.compact",
+          type: SpanTypeAttribute.LLM,
+          extractInput: ([params]) => extractOpenAIResponsesInput(params),
+          extractOutput: (result) => {
+            return processImagesInOutput(result?.output);
+          },
+          extractMetadata: (result) => extractOpenAIResponsesMetadata(result),
+          extractMetrics: (result, startTime, endEvent) => {
+            const metrics = withCachedMetric(
+              parseMetricsFromUsage(result?.usage),
+              result,
+              endEvent,
+            );
+            if (startTime) {
+              metrics.time_to_first_token =
+                getCurrentUnixTimestamp() - startTime;
+            }
+            return metrics;
+          },
+        },
+      ),
+  );
+}
+
+function processChatCompletionOutput(
+  choices: OpenAIChatChoice[] | undefined,
+  audioFormat: string | undefined,
+): unknown {
+  const captureAttachments = _internalCaptureAttachmentsEnabled();
+  return choices?.map((choice) => ({
+    ...choice,
+    // Parsed outputs and tool arguments are application JSON, not media parts.
+    message: {
+      ...choice.message,
+      ...(Array.isArray(choice.message.content)
+        ? {
+            content: processInputAttachments(
+              choice.message.content,
+              captureAttachments,
+            ),
+          }
+        : {}),
+      ...(choice.message.audio
+        ? {
+            audio: processInputAttachments(
+              { role: "assistant", audio: choice.message.audio },
+              captureAttachments,
+              audioFormat,
+            ).audio,
+          }
+        : {}),
+    },
+  }));
+}
+
+function getCachedMetricFromEndEvent(endEvent: unknown): number | undefined {
+  if (!isObject(endEvent)) {
+    return undefined;
+  }
+
+  const response = (endEvent as Record<string, unknown>).response;
+  if (!isObject(response)) {
+    return undefined;
+  }
+
+  const headers = (response as { headers?: unknown }).headers;
+  if (!headers || typeof (headers as Headers).get !== "function") {
+    return undefined;
+  }
+
+  return getCachedMetricFromHeaders(headers as Headers);
+}
+
+function withCachedMetric(
+  metrics: Record<string, number>,
+  result: unknown,
+  endEvent?: unknown,
+): Record<string, number> {
+  if (metrics.cached !== undefined) {
+    return metrics;
+  }
+
+  const cachedFromEvent = getCachedMetricFromEndEvent(endEvent);
+  if (cachedFromEvent !== undefined) {
+    return {
+      ...metrics,
+      cached: cachedFromEvent,
+    };
+  }
+
+  if (!isObject(result)) {
+    return metrics;
+  }
+
+  const cached = (result as Record<string, unknown>)[
+    BRAINTRUST_CACHED_STREAM_METRIC
+  ];
+
+  if (typeof cached !== "number") {
+    return metrics;
+  }
+
+  return {
+    ...metrics,
+    cached,
+  };
+}
+
+function mergeLogprobTokens(
+  existing: OpenAIChatLogprobs["content"] | OpenAIChatLogprobs["refusal"],
+  incoming: OpenAIChatLogprobs["content"] | OpenAIChatLogprobs["refusal"],
+): OpenAIChatLogprobs["content"] | OpenAIChatLogprobs["refusal"] {
+  if (incoming === undefined) {
+    return existing;
+  }
+
+  if (incoming === null) {
+    return existing ?? null;
+  }
+
+  if (Array.isArray(existing)) {
+    return [...existing, ...incoming];
+  }
+
+  return [...incoming];
+}
+
+function aggregateChatLogprobs(
+  existing: OpenAIChatLogprobs | null | undefined,
+  incoming: OpenAIChatLogprobs | null | undefined,
+): OpenAIChatLogprobs | null | undefined {
+  if (incoming === undefined) {
+    return existing;
+  }
+
+  if (incoming === null) {
+    return existing ?? null;
+  }
+
+  const aggregated: OpenAIChatLogprobs =
+    existing && existing !== null
+      ? { ...existing, ...incoming }
+      : { ...incoming };
+
+  const content = mergeLogprobTokens(existing?.content, incoming.content);
+  if (content !== undefined) {
+    aggregated.content = content;
+  }
+
+  const refusal = mergeLogprobTokens(existing?.refusal, incoming.refusal);
+  if (refusal !== undefined) {
+    aggregated.refusal = refusal;
+  }
+
+  return aggregated;
+}
+
+type AggregatedChatChoice = {
+  index: number;
+  role: string | undefined;
+  content: string | undefined;
+  reasoning_content: string | null | undefined;
+  refusal: string | undefined;
+  audio: NonNullable<OpenAIChatChoice["message"]["audio"]> | undefined;
+  toolCallsByIndex: Map<
+    number,
+    NonNullable<OpenAIChatChoice["message"]["tool_calls"]>[number]
+  >;
+  logprobs: OpenAIChatLogprobs | null | undefined;
+  finish_reason: string | null | undefined;
+};
+
+function createAggregatedChatChoice(index: number): AggregatedChatChoice {
+  return {
+    index,
+    role: undefined,
+    content: undefined,
+    reasoning_content: undefined,
+    refusal: undefined,
+    audio: undefined,
+    toolCallsByIndex: new Map(),
+    logprobs: undefined,
+    finish_reason: undefined,
+  };
+}
+
+function toChatChoice(choice: AggregatedChatChoice): OpenAIChatChoice {
+  const toolCalls = Array.from(choice.toolCallsByIndex.entries())
+    .sort(([left], [right]) => left - right)
+    .map(([, toolCall]) => toolCall);
+
+  return {
+    index: choice.index,
+    message: {
+      role: choice.role,
+      content: choice.content,
+      ...(choice.reasoning_content !== undefined
+        ? { reasoning_content: choice.reasoning_content }
+        : {}),
+      ...(choice.refusal !== undefined ? { refusal: choice.refusal } : {}),
+      ...(choice.audio !== undefined ? { audio: choice.audio } : {}),
+      tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
+    },
+    logprobs: choice.logprobs ?? null,
+    finish_reason: choice.finish_reason,
+  };
+}
+
+// Some OpenAI-compatible providers omit `index` on streamed tool call deltas.
+// Match existing ids before starting a new call; a delta without an id
+// continues the latest one.
+function resolveToolCallIndex(
+  toolCallsByIndex: AggregatedChatChoice["toolCallsByIndex"],
+  toolDelta: { index?: number | null; id?: string },
+): number {
+  if (typeof toolDelta.index === "number") {
+    return toolDelta.index;
+  }
+  if (toolDelta.id) {
+    for (const [index, toolCall] of toolCallsByIndex) {
+      if (toolCall.id === toolDelta.id) {
+        return index;
+      }
+    }
+  }
+  if (toolCallsByIndex.size === 0) {
+    return 0;
+  }
+  const lastIndex = Math.max(...toolCallsByIndex.keys());
+  const lastId = toolCallsByIndex.get(lastIndex)?.id;
+  return toolDelta.id && lastId && lastId !== toolDelta.id
+    ? lastIndex + 1
+    : lastIndex;
+}
+
+/**
+ * Aggregate chat completion chunks into a single response.
+ * Combines role (first), content, reasoning_content and audio transcripts (concatenated),
+ * tool_calls (by index), finish_reason (last), and usage (last chunk).
+ */
+export function aggregateChatCompletionChunks(
+  chunks: OpenAIChatCompletionChunk[],
+  streamResult?: unknown,
+  endEvent?: unknown,
+): {
+  output: OpenAIChatChoice[];
+  metrics: Record<string, number>;
+} {
+  const choicesByIndex = new Map<number, AggregatedChatChoice>();
+  let metrics: Record<string, number> = {};
+
+  for (const chunk of chunks) {
+    if (chunk.usage) {
+      metrics = {
+        ...metrics,
+        ...parseMetricsFromUsage(chunk.usage),
+      };
+    }
+
+    const choices = chunk.choices;
+    if (!choices?.length) {
+      continue;
+    }
+
+    for (const choice of choices) {
+      const choiceIndex = choice.index;
+      let aggregatedChoice = choicesByIndex.get(choiceIndex);
+      if (!aggregatedChoice) {
+        aggregatedChoice = createAggregatedChatChoice(choiceIndex);
+        choicesByIndex.set(choiceIndex, aggregatedChoice);
+      }
+
+      if (choice.finish_reason) {
+        aggregatedChoice.finish_reason = choice.finish_reason;
+      }
+
+      aggregatedChoice.logprobs = aggregateChatLogprobs(
+        aggregatedChoice.logprobs,
+        choice.logprobs,
+      );
+
+      const delta = choice.delta;
+      if (!delta) {
+        continue;
+      }
+
+      if (delta.finish_reason) {
+        aggregatedChoice.finish_reason = delta.finish_reason;
+      }
+
+      if (!aggregatedChoice.role && delta.role) {
+        aggregatedChoice.role = delta.role;
+      }
+
+      if (delta.content) {
+        aggregatedChoice.content =
+          (aggregatedChoice.content || "") + delta.content;
+      }
+
+      if (typeof delta.reasoning_content === "string") {
+        aggregatedChoice.reasoning_content =
+          (aggregatedChoice.reasoning_content ?? "") + delta.reasoning_content;
+      } else if (delta.reasoning_content === null) {
+        // Retain explicit nulls, but never discard text from earlier chunks.
+        aggregatedChoice.reasoning_content ??= null;
+      }
+
+      if (delta.refusal) {
+        aggregatedChoice.refusal =
+          (aggregatedChoice.refusal || "") + delta.refusal;
+      }
+
+      if (delta.audio) {
+        const { id, expires_at: expiresAt, transcript } = delta.audio;
+        if (
+          id !== undefined ||
+          expiresAt !== undefined ||
+          transcript !== undefined
+        ) {
+          aggregatedChoice.audio ??= {};
+          if (id !== undefined) {
+            aggregatedChoice.audio.id = id;
+          }
+          if (expiresAt !== undefined) {
+            aggregatedChoice.audio.expires_at = expiresAt;
+          }
+          if (transcript !== undefined) {
+            aggregatedChoice.audio.transcript =
+              (aggregatedChoice.audio.transcript || "") + transcript;
+          }
+        }
+      }
+
+      if (delta.tool_calls) {
+        for (const toolDelta of delta.tool_calls) {
+          const toolIndex = resolveToolCallIndex(
+            aggregatedChoice.toolCallsByIndex,
+            toolDelta,
+          );
+          let aggregatedToolCall =
+            aggregatedChoice.toolCallsByIndex.get(toolIndex);
+          if (!aggregatedToolCall) {
+            aggregatedToolCall = {
+              function: { arguments: "" },
+            };
+            aggregatedChoice.toolCallsByIndex.set(
+              toolIndex,
+              aggregatedToolCall,
+            );
+          }
+
+          if (toolDelta.id !== undefined) {
+            aggregatedToolCall.id = toolDelta.id;
+          }
+          if (toolDelta.type !== undefined) {
+            aggregatedToolCall.type = toolDelta.type;
+          }
+          if (toolDelta.function?.name !== undefined) {
+            aggregatedToolCall.function.name = toolDelta.function.name;
+          }
+          if (toolDelta.function?.arguments !== undefined) {
+            aggregatedToolCall.function.arguments +=
+              toolDelta.function.arguments;
+          }
+        }
+      }
+    }
+  }
+
+  metrics = withCachedMetric(metrics, streamResult, endEvent);
+  const output = Array.from(choicesByIndex.values())
+    .sort((left, right) => left.index - right.index)
+    .map(toChatChoice);
+
+  return {
+    metrics,
+    output:
+      output.length > 0
+        ? output
+        : [toChatChoice(createAggregatedChatChoice(0))],
+  };
+}
+
+// A Responses API stream ends with one of these events. Streams that hit
+// `max_output_tokens` or a content filter end with `response.incomplete`, and
+// streams that error server-side end with `response.failed`. All of them carry
+// the final `response` object with output and usage.
+const TERMINAL_RESPONSE_EVENT_TYPES = new Set([
+  "response.completed",
+  "response.incomplete",
+  "response.failed",
+]);
+
+export function aggregateResponseStreamEvents(
+  chunks: OpenAIResponseStreamEvent[],
+  _streamResult?: unknown,
+  endEvent?: unknown,
+): {
+  output: any;
+  metrics: Record<string, number>;
+  metadata?: Record<string, any>;
+  error?: string;
+} {
+  let output: any = undefined;
+  let metrics: Record<string, number> = {};
+  let metadata: Record<string, any> | undefined = undefined;
+  let error: string | undefined = undefined;
+
+  for (const chunk of chunks) {
+    if (!chunk?.response || !TERMINAL_RESPONSE_EVENT_TYPES.has(chunk.type)) {
+      continue;
+    }
+
+    const response = chunk.response;
+    if (response.output !== undefined) {
+      output = processImagesInOutput(response.output);
+    }
+
+    const { usage: _usage, output: _output, ...rest } = response;
+    if (Object.keys(rest).length > 0) {
+      metadata = rest;
+    }
+
+    metrics = parseMetricsFromUsage(response.usage);
+    if (chunk.type === "response.failed" && response.error) {
+      error = `${response.error.code}: ${response.error.message}`;
+    }
+  }
+
+  return {
+    output,
+    metrics: withCachedMetric(metrics, undefined, endEvent),
+    ...(metadata !== undefined ? { metadata } : {}),
+    ...(error !== undefined ? { error } : {}),
+  };
+}
+
+export { parseMetricsFromUsage };

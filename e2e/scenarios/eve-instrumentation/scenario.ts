@@ -67,28 +67,21 @@ async function main() {
     recursive: true,
   });
   await rm(path.join(agentDir, "channels", "eve.ts"), { force: true });
-  if (process.env.EVE_INSTRUMENTATION_PROVIDER === "1") {
-    // Eve 0.62 made instrumentation providers stable and rejects the flag.
-    const [major = 0, minor = 0] = evePackage.version.split(".").map(Number);
-    if (major === 0 && minor < 62) {
-      process.env.EVE_EXPERIMENTAL_INSTRUMENTATION_PROVIDERS = "1";
-    }
-    await mkdir(path.join(agentDir, "instrumentation"), { recursive: true });
-    await mkdir(path.join(agentDir, "channels"), { recursive: true });
-    await copyFile(
-      path.join(process.cwd(), "config", "provider-instrumentation.ts"),
-      path.join(agentDir, "instrumentation", "braintrust.ts"),
-    );
-    await copyFile(
-      path.join(process.cwd(), "config", "provider-eve-channel.ts"),
-      path.join(agentDir, "channels", "eve.ts"),
-    );
-  } else {
-    await copyFile(
-      path.join(process.cwd(), "config", "legacy-instrumentation.ts"),
-      path.join(agentDir, "instrumentation.ts"),
-    );
+  // Eve 0.62 made instrumentation providers stable and rejects the flag.
+  const [major = 0, minor = 0] = evePackage.version.split(".").map(Number);
+  if (major === 0 && minor < 62) {
+    process.env.EVE_EXPERIMENTAL_INSTRUMENTATION_PROVIDERS = "1";
   }
+  await mkdir(path.join(agentDir, "instrumentation"), { recursive: true });
+  await mkdir(path.join(agentDir, "channels"), { recursive: true });
+  await copyFile(
+    path.join(process.cwd(), "config", "provider-instrumentation.ts"),
+    path.join(agentDir, "instrumentation", "braintrust.ts"),
+  );
+  await copyFile(
+    path.join(process.cwd(), "config", "provider-eve-channel.ts"),
+    path.join(agentDir, "channels", "eve.ts"),
+  );
 
   const eveBin = path.join(evePackageDir, eveBinPath);
 

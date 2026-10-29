@@ -10,15 +10,12 @@ import {
   expectTypeOf,
   expect,
   vi,
-} from "vitest";
+} from "vite-plus/test";
 import { configureNode } from "../../node/config";
 import * as ai from "ai";
 import { openai } from "@ai-sdk/openai";
-import {
-  _exportsForTestingOnly,
-  initLogger,
-  TestBackgroundLogger,
-} from "../../logger";
+import { _exportsForTestingOnly } from "../../logger/testing";
+import { initLogger, TestBackgroundLogger } from "../../logger/core";
 import { wrapAISDK, wrapAgentClass } from "./ai-sdk";
 import { getCurrentUnixTimestamp } from "../../util";
 import { readFileSync } from "fs";

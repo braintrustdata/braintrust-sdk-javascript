@@ -1,11 +1,7 @@
-import { expect, expectTypeOf, test, beforeAll } from "vitest";
-import {
-  evalParametersSchema,
-  type InferParameters,
-  validateParameters,
-} from "./eval-parameters";
+import { expect, expectTypeOf, test, beforeAll } from "vite-plus/test";
+import { type InferParameters, validateParameters } from "./eval-parameters";
 import { Eval, runEvaluator } from "./framework";
-import { RemoteEvalParameters } from "./logger";
+import { RemoteEvalParameters } from "./logger/prompts";
 import { z } from "zod/v3";
 import * as z4 from "zod/v4";
 import { type ProgressReporter } from "./reporters/types";
@@ -38,8 +34,6 @@ test("mixed Zod v3 and v4 parameters validate and infer parsed outputs", async (
     optional: boolean | undefined;
     model: string;
   }>();
-  expect(evalParametersSchema.parse(schema)).toEqual(schema);
-  expect(evalParametersSchema.safeParse({ invalid: {} }).success).toBe(false);
   await expect(
     validateParameters({ v3Length: "abc", v4Length: "abcd" }, schema),
   ).resolves.toEqual({
@@ -101,7 +95,6 @@ test("parameters are passed to task", async () => {
       },
     },
     new NoopProgressReporter(),
-    [],
     undefined,
     { prefix: "start:", suffix: ":end" },
     true,
@@ -147,7 +140,6 @@ test("prompt parameter is passed correctly", async () => {
       },
     },
     new NoopProgressReporter(),
-    [],
     undefined,
     undefined,
     true,
@@ -229,7 +221,6 @@ test("custom parameter values override defaults", async () => {
       },
     },
     new NoopProgressReporter(),
-    [],
     undefined,
     {
       prefix: "custom:",
@@ -261,7 +252,6 @@ test("array parameter is handled correctly", async () => {
       },
     },
     new NoopProgressReporter(),
-    [],
     undefined,
     undefined,
     true,
@@ -300,7 +290,6 @@ test("object parameter is handled correctly", async () => {
       },
     },
     new NoopProgressReporter(),
-    [],
     undefined,
     undefined,
     true,
@@ -331,7 +320,6 @@ test("model parameter defaults to configured value", async () => {
       },
     },
     new NoopProgressReporter(),
-    [],
     undefined,
     undefined,
     true,
@@ -359,7 +347,6 @@ test("model parameter is required when default is missing", async () => {
         },
       },
       new NoopProgressReporter(),
-      [],
       undefined,
       undefined,
       true,

@@ -1,20 +1,11 @@
-import * as path from "node:path";
-import { pathToFileURL } from "node:url";
 import { defineConfig } from "vitest/config";
-
-const repoRoot = process.env.BRAINTRUST_E2E_REPO_ROOT;
-if (!repoRoot) {
-  throw new Error("BRAINTRUST_E2E_REPO_ROOT is not set");
-}
 
 const testRunId = process.env.BRAINTRUST_E2E_RUN_ID;
 if (!testRunId) {
   throw new Error("BRAINTRUST_E2E_RUN_ID is not set");
 }
 
-const { default: BraintrustVitestEvalsReporter } = await import(
-  pathToFileURL(path.join(repoRoot, "js/dist/vitest-evals-reporter.mjs")).href
-);
+import BraintrustVitestEvalsReporter from "braintrust/vitest-evals-reporter";
 
 export default defineConfig({
   test: {

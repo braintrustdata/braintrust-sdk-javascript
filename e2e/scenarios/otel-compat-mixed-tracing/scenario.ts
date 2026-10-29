@@ -1,7 +1,7 @@
 import { context as otelContext, trace } from "@opentelemetry/api";
 import { AsyncHooksContextManager } from "@opentelemetry/context-async-hooks";
 import { BraintrustSpanProcessor, setupOtelCompat } from "@braintrust/otel";
-import { getContextManager, initLogger } from "braintrust";
+import { initLogger, withCurrent } from "braintrust";
 import {
   createTracerProvider,
   getTestRunId,
@@ -39,9 +39,7 @@ async function main() {
         },
       },
     });
-    const contextManagerFacade = getContextManager();
-
-    await contextManagerFacade.runInContext(btRoot, async () => {
+    await withCurrent(btRoot, async () => {
       await tracer.startActiveSpan("otel-middle", async (otelSpan) => {
         const btChild = logger.startSpan({
           name: "bt-child-under-otel",

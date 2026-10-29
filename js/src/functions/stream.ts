@@ -1,9 +1,13 @@
 import {
-  type CallEventType as CallEventSchema,
   CallEvent as callEventSchema,
   SSEConsoleEventData as sseConsoleEventDataSchema,
   SSEProgressEventData as sseProgressEventDataSchema,
-} from "../generated_types";
+} from "../sdk-schemas";
+import type {
+  CallEvent,
+  SSEConsoleEventData,
+  SSEProgressEventData,
+} from "../sdk-types";
 import {
   createParser,
   EventSourceParser,
@@ -12,7 +16,21 @@ import {
 } from "eventsource-parser";
 import { z } from "zod/v3";
 
-export const braintrustStreamChunkSchema = z.union([
+/**
+ * A chunk of data from a Braintrust stream. Each chunk type matches
+ * an SSE event type.
+ */
+export type BraintrustStreamChunk =
+  | { type: "text_delta"; data: string }
+  | { type: "reasoning_delta"; data: string }
+  | { type: "json_delta"; data: string }
+  | { type: "error"; data: string }
+  | { type: "console"; data: SSEConsoleEventData }
+  | { type: "progress"; data: SSEProgressEventData }
+  | { type: "start"; data: string }
+  | { type: "done"; data: string };
+
+const braintrustStreamChunkSchema: z.ZodType<BraintrustStreamChunk> = z.union([
   z.object({
     type: z.literal("text_delta"),
     data: z.string(),
@@ -46,12 +64,6 @@ export const braintrustStreamChunkSchema = z.union([
     data: z.string(),
   }),
 ]);
-
-/**
- * A chunk of data from a Braintrust stream. Each chunk type matches
- * an SSE event type.
- */
-export type BraintrustStreamChunk = z.infer<typeof braintrustStreamChunkSchema>;
 
 /**
  * A Braintrust stream. This is a wrapper around a ReadableStream of `BraintrustStreamChunk`,
@@ -163,7 +175,7 @@ export class BraintrustStream {
     return this.memoizedFinalValue;
   }
 
-  static parseRawEvent(event: CallEventSchema): BraintrustStreamChunk {
+  static parseRawEvent(event: CallEvent): BraintrustStreamChunk {
     switch (event.event) {
       case "text_delta":
         return {
@@ -212,7 +224,7 @@ export class BraintrustStream {
     }
   }
 
-  static serializeRawEvent(event: BraintrustStreamChunk): CallEventSchema {
+  static serializeRawEvent(event: BraintrustStreamChunk): CallEvent {
     switch (event.type) {
       case "text_delta":
         return {

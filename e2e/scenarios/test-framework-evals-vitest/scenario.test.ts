@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, test } from "vite-plus/test";
 import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import {
   prepareScenarioDir,
@@ -21,6 +21,12 @@ interface VitestScenario {
 }
 
 const scenarios: VitestScenario[] = [
+  ...["vitest-v5", "vitest-v5-latest"].map((name) => ({
+    dependencyName: name,
+    entry: "scenario.vitest-v5.ts",
+    label: name,
+    variantKey: name,
+  })),
   {
     dependencyName: "vitest-v2",
     entry: "scenario.ts",

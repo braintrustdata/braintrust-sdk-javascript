@@ -97,7 +97,15 @@ class TemplatePluginRegistry {
   }
 }
 
-export const templateRegistry = new TemplatePluginRegistry();
+let templateRegistry: TemplatePluginRegistry | undefined;
+
+function getTemplateRegistry(): TemplatePluginRegistry {
+  if (!templateRegistry) {
+    templateRegistry = new TemplatePluginRegistry();
+    templateRegistry.register(mustachePlugin);
+  }
+  return templateRegistry;
+}
 
 /**
  * Register a template plugin and optionally activate it
@@ -106,8 +114,9 @@ export const templateRegistry = new TemplatePluginRegistry();
  * If `options` is omitted but the plugin defines `defaultOptions`, the
  * registry will activate the renderer using those defaults.
  */
-export const registerTemplatePlugin =
-  templateRegistry.register.bind(templateRegistry);
+export function registerTemplatePlugin(plugin: TemplateRendererPlugin): void {
+  getTemplateRegistry().register(plugin);
+}
 
 /**
  * Gets an active template renderer by name.
@@ -127,6 +136,8 @@ export const registerTemplatePlugin =
  * }
  * ```
  */
-export const getTemplateRenderer = templateRegistry.get.bind(templateRegistry);
-
-registerTemplatePlugin(mustachePlugin);
+export function getTemplateRenderer(
+  name: string,
+): TemplateRenderer | undefined {
+  return getTemplateRegistry().get(name);
+}

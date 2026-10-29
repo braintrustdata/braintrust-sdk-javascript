@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vite-plus/test";
 import { inspect } from "node:util";
 import { Console } from "node:console";
 import { Writable } from "node:stream";
@@ -7,15 +7,14 @@ import {
   Logger,
   TestBackgroundLogger,
   _internalGetGlobalState,
-} from "../logger";
+} from "../logger/core";
 import { LazyValue } from "../util";
 import { wrapConsole } from "./index";
 import { consoleMethods } from "./console";
 import { configureNode } from "../node/config";
-import iso from "../isomorph";
+import iso from "#braintrust-platform";
 import type { ExperimentEvent } from "../util";
 import { debugLogger } from "../debug-logger";
-import { OTELIDGenerator } from "../id-gen";
 import { logError } from "../framework";
 import { SimpleProgressReporter } from "../reporters/progress";
 
@@ -27,7 +26,7 @@ async function drain(
   return (await background.drain()) as ExperimentEvent[];
 }
 
-function setup<Async extends boolean>(asyncFlush: Async) {
+function setup() {
   const state = new BraintrustState({});
   const background = new TestBackgroundLogger();
   vi.spyOn(state, "bgLogger").mockReturnValue(background);
@@ -38,7 +37,7 @@ function setup<Async extends boolean>(asyncFlush: Async) {
       org_id: "org",
       project: { id: "project", name: "application-logs", fullInfo: {} },
     })),
-    { asyncFlush },
+    {},
   );
   return { state, background, logger, enqueue };
 }
@@ -84,7 +83,7 @@ describe("application logs", () => {
         org_id: "org",
         project: { id: "project", name: "test", fullInfo: {} },
       })),
-      { asyncFlush: true },
+      {},
     );
     const target = fakeConsole();
     const originals = { ...target };
@@ -132,7 +131,7 @@ describe("application logs", () => {
   });
 
   test("severity methods each enqueue one complete initial row", async () => {
-    const { logger, background, enqueue } = setup(true);
+    const { logger, background, enqueue } = setup();
     const timestamp = new Date("2026-01-02T03:04:05.000Z");
     const levels = [
       "trace",
@@ -176,7 +175,7 @@ describe("application logs", () => {
   });
 
   test("fmt captures stable templates and values without emitting or mutating metadata", async () => {
-    const { logger, background, enqueue } = setup(true);
+    const { logger, background, enqueue } = setup();
     const metadata = Object.freeze({
       source: "checkout",
       "braintrust.template": "old",
@@ -207,7 +206,7 @@ describe("application logs", () => {
   });
 
   test("fmt preserves cooked text, escaped placeholders, and interpolation boundaries", async () => {
-    const { logger, background } = setup(true);
+    const { logger, background } = setup();
     const count = 3;
     logger.info(logger.fmt`line\n\t${count * 2}\\end`);
     logger.info(logger.fmt`literal \${value} and {braces} ${count}`);
@@ -234,7 +233,7 @@ describe("application logs", () => {
   });
 
   test("fmt retains JSON parameter values and encodes undefined and bigint as text", async () => {
-    const { logger, background } = setup(true);
+    const { logger, background } = setup();
     const values = [Object.freeze({ id: 42 }), false, null, 0, undefined, 123n];
     for (const value of values) logger.info(logger.fmt`${value}`);
     const rows = await drain(background);
@@ -252,7 +251,7 @@ describe("application logs", () => {
   });
 
   test("groups standalone messages per logger with independent row and span IDs", async () => {
-    const { logger, background, state } = setup(true);
+    const { logger, background, state } = setup();
     logger.info("one");
     logger.warn({ event: "two" });
     const other = new Logger(
@@ -261,7 +260,7 @@ describe("application logs", () => {
         org_id: "org",
         project: { id: "project", name: "test", fullInfo: {} },
       })),
-      { asyncFlush: true },
+      {},
     );
     other.info("three");
     const [one, two, three] = await drain(background);
@@ -276,16 +275,15 @@ describe("application logs", () => {
   test("uses the current ID generator for the first standalone log after late OpenTelemetry setup", async () => {
     vi.stubEnv("BRAINTRUST_LEGACY_IDS", "true");
     vi.stubEnv("BRAINTRUST_OTEL_COMPAT", undefined);
-    vi.stubGlobal("BRAINTRUST_ID_GENERATOR", undefined);
     try {
-      const { logger, background, state } = setup(true);
+      const { logger, background, state } = setup();
       const root = logger.startSpan({ name: "before-otel" });
       state.contextManager.runInContext(root, () => logger.info("inside span"));
       root.end();
       expect(root.rootSpanId).toContain("-");
 
-      // Match setupOtelCompat(): install the hex generator and reset the cache.
-      vi.stubGlobal("BRAINTRUST_ID_GENERATOR", OTELIDGenerator);
+      // Change ID configuration after logger creation and reset the cache.
+      vi.stubEnv("BRAINTRUST_OTEL_COMPAT", "true");
       state.resetIdGenState();
       logger.info("first standalone log");
       logger.warn("second standalone log");
@@ -306,7 +304,7 @@ describe("application logs", () => {
   });
 
   test("correlates SDK and console logs across awaits without modifying the active span", async () => {
-    const { logger, background, state } = setup(true);
+    const { logger, background, state } = setup();
     const target = fakeConsole();
     const uninstrument = wrapConsole(target, { logger });
     const root = logger.startSpan({ name: "request" });
@@ -336,7 +334,7 @@ describe("application logs", () => {
   });
 
   test("uses context-manager IDs even without a native Braintrust span", async () => {
-    const { logger, background, state } = setup(true);
+    const { logger, background, state } = setup();
     vi.spyOn(state.contextManager, "getParentSpanIds").mockReturnValue({
       rootSpanId: "otel-trace",
       spanParents: ["otel-span"],
@@ -348,15 +346,17 @@ describe("application logs", () => {
     });
   });
 
-  test("waits for flush when asyncFlush is false", async () => {
-    const { logger, background, enqueue } = setup(false);
+  test("returns a row ID immediately and waits for explicit flush", async () => {
+    const { logger, background, enqueue } = setup();
     let finishFlush!: () => void;
     const flush = vi.spyOn(background, "flush").mockReturnValue(
       new Promise<void>((resolve) => {
         finishFlush = resolve;
       }),
     );
-    const pending = logger.info("synchronous");
+    const id = logger.info("synchronous");
+    expect(typeof id).toBe("string");
+    const pending = logger.flush();
     let settled = false;
     void pending.then(() => {
       settled = true;
@@ -364,7 +364,7 @@ describe("application logs", () => {
     await Promise.resolve();
     expect(settled).toBe(false);
     finishFlush();
-    const id = await pending;
+    await pending;
     expect(flush).toHaveBeenCalledTimes(1);
     expect(enqueue).toHaveBeenCalledTimes(1);
     expect((await drain(background))[0].id).toBe(id);
@@ -374,8 +374,8 @@ describe("application logs", () => {
 describe("wrapConsole", () => {
   test("wrapConsole() follows logger initialization and replacement until cleanup", async () => {
     const target = mockGlobalConsole();
-    const first = setup(false);
-    const second = setup(false);
+    const first = setup();
+    const second = setup();
     const state = _internalGetGlobalState();
     const previousLogger = state.currentLogger;
     const original = target.info;
@@ -407,8 +407,8 @@ describe("wrapConsole", () => {
   });
 
   test("rewrapping and cleanup preserve the current destination without reactivating older wraps", async () => {
-    const first = setup(true);
-    const second = setup(true);
+    const first = setup();
+    const second = setup();
     const target = fakeConsole();
     const original = target.info;
     const stopFirst = wrapConsole(target, { logger: first.logger });
@@ -439,8 +439,8 @@ describe("wrapConsole", () => {
   });
 
   test("cleanup affects only its console; direct logging and unrelated methods stay enabled", async () => {
-    const first = setup(true);
-    const second = setup(true);
+    const first = setup();
+    const second = setup();
     const time = vi.fn();
     const firstConsole = { ...fakeConsole(), time };
     const secondConsole = fakeConsole();
@@ -461,8 +461,8 @@ describe("wrapConsole", () => {
   });
 
   test("nested wrapping captures once and cleanup preserves third-party patches without reviving older capture", () => {
-    const first = setup(true);
-    const second = setup(true);
+    const first = setup();
+    const second = setup();
     const target = fakeConsole();
     const original = target.info;
     const stopFirst = wrapConsole(target, { logger: first.logger });
@@ -487,7 +487,7 @@ describe("wrapConsole", () => {
   });
 
   test("nested console calls capture once and native exceptions do not leave the guard active", async () => {
-    const { logger, background, enqueue } = setup(true);
+    const { logger, background, enqueue } = setup();
     const target = fakeConsole();
     target.trace.mockImplementation((...args) => target.error(...args));
     const error = new Error("console failure");
@@ -509,7 +509,7 @@ describe("wrapConsole", () => {
   });
 
   test("object formatting hooks run only in the native console, not during capture", async () => {
-    const { logger, background } = setup(true);
+    const { logger, background } = setup();
     const output: string[] = [];
     const stdout = new Writable({
       write(chunk, _encoding, callback) {
@@ -564,7 +564,7 @@ describe("wrapConsole", () => {
   });
 
   test("preserves primitive formatting, parameters, errors, and circular objects without calling toJSON", async () => {
-    const { logger, background } = setup(true);
+    const { logger, background } = setup();
     const target = fakeConsole();
     wrapConsole(target, { logger });
     target.info("Payment %s attempt %d", "pay_123", 2);
@@ -594,7 +594,7 @@ describe("wrapConsole", () => {
   });
 
   test("fallback formatting serializes parameters once and preserves BigInt arguments", async () => {
-    const { logger, background } = setup(true);
+    const { logger, background } = setup();
     const target = fakeConsole();
     wrapConsole(target, { logger });
     let serializations = 0;
@@ -628,7 +628,7 @@ describe("wrapConsole", () => {
 
   test("SDK output uses saved console methods across awaits, rewrapping, and cleanup", async () => {
     const target = mockGlobalConsole();
-    const { logger, enqueue } = setup(true);
+    const { logger, enqueue } = setup();
     const sdkState = _internalGetGlobalState();
     vi.spyOn(sdkState, "getDebugLogLevel").mockReturnValue("warn");
     vi.spyOn(sdkState, "hasDebugLogLevelOverride").mockReturnValue(true);

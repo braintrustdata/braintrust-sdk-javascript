@@ -1,8 +1,8 @@
 import * as fs from "fs/promises";
 import * as path from "path";
 import { tmpdir } from "os";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { RemoteEvalParameters } from "../logger";
+import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
+import { RemoteEvalParameters } from "../logger/prompts";
 import { configureNode } from "../node/config";
 import { DiskCache } from "./disk-cache";
 import {

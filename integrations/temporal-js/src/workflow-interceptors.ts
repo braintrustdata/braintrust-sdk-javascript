@@ -12,7 +12,6 @@ import {
   WorkflowExecuteInput,
   Next,
   proxySinks,
-  workflowInfo,
   uuid4,
 } from "@temporalio/workflow";
 import type {
@@ -21,13 +20,12 @@ import type {
   StartChildWorkflowExecutionInput,
 } from "@temporalio/workflow";
 import type { Payload } from "@temporalio/common";
+import type { PropagationContext } from "braintrust";
 import type { BraintrustSinks } from "./sinks";
 import {
-  BRAINTRUST_SPAN_HEADER,
-  BRAINTRUST_WORKFLOW_SPAN_HEADER,
-  BRAINTRUST_WORKFLOW_SPAN_ID_HEADER,
-  serializeHeaderValue,
-  deserializeHeaderValue,
+  deserializeTraceContext,
+  serializeTraceContext,
+  withParentSpanId,
 } from "./utils";
 
 const { braintrust } = proxySinks<BraintrustSinks>();
@@ -37,7 +35,7 @@ const { braintrust } = proxySinks<BraintrustSinks>();
  * Created per-workflow by the factory function to avoid global state issues.
  */
 interface WorkflowSpanState {
-  parentContext: string | undefined;
+  parentContext: PropagationContext | undefined;
   spanId: string | undefined;
 }
 
@@ -49,15 +47,13 @@ class BraintrustWorkflowInboundInterceptor implements WorkflowInboundCallsInterc
     next: Next<WorkflowInboundCallsInterceptor, "execute">,
   ): Promise<unknown> {
     // Extract parent context from headers
-    const parentContext = input.headers
-      ? deserializeHeaderValue(input.headers[BRAINTRUST_SPAN_HEADER])
-      : undefined;
+    const parentContext = deserializeTraceContext(input.headers);
 
     // Store for the outbound interceptor to forward to activities
     this.state.parentContext = parentContext;
 
     // Generate a deterministic spanId for the workflow span
-    this.state.spanId = uuid4();
+    this.state.spanId = uuid4().replace(/-/g, "").slice(0, 16);
 
     // Create workflow span via sink (only called if not replaying)
     // NOTE: WorkflowInfo is injected automatically by the runtime
@@ -78,27 +74,11 @@ class BraintrustWorkflowOutboundInterceptor implements WorkflowOutboundCallsInte
   constructor(private state: WorkflowSpanState) {}
 
   private getHeaders(): Record<string, Payload> {
-    const info = workflowInfo();
-    const headers: Record<string, Payload> = {};
-
-    // Pass runId so activity can look up workflow span on same worker
-    headers[BRAINTRUST_WORKFLOW_SPAN_HEADER] = serializeHeaderValue(info.runId);
-
-    // Pass workflow span ID for cross-worker activities to construct parent
-    if (this.state.spanId) {
-      headers[BRAINTRUST_WORKFLOW_SPAN_ID_HEADER] = serializeHeaderValue(
-        this.state.spanId,
-      );
-    }
-
-    // Pass client context for cross-worker activities to construct parent
-    if (this.state.parentContext) {
-      headers[BRAINTRUST_SPAN_HEADER] = serializeHeaderValue(
-        this.state.parentContext,
-      );
-    }
-
-    return headers;
+    const context =
+      this.state.parentContext && this.state.spanId
+        ? withParentSpanId(this.state.parentContext, this.state.spanId)
+        : undefined;
+    return context ? serializeTraceContext(context) : {};
   }
 
   scheduleActivity(

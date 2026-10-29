@@ -1,4 +1,4 @@
-import { describe } from "vitest";
+import { describe } from "vite-plus/test";
 import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
@@ -42,6 +42,28 @@ describe.concurrent("variants", () => {
           });
         },
         snapshotName: `${scenario.snapshotName}-wrapped`,
+        testFileUrl: import.meta.url,
+        timeoutMs: SCENARIO_TIMEOUT_MS,
+      });
+
+      defineAssertions({
+        name: "auto-hook instrumentation ESM",
+        runScenario: async ({ runNodeScenarioDir }) => {
+          await runNodeScenarioDir({
+            entry: "scenario.auto.mjs",
+            env: {
+              HUGGINGFACE_TRANSFORMERS_PACKAGE_NAME: scenario.dependencyName,
+            },
+            nodeArgs: ["--import", "braintrust/hook.mjs"],
+            runContext: {
+              originalScenarioDir,
+              variantKey: scenario.snapshotName,
+            },
+            scenarioDir,
+            timeoutMs: SCENARIO_TIMEOUT_MS,
+          });
+        },
+        snapshotName: `${scenario.snapshotName}-auto-esm`,
         testFileUrl: import.meta.url,
         timeoutMs: SCENARIO_TIMEOUT_MS,
       });

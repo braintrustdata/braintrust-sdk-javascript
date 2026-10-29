@@ -47,7 +47,7 @@ export class SpanRowIdsV1 {
     }
   }
 
-  public toObject() {
+  public toObject(): { rowId: string; spanId: string; rootSpanId: string } {
     return {
       rowId: this.rowId,
       spanId: this.spanId,
@@ -160,7 +160,11 @@ export class SpanComponentsV1 {
     }
   }
 
-  public toObject() {
+  public toObject(): {
+    objectType: SpanObjectTypeV1;
+    objectId: string;
+    rowIds: { rowId: string; spanId: string; rootSpanId: string } | undefined;
+  } {
     return {
       objectType: this.objectType,
       objectId: this.objectId,

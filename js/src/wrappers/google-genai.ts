@@ -1,5 +1,6 @@
+import { registerInstrumentation } from "../instrumentation/registrations/googleGenAI";
 import { debugLogger } from "../debug-logger";
-import { googleGenAIChannels } from "../instrumentation/plugins/google-genai-interceptors";
+import { googleGenAIChannels } from "../instrumentation/providers/google-genai-interceptors";
 import { isObject } from "../util";
 import type {
   GoogleGenAIClient,
@@ -37,6 +38,7 @@ const patchedHttpResponses = new WeakSet<object>();
 export function wrapGoogleGenAI<T extends Record<string, any>>(
   googleGenAI: T,
 ): T {
+  registerInstrumentation();
   if (!googleGenAI || typeof googleGenAI !== "object") {
     debugLogger.notice.warn("Invalid Google GenAI module. Not wrapping.");
     return googleGenAI;

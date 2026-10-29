@@ -10,7 +10,7 @@ Tests Braintrust SDK in a Cloudflare Workers environment with Vite bundling via 
 
 **Hono framework:** Uses Hono for elegant routing instead of raw Worker API.
 
-**Browser build:** Uses `braintrust/browser` import since Cloudflare Workers don't support Node.js APIs.
+**Browser build:** Imports `braintrust`; the package's browser condition selects the browser-safe build because Cloudflare Workers don't support Node.js APIs.
 
 **Wrangler dev:** Tests via Wrangler dev server, which uses Vite to build the worker.
 

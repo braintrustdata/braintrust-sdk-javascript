@@ -17,8 +17,7 @@ This package provides reusable test logic that can be imported and run in differ
 
 The package is built with `tsup` to produce both CommonJS and ESM formats:
 
-- `dist/index.js` - CommonJS build
-- `dist/index.mjs` - ESM build
+- `dist/index.js` - ESM build
 - `dist/index.d.ts` / `dist/index.d.mts` - TypeScript declarations
 
 This allows the same test code to be imported in both CJS and ESM environments.
@@ -66,7 +65,7 @@ import {
   testBasicSpanLogging,
   testMultipleSpans,
   testNunjucksTemplate,
-} from "../../shared/dist/index.mjs";
+} from "../../shared/dist/index.js";
 
 import * as braintrust from "braintrust";
 
@@ -105,7 +104,7 @@ const {
   testMultipleSpans,
 } = require("../../shared");
 
-const braintrust = require("braintrust");
+import * as braintrust from "braintrust";
 
 async function main() {
   const { all, passed, failed, xfail } = await runTests({
@@ -414,7 +413,7 @@ Tests basic eval functionality:
 All scenarios use `displayTestResults()` for consistent output:
 
 ```typescript
-import { displayTestResults } from "../../shared/dist/index.mjs";
+import { displayTestResults } from "../../shared/dist/index.js";
 
 // Called automatically by runTests(), but can also be used standalone
 displayTestResults({

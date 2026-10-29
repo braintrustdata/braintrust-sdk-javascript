@@ -1,0 +1,724 @@
+import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
+import { SpanTypeAttribute, isObject } from "../../../util/index";
+import type { Span } from "../../logger/core";
+import { parseMetricsFromUsage } from "../../openai-utils";
+import { INSTRUMENTATION_NAMES } from "../../span-origin";
+import { getCurrentUnixTimestamp } from "../../util";
+import type {
+  HuggingFaceChatCompletion,
+  HuggingFaceChatCompletionChunk,
+  HuggingFaceFeatureExtractionOutput,
+  HuggingFaceTextGenerationDetails,
+  HuggingFaceTextGenerationStreamOutput,
+} from "../../vendor-sdk-types/huggingface";
+
+import { traceAsyncCall, traceSyncStreamCall } from "../core/tracing";
+
+import { huggingFaceChannels } from "./huggingface-interceptors";
+
+const REQUEST_METADATA_ALLOWLIST = new Set([
+  "dimensions",
+  "encoding_format",
+  "endpointUrl",
+  "max_tokens",
+  "model",
+  "provider",
+  "seed",
+  "stop",
+  "stream",
+  "temperature",
+  "tool_choice",
+  "tools",
+  "top_p",
+]);
+
+const RESPONSE_METADATA_ALLOWLIST = new Set([
+  "created",
+  "id",
+  "model",
+  "object",
+]);
+
+export function registerHuggingFaceInstrumentation(): void {
+  huggingFaceChannels.chatCompletion.intercept(
+    (target, receiver, args, additional) =>
+      traceAsyncCall<typeof huggingFaceChannels.chatCompletion>(
+        () => Reflect.apply(target, receiver, args),
+        { ...additional, arguments: args, self: receiver },
+        {
+          instrumentationName: INSTRUMENTATION_NAMES.HUGGINGFACE,
+          name: "huggingface.chat_completion",
+          type: SpanTypeAttribute.LLM,
+          extractInput: ([params]) =>
+            extractChatInputWithMetadata([
+              {
+                ...params,
+                ...(additional.endpointUrl && !params.endpointUrl
+                  ? { endpointUrl: additional.endpointUrl }
+                  : {}),
+              },
+            ]),
+          extractOutput: (result) => result?.choices,
+          extractMetadata: (result) => extractResponseMetadata(result),
+          extractMetrics: (result) => parseMetricsFromUsage(result?.usage),
+        },
+      ),
+  );
+  huggingFaceChannels.chatCompletionStream.intercept(
+    (target, receiver, args, additional) =>
+      traceSyncStreamCall<typeof huggingFaceChannels.chatCompletionStream>(
+        () => Reflect.apply(target, receiver, args),
+        { ...additional, arguments: args, self: receiver },
+        {
+          instrumentationName: INSTRUMENTATION_NAMES.HUGGINGFACE,
+          name: "huggingface.chat_completion_stream",
+          type: SpanTypeAttribute.LLM,
+          extractInput: ([params]) =>
+            extractChatInputWithMetadata([
+              {
+                ...params,
+                ...(additional.endpointUrl && !params.endpointUrl
+                  ? { endpointUrl: additional.endpointUrl }
+                  : {}),
+              },
+            ]),
+          patchResult: ({ result, span, startTime }) =>
+            patchChatCompletionStream({
+              result,
+              span,
+              startTime,
+            }),
+        },
+      ),
+  );
+  huggingFaceChannels.textGeneration.intercept(
+    (target, receiver, args, additional) =>
+      traceAsyncCall<typeof huggingFaceChannels.textGeneration>(
+        () => Reflect.apply(target, receiver, args),
+        { ...additional, arguments: args, self: receiver },
+        {
+          instrumentationName: INSTRUMENTATION_NAMES.HUGGINGFACE,
+          name: "huggingface.text_generation",
+          type: SpanTypeAttribute.LLM,
+          extractInput: ([params]) =>
+            extractTextGenerationInputWithMetadata([
+              {
+                ...params,
+                ...(additional.endpointUrl && !params.endpointUrl
+                  ? { endpointUrl: additional.endpointUrl }
+                  : {}),
+              },
+            ]),
+          extractOutput: (result) =>
+            isObject(result)
+              ? { generated_text: result.generated_text }
+              : result,
+          extractMetadata: extractTextGenerationMetadata,
+          extractMetrics: (result) =>
+            extractTextGenerationMetrics(result?.details ?? null),
+        },
+      ),
+  );
+  huggingFaceChannels.textGenerationStream.intercept(
+    (target, receiver, args, additional) =>
+      traceSyncStreamCall<typeof huggingFaceChannels.textGenerationStream>(
+        () => Reflect.apply(target, receiver, args),
+        { ...additional, arguments: args, self: receiver },
+        {
+          instrumentationName: INSTRUMENTATION_NAMES.HUGGINGFACE,
+          name: "huggingface.text_generation_stream",
+          type: SpanTypeAttribute.LLM,
+          extractInput: ([params]) =>
+            extractTextGenerationInputWithMetadata([
+              {
+                ...params,
+                ...(additional.endpointUrl && !params.endpointUrl
+                  ? { endpointUrl: additional.endpointUrl }
+                  : {}),
+              },
+            ]),
+          patchResult: ({ result, span, startTime }) =>
+            patchTextGenerationStream({
+              result,
+              span,
+              startTime,
+            }),
+        },
+      ),
+  );
+  huggingFaceChannels.featureExtraction.intercept(
+    (target, receiver, args, additional) =>
+      traceAsyncCall<typeof huggingFaceChannels.featureExtraction>(
+        () => Reflect.apply(target, receiver, args),
+        { ...additional, arguments: args, self: receiver },
+        {
+          instrumentationName: INSTRUMENTATION_NAMES.HUGGINGFACE,
+          name: "huggingface.feature_extraction",
+          type: SpanTypeAttribute.LLM,
+          extractInput: ([params]) =>
+            extractFeatureExtractionInputWithMetadata([
+              {
+                ...params,
+                ...(additional.endpointUrl && !params.endpointUrl
+                  ? { endpointUrl: additional.endpointUrl }
+                  : {}),
+              },
+            ]),
+          extractOutput: summarizeFeatureExtractionOutput,
+          extractMetrics: () => ({}),
+        },
+      ),
+  );
+}
+
+function addProviderMetadata(
+  metadata: Record<string, unknown>,
+): Record<string, unknown> {
+  return {
+    ...metadata,
+    provider: metadata.provider ?? "huggingface",
+  };
+}
+
+function normalizeArgs(args: unknown[] | unknown): unknown[] {
+  if (Array.isArray(args)) {
+    return args;
+  }
+
+  if (isArrayLike(args)) {
+    return Array.from(args);
+  }
+
+  return [args];
+}
+
+function isArrayLike(value: unknown): value is ArrayLike<unknown> {
+  return (
+    isObject(value) &&
+    "length" in value &&
+    typeof value.length === "number" &&
+    Number.isInteger(value.length) &&
+    value.length >= 0
+  );
+}
+
+function getFirstObjectArg(
+  args: unknown[] | unknown,
+): Record<string, unknown> | undefined {
+  const firstObjectArg = normalizeArgs(args).find((arg) => isObject(arg));
+  return isObject(firstObjectArg) ? firstObjectArg : undefined;
+}
+
+function pickRequestMetadata(
+  params: Record<string, unknown> | undefined,
+): Record<string, unknown> {
+  if (!params) {
+    return addProviderMetadata({});
+  }
+
+  const metadata: Record<string, unknown> = {};
+  for (const key of REQUEST_METADATA_ALLOWLIST) {
+    const value = params[key];
+    if (value !== undefined) {
+      metadata[key] = value;
+    }
+  }
+
+  if (isObject(params.parameters)) {
+    metadata.parameters = params.parameters;
+  }
+
+  return addProviderMetadata(metadata);
+}
+
+function extractChatInputWithMetadata(args: unknown[] | unknown): {
+  input: unknown;
+  metadata: Record<string, unknown>;
+} {
+  const params = getFirstObjectArg(args);
+  const { messages, ...rawMetadata } = params ?? {};
+  return {
+    input: messages,
+    metadata: pickRequestMetadata(rawMetadata),
+  };
+}
+
+function extractTextGenerationInputWithMetadata(args: unknown[] | unknown): {
+  input: unknown;
+  metadata: Record<string, unknown>;
+} {
+  const params = getFirstObjectArg(args);
+  const { inputs, ...rawMetadata } = params ?? {};
+  return {
+    input: inputs,
+    metadata: pickRequestMetadata(rawMetadata),
+  };
+}
+
+function extractFeatureExtractionInputWithMetadata(args: unknown[] | unknown): {
+  input: unknown;
+  metadata: Record<string, unknown>;
+} {
+  const params = getFirstObjectArg(args);
+  const { inputs, ...rawMetadata } = params ?? {};
+  return {
+    input: inputs,
+    metadata: pickRequestMetadata(rawMetadata),
+  };
+}
+
+function extractResponseMetadata(
+  result: HuggingFaceChatCompletion | undefined,
+): Record<string, unknown> | undefined {
+  if (!isObject(result)) {
+    return undefined;
+  }
+
+  const metadata: Record<string, unknown> = {};
+  for (const key of RESPONSE_METADATA_ALLOWLIST) {
+    const value = result[key];
+    if (value !== undefined) {
+      metadata[key] = value;
+    }
+  }
+
+  return Object.keys(metadata).length > 0 ? metadata : undefined;
+}
+
+function extractTextGenerationMetrics(
+  details: HuggingFaceTextGenerationDetails | null | undefined,
+): Record<string, number> {
+  if (!isObject(details)) {
+    return {};
+  }
+
+  const promptTokens = Array.isArray(details.prefill)
+    ? details.prefill.length
+    : undefined;
+  const completionTokens =
+    typeof details.generated_tokens === "number"
+      ? details.generated_tokens
+      : Array.isArray(details.tokens)
+        ? details.tokens.length
+        : undefined;
+
+  const metrics: Record<string, number> = {};
+  if (promptTokens !== undefined) {
+    metrics.prompt_tokens = promptTokens;
+  }
+  if (completionTokens !== undefined) {
+    metrics.completion_tokens = completionTokens;
+  }
+  if (promptTokens !== undefined || completionTokens !== undefined) {
+    metrics.tokens = (promptTokens ?? 0) + (completionTokens ?? 0);
+  }
+  return metrics;
+}
+
+function extractTextGenerationMetadata(result: {
+  details?: HuggingFaceTextGenerationDetails | null;
+}): Record<string, unknown> | undefined {
+  if (!isObject(result?.details)) {
+    return undefined;
+  }
+
+  return typeof result.details.finish_reason === "string"
+    ? {
+        finish_reason: result.details.finish_reason,
+      }
+    : undefined;
+}
+
+function summarizeFeatureExtractionOutput(
+  result: HuggingFaceFeatureExtractionOutput,
+): Record<string, number> | undefined {
+  if (!Array.isArray(result)) {
+    return undefined;
+  }
+
+  const first = result[0];
+  if (typeof first === "number") {
+    return { embedding_length: result.length };
+  }
+
+  if (
+    Array.isArray(first) &&
+    first.every((value) => typeof value === "number")
+  ) {
+    return {
+      embedding_count: result.length,
+      embedding_length: first.length,
+    };
+  }
+
+  if (
+    Array.isArray(first) &&
+    first.length > 0 &&
+    Array.isArray(first[0]) &&
+    first[0].every((value) => typeof value === "number")
+  ) {
+    return {
+      embedding_batch_count: result.length,
+      embedding_count: first.length,
+      embedding_length: first[0].length,
+    };
+  }
+
+  return undefined;
+}
+
+function patchChatCompletionStream(args: {
+  result: AsyncIterable<HuggingFaceChatCompletionChunk>;
+  span: Span;
+  startTime: number;
+}): boolean {
+  const { result, span, startTime } = args;
+  if (!result || !isAsyncIterable(result)) {
+    return false;
+  }
+
+  let firstChunkTime: number | undefined;
+  patchStreamIfNeeded<HuggingFaceChatCompletionChunk>(result, {
+    onChunk: () => {
+      if (firstChunkTime === undefined) {
+        firstChunkTime = getCurrentUnixTimestamp();
+      }
+    },
+    onComplete: (chunks) => {
+      const lastChunk = chunks.at(-1);
+      const responseMetadata = extractResponseMetadata(lastChunk);
+      const metrics = {
+        ...parseMetricsFromUsage(lastChunk?.usage),
+        ...(firstChunkTime !== undefined
+          ? { time_to_first_token: firstChunkTime - startTime }
+          : {}),
+      };
+
+      span.log({
+        output: aggregateChatCompletionChunks(chunks),
+        ...(responseMetadata ? { metadata: responseMetadata } : {}),
+        metrics,
+      });
+      span.end();
+    },
+    onError: (error) => {
+      span.log({
+        error: error.message,
+      });
+      span.end();
+    },
+  });
+
+  return true;
+}
+
+function patchTextGenerationStream(args: {
+  result: AsyncIterable<HuggingFaceTextGenerationStreamOutput>;
+  span: Span;
+  startTime: number;
+}): boolean {
+  const { result, span, startTime } = args;
+  if (!result || !isAsyncIterable(result)) {
+    return false;
+  }
+
+  let firstChunkTime: number | undefined;
+  patchStreamIfNeeded<HuggingFaceTextGenerationStreamOutput>(result, {
+    onChunk: () => {
+      if (firstChunkTime === undefined) {
+        firstChunkTime = getCurrentUnixTimestamp();
+      }
+    },
+    onComplete: (chunks) => {
+      const lastChunk = chunks.at(-1);
+      const streamMetadata = extractTextGenerationStreamMetadata(chunks);
+      span.log({
+        output: aggregateTextGenerationStreamChunks(chunks),
+        ...(streamMetadata ? { metadata: streamMetadata } : {}),
+        metrics: {
+          ...extractTextGenerationMetrics(lastChunk?.details ?? null),
+          ...parseMetricsFromUsage(lastChunk?.usage),
+          ...(firstChunkTime !== undefined
+            ? { time_to_first_token: firstChunkTime - startTime }
+            : {}),
+        },
+      });
+      span.end();
+    },
+    onError: (error) => {
+      span.log({
+        error: error.message,
+      });
+      span.end();
+    },
+  });
+
+  return true;
+}
+
+function aggregateChatCompletionChunks(
+  chunks: HuggingFaceChatCompletionChunk[],
+): { choices: Array<Record<string, unknown>> } | undefined {
+  if (chunks.length === 0) {
+    return undefined;
+  }
+
+  const aggregatedChoices = new Map<
+    number,
+    {
+      content: string;
+      finish_reason?: string | null;
+      role?: string;
+      toolCallsByIndex: Map<number, Record<string, unknown>>;
+    }
+  >();
+
+  for (const chunk of chunks) {
+    for (const choice of chunk.choices ?? []) {
+      const index = typeof choice.index === "number" ? choice.index : 0;
+      const existing = aggregatedChoices.get(index) ?? {
+        content: "",
+        toolCallsByIndex: new Map<number, Record<string, unknown>>(),
+      };
+      const delta = isObject(choice.delta) ? choice.delta : undefined;
+      const message = isObject(choice.message) ? choice.message : undefined;
+
+      if (typeof delta?.content === "string") {
+        existing.content += delta.content;
+      } else if (typeof message?.content === "string") {
+        existing.content = message.content;
+      }
+
+      if (typeof delta?.role === "string") {
+        existing.role = delta.role;
+      } else if (typeof message?.role === "string") {
+        existing.role = message.role;
+      }
+
+      if (choice.finish_reason !== undefined) {
+        existing.finish_reason = choice.finish_reason;
+      }
+
+      const toolCallDeltas =
+        getChatToolCallDeltas(delta) ?? getChatToolCallDeltas(message);
+      if (toolCallDeltas) {
+        mergeChatToolCallDeltas(existing.toolCallsByIndex, toolCallDeltas);
+      }
+
+      aggregatedChoices.set(index, existing);
+    }
+  }
+
+  return {
+    choices: [...aggregatedChoices.entries()].map(([index, choice]) => ({
+      index,
+      message: {
+        content: choice.content,
+        role: choice.role ?? "assistant",
+        ...(choice.toolCallsByIndex.size > 0
+          ? {
+              tool_calls: [...choice.toolCallsByIndex.entries()]
+                .sort(([leftIndex], [rightIndex]) => leftIndex - rightIndex)
+                .map(([, toolCall]) => toolCall),
+            }
+          : {}),
+      },
+      ...(choice.finish_reason !== undefined
+        ? { finish_reason: choice.finish_reason }
+        : {}),
+    })),
+  };
+}
+
+function getChatToolCallDeltas(
+  value: Record<string, unknown> | undefined,
+): Record<string, unknown>[] | undefined {
+  if (!Array.isArray(value?.tool_calls)) {
+    return undefined;
+  }
+
+  const toolCalls = value.tool_calls.filter((toolCall) => isObject(toolCall));
+  return toolCalls.length > 0 ? toolCalls : undefined;
+}
+
+function mergeChatToolCallDeltas(
+  toolCallsByIndex: Map<number, Record<string, unknown>>,
+  toolCallDeltas: Record<string, unknown>[],
+): void {
+  for (const toolDelta of toolCallDeltas) {
+    const toolIndex =
+      typeof toolDelta.index === "number" && toolDelta.index >= 0
+        ? toolDelta.index
+        : resolveMissingToolCallIndex(toolCallsByIndex, toolDelta);
+    const existing = toolCallsByIndex.get(toolIndex);
+
+    if (!existing) {
+      toolCallsByIndex.set(toolIndex, createChatToolCall(toolDelta));
+      continue;
+    }
+
+    mergeChatToolCall(existing, toolDelta);
+  }
+}
+
+// Some providers omit `index`: match existing ids before starting a new call.
+// A delta without an id continues the latest one.
+function resolveMissingToolCallIndex(
+  toolCallsByIndex: Map<number, Record<string, unknown>>,
+  toolDelta: Record<string, unknown>,
+): number {
+  if (typeof toolDelta.id === "string") {
+    for (const [index, toolCall] of toolCallsByIndex) {
+      if (toolCall.id === toolDelta.id) {
+        return index;
+      }
+    }
+  }
+  if (toolCallsByIndex.size === 0) {
+    return 0;
+  }
+  const lastIndex = Math.max(...toolCallsByIndex.keys());
+  const lastId = toolCallsByIndex.get(lastIndex)?.id;
+  return typeof toolDelta.id === "string" &&
+    typeof lastId === "string" &&
+    lastId !== toolDelta.id
+    ? lastIndex + 1
+    : lastIndex;
+}
+
+function createChatToolCall(
+  toolDelta: Record<string, unknown>,
+): Record<string, unknown> {
+  const toolFunction = isObject(toolDelta.function) ? toolDelta.function : {};
+  const toolCallFunction: Record<string, unknown> = {
+    arguments:
+      typeof toolFunction.arguments === "string" ? toolFunction.arguments : "",
+  };
+
+  if (typeof toolFunction.name === "string") {
+    toolCallFunction.name = toolFunction.name;
+  }
+
+  const toolCall: Record<string, unknown> = {
+    function: toolCallFunction,
+  };
+
+  if (typeof toolDelta.id === "string") {
+    toolCall.id = toolDelta.id;
+  }
+  if (typeof toolDelta.type === "string") {
+    toolCall.type = toolDelta.type;
+  }
+
+  return toolCall;
+}
+
+function mergeChatToolCall(
+  existing: Record<string, unknown>,
+  toolDelta: Record<string, unknown>,
+): void {
+  const currentFunction = isObject(existing.function) ? existing.function : {};
+  const deltaFunction = isObject(toolDelta.function) ? toolDelta.function : {};
+  const currentArguments =
+    typeof currentFunction.arguments === "string"
+      ? currentFunction.arguments
+      : "";
+  const deltaArguments =
+    typeof deltaFunction.arguments === "string" ? deltaFunction.arguments : "";
+
+  if (typeof toolDelta.id === "string" && typeof existing.id !== "string") {
+    existing.id = toolDelta.id;
+  }
+  if (typeof toolDelta.type === "string" && typeof existing.type !== "string") {
+    existing.type = toolDelta.type;
+  }
+
+  const nextFunction: Record<string, unknown> = {
+    ...currentFunction,
+    arguments: `${currentArguments}${deltaArguments}`,
+  };
+
+  if (
+    typeof deltaFunction.name === "string" &&
+    typeof currentFunction.name !== "string"
+  ) {
+    nextFunction.name = deltaFunction.name;
+  }
+
+  existing.function = nextFunction;
+}
+
+export { aggregateChatCompletionChunks, extractResponseMetadata };
+
+function aggregateTextGenerationStreamChunks(
+  chunks: HuggingFaceTextGenerationStreamOutput[],
+): { generated_text: string; finish_reason?: string | null } | undefined {
+  if (chunks.length === 0) {
+    return undefined;
+  }
+
+  let generatedText = "";
+  let finishReason: string | null | undefined;
+  for (const chunk of chunks) {
+    if (typeof chunk.generated_text === "string") {
+      generatedText = chunk.generated_text;
+    } else if (typeof chunk.token?.text === "string" && !chunk.token.special) {
+      generatedText += chunk.token.text;
+    } else if (Array.isArray(chunk.choices)) {
+      for (const choice of chunk.choices) {
+        if (typeof choice.text === "string") {
+          generatedText += choice.text;
+        }
+
+        if (choice.finish_reason !== undefined) {
+          finishReason = choice.finish_reason;
+        }
+      }
+    }
+
+    if (
+      isObject(chunk.details) &&
+      typeof chunk.details.finish_reason === "string"
+    ) {
+      finishReason = chunk.details.finish_reason;
+    }
+  }
+
+  return {
+    generated_text: generatedText,
+    ...(finishReason !== undefined ? { finish_reason: finishReason } : {}),
+  };
+}
+
+function extractTextGenerationStreamMetadata(
+  chunks: HuggingFaceTextGenerationStreamOutput[],
+): Record<string, unknown> | undefined {
+  for (let index = chunks.length - 1; index >= 0; index--) {
+    const chunk = chunks[index];
+    if (
+      isObject(chunk?.details) &&
+      typeof chunk.details.finish_reason === "string"
+    ) {
+      return {
+        finish_reason: chunk.details.finish_reason,
+      };
+    }
+
+    if (!Array.isArray(chunk?.choices)) {
+      continue;
+    }
+
+    for (
+      let choiceIndex = chunk.choices.length - 1;
+      choiceIndex >= 0;
+      choiceIndex--
+    ) {
+      const choice = chunk.choices[choiceIndex];
+      if (choice?.finish_reason !== undefined) {
+        return { finish_reason: choice.finish_reason };
+      }
+    }
+  }
+
+  return undefined;
+}

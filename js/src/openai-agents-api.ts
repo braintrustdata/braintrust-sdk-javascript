@@ -1,11 +1,12 @@
+import { registerInstrumentation } from "./instrumentation/registrations/openai";
 import { debugLogger } from "./debug-logger";
-import { openAIChannels } from "./instrumentation/plugins/openai-interceptors";
+import { openAIChannels } from "./instrumentation/providers/openai-interceptors";
 import { resolveUseLegacyUuidIds } from "./id-gen";
 import {
   _internalExportParentSynchronously,
   getSpanParentObject,
   newId,
-} from "./logger";
+} from "./logger/core";
 import { getCurrentUnixTimestamp } from "./util";
 import { SpanComponentsV4 } from "../util/span_identifier_v4";
 import type {
@@ -127,6 +128,7 @@ export function startOpenAIAgentsTrace(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Provider types vary between OpenAI SDK versions; validate the narrow surface at runtime.
   args: any,
 ): OpenAIAgentsTraceToken {
+  registerInstrumentation();
   const validatedArgs = validateStartArgs(args);
   const state = createTraceState();
   if (!state) {
@@ -167,6 +169,7 @@ export async function updateOpenAIAgentsTrace(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Provider event types vary between OpenAI SDK versions; validate the narrow surface at runtime.
   event: any,
 ): Promise<OpenAIAgentsTraceToken> {
+  registerInstrumentation();
   const state = token;
   const validatedEvent = validateEvent(event);
   try {
@@ -195,6 +198,7 @@ export async function failOpenAIAgentsTrace(
   token: OpenAIAgentsTraceToken,
   error: unknown,
 ): Promise<OpenAIAgentsTraceToken> {
+  registerInstrumentation();
   const state = token;
   try {
     return await openAIChannels.agentsTraceFail.invoke(

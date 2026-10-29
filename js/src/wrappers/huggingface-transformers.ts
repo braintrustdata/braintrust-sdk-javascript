@@ -1,7 +1,8 @@
+import { registerInstrumentation } from "../instrumentation/registrations/huggingface";
 import {
   huggingFaceTransformersChannels,
   isSupportedHuggingFaceTransformersTask,
-} from "../instrumentation/plugins/huggingface-transformers-interceptors";
+} from "../instrumentation/providers/huggingface-transformers-interceptors";
 import type {
   HuggingFaceTransformersModule,
   HuggingFaceTransformersPipeline,
@@ -25,6 +26,7 @@ export function wrapHuggingFaceTransformers(
 ): HuggingFaceTransformersPipeline;
 export function wrapHuggingFaceTransformers<T>(transformers: T): T;
 export function wrapHuggingFaceTransformers(transformers: unknown): unknown {
+  registerInstrumentation();
   const pipelineTask = (transformers as { task?: unknown } | null)?.task;
   if (
     typeof transformers === "function" &&

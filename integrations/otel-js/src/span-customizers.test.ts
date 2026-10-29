@@ -1,3 +1,4 @@
+import { _exportsForTestingOnly } from "../../../js/src/logger/testing";
 import {
   afterAll,
   afterEach,
@@ -7,7 +8,7 @@ import {
   expect,
   test,
   vi,
-} from "vitest";
+} from "vite-plus/test";
 import { createServer, type Server } from "node:http";
 import { createRequire } from "node:module";
 import type { AddressInfo } from "node:net";
@@ -28,7 +29,7 @@ import {
   resetOtelCompat,
   BraintrustSpanProcessor,
   BraintrustExporter,
-} from ".";
+} from "./";
 import { createTracerProvider } from "../tests/utils";
 
 type Data = Record<string, any>;
@@ -526,15 +527,15 @@ describe("OpenTelemetry span customizers at the HTTP boundary", () => {
         : { output: "redacted" },
     );
     shared[customizersKey] = [{ onSpanExport: hook }];
-    await braintrust._exportsForTestingOnly.simulateLoginForTests();
-    const memory = braintrust._exportsForTestingOnly.useTestBackgroundLogger();
+    await _exportsForTestingOnly.simulateLoginForTests();
+    const memory = _exportsForTestingOnly.useTestBackgroundLogger();
     setupOtelCompat();
     try {
       const logger = braintrust.initLogger({
         projectId: "test",
         projectName: "test",
       });
-      const experiment = braintrust._exportsForTestingOnly.initTestExperiment(
+      const experiment = _exportsForTestingOnly.initTestExperiment(
         "experiment",
         "test",
       );
@@ -566,8 +567,8 @@ describe("OpenTelemetry span customizers at the HTTP boundary", () => {
       expect(JSON.stringify(bodies)).not.toContain("PRIVATE");
     } finally {
       await provider.shutdown();
-      braintrust._exportsForTestingOnly.clearTestBackgroundLogger();
-      braintrust._exportsForTestingOnly.simulateLogoutForTests();
+      _exportsForTestingOnly.clearTestBackgroundLogger();
+      _exportsForTestingOnly.simulateLogoutForTests();
     }
   });
 
@@ -583,8 +584,8 @@ describe("OpenTelemetry span customizers at the HTTP boundary", () => {
           },
         },
       ];
-      await bt._exportsForTestingOnly.simulateLoginForTests();
-      const memory = bt._exportsForTestingOnly.useTestBackgroundLogger();
+      await _exportsForTestingOnly.simulateLoginForTests();
+      const memory = _exportsForTestingOnly.useTestBackgroundLogger();
       const native = async () => {
         const span = bt
           .initLogger({ projectName: "native", projectId: "native" })
@@ -606,8 +607,8 @@ describe("OpenTelemetry span customizers at the HTTP boundary", () => {
         expect(received()).toHaveLength(2);
         expect(JSON.stringify(bodies)).not.toContain("PRIVATE");
       } finally {
-        bt._exportsForTestingOnly.clearTestBackgroundLogger();
-        bt._exportsForTestingOnly.simulateLogoutForTests();
+        _exportsForTestingOnly.clearTestBackgroundLogger();
+        _exportsForTestingOnly.simulateLogoutForTests();
       }
     },
   );

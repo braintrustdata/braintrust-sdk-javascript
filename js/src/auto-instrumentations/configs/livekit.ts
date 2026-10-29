@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { livekitChannels } from "../../instrumentation/plugins/livekit-interceptors";
+import { livekitChannels } from "../../instrumentation/providers/livekit-interceptors";
 
 // Private lifecycle hooks: widen only after validating the supported release matrix.
 const versionRange = ">=1.9.1 <1.10.0";

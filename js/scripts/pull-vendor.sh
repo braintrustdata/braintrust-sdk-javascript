@@ -31,7 +31,7 @@ show_usage() {
     echo "  versions   - Comma-separated list of major versions to track (e.g., v3,v4,v5)"
     echo ""
     echo "Examples:"
-    echo "  $0 https://github.com/vercel/ai.git v3,v4,v5"
+    echo "  $0 https://github.com/vercel/ai.git v4,v5,v6,v7"
     echo "  $0 https://github.com/openai/openai-node.git v3,v4"
     echo "  $0 https://github.com/anthropics/anthropic-sdk-typescript.git v0.20,v0.21"
     echo ""
@@ -285,7 +285,7 @@ Run the pull script to update to the latest tags:
 cd sdk/js
 
 # Example for vercel/ai (uses ai@X.Y.Z tag format)
-./scripts/pull-vendor.sh https://github.com/vercel/ai.git v3,v4,v5,v6
+./scripts/pull-vendor.sh https://github.com/vercel/ai.git v4,v5,v6,v7
 
 # Example for OpenAI SDK
 ./scripts/pull-vendor.sh https://github.com/openai/openai-node.git v3,v4

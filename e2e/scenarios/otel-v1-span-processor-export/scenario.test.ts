@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
-import { expect, test } from "vitest";
+import { expect, test } from "vite-plus/test";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,

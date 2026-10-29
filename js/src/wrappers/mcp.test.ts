@@ -1,3 +1,4 @@
+import { _exportsForTestingOnly } from "../logger/testing";
 import { debugLogger } from "../debug-logger";
 import {
   afterEach,
@@ -7,10 +8,10 @@ import {
   expect,
   it,
   vi,
-} from "vitest";
-import { _exportsForTestingOnly, initLogger } from "../logger";
+} from "vite-plus/test";
+import { initLogger } from "../logger/core";
 import { configureNode } from "../node/config";
-import { mcpSDKChannels } from "../instrumentation/plugins/mcp-interceptors";
+import { mcpSDKChannels } from "../instrumentation/providers/mcp-interceptors";
 import type {
   MCPProtocol,
   MCPRequestHandler,

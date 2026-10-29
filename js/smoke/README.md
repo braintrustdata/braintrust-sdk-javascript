@@ -29,7 +29,7 @@ import {
   testBasicSpanLogging,
   testMultipleSpans,
   // ... other test functions
-} from "../../shared/dist/index.mjs";
+} from "../../shared/dist/index.js";
 
 import * as braintrust from "braintrust";
 

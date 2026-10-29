@@ -20,13 +20,13 @@ sdk/integrations/otel-js/
 ├── otel-v1/                      # Test environment for OTel 1.x
 │   ├── src -> ../src             # SYMLINK to parent src/
 │   ├── package.json              # Pins OTel 1.x versions
-│   ├── vitest.config.ts          # Aliases to local node_modules
+│   ├── vite.config.ts          # Aliases to local node_modules
 │   ├── pnpm-lock.yaml            # Independent lockfile
 │   └── node_modules/             # Isolated v1.x dependencies
 └── otel-v2/                      # Test environment for OTel 2.x
     ├── src -> ../src             # SYMLINK to parent src/
     ├── package.json              # Pins OTel 2.x versions
-    ├── vitest.config.ts          # Aliases to local node_modules
+    ├── vite.config.ts          # Aliases to local node_modules
     ├── pnpm-lock.yaml            # Independent lockfile
     └── node_modules/             # Isolated v2.x dependencies
 ```
@@ -162,10 +162,10 @@ This is rarely needed but useful for troubleshooting or regenerating dependencie
 
 ### 5. Vitest Configuration
 
-Each test environment has a `vitest.config.ts` that creates module aliases:
+Each test environment has a `vite.config.ts` that creates module aliases:
 
 ```typescript
-import { defineConfig } from "vitest/config";
+import { defineConfig } from "vite-plus";
 import {
   detectOtelVersion,
   logOtelVersions,

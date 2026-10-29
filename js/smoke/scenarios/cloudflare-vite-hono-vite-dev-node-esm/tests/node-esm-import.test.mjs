@@ -17,10 +17,7 @@ import { spawn } from "node:child_process";
 import { rmSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import {
-  displayTestResults,
-  hasFailures,
-} from "../../../shared/dist/index.mjs";
+import { displayTestResults, hasFailures } from "../../../shared/dist/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -86,7 +83,7 @@ async function testViteDevServerWithNodeEsm() {
         details:
           "Vite's dependency pre-bundler cannot handle Nunjucks' use of Object.setPrototypeOf when pre-bundling braintrust/node",
         recommendation:
-          "Use 'braintrust/browser' import or configure Vite to exclude Nunjucks from optimization",
+          "Import 'braintrust' through its browser condition or configure Vite to exclude Nunjucks from optimization",
       };
     }
 
@@ -163,7 +160,7 @@ async function testViteDevServerWithNodeEsm() {
         "Expected failure: Nunjucks incompatibility with Vite bundler when using braintrust/node. " +
         "Root cause: Nunjucks uses Object.setPrototypeOf in ways incompatible with Vite's ESM bundler. " +
         "The Node.js ESM build includes Nunjucks, which causes this error during Vite's dependency pre-bundling. " +
-        "Recommendation: Use 'braintrust/browser' import or exclude Nunjucks from Vite optimization",
+        "Recommendation: Import 'braintrust' through its browser condition or exclude Nunjucks from Vite optimization",
       error: errorStack
         ? {
             message: testResult.error,

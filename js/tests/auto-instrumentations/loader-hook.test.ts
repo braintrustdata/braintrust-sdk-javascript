@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vite-plus/test";
 import { Worker } from "node:worker_threads";
 import * as fs from "node:fs";
 import { createRequire } from "node:module";
@@ -12,10 +12,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixturesDir = path.join(__dirname, "fixtures");
 
 // Path to unified loader hook (built dist file)
-const hookPath = path.join(
-  __dirname,
-  "../../dist/auto-instrumentations/hook.mjs",
-);
+const hookPath = path.join(__dirname, "../../dist/hooks/hook.mjs");
 
 // Paths to fixtures
 const listenerPath = path.join(fixturesDir, "listener-esm.mjs");

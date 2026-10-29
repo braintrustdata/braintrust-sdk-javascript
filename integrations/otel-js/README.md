@@ -118,28 +118,23 @@ const logger = initLogger({ projectName: "my_project" });
 **What it does**:
 
 - Sets Braintrust to use OpenTelemetry's context manager for parent-child span relationships
-- Configures Braintrust to use OpenTelemetry-compatible span and trace IDs
 - Enables seamless mixing of Braintrust and OpenTelemetry spans in the same trace
 
 ## Distributed Tracing Helpers
 
 These utilities enable distributed tracing across services that use different tracing systems (Braintrust and OpenTelemetry).
 
-### `contextFromSpanExport(exportStr: string)`
+### `contextFromSpan(span: Span)`
 
-Creates an OpenTelemetry context from a Braintrust span export string.
+Creates an OpenTelemetry context from a Braintrust span using W3C Trace Context.
 
-**When to use it**: When Service A uses Braintrust and sends a span export to Service B that uses OpenTelemetry. This allows Service B to create spans as children of Service A's span.
+**When to use it**: When Braintrust and OpenTelemetry code run in the same process and an OpenTelemetry operation should be a child of a Braintrust span. Across services, propagate the headers returned by `span.inject()` instead.
 
 ```typescript
-import { contextFromSpanExport } from "@braintrust/otel";
+import { contextFromSpan } from "@braintrust/otel";
 import { context } from "@opentelemetry/api";
 
-// Service A (Braintrust) exports span
-const exportedSpan = await spanA.export();
-
-// Service B (OpenTelemetry) imports context
-const ctx = contextFromSpanExport(exportedSpan);
+const ctx = contextFromSpan(spanA);
 await context.with(ctx, async () => {
   // OpenTelemetry spans created here will be children of Service A's span
   await tracer.startActiveSpan("service_b_operation", async (span) => {

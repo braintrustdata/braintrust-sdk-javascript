@@ -13,7 +13,9 @@ import * as path from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { runInNewContext } from "node:vm";
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { SourceMapConsumer } from "source-map";
+import { Transformer } from "../../src/auto-instrumentations/orchestrion-js/transformer";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vite-plus/test";
 import {
   InstrumentationMatcher,
   type InstrumentationConfig,
@@ -75,6 +77,7 @@ function transformTestCode(
 }
 
 function expectGlobalHookTransform(output: string): void {
+  expect(output).toContain("braintrust/auto");
   expect(output).toContain("__braintrust_invocation_hooks_v2");
   expect(output).toContain("braintrust.global-instrumentation-hooks.registry");
   expect(output).toContain(
@@ -93,6 +96,36 @@ function expectGlobalHookTransform(output: string): void {
 }
 
 describe("Orchestrion Transformation Tests", () => {
+  it("initializes consumers before CommonJS calls without changing strict mode or source maps", async () => {
+    const source =
+      '"use strict";\nfunction request() { return this; }\nmodule.exports = request();';
+    const transformer = new Transformer("test-sdk", "1.0.0", "index.cjs", [
+      testConfig({ functionName: "request" }),
+    ]);
+    const result = transformer.transform(source, "cjs", "braintrust/auto");
+    const loadedModule = { exports: "not called" };
+    const require = vi.fn((id: string) => {
+      expect(id).toBe("braintrust/auto");
+      expect(loadedModule.exports).toBe("not called");
+    });
+
+    Function("require", "module", result.code)(require, loadedModule);
+    expect(require).toHaveBeenCalledOnce();
+    expect(loadedModule.exports).toBeUndefined();
+
+    const lines = result.code.split("\n");
+    const generatedLine =
+      lines.findIndex((line) => line.startsWith("module.exports")) + 1;
+    await SourceMapConsumer.with(result.map!, null, (consumer) => {
+      expect(
+        consumer.originalPositionFor({ line: generatedLine, column: 0 }),
+      ).toMatchObject({
+        source: "test-sdk/index.cjs",
+        line: 3,
+        column: 0,
+      });
+    });
+  });
   it.each(["7.0.108", "7.0.138"])(
     "leaves batch lifecycle export aliases uninstrumented in %s",
     async (version) => {
@@ -615,7 +648,7 @@ describe("Orchestrion Transformation Tests", () => {
   describe("esbuild", () => {
     it.each([
       ["browser", "browser", { browser: true }],
-      ["legacy-browser", "browser", { useDiagnosticChannelCompatShim: true }],
+      ["legacy-browser", "browser", { browser: true }],
       ["edge", "neutral", { browser: true }],
     ] as const)(
       "should keep Mastra %s bundles free of Node-only patches",
@@ -719,6 +752,7 @@ describe("Orchestrion Transformation Tests", () => {
             library: { type: "module" },
           },
           experiments: { outputModule: true },
+          externals: { "braintrust/auto": "module braintrust/auto" },
           mode: "development",
           resolve: { modules: [nodeModulesDir, "node_modules"] },
           plugins: [braintrustWebpackPlugin({ browser })],
@@ -733,7 +767,7 @@ describe("Orchestrion Transformation Tests", () => {
   describe("turbopack / webpack loader", () => {
     const webpackLoaderPath = path.resolve(
       __dirname,
-      "../../dist/auto-instrumentations/bundler/webpack-loader.cjs",
+      "../../dist/loaders/webpack-loader.cjs",
     );
     it.each([
       "",
@@ -825,6 +859,7 @@ describe("Orchestrion Transformation Tests", () => {
             library: { type: "module" },
           },
           experiments: { outputModule: true },
+          externals: { "braintrust/auto": "module braintrust/auto" },
           mode: "development",
           resolve: { modules: [nodeModulesDir, "node_modules"] },
           // No plugins — only the loader, mirroring turbopack's constraint
@@ -853,6 +888,7 @@ describe("Orchestrion Transformation Tests", () => {
               library: { type: "module" },
             },
             experiments: { outputModule: true },
+            externals: { "braintrust/auto": "module braintrust/auto" },
             mode: "development",
             resolve: { modules: [nodeModulesDir, "node_modules"] },
             module: {
@@ -880,13 +916,7 @@ describe("Orchestrion Transformation Tests", () => {
     );
 
     it.each([
-      [
-        "skip",
-        "legacy browser",
-        "web",
-        { useDiagnosticChannelCompatShim: true },
-        false,
-      ],
+      ["skip", "legacy browser", "web", { browser: true }, false],
       ["skip", "browser", "web", { browser: true }, false],
       ["apply", "node", "node", { browser: false }, true],
     ] as const)(
@@ -902,6 +932,7 @@ describe("Orchestrion Transformation Tests", () => {
           experiments: { outputModule: true },
           mode: "development",
           target,
+          externals: { "braintrust/auto": "module braintrust/auto" },
           module: {
             rules: [
               {
@@ -918,9 +949,11 @@ describe("Orchestrion Transformation Tests", () => {
 
         expect(errors).toHaveLength(0);
         if (shouldPatch) {
+          expect(output).toContain("braintrust/auto");
           expect(output).toContain("__braintrustObservabilityClass");
           expect(output).toContain("@mastra/observability");
         } else {
+          expect(output).not.toContain("braintrust/auto");
           expect(output).not.toContain("__braintrustObservabilityClass");
           expect(output).not.toContain("node:module");
         }
@@ -938,6 +971,7 @@ describe("Orchestrion Transformation Tests", () => {
         experiments: { outputModule: true },
         mode: "development",
         target: "web",
+        externals: { "braintrust/auto": "module braintrust/auto" },
         module: {
           rules: [
             {
@@ -954,6 +988,7 @@ describe("Orchestrion Transformation Tests", () => {
 
       expect(errors).toHaveLength(0);
       expect(output).toContain("__btPatchAPIPromise");
+      expect(output).toContain("braintrust/auto");
       expect(output).toContain("__btParsePatched");
     });
   });

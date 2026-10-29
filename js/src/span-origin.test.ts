@@ -1,6 +1,6 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
-import iso from "./isomorph";
+import iso from "#braintrust-platform";
 import {
   detectSpanOriginEnvironment,
   getSpanInstrumentationName,

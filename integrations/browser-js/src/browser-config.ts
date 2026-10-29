@@ -1,41 +1,35 @@
-import { _internalIso as iso, _internalSetInitialState } from "braintrust";
+import {
+  configureContextManager,
+  ContextManager,
+  type ContextParentSpanIds,
+  type CurrentSpanStore,
+  type Span,
+} from "braintrust";
 import { AsyncLocalStorage as BrowserAsyncLocalStorage } from "als-browser";
 
-export function configureBrowser() {
-  // Set build type indicator
-  iso.buildType = "browser-js" as "browser";
+class BrowserContextManager extends ContextManager {
+  private readonly currentSpan = new BrowserAsyncLocalStorage<Span>();
 
-  iso.newAsyncLocalStorage = <T>() => new BrowserAsyncLocalStorage<T>();
+  getParentSpanIds(): ContextParentSpanIds | undefined {
+    const span = this.currentSpan.getStore();
+    return span
+      ? { rootSpanId: span.rootSpanId, spanParents: [span.spanId] }
+      : undefined;
+  }
 
-  iso.getEnv = (name: string) => {
-    if (typeof process === "undefined" || typeof process.env === "undefined") {
-      return undefined;
-    }
-    return process.env[name];
-  };
+  runInContext<R>(span: Span, callback: () => R): R {
+    return this.currentSpan.run(span, callback);
+  }
 
-  // noop implementations for git config
-  iso.getRepoInfo = async () => ({
-    commit: null,
-    branch: null,
-    tag: null,
-    dirty: false,
-  });
-  iso.getCallerLocation = () => undefined;
+  getCurrentSpan(): Span | undefined {
+    return this.currentSpan.getStore();
+  }
 
-  // Implement browser-compatible hash function using a simple hash algorithm
-  iso.hash = (data: string): string => {
-    // Simple hash function for browser compatibility
-    let hash = 0;
-    for (let i = 0; i < data.length; i++) {
-      const char = data.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash; // Convert to 32bit integer
-    }
-    // Convert to hex string
-    const hashHex = (hash >>> 0).toString(16).padStart(8, "0");
-    return hashHex.repeat(8).substring(0, 64); // Make it look like a SHA-256 hash length
-  };
+  getCurrentSpanStore(): CurrentSpanStore {
+    return this.currentSpan;
+  }
+}
 
-  _internalSetInitialState();
+export function configureBrowser(): void {
+  configureContextManager(BrowserContextManager);
 }

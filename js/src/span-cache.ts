@@ -9,7 +9,7 @@
  * the cache becomes a no-op (all lookups return undefined).
  */
 
-import iso from "./isomorph";
+import iso from "#braintrust-platform";
 import { mergeDicts } from "../util/object_util";
 
 // Global registry of active span caches for process exit cleanup

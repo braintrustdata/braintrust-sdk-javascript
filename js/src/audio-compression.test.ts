@@ -1,11 +1,11 @@
-import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vite-plus/test";
 import {
   _exportsForTestingOnly,
   audioEncodingStack,
   type AudioEncodingDefaults,
 } from "./audio-compression";
 import type { AudioMiddleware } from "./audio-middleware";
-import iso from "./isomorph";
+import iso from "#braintrust-platform";
 import { configureNode } from "./node/config";
 
 configureNode();

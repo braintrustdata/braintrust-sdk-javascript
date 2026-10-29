@@ -1,10 +1,19 @@
+import { getLoaderCaches } from "../logger/prompts";
 import * as fs from "fs/promises";
 import * as path from "path";
 import { tmpdir } from "os";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import iso from "../isomorph";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vite-plus/test";
+import iso from "#braintrust-platform";
 import { configureNode } from "../node/config";
-import { BraintrustState, Prompt, RemoteEvalParameters } from "../logger";
+import { BraintrustState } from "../logger/core";
+import { Prompt, RemoteEvalParameters } from "../logger/prompts";
 
 configureNode();
 
@@ -117,19 +126,27 @@ describe("prompt and parameters cache modes", () => {
     await configureCacheDirs();
 
     const state = new BraintrustState({});
-    await state.promptCache.set(promptKey, testPrompt);
-    await state.promptCache.set({ ...promptKey, slug: "other" }, testPrompt);
-    await state.parametersCache.set(parametersKey, testParameters);
-    await state.parametersCache.set(
+    await getLoaderCaches(state).promptCache.set(promptKey, testPrompt);
+    await getLoaderCaches(state).promptCache.set(
+      { ...promptKey, slug: "other" },
+      testPrompt,
+    );
+    await getLoaderCaches(state).parametersCache.set(
+      parametersKey,
+      testParameters,
+    );
+    await getLoaderCaches(state).parametersCache.set(
       { ...parametersKey, slug: "other" },
       testParameters,
     );
 
     const nextState = new BraintrustState({});
-    expect(await nextState.promptCache.get(promptKey)).toEqual(testPrompt);
-    expect(await nextState.parametersCache.get(parametersKey)).toEqual(
-      testParameters,
+    expect(await getLoaderCaches(nextState).promptCache.get(promptKey)).toEqual(
+      testPrompt,
     );
+    expect(
+      await getLoaderCaches(nextState).parametersCache.get(parametersKey),
+    ).toEqual(testParameters);
   });
 
   it("memory mode does not write to disk", async () => {
@@ -137,19 +154,28 @@ describe("prompt and parameters cache modes", () => {
     const { promptDir, parametersDir } = await configureCacheDirs();
 
     const state = new BraintrustState({});
-    await state.promptCache.set(promptKey, testPrompt);
-    await state.parametersCache.set(parametersKey, testParameters);
-
-    expect(await state.promptCache.get(promptKey)).toEqual(testPrompt);
-    expect(await state.parametersCache.get(parametersKey)).toEqual(
+    await getLoaderCaches(state).promptCache.set(promptKey, testPrompt);
+    await getLoaderCaches(state).parametersCache.set(
+      parametersKey,
       testParameters,
     );
+
+    expect(await getLoaderCaches(state).promptCache.get(promptKey)).toEqual(
+      testPrompt,
+    );
+    expect(
+      await getLoaderCaches(state).parametersCache.get(parametersKey),
+    ).toEqual(testParameters);
     expect(await fs.readdir(promptDir)).toEqual([]);
     expect(await fs.readdir(parametersDir)).toEqual([]);
 
     const nextState = new BraintrustState({});
-    expect(await nextState.promptCache.get(promptKey)).toBeUndefined();
-    expect(await nextState.parametersCache.get(parametersKey)).toBeUndefined();
+    expect(
+      await getLoaderCaches(nextState).promptCache.get(promptKey),
+    ).toBeUndefined();
+    expect(
+      await getLoaderCaches(nextState).parametersCache.get(parametersKey),
+    ).toBeUndefined();
   });
 
   it("disk mode does not warm memory", async () => {
@@ -157,20 +183,29 @@ describe("prompt and parameters cache modes", () => {
     const { promptDir, parametersDir } = await configureCacheDirs();
 
     const state = new BraintrustState({});
-    await state.promptCache.set(promptKey, testPrompt);
-    await state.parametersCache.set(parametersKey, testParameters);
-
-    const nextState = new BraintrustState({});
-    expect(await nextState.promptCache.get(promptKey)).toEqual(testPrompt);
-    expect(await nextState.parametersCache.get(parametersKey)).toEqual(
+    await getLoaderCaches(state).promptCache.set(promptKey, testPrompt);
+    await getLoaderCaches(state).parametersCache.set(
+      parametersKey,
       testParameters,
     );
+
+    const nextState = new BraintrustState({});
+    expect(await getLoaderCaches(nextState).promptCache.get(promptKey)).toEqual(
+      testPrompt,
+    );
+    expect(
+      await getLoaderCaches(nextState).parametersCache.get(parametersKey),
+    ).toEqual(testParameters);
 
     await fs.rm(promptDir, { recursive: true, force: true });
     await fs.rm(parametersDir, { recursive: true, force: true });
 
-    expect(await nextState.promptCache.get(promptKey)).toBeUndefined();
-    expect(await nextState.parametersCache.get(parametersKey)).toBeUndefined();
+    expect(
+      await getLoaderCaches(nextState).promptCache.get(promptKey),
+    ).toBeUndefined();
+    expect(
+      await getLoaderCaches(nextState).parametersCache.get(parametersKey),
+    ).toBeUndefined();
   });
 
   it("none mode disables all cache reads and writes", async () => {
@@ -178,11 +213,18 @@ describe("prompt and parameters cache modes", () => {
     const { promptDir, parametersDir } = await configureCacheDirs();
 
     const state = new BraintrustState({});
-    await state.promptCache.set(promptKey, testPrompt);
-    await state.parametersCache.set(parametersKey, testParameters);
+    await getLoaderCaches(state).promptCache.set(promptKey, testPrompt);
+    await getLoaderCaches(state).parametersCache.set(
+      parametersKey,
+      testParameters,
+    );
 
-    expect(await state.promptCache.get(promptKey)).toBeUndefined();
-    expect(await state.parametersCache.get(parametersKey)).toBeUndefined();
+    expect(
+      await getLoaderCaches(state).promptCache.get(promptKey),
+    ).toBeUndefined();
+    expect(
+      await getLoaderCaches(state).parametersCache.get(parametersKey),
+    ).toBeUndefined();
     expect(await fs.readdir(promptDir)).toEqual([]);
     expect(await fs.readdir(parametersDir)).toEqual([]);
   });
@@ -194,14 +236,19 @@ describe("prompt and parameters cache modes", () => {
     await configureCacheDirs();
 
     const state = new BraintrustState({});
-    await state.promptCache.set(promptKey, testPrompt);
-    await state.parametersCache.set(parametersKey, testParameters);
-
-    const nextState = new BraintrustState({});
-    expect(await nextState.promptCache.get(promptKey)).toEqual(testPrompt);
-    expect(await nextState.parametersCache.get(parametersKey)).toEqual(
+    await getLoaderCaches(state).promptCache.set(promptKey, testPrompt);
+    await getLoaderCaches(state).parametersCache.set(
+      parametersKey,
       testParameters,
     );
+
+    const nextState = new BraintrustState({});
+    expect(await getLoaderCaches(nextState).promptCache.get(promptKey)).toEqual(
+      testPrompt,
+    );
+    expect(
+      await getLoaderCaches(nextState).parametersCache.get(parametersKey),
+    ).toEqual(testParameters);
 
     expect(warnSpy).toHaveBeenCalledTimes(1);
     expect(warnSpy).toHaveBeenCalledWith(
@@ -216,30 +263,36 @@ describe("prompt and parameters cache modes", () => {
 
     const state = new BraintrustState({});
     for (let i = 0; i < 1025; i++) {
-      await state.promptCache.set(
+      await getLoaderCaches(state).promptCache.set(
         { ...promptKey, slug: `prompt-${i}` },
         testPrompt,
       );
-      await state.parametersCache.set(
+      await getLoaderCaches(state).parametersCache.set(
         { ...parametersKey, slug: `parameters-${i}` },
         testParameters,
       );
     }
 
     expect(
-      await state.promptCache.get({ ...promptKey, slug: "prompt-0" }),
+      await getLoaderCaches(state).promptCache.get({
+        ...promptKey,
+        slug: "prompt-0",
+      }),
     ).toBeUndefined();
     expect(
-      await state.parametersCache.get({
+      await getLoaderCaches(state).parametersCache.get({
         ...parametersKey,
         slug: "parameters-0",
       }),
     ).toBeUndefined();
     expect(
-      await state.promptCache.get({ ...promptKey, slug: "prompt-1024" }),
+      await getLoaderCaches(state).promptCache.get({
+        ...promptKey,
+        slug: "prompt-1024",
+      }),
     ).toEqual(testPrompt);
     expect(
-      await state.parametersCache.get({
+      await getLoaderCaches(state).parametersCache.get({
         ...parametersKey,
         slug: "parameters-1024",
       }),
@@ -253,10 +306,17 @@ describe("prompt and parameters cache modes", () => {
     iso.gzip = undefined;
 
     const state = new BraintrustState({});
-    await state.promptCache.set(promptKey, testPrompt);
-    expect(await state.promptCache.get(promptKey)).toBeUndefined();
-    await state.parametersCache.set(parametersKey, testParameters);
-    expect(await state.parametersCache.get(parametersKey)).toBeUndefined();
+    await getLoaderCaches(state).promptCache.set(promptKey, testPrompt);
+    expect(
+      await getLoaderCaches(state).promptCache.get(promptKey),
+    ).toBeUndefined();
+    await getLoaderCaches(state).parametersCache.set(
+      parametersKey,
+      testParameters,
+    );
+    expect(
+      await getLoaderCaches(state).parametersCache.get(parametersKey),
+    ).toBeUndefined();
 
     new BraintrustState({});
     expect(warnSpy).toHaveBeenCalledTimes(1);

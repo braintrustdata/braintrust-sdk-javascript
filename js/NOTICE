@@ -24,3 +24,8 @@ diagnostics_channel TracingChannel implementation.
 Copyright Node.js contributors. All rights reserved.
 It is licensed under the MIT License.
 See licenses/node-diagnostics-channel/LICENSE.
+
+This package also bundles async 3.2.5.
+Copyright (c) 2010-2018 Caolan McMahon.
+async is licensed under the MIT License.
+See licenses/async/LICENSE.

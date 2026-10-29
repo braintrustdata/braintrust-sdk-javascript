@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, test } from "vite-plus/test";
 import oggOpus from "@audio/encode-opus";
 import type { AudioSegmentMeta } from "./types";
 import { opus, type OpusOptions } from "./opus";
@@ -53,7 +53,7 @@ function oggPackets(file: Uint8Array) {
   const packets: Uint8Array[] = [];
   let partial: number[] = [];
   let granule = 0;
-  for (let at = 0; at < file.length; ) {
+  for (let at = 0; at < file.length;) {
     granule = Number(view.getBigUint64(at + 6, true));
     const count = file[at + 26];
     let data = at + 27 + count;

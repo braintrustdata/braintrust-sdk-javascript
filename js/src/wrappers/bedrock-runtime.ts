@@ -1,10 +1,11 @@
+import { registerInstrumentation } from "../instrumentation/registrations/awsBedrockRuntime";
 import { debugLogger } from "../debug-logger";
 import { runWithAutoInstrumentationSuppressed } from "../instrumentation/auto-instrumentation-suppression";
-import { bedrockRuntimeChannels } from "../instrumentation/plugins/bedrock-runtime-interceptors";
+import { bedrockRuntimeChannels } from "../instrumentation/providers/bedrock-runtime-interceptors";
 import {
   buildBedrockRuntimeSpanInfo,
   getBedrockRuntimeOperation,
-} from "../instrumentation/plugins/bedrock-runtime-common";
+} from "../instrumentation/providers/bedrock-runtime-common";
 import type {
   BedrockRuntimeClient,
   BedrockRuntimeCommandLike,
@@ -14,6 +15,7 @@ import type {
  * Wrap an AWS Bedrock Runtime client with Braintrust tracing.
  */
 export function wrapBedrockRuntime<T>(client: T): T {
+  registerInstrumentation();
   if (isSupportedBedrockRuntimeClient(client)) {
     return bedrockRuntimeProxy(client) as T;
   }

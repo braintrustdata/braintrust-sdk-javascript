@@ -1,5 +1,6 @@
 import {
   flush,
+  extractTraceContextFromHeaders,
   initLogger,
   startSpan,
   traced,
@@ -28,7 +29,7 @@ async function main() {
       },
     },
   });
-  const exportedRoot = await rootSpan.export();
+  const propagatedRoot = extractTraceContextFromHeaders(rootSpan.inject());
 
   await withCurrent(rootSpan, async () => {
     const currentChild = startSpan({
@@ -50,7 +51,7 @@ async function main() {
 
   rootSpan.end();
 
-  await withParent(exportedRoot, async () => {
+  await withParent(propagatedRoot, async () => {
     await traced(
       (span) => {
         span.log({

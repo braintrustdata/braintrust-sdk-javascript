@@ -1,4 +1,5 @@
-import { describe } from "vitest";
+import { defineAttachmentCaptureTests } from "../../helpers/attachment-capture-assertions";
+import { describe } from "vite-plus/test";
 import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
@@ -53,7 +54,10 @@ describe.concurrent("variants", () => {
         runScenario: async ({ runScenarioDir }) => {
           await runScenarioDir({
             entry: scenario.wrapperEntry,
-            env: { ANTHROPIC_PACKAGE_NAME: scenario.dependencyName },
+            env: {
+              BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "true",
+              ANTHROPIC_PACKAGE_NAME: scenario.dependencyName,
+            },
             runContext: {
               variantKey: scenario.snapshotName,
               originalScenarioDir,
@@ -77,7 +81,10 @@ describe.concurrent("variants", () => {
         runScenario: async ({ runNodeScenarioDir }) => {
           await runNodeScenarioDir({
             entry: scenario.autoEntry,
-            env: { ANTHROPIC_PACKAGE_NAME: scenario.dependencyName },
+            env: {
+              BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "true",
+              ANTHROPIC_PACKAGE_NAME: scenario.dependencyName,
+            },
             nodeArgs: ["--import", "braintrust/hook.mjs"],
             runContext: {
               variantKey: scenario.snapshotName,
@@ -99,3 +106,13 @@ describe.concurrent("variants", () => {
     });
   }
 });
+
+for (const scenario of anthropicScenarios) {
+  defineAttachmentCaptureTests({
+    scenarioDir,
+    originalScenarioDir,
+    provider: "anthropic",
+    packageName: scenario.dependencyName,
+    variantKey: scenario.snapshotName,
+  });
+}

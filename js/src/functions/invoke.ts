@@ -1,28 +1,24 @@
-import {
-  FunctionId as functionIdSchema,
-  type InvokeFunctionType as InvokeFunctionRequest,
-  type ChatCompletionMessageParamType as Message,
-  type StreamingModeType as StreamingMode,
-  type FunctionTypeEnumType as FunctionType,
-} from "../generated_types";
+import { FunctionId as functionIdSchema } from "../sdk-schemas";
+import type {
+  InvokeFunction as InvokeFunctionRequest,
+  ChatCompletionMessageParam as Message,
+  StreamingMode,
+  FunctionTypeEnum as FunctionType,
+} from "../sdk-types";
 import {
   _internalGetGlobalState,
   BraintrustState,
   Exportable,
   FullLoginOptions,
   getSpanParentObject,
-} from "../logger";
+} from "../logger/core";
 import { BraintrustStream } from "./stream";
 import { z } from "zod/v3";
 
 /**
  * Arguments for the `invoke` function.
  */
-export interface InvokeFunctionArgs<
-  Input,
-  Output,
-  Stream extends boolean = false,
-> {
+interface InvokeFunctionArgs<Input, Output, Stream extends boolean = false> {
   // These parameters are duplicated from FunctionId, so that we can document them.
 
   /**
@@ -136,7 +132,7 @@ export interface InvokeFunctionArgs<
  * if `stream` is true, otherwise returns the output of the function using the Zod schema's
  * type if present.
  */
-export type InvokeReturn<Stream extends boolean, Output> = Stream extends true
+type InvokeReturn<Stream extends boolean, Output> = Stream extends true
   ? BraintrustStream
   : Output;
 
@@ -283,7 +279,7 @@ export function initFunction({
   slug: string;
   version?: string;
   state?: BraintrustState;
-}) {
+}): (input: any) => Promise<any> {
   // Disable span cache since remote function spans won't be in the local cache
   const s = state ?? _internalGetGlobalState();
   s?.spanCache?.disable();

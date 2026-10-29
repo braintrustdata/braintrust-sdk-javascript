@@ -5,25 +5,24 @@
   "type": "module",
   "license": "MIT",
   "engines": {
-    "node": ">=18"
+    "node": ">=22.18.0"
   },
-  "main": "./dist/index.cjs",
+  "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "default": "./dist/index.js"
     }
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "vp run compile",
     "check:typings": "tsc --noEmit",
-    "dev": "tsup --watch",
+    "dev": "vp pack --watch",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -31,7 +30,8 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
-    "tsup": "^8.5.1",
-    "typescript": "^5.7.2"
-  }
+    "typescript": "^5.7.2",
+    "vite-plus": "catalog:"
+  },
+  "sideEffects": false
 }

@@ -14,6 +14,9 @@ Install the SDK:
 npm install braintrust
 ```
 
+The `bt` CLI is installed separately from the SDK.
+See the standalone installation instructions in the [CLI quickstart](https://www.braintrust.dev/docs/reference/cli/quickstart).
+
 ## Quickstart
 
 Run a simple experiment (replace `YOUR_API_KEY` with your Braintrust API key):
@@ -104,13 +107,56 @@ If you use TypeScript or other transpilation plugins, place the Braintrust plugi
 
 For deeper details, see the [auto-instrumentation architecture docs](src/auto-instrumentations/README.md).
 
+### LangSmith tracing
+
+Braintrust supports LangSmith `>=0.3.30 <1.0.0`. LangSmith tracing remains authoritative: LangSmith must be enabled, and it continues exporting traces to LangSmith while Braintrust mirrors the same run lifecycle. This integration covers tracing only; LangSmith eval, Jest, and Vitest APIs are not instrumented.
+
+For automatic Node.js instrumentation, use the standard hook before importing LangSmith:
+
+```bash
+node --import braintrust/hook.mjs app.js
+```
+
+The Vite, Webpack, esbuild, and Rollup plugins shown above apply the same automatic instrumentation in bundled applications. To instrument explicit namespaces instead, wrap the three LangSmith entrypoints you use:
+
+```typescript
+import {
+  wrapLangSmithClient,
+  wrapLangSmithRunTrees,
+  wrapLangSmithTraceable,
+} from "braintrust";
+import * as clientNamespace from "langsmith/client";
+import * as runTreesNamespace from "langsmith/run_trees";
+import * as traceableNamespace from "langsmith/traceable";
+
+const { Client } = wrapLangSmithClient(clientNamespace);
+const { RunTree } = wrapLangSmithRunTrees(runTreesNamespace);
+const { traceable } = wrapLangSmithTraceable(traceableNamespace);
+```
+
+The wrappers are composable and idempotent. They preserve LangSmith behavior, including its network export and `on_end` callbacks. Automatic and explicit instrumentation can safely be used together.
+
+Disable LangSmith instrumentation in code or through the environment:
+
+```typescript
+import { configureInstrumentation } from "braintrust/instrumentation";
+
+configureInstrumentation({ integrations: { langsmith: false } });
+```
+
+```bash
+BRAINTRUST_DISABLE_INSTRUMENTATION=langsmith node --import braintrust/hook.mjs app.js
+```
+
+When Braintrust LangChain/LangGraph instrumentation is enabled, LangSmith runs serialized by LangChain are ignored to avoid duplicate spans. Set `langchain: false` (and use LangSmith instrumentation) when LangSmith should be the source for those runs instead.
+
 ## Migration Guides
 
 ### Upgrading from 2.x to 3.x
 
 See the [Migrate from v2.x to v3.x guide](https://www.braintrust.dev/docs/reference/sdks/typescript/migrations/v2-to-v3).
 
-In 3.x, browser usage should move to `@braintrust/browser` instead of relying on the legacy `braintrust/browser` path.
+For direct browser imports, use `@braintrust/browser`. The package root still selects its browser build through export conditions, but `braintrust/browser` is no longer published.
 
 ### Upgrading from 1.x to 2.x
 

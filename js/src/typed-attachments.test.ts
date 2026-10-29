@@ -1,5 +1,12 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { Attachment } from "./logger";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vite-plus/test";
+import { Attachment } from "./logger/core";
 import { configureNode } from "./node/config";
 import {
   TypedAttachmentProcessor,
@@ -19,7 +26,7 @@ const file = {
   data: png,
 };
 
-beforeEach(() => vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", "true"));
+beforeEach(() => vi.stubEnv("BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS", "true"));
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.restoreAllMocks();
@@ -200,7 +207,7 @@ describe("decision attachment export", () => {
   test.each([127, 128, 129, 140])(
     "capture disabled does not leak media at depth %s",
     (depth) => {
-      vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", "false");
+      vi.stubEnv("BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS", "false");
       let nested: unknown = { ...file, data: { type: "data", data: png } };
       for (let i = 0; i < depth; i++) nested = i % 2 ? { nested } : [nested];
       const input = {
@@ -289,7 +296,7 @@ describe("decision attachment export", () => {
   );
 
   test("capture disabled omits bytes recursively but preserves explicit references and URLs", async () => {
-    vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", "false");
+    vi.stubEnv("BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS", "false");
     const upload = vi.spyOn(Attachment.prototype, "upload");
     const reference = {
       type: "inline_attachment",
@@ -356,7 +363,7 @@ describe("decision attachment export", () => {
     expect(await new TypedAttachmentProcessor().process(record)).toEqual(
       record,
     );
-    vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", "false");
+    vi.stubEnv("BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS", "false");
     expect(prepareTypedAttachments(record.input)).toEqual(record.input);
     expect(prepareTypedAttachments(record.output)).toEqual(record.output);
     expect(upload).not.toHaveBeenCalled();
@@ -373,7 +380,7 @@ describe("decision attachment export", () => {
     expect(await new TypedAttachmentProcessor().process(record)).toEqual(
       record,
     );
-    vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", "false");
+    vi.stubEnv("BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS", "false");
     expect(prepareTypedAttachments(record.input)).toEqual(record.input);
     expect(upload).not.toHaveBeenCalled();
   });

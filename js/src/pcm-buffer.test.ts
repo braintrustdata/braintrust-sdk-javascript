@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, test } from "vite-plus/test";
 import { PcmBuffer } from "./pcm-buffer";
 
 const MAX = Number.MAX_SAFE_INTEGER;

@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, test } from "vitest";
+import { beforeAll, describe, expect, test } from "vite-plus/test";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import type { Json } from "../../helpers/normalize";
 import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
@@ -266,7 +266,7 @@ const OPERATION_SPECS: readonly OperationSpec[] = [
                 key: expect.any(String),
               }
             : mode === "images-disabled"
-              ? "<omitted>"
+              ? undefined
               : "[redacted]";
         expect(span?.span.type).toBe("question");
         expect(span?.input).toEqual({
@@ -275,11 +275,18 @@ const OPERATION_SPECS: readonly OperationSpec[] = [
               role: "user",
               content: [
                 { type: "input_text", text: "Compare these two images." },
-                { type: "input_image", image_url: image },
-                { type: "input_text", text: "Here is the second image." },
-                ...(mode === "images-redacted"
+                ...(image === undefined
                   ? []
                   : [{ type: "input_image", image_url: image }]),
+                { type: "input_text", text: "Here is the second image." },
+                ...(mode === "images-redacted" || image === undefined
+                  ? []
+                  : [
+                      {
+                        type: "input_image",
+                        image_url: image,
+                      },
+                    ]),
               ],
             },
           ],

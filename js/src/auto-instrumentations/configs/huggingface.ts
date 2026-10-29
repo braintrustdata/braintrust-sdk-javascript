@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { huggingFaceChannels } from "../../instrumentation/plugins/huggingface-interceptors";
+import { huggingFaceChannels } from "../../instrumentation/providers/huggingface-interceptors";
 
 export const huggingFaceConfigs: InstrumentationConfig[] = [
   {

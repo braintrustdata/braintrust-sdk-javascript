@@ -1,4 +1,4 @@
-import { expect } from "vitest";
+import { expect } from "vite-plus/test";
 import { normalizeForSnapshot, type Json } from "../../helpers/normalize";
 import type {
   CapturedLogEvent,

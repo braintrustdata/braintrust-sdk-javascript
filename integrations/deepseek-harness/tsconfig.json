@@ -2,14 +2,14 @@
   "compilerOptions": {
     "declaration": true,
     "lib": ["es2022"],
-    "module": "commonjs",
+    "module": "esnext",
     "target": "es2022",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "strict": true,
     "noUnusedLocals": true,
     "esModuleInterop": true,
     "skipLibCheck": true
   },
-  "include": ["."],
+  "include": ["src"],
   "exclude": ["node_modules/**", "**/dist/**"]
 }

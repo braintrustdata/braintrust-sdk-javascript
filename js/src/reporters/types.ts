@@ -32,7 +32,7 @@ export interface ReporterBody<EvalReport> {
 
   /**
    * A function that takes all evaluator results and returns a boolean indicating
-   * whether the run was successful. If you return false, the `braintrust eval`
+   * whether the run was successful. If you return false, the `bt eval`
    * command will exit with a non-zero status code.
    *
    * @param reports

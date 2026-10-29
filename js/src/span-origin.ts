@@ -1,4 +1,4 @@
-import iso from "./isomorph";
+import iso from "#braintrust-platform";
 
 declare const __BRAINTRUST_SDK_VERSION__: string;
 
@@ -60,7 +60,7 @@ type SpanOrigin = {
   environment?: SpanOriginEnvironment;
 };
 
-export const INTERNAL_SPAN_INSTRUMENTATION_NAME = Symbol.for(
+export const INTERNAL_SPAN_INSTRUMENTATION_NAME: unique symbol = Symbol.for(
   "braintrust.spanInstrumentationName",
 );
 

@@ -1,0 +1,477 @@
+import { observeResult, runInstrumentation } from "../core/observe-result";
+
+import { SpanTypeAttribute } from "../../../util/index";
+import { debugLogger } from "../../debug-logger";
+import type { Span } from "../../logger/core";
+import { startSpan as startBaseSpan, withCurrent } from "../../logger/core";
+import {
+  INSTRUMENTATION_NAMES,
+  withSpanInstrumentationName,
+} from "../../span-origin";
+import type {
+  CloudflareAIChatAgent,
+  CloudflareAIChatMessage,
+  CloudflareAIChatTurnCallback,
+} from "../../vendor-sdk-types/cloudflare-ai-chat";
+import type { ChannelMessage } from "../core/tracing-types";
+import { cloudflareAIChatChannels } from "./cloudflare-ai-chat-interceptors";
+import { instrumentCloudflareAIChatResponseHook } from "./cloudflare-ai-chat-instrumentation";
+
+type TurnChannel = typeof cloudflareAIChatChannels.runExclusiveChatTurn;
+type ResponseChannel = typeof cloudflareAIChatChannels.onChatResponse;
+
+type TurnState = {
+  agent?: object;
+  cleanupTimer?: ReturnType<typeof setTimeout>;
+  depth: number;
+  ended: boolean;
+  input?: Record<string, unknown>[];
+  key: string | symbol;
+  pendingError?: unknown;
+  responseObserved: boolean;
+  settled: boolean;
+  span: Span;
+};
+
+const BLOCKED_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+const RESPONSE_STATE_RETENTION_MS = 60_000;
+
+class CloudflareAIChatInstrumentationConsumer {
+  private readonly activeStates = new Set<TurnState>();
+  private readonly activeTurns = new WeakMap<
+    object,
+    Map<string | symbol, TurnState>
+  >();
+  private readonly eventStates = new WeakMap<object, TurnState>();
+
+  public register(): void {
+    this.subscribeToResponseHook();
+    this.subscribeToTurnRunner();
+  }
+
+  private subscribeToTurnRunner(): void {
+    const invocationHook = cloudflareAIChatChannels.runExclusiveChatTurn;
+
+    invocationHook.intercept((target, receiver, args, additional) => {
+      const event = {
+        ...additional,
+        arguments: args,
+        self: receiver,
+      } as ChannelMessage<TurnChannel>;
+      const spanState = runInstrumentation(() => this.ensureEventState(event));
+      const prepare = (event: ChannelMessage<TurnChannel>) => {
+        this.ensureEventState(event);
+      };
+      const resolved = (event: ChannelMessage<TurnChannel>) => {
+        this.finishEvent(event);
+      };
+      const failed = (event: ChannelMessage<TurnChannel>) => {
+        this.finishEvent(event, event.error);
+      };
+      const invoke = () => {
+        runInstrumentation(() => prepare(event));
+        let result;
+        try {
+          result = Reflect.apply(target, receiver, args);
+        } catch (error) {
+          Object.assign(event, { error });
+          runInstrumentation(() => failed(event));
+          throw error;
+        }
+
+        return observeResult(
+          result,
+          (value) => {
+            Object.assign(event, { result: value });
+            resolved(event);
+          },
+          (error) => {
+            Object.assign(event, { error });
+            failed(event);
+          },
+        );
+      };
+      return spanState ? withCurrent(spanState.span, invoke) : invoke();
+    });
+  }
+
+  private subscribeToResponseHook(): void {
+    const invocationHook = cloudflareAIChatChannels.onChatResponse;
+
+    invocationHook.intercept((target, receiver, args, additional) => {
+      const event = {
+        ...additional,
+        arguments: args,
+        self: receiver,
+      } as ChannelMessage<ResponseChannel>;
+
+      const prepare = (event: ChannelMessage<ResponseChannel>) => {
+        let state: TurnState | undefined;
+        try {
+          const agent = asObject(event.self);
+          const result = event.arguments[0];
+          state = agent
+            ? this.findResponseState(
+                agent,
+                stringValue(ownValue(result, "requestId")),
+              )
+            : undefined;
+          if (!state) {
+            return;
+          }
+          state.responseObserved = true;
+
+          const output = serializeMessage(ownValue(result, "message"));
+          const status = stringValue(ownValue(result, "status"));
+          const error = ownValue(result, "error");
+          const input =
+            ownValue(result, "continuation") === true
+              ? state.input
+              : serializeMessages(readProperty(agent, "messages"))?.filter(
+                  (message) =>
+                    typeof output?.id !== "string" || message.id !== output.id,
+                );
+          state.span.log({
+            ...(input !== undefined ? { input } : {}),
+            ...(output !== undefined ? { output } : {}),
+            ...(status === "error" && error !== undefined ? { error } : {}),
+          });
+        } catch (error) {
+          debugLogger.debug(
+            "Failed to process @cloudflare/ai-chat response hook:",
+            error,
+          );
+        } finally {
+          if (state?.settled) {
+            this.cleanupState(state);
+          }
+        }
+      };
+      runInstrumentation(() => prepare(event));
+      let result;
+      try {
+        result = Reflect.apply(target, receiver, args);
+      } catch (error) {
+        throw error;
+      }
+      return result;
+    });
+  }
+
+  private ensureEventState(
+    event: ChannelMessage<TurnChannel>,
+  ): TurnState | undefined {
+    const eventKey = event as object;
+    const known = this.eventStates.get(eventKey);
+    if (known) {
+      return known;
+    }
+
+    try {
+      const agent = asObject(event.self);
+      const requestId = stringValue(event.arguments[0]);
+      const key = requestId ?? Symbol("cloudflare-ai-chat-turn");
+      const activeForAgent = agent ? this.getActiveTurns(agent) : undefined;
+      const existing = activeForAgent?.get(key);
+      const state =
+        existing && !existing.settled
+          ? existing
+          : this.createTurnState(agent, key);
+
+      if (existing && !existing.settled) {
+        state.depth += 1;
+      }
+      this.eventStates.set(eventKey, state);
+      this.bindTurnCallback(event, agent, state);
+
+      if (agent) {
+        instrumentCloudflareAIChatResponseHook(agent as CloudflareAIChatAgent);
+      }
+      return state;
+    } catch (error) {
+      debugLogger.debug(
+        "Failed to start @cloudflare/ai-chat instrumentation:",
+        error,
+      );
+      return undefined;
+    }
+  }
+
+  private createTurnState(
+    agent: object | undefined,
+    key: string | symbol,
+  ): TurnState {
+    const span = startBaseSpan(
+      withSpanInstrumentationName(
+        {
+          name: "AIChatAgent.onChatMessage",
+          spanAttributes: { type: SpanTypeAttribute.TASK },
+        },
+        INSTRUMENTATION_NAMES.CLOUDFLARE_AI_CHAT,
+      ),
+    );
+    const state: TurnState = {
+      agent,
+      depth: 1,
+      ended: false,
+      key,
+      responseObserved: false,
+      settled: false,
+      span,
+    };
+    this.activeStates.add(state);
+    if (agent) {
+      this.getActiveTurns(agent).set(key, state);
+    }
+
+    return state;
+  }
+
+  private bindTurnCallback(
+    event: ChannelMessage<TurnChannel>,
+    agent: object | undefined,
+    state: TurnState,
+  ): void {
+    const callback = event.arguments[1];
+    if (typeof callback !== "function") {
+      return;
+    }
+
+    try {
+      event.arguments[1] = function (
+        this: unknown,
+        ...args: unknown[]
+      ): unknown {
+        return withCurrent(state.span, () => {
+          try {
+            const input = serializeMessages(readProperty(agent, "messages"));
+            if (input !== undefined && state.input === undefined) {
+              state.input = input;
+              state.span.log({ input });
+            }
+          } catch (error) {
+            debugLogger.debug(
+              "Failed to capture @cloudflare/ai-chat messages:",
+              error,
+            );
+          }
+          return Reflect.apply(callback, this, args);
+        });
+      } as CloudflareAIChatTurnCallback;
+    } catch (error) {
+      debugLogger.debug(
+        "Failed to bind @cloudflare/ai-chat turn callback context:",
+        error,
+      );
+    }
+  }
+
+  private finishEvent(
+    event: ChannelMessage<TurnChannel>,
+    error?: unknown,
+  ): void {
+    const eventKey = event as object;
+    const state = this.eventStates.get(eventKey);
+    if (!state || state.ended) {
+      return;
+    }
+    this.eventStates.delete(eventKey);
+    if (error !== undefined && state.pendingError === undefined) {
+      state.pendingError = error;
+    }
+    state.depth -= 1;
+    if (state.depth === 0) {
+      state.settled = true;
+      this.endState(state);
+      if (state.responseObserved || error !== undefined) {
+        this.cleanupState(state);
+      } else {
+        state.cleanupTimer = setTimeout(
+          () => this.cleanupState(state),
+          RESPONSE_STATE_RETENTION_MS,
+        );
+        if (
+          typeof state.cleanupTimer === "object" &&
+          state.cleanupTimer !== null &&
+          "unref" in state.cleanupTimer &&
+          typeof state.cleanupTimer.unref === "function"
+        ) {
+          state.cleanupTimer.unref();
+        }
+      }
+    }
+  }
+
+  private endState(state: TurnState): void {
+    if (state.ended) {
+      return;
+    }
+    state.ended = true;
+    try {
+      if (state.pendingError !== undefined) {
+        state.span.log({ error: state.pendingError });
+      }
+    } finally {
+      state.span.end();
+    }
+  }
+
+  private cleanupState(state: TurnState): void {
+    if (state.cleanupTimer !== undefined) {
+      clearTimeout(state.cleanupTimer);
+      state.cleanupTimer = undefined;
+    }
+    try {
+      this.endState(state);
+    } finally {
+      this.activeStates.delete(state);
+      if (state.agent) {
+        const activeForAgent = this.activeTurns.get(state.agent);
+        if (activeForAgent?.get(state.key) === state) {
+          activeForAgent.delete(state.key);
+        }
+      }
+    }
+  }
+
+  private getActiveTurns(agent: object): Map<string | symbol, TurnState> {
+    let turns = this.activeTurns.get(agent);
+    if (!turns) {
+      turns = new Map();
+      this.activeTurns.set(agent, turns);
+    }
+    return turns;
+  }
+
+  private findResponseState(
+    agent: object,
+    requestId: string | undefined,
+  ): TurnState | undefined {
+    const turns = this.activeTurns.get(agent);
+    if (!turns) {
+      return undefined;
+    }
+    if (requestId !== undefined) {
+      return turns.get(requestId);
+    }
+    const active = [...turns.values()];
+    return active.length === 1 ? active[0] : undefined;
+  }
+}
+
+function asObject(value: unknown): object | undefined {
+  return value !== null &&
+    (typeof value === "object" || typeof value === "function")
+    ? value
+    : undefined;
+}
+
+function readProperty(value: unknown, key: PropertyKey): unknown {
+  const object = asObject(value);
+  return object ? Reflect.get(object, key) : undefined;
+}
+
+function ownValue(value: unknown, key: PropertyKey): unknown {
+  const object = asObject(value);
+  if (!object) {
+    return undefined;
+  }
+  const descriptor = Object.getOwnPropertyDescriptor(object, key);
+  return descriptor && "value" in descriptor ? descriptor.value : undefined;
+}
+
+function stringValue(value: unknown): string | undefined {
+  return typeof value === "string" ? value : undefined;
+}
+
+function serializeMessages(
+  value: unknown,
+): Record<string, unknown>[] | undefined {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+  return value.flatMap((message) => {
+    const serialized = serializeMessage(message);
+    return serialized === undefined ? [] : [serialized];
+  });
+}
+
+function serializeMessage(value: unknown): Record<string, unknown> | undefined {
+  const message = asObject(value) as CloudflareAIChatMessage | undefined;
+  if (!message) {
+    return undefined;
+  }
+
+  const serialized: Array<[string, unknown]> = [];
+  const id = ownValue(message, "id");
+  const role = ownValue(message, "role");
+  const parts = ownValue(message, "parts");
+  if (typeof id === "string") {
+    serialized.push(["id", id]);
+  }
+  if (typeof role === "string") {
+    serialized.push(["role", role]);
+  }
+  const sanitizedParts = sanitizeLoggedValue(parts);
+  if (sanitizedParts !== undefined) {
+    serialized.push(["parts", sanitizedParts]);
+  }
+  return serialized.length > 0 ? Object.fromEntries(serialized) : undefined;
+}
+
+function sanitizeLoggedValue(
+  value: unknown,
+  seen = new WeakSet<object>(),
+  depth = 0,
+): unknown {
+  if (
+    value === null ||
+    typeof value === "string" ||
+    typeof value === "boolean"
+  ) {
+    return value;
+  }
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : undefined;
+  }
+  const object = asObject(value);
+  if (!object || depth >= 20 || typeof value === "function") {
+    return undefined;
+  }
+  if (seen.has(object)) {
+    return "[Circular]";
+  }
+  seen.add(object);
+
+  if (Array.isArray(value)) {
+    return value.map((entry) => sanitizeLoggedValue(entry, seen, depth + 1));
+  }
+
+  const entries: Array<[string, unknown]> = [];
+  for (const [key, descriptor] of Object.entries(
+    Object.getOwnPropertyDescriptors(object),
+  )) {
+    if (
+      BLOCKED_KEYS.has(key) ||
+      !descriptor.enumerable ||
+      !("value" in descriptor)
+    ) {
+      continue;
+    }
+    const sanitized = sanitizeLoggedValue(descriptor.value, seen, depth + 1);
+    if (sanitized !== undefined) {
+      entries.push([key, sanitized]);
+    }
+  }
+  return Object.fromEntries(entries);
+}
+
+let cloudflareAIChatInstrumentationConsumer:
+  | CloudflareAIChatInstrumentationConsumer
+  | undefined;
+
+export function registerCloudflareAIChatInstrumentation(): void {
+  cloudflareAIChatInstrumentationConsumer ??=
+    new CloudflareAIChatInstrumentationConsumer();
+  cloudflareAIChatInstrumentationConsumer.register();
+}

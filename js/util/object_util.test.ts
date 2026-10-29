@@ -1,4 +1,4 @@
-import { expect, test, describe, afterEach } from "vitest";
+import { expect, test, describe, afterEach } from "vite-plus/test";
 import {
   mapAt,
   forEachMissingKey,

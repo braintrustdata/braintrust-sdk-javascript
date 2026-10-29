@@ -13,6 +13,8 @@ export type Bundler = "esbuild" | "vite" | "rollup";
  * Bundles a fixture entry (which imports packages from fixtures/node_modules)
  * with the Braintrust plugin for the given bundler and writes an ESM bundle to
  * `outfile`.
+ * Keep the runtime external so these tests isolate the generated hooks; e2e
+ * scenarios verify bundled consumer initialization and span creation.
  */
 export async function bundleFixture(
   bundler: Bundler,
@@ -34,6 +36,7 @@ export async function bundleFixture(
       absWorkingDir: fixturesDir,
       preserveSymlinks: true, // Don't dereference symlinks
       platform: "node",
+      external: ["braintrust/auto"],
     });
   } else if (bundler === "vite") {
     const { braintrustVitePlugin } =
@@ -44,11 +47,12 @@ export async function bundleFixture(
         lib: {
           entry: entryPoint,
           formats: ["es"],
-          fileName: path.basename(outfile, ".mjs"),
+          fileName: () => path.basename(outfile),
         },
         outDir: path.dirname(outfile),
         emptyOutDir: false,
         minify: false,
+        rolldownOptions: { external: ["braintrust/auto"] },
       },
       plugins: [braintrustVitePlugin(options)],
       logLevel: "error",
@@ -59,6 +63,7 @@ export async function bundleFixture(
       await import("../../src/auto-instrumentations/bundler/rollup.js");
     const bundle = await rollup({
       input: entryPoint,
+      external: ["braintrust/auto"],
       plugins: [
         {
           name: "resolve-fixture-packages",

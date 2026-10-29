@@ -1,4 +1,5 @@
-import { braintrustEveInstrumentation, initLogger } from "braintrust";
+import { initLogger } from "braintrust";
+import { braintrustEveInstrumentation } from "braintrust/instrumentation";
 
 export default braintrustEveInstrumentation({
   metadata: {

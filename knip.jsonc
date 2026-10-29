@@ -19,7 +19,7 @@
     "e2e": {
       "entry": [
         "package.json",
-        "vitest.config.mts",
+        "vite.config.ts",
         "helpers/**/*.ts",
         "scenarios/**/*.test.ts",
         "scenarios/**/package.json",
@@ -46,25 +46,29 @@
     "js": {
       "entry": [
         "src/node/index.ts",
+        "src/exports.ts",
+        "src/auto.ts",
+        "src/auto-instrumentations/{index.ts,hook.mts,loader/module-hooks.mts}",
+        "src/{node,non-node}/apply-auto-instrumentation-entry.ts",
+        "src/{node,browser,workerd,edge-light}/{isomorph,config}.ts",
+        "src/{custom-views,preprocessors}/exports.ts",
         "src/browser/index.ts",
         "src/edge-light/index.ts",
         "src/workerd/index.ts",
         "src/instrumentation/index.ts",
         "src/auto-instrumentations/bundler/*.ts",
         "tests/**/*.{ts,tsx,mts,cts,cjs,mjs}",
-        "scripts/**/*.ts",
+        "scripts/**/*.{ts,mjs}",
         "examples/**/*.{ts,tsx,js,jsx,mjs,cjs}",
         "smoke/**/*.{ts,tsx,js,jsx,mjs,cjs}",
-        "dev/**/*.ts",
         "util/**/*.ts",
       ],
       "project": [
         "src/**/*.{ts,tsx,mts,cts}",
         "tests/**/*.{ts,tsx,mts,cts,cjs,mjs}",
-        "scripts/**/*.ts",
+        "scripts/**/*.{ts,mjs}",
         "examples/**/*.{ts,tsx,js,jsx,mjs,cjs}",
         "smoke/**/*.{ts,tsx,js,jsx,mjs,cjs,d.ts}",
-        "dev/**/*.ts",
         "util/**/*.ts",
       ],
     },
@@ -76,8 +80,13 @@
       "entry": ["*.test.ts"],
       "project": ["*.ts"],
     },
+    "integrations/deepseek-harness": {
+      "entry": ["src/index.ts", "src/**/*.test.ts"],
+      "project": ["src/**/*.ts"],
+    },
     "integrations/otel-js": {
       "entry": [
+        "src/index.ts",
         "src/**/*.test.ts",
         "tests/**/*.ts",
         "examples/**/*.{ts,js,mjs,cjs}",
@@ -91,11 +100,15 @@
       ],
     },
     "integrations/temporal-js": {
-      "entry": ["examples/**/*.{ts,js,mjs,cjs}"],
+      "entry": [
+        "src/index.ts",
+        "src/workflow-interceptors.ts",
+        "examples/**/*.{ts,js,mjs,cjs}",
+      ],
       "project": ["src/**/*.ts", "examples/**/*.{ts,js,mjs,cjs}"],
     },
     "integrations/templates-nunjucks": {
-      "entry": ["smoke/**/*.{ts,tsx,js,jsx,mjs,cjs}"],
+      "entry": ["src/index.ts", "smoke/**/*.{ts,tsx,js,jsx,mjs,cjs}"],
       "project": ["src/**/*.ts", "smoke/**/*.{ts,tsx,js,jsx,mjs,cjs,d.ts}"],
     },
   },

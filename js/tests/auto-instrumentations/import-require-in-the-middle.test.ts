@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { spawn } from "node:child_process";
 import * as path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";

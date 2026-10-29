@@ -1,4 +1,11 @@
-import { test, expect, describe, afterAll, vi, beforeAll } from "vitest";
+import {
+  test,
+  expect,
+  describe,
+  afterAll,
+  vi,
+  beforeAll,
+} from "vite-plus/test";
 import { initNodeTestSuite } from "./suite";
 import {
   setupNodeTestEnv,

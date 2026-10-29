@@ -8,7 +8,7 @@ setup:
 		echo "==> Using BRAINTRUST_TAR: $(BRAINTRUST_TAR)"; \
 	else \
 		echo "==> Building SDK"; \
-		cd ../../.. && pnpm exec turbo build --filter=braintrust && mkdir -p artifacts && pnpm pack --pack-destination artifacts; \
+		cd ../../.. && pnpm --filter=braintrust run build && mkdir -p artifacts && pnpm pack --pack-destination artifacts; \
 		\
 		for f in artifacts/braintrust-*.tgz; do \
 			[ "$$(basename $$f)" = "braintrust-latest.tgz" ] && continue; \

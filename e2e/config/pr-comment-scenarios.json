@@ -682,14 +682,6 @@
     "metadataScenario": "ai-sdk-instrumentation",
     "variants": [
       {
-        "variantKey": "ai-sdk-v3",
-        "label": "v3 pinned"
-      },
-      {
-        "variantKey": "ai-sdk-v3-latest",
-        "label": "v3 latest"
-      },
-      {
         "variantKey": "ai-sdk-v4",
         "label": "v4 pinned"
       },
@@ -774,14 +766,6 @@
     "metadataScenario": "flue-instrumentation",
     "variants": [
       {
-        "variantKey": "flue-v0-8-0",
-        "label": "v0.8 pinned"
-      },
-      {
-        "variantKey": "flue-v0-8-latest",
-        "label": "v0.8 latest"
-      },
-      {
         "variantKey": "flue-v1-0-0-beta-3",
         "label": "v1 pinned"
       },
@@ -804,10 +788,6 @@
     "label": "Eve Instrumentation",
     "metadataScenario": "eve-instrumentation",
     "variants": [
-      {
-        "variantKey": "eve-v0",
-        "label": "v0 pinned"
-      },
       {
         "variantKey": "eve-v0-provider",
         "label": "v0 provider minimum"
@@ -933,6 +913,14 @@
       {
         "variantKey": "vitest-v4-latest",
         "label": "v4 latest"
+      },
+      {
+        "variantKey": "vitest-v5",
+        "label": "v5 pinned"
+      },
+      {
+        "variantKey": "vitest-v5-latest",
+        "label": "v5 latest"
       }
     ],
     "evals": [
@@ -941,21 +929,6 @@
         "experimentNameTemplate": "vitest-evals-reporter-{testRunId}",
         "label": "vitest-evals reporter",
         "variantKey": "vitest-evals-reporter"
-      }
-    ]
-  },
-  {
-    "scenarioDirName": "wrap-langchain-js-traces",
-    "label": "LangChain JS Wrapper Traces",
-    "metadataScenario": "wrap-langchain-js-traces",
-    "variants": [
-      {
-        "variantKey": "wrap-langchain-js-traces-v1",
-        "label": "v1 pinned"
-      },
-      {
-        "variantKey": "wrap-langchain-js-traces-v1-latest",
-        "label": "v1 latest"
       }
     ]
   },

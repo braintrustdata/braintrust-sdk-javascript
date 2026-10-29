@@ -1,4 +1,4 @@
-import { describe } from "vitest";
+import { describe } from "vite-plus/test";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -40,45 +40,53 @@ const cursorSDKScenarios = await Promise.all(
 
 describe.concurrent("variants", () => {
   for (const cursorSDKScenario of cursorSDKScenarios) {
-    describe.sequential(`cursor sdk ${cursorSDKScenario.version}`, () => {
-      defineCursorSDKInstrumentationAssertions({
-        name: "wrapped instrumentation",
-        runScenario: async ({ runScenarioDir }) => {
-          await runScenarioDir({
-            entry: cursorSDKScenario.wrapperEntry,
-            env: { CURSOR_SDK_PACKAGE_NAME: cursorSDKScenario.dependencyName },
-            runContext: {
-              variantKey: cursorSDKScenario.variantKey,
-              originalScenarioDir,
-            },
-            scenarioDir,
-            timeoutMs: TIMEOUT_MS,
-          });
-        },
-        snapshotName: cursorSDKScenario.wrapperSnapshotName,
-        testFileUrl: import.meta.url,
-        timeoutMs: TIMEOUT_MS,
-      });
+    describe(
+      `cursor sdk ${cursorSDKScenario.version}`,
+      { concurrent: false },
+      () => {
+        defineCursorSDKInstrumentationAssertions({
+          name: "wrapped instrumentation",
+          runScenario: async ({ runScenarioDir }) => {
+            await runScenarioDir({
+              entry: cursorSDKScenario.wrapperEntry,
+              env: {
+                CURSOR_SDK_PACKAGE_NAME: cursorSDKScenario.dependencyName,
+              },
+              runContext: {
+                variantKey: cursorSDKScenario.variantKey,
+                originalScenarioDir,
+              },
+              scenarioDir,
+              timeoutMs: TIMEOUT_MS,
+            });
+          },
+          snapshotName: cursorSDKScenario.wrapperSnapshotName,
+          testFileUrl: import.meta.url,
+          timeoutMs: TIMEOUT_MS,
+        });
 
-      defineCursorSDKInstrumentationAssertions({
-        name: "auto-hook instrumentation",
-        runScenario: async ({ runNodeScenarioDir }) => {
-          await runNodeScenarioDir({
-            entry: cursorSDKScenario.autoEntry,
-            env: { CURSOR_SDK_PACKAGE_NAME: cursorSDKScenario.dependencyName },
-            nodeArgs: ["--import", "braintrust/hook.mjs"],
-            runContext: {
-              variantKey: cursorSDKScenario.variantKey,
-              originalScenarioDir,
-            },
-            scenarioDir,
-            timeoutMs: TIMEOUT_MS,
-          });
-        },
-        snapshotName: cursorSDKScenario.autoSnapshotName,
-        testFileUrl: import.meta.url,
-        timeoutMs: TIMEOUT_MS,
-      });
-    });
+        defineCursorSDKInstrumentationAssertions({
+          name: "auto-hook instrumentation",
+          runScenario: async ({ runNodeScenarioDir }) => {
+            await runNodeScenarioDir({
+              entry: cursorSDKScenario.autoEntry,
+              env: {
+                CURSOR_SDK_PACKAGE_NAME: cursorSDKScenario.dependencyName,
+              },
+              nodeArgs: ["--import", "braintrust/hook.mjs"],
+              runContext: {
+                variantKey: cursorSDKScenario.variantKey,
+                originalScenarioDir,
+              },
+              scenarioDir,
+              timeoutMs: TIMEOUT_MS,
+            });
+          },
+          snapshotName: cursorSDKScenario.autoSnapshotName,
+          testFileUrl: import.meta.url,
+          timeoutMs: TIMEOUT_MS,
+        });
+      },
+    );
   }
 });

@@ -1,4 +1,4 @@
-import { describe, expect, expectTypeOf, test, vi } from "vitest";
+import { describe, expect, expectTypeOf, test, vi } from "vite-plus/test";
 import { configureNode } from "./node/config";
 import {
   WorkflowBatchScorer,

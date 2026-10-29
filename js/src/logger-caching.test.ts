@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vite-plus/test";
 import {
   BraintrustState,
   initLogger,
@@ -6,9 +6,9 @@ import {
   startSpan,
   updateSpan,
   _internalResumeSpan,
-} from "./logger";
+} from "./logger/core";
 import { configureNode } from "./node/config";
-import iso from "./isomorph";
+import iso from "#braintrust-platform";
 import { SpanComponentsV4 } from "../util/span_identifier_v4";
 
 configureNode();
@@ -198,7 +198,7 @@ describe("project metadata caching", () => {
     "shares lookups across SDK copies and invalidates on %s",
     async (action) => {
       vi.resetModules();
-      const otherSdk = await import("./logger");
+      const otherSdk = await import("./logger/core");
       const otherNode = await import("./node/config");
       otherNode.configureNode();
 
@@ -322,7 +322,7 @@ describe("project metadata caching", () => {
       setCurrent: false,
     }).startSpan();
     const exported = await root.export();
-    startSpan({ state, parent: exported }).end();
+    startSpan({ state, parent: root.inject() }).end();
     updateSpan({ state, exported, output: "updated" });
     _internalResumeSpan({ state, exported }).end();
     root.end();

@@ -1,4 +1,4 @@
-import { describe } from "vitest";
+import { describe } from "vite-plus/test";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -32,8 +32,9 @@ const scenarios = await Promise.all(
 
 describe.concurrent("variants", () => {
   for (const scenario of scenarios) {
-    describe.sequential(
+    describe(
       `${scenario.variantKey}: OpenAI Agents API SDK ${scenario.version}`,
+      { concurrent: false },
       () => {
         defineOpenAIAgentsAPIInstrumentationAssertions({
           name: "manual instrumentation",

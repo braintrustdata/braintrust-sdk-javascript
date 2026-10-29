@@ -1,15 +1,15 @@
+import { _internalStartSpan } from "../../logger/core";
 import { SpanComponentsV4 } from "../../../util/span_identifier_v4";
-import type { IsoAsyncLocalStorage } from "../../isomorph";
-import iso from "../../isomorph";
+import type { IsoAsyncLocalStorage } from "#braintrust-platform";
+import iso from "#braintrust-platform";
 import {
   _internalExportParentSynchronously,
   _internalGetGlobalState,
   currentSpan,
-  startSpan,
   updateSpan,
   type Span,
   type StartSpanArgs,
-} from "../../logger";
+} from "../../logger/core";
 import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
@@ -332,9 +332,10 @@ export function startHarnessTurnChildSpan(
     args,
     INSTRUMENTATION_NAMES.AI_SDK,
   );
+  const { parent: _ignoredParent, ...publicSpanArgs } = spanArgs;
   return typeof parent === "string"
-    ? startSpan({ ...spanArgs, parent })
-    : parent.startSpan(spanArgs);
+    ? _internalStartSpan({ ...spanArgs, parent })
+    : parent.startSpan(publicSpanArgs);
 }
 
 export function updateHarnessTurn(

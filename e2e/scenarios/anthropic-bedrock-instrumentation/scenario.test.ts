@@ -1,4 +1,4 @@
-import { describe } from "vitest";
+import { describe } from "vite-plus/test";
 import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,

@@ -1,10 +1,10 @@
-const {
+import {
   runTests,
   testMustacheTemplate,
   testNunjucksTemplate,
-} = require("../../../../../../js/smoke/shared/dist/index.js");
-const braintrust = require("braintrust");
-const { nunjucksPlugin } = require("@braintrust/templates-nunjucks-js");
+} from "../../../../../../js/smoke/shared/dist/index.js";
+import * as braintrust from "braintrust";
+import { nunjucksPlugin } from "@braintrust/templates-nunjucks-js";
 
 test("Templates-Nunjucks basic behavior", async () => {
   // Register nunjucks plugin before running tests

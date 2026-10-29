@@ -1,9 +1,6 @@
-import { describe, expect, test, vi } from "vitest";
-import {
-  DEFAULT_FETCH_BATCH_SIZE,
-  ObjectFetcher,
-  type BraintrustState,
-} from "./logger";
+import { describe, expect, test, vi } from "vite-plus/test";
+import { DEFAULT_FETCH_BATCH_SIZE, ObjectFetcher } from "./logger/objects";
+import { type BraintrustState } from "./logger/core";
 import { configureNode } from "./node/config";
 
 configureNode();

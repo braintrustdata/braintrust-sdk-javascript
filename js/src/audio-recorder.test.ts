@@ -1,4 +1,4 @@
-import { expect, test, vi } from "vitest";
+import { expect, test, vi } from "vite-plus/test";
 import type { AudioMiddleware, AudioSegmentMeta } from "./audio-middleware";
 import { AudioRecorder } from "./audio-recorder";
 

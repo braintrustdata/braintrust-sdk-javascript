@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { cloudflareThinkChannels } from "../../instrumentation/plugins/cloudflare-think-interceptors";
+import { cloudflareThinkChannels } from "../../instrumentation/providers/cloudflare-think-interceptors";
 
 const cloudflareThinkVersionRange = ">=0.13.0 <0.21.0";
 

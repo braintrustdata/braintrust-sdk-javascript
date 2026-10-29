@@ -7,7 +7,6 @@ import {
   syncTransformedSources,
 } from "../auto-instrumentations/loader/module-hooks.mjs";
 import { debugLogger } from "../debug-logger";
-import { getCurrentModuleUrl } from "./module-url";
 import { GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION } from "../global-instrumentation-hooks";
 
 interface ApplyAutoInstrumentationState {
@@ -55,10 +54,7 @@ export function applyAutoInstrumentation(loaderUrl?: URL): void {
   } else {
     nodeModule.register(
       loaderUrl ??
-        new URL(
-          "./auto-instrumentations/loader/module-hooks.mjs",
-          getCurrentModuleUrl(),
-        ),
+        new URL("../../hooks/loader/module-hooks.mjs", import.meta.url),
       { data: { instrumentations: allConfigs } },
     );
   }

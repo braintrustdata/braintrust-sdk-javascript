@@ -1,11 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
-  _exportsForTestingOnly,
-  initLogger,
-  TestBackgroundLogger,
-} from "../../logger";
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vite-plus/test";
+import { _exportsForTestingOnly } from "../../logger/testing";
+import { initLogger, TestBackgroundLogger } from "../../logger/core";
 import { configureNode } from "../../node/config";
 import { wrapAISDK } from "./ai-sdk";
 

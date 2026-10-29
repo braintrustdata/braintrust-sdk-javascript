@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "vite-plus/test";
 import type { CapturedLogEvent } from "./mock-braintrust-server";
 import { formatSpanTreeJsonSnapshot } from "./span-tree";
 

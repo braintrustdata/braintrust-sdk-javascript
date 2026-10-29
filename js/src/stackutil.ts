@@ -1,4 +1,4 @@
-import iso, { CallerLocation } from "./isomorph";
+import iso, { CallerLocation } from "#braintrust-platform";
 
 interface StackTraceEntry {
   functionName: string;
@@ -31,8 +31,7 @@ function getStackTrace(): StackTraceEntry[] {
   return out;
 }
 
-// Fetches the first StackTraceEntry not contained inside the same directory as
-// this file and converts it into a CallerLocation.
+// Skip SDK frames, including feature modules nested below this directory.
 export function getCallerLocation(): CallerLocation | undefined {
   let thisDir: string | undefined = undefined;
   const entries = getStackTrace();
@@ -40,7 +39,11 @@ export function getCallerLocation(): CallerLocation | undefined {
     if (thisDir === undefined) {
       thisDir = iso.pathDirname?.(frame.fileName);
     }
-    if (iso.pathDirname?.(frame.fileName) !== thisDir) {
+    if (
+      thisDir !== undefined &&
+      !frame.fileName.startsWith(`${thisDir}/`) &&
+      !frame.fileName.startsWith(`${thisDir}\\`)
+    ) {
       return {
         caller_functionname: frame.functionName,
         caller_filename: frame.fileName,

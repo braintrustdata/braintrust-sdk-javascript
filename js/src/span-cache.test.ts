@@ -6,8 +6,8 @@ import {
   afterEach,
   beforeAll,
   vi,
-} from "vitest";
-import iso from "./isomorph";
+} from "vite-plus/test";
+import iso from "#braintrust-platform";
 import { SpanCache } from "./span-cache";
 import { configureNode } from "./node/config";
 

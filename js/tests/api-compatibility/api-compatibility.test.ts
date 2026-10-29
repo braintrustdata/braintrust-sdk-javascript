@@ -1,11 +1,10 @@
-import { describe, test, expect, beforeAll, afterAll } from "vitest";
+import { describe, test, expect, beforeAll, afterAll } from "vite-plus/test";
 import { execSync } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 import * as ts from "typescript";
 import * as tar from "tar";
-import type { Options } from "tsup";
 
 /**
  * API Compatibility Test
@@ -20,7 +19,7 @@ import type { Options } from "tsup";
  * ## How It Works
  *
  * 1. Downloads the latest published version from npm
- * 2. Extracts the .d.ts files for each entrypoint (main, browser, dev, util)
+ * 2. Extracts the .d.ts files for each built entrypoint
  * 3. Parses both published and current .d.ts files using TypeScript Compiler API
  * 4. Compares exported symbols (functions, classes, interfaces, types, etc.)
  * 5. Fails if breaking changes are detected in non-major version bumps
@@ -47,110 +46,46 @@ import type { Options } from "tsup";
  * and handles complex TypeScript syntax correctly.
  */
 
-/**
- * Extracts entrypoints from tsup.config.ts
- * Reads the config and identifies all builds that generate .d.ts files
- */
-function getEntrypointsFromTsupConfig(
-  config: Options | Options[],
-): Array<{ name: string; typesPath: string }> {
-  const configs = Array.isArray(config) ? config : [config];
-  const entrypoints: Array<{ name: string; typesPath: string }> = [];
+interface Entrypoint {
+  name: string;
+  typesPath: string;
+  runtimePath: string;
+}
 
-  for (const cfg of configs) {
-    // Skip configs without dts enabled
-    if (!cfg.dts) continue;
-
-    const entry = cfg.entry;
-    const outDir = cfg.outDir || "dist";
-
-    if (Array.isArray(entry)) {
-      for (const entryFile of entry) {
-        const name = getEntrypointName(entryFile, outDir);
-        const typesPath = getTypesPath(entryFile, outDir);
-        entrypoints.push({ name, typesPath });
-      }
-    } else if (typeof entry === "object") {
-      // entry is a record like { main: 'src/index.ts' }
-      for (const [key, entryFile] of Object.entries(entry)) {
-        const name = key;
-        const typesPath = getTypesPath(String(entryFile), outDir);
-        entrypoints.push({ name, typesPath });
+/** Read paths from each package's own manifest, since layouts change between releases. */
+function getEntrypointsFromPackageExports(packageRoot: string): Entrypoint[] {
+  const pkg = JSON.parse(
+    fs.readFileSync(path.join(packageRoot, "package.json"), "utf8"),
+  );
+  function target(
+    value: unknown,
+    condition: "types" | "runtime",
+  ): string | undefined {
+    if (typeof value === "string") return value;
+    if (!value || typeof value !== "object") return undefined;
+    const conditions = value as Record<string, unknown>;
+    for (const key of condition === "types"
+      ? ["types", "node", "import", "default"]
+      : ["node", "import", "default"]) {
+      if (conditions[key] !== undefined) {
+        const resolved = target(conditions[key], condition);
+        if (resolved) return resolved;
       }
     }
+    return undefined;
   }
-
-  // Separate CJS and ESM builds can emit the same declaration entrypoint.
-  return entrypoints.filter(
-    (entrypoint, index) =>
-      entrypoints.findIndex(
-        (other) =>
-          other.name === entrypoint.name &&
-          other.typesPath === entrypoint.typesPath,
-      ) === index,
-  );
-}
-
-describe("getEntrypointsFromTsupConfig", () => {
-  test("deduplicates formats while preserving distinct entrypoints", () => {
-    expect(
-      getEntrypointsFromTsupConfig([
-        {
-          entry: { browser: "src/browser/index.ts" },
-          format: ["cjs"],
-          dts: true,
-        },
-        {
-          entry: { browser: "src/browser/index.ts" },
-          format: ["esm"],
-          dts: true,
-        },
-        {
-          entry: { browser: "src/browser/index.ts" },
-          outDir: "other/dist",
-          dts: true,
-        },
-        {
-          entry: { workerd: "src/workerd/index.ts" },
-          dts: true,
-        },
-      ]),
-    ).toEqual([
-      { name: "browser", typesPath: "dist/index.d.ts" },
-      { name: "browser", typesPath: "other/dist/index.d.ts" },
-      { name: "workerd", typesPath: "dist/index.d.ts" },
-    ]);
+  return Object.entries(pkg.exports).flatMap(([name, entry]) => {
+    const typesPath = target(entry, "types");
+    const runtimePath = target(entry, "runtime");
+    if (!typesPath || !/\.d\.[cm]?ts$/.test(typesPath) || !runtimePath)
+      return [];
+    return [
+      { name: name === "." ? "main" : name.slice(2), typesPath, runtimePath },
+    ];
   });
-});
-
-/**
- * Determines the entrypoint name from the entry file path
- */
-function getEntrypointName(entryFile: string, outDir: string): string {
-  const basename = path.basename(entryFile, path.extname(entryFile));
-
-  // Map common patterns to friendly names
-  if (entryFile.includes("src/node/index.ts")) return "main";
-  if (entryFile.includes("src/browser/index.ts")) return "browser";
-  if (entryFile.includes("src/edge-light/index.ts")) return "edge-light";
-  if (entryFile.includes("src/workerd/index.ts")) return "workerd";
-  if (entryFile.includes("dev/index.ts")) return "dev";
-  if (entryFile.includes("util/index.ts")) return "util";
-
-  // Default to basename
-  return basename;
 }
 
-/**
- * Constructs the .d.ts path from entry file and output directory
- */
-function getTypesPath(entryFile: string, outDir: string): string {
-  const basename = path.basename(entryFile, path.extname(entryFile));
-  return path.join(outDir, `${basename}.d.ts`);
-}
-
-// Will be populated in beforeAll
-let ENTRYPOINTS: Array<{ name: string; typesPath: string }> = [];
+let ENTRYPOINTS: Entrypoint[] = [];
 
 interface VersionInfo {
   major: number;
@@ -186,150 +121,80 @@ function getVersionBumpType(
   return "none";
 }
 
+function getChangesetBumpType(
+  packageName: string,
+): "major" | "minor" | "patch" | null {
+  const changesetDir = path.join(__dirname, "..", "..", "..", ".changeset");
+  if (!fs.existsSync(changesetDir)) {
+    return null;
+  }
+
+  const bumpPriority = { patch: 1, minor: 2, major: 3 } as const;
+  let highestBump: "major" | "minor" | "patch" | null = null;
+  const escapedPackageName = packageName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const packageBumpPattern = new RegExp(
+    `^\\s*["']?${escapedPackageName}["']?\\s*:\\s*(major|minor|patch)\\s*$`,
+    "m",
+  );
+
+  for (const file of fs.readdirSync(changesetDir)) {
+    if (!file.endsWith(".md")) {
+      continue;
+    }
+
+    const contents = fs.readFileSync(path.join(changesetDir, file), "utf8");
+    const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---/.exec(contents)?.[1];
+    const bump = frontmatter?.match(packageBumpPattern)?.[1] as
+      | "major"
+      | "minor"
+      | "patch"
+      | undefined;
+    if (
+      bump &&
+      (!highestBump || bumpPriority[bump] > bumpPriority[highestBump])
+    ) {
+      highestBump = bump;
+    }
+  }
+
+  return highestBump;
+}
+
 /**
  * Extracts exports and their signatures from a .d.ts file.
  * For bulk exports (export { A, B, C }), looks up the actual declaration
  * of each symbol to get its true signature, rather than using the export statement.
  */
 function extractExportsFromDts(filePath: string): Map<string, ExportedSymbol> {
-  const exports = new Map<string, ExportedSymbol>();
-
-  if (!fs.existsSync(filePath)) {
-    return exports;
-  }
-
-  const sourceText = fs.readFileSync(filePath, "utf-8");
-  const sourceFile = ts.createSourceFile(
-    filePath,
-    sourceText,
-    ts.ScriptTarget.Latest,
-    true,
+  const program = ts.createProgram([filePath], {
+    target: ts.ScriptTarget.ES2022,
+    module: ts.ModuleKind.ESNext,
+    moduleResolution: ts.ModuleResolutionKind.Bundler,
+    skipLibCheck: true,
+  });
+  const checker = program.getTypeChecker();
+  const source = program.getSourceFile(filePath);
+  if (!source) throw new Error(`Missing declarations: ${filePath}`);
+  const module = checker.getSymbolAtLocation(source);
+  if (!module) throw new Error(`No module exports in ${filePath}`);
+  return new Map(
+    checker.getExportsOfModule(module).map((exported) => {
+      const symbol =
+        exported.flags & ts.SymbolFlags.Alias
+          ? checker.getAliasedSymbol(exported)
+          : exported;
+      const declarations = symbol.declarations ?? [];
+      const declaration = declarations[0];
+      return [
+        exported.name,
+        {
+          name: exported.name,
+          kind: declaration ? getNodeKind(declaration) : "re-export",
+          signature: declarations.map((node) => node.getText()).join("\n"),
+        },
+      ];
+    }),
   );
-
-  // First pass: collect all declarations by name
-  const declarations = new Map<string, ts.Node>();
-
-  function collectDeclarations(node: ts.Node) {
-    let name: string | undefined;
-
-    if (ts.isFunctionDeclaration(node) && node.name) {
-      name = node.name.text;
-    } else if (ts.isClassDeclaration(node) && node.name) {
-      name = node.name.text;
-    } else if (ts.isInterfaceDeclaration(node)) {
-      name = node.name.text;
-    } else if (ts.isTypeAliasDeclaration(node)) {
-      name = node.name.text;
-    } else if (ts.isEnumDeclaration(node)) {
-      name = node.name.text;
-    } else if (ts.isVariableStatement(node)) {
-      node.declarationList.declarations.forEach((decl) => {
-        if (ts.isIdentifier(decl.name)) {
-          declarations.set(decl.name.text, node);
-        }
-      });
-    } else if (ts.isModuleDeclaration(node) && node.name) {
-      name = node.name.text;
-    }
-
-    if (name) {
-      declarations.set(name, node);
-    }
-
-    ts.forEachChild(node, collectDeclarations);
-  }
-
-  collectDeclarations(sourceFile);
-
-  // Helper to check if a node is inside a namespace
-  function isInsideNamespace(node: ts.Node): boolean {
-    let parent = node.parent;
-    while (parent) {
-      if (ts.isModuleDeclaration(parent)) {
-        return true;
-      }
-      parent = parent.parent;
-    }
-    return false;
-  }
-
-  // Second pass: process exports
-  function visit(node: ts.Node) {
-    // Skip exports inside namespaces - they're not top-level exports
-    if (isInsideNamespace(node)) {
-      ts.forEachChild(node, visit);
-      return;
-    }
-
-    // Handle: export { foo, bar } or export { foo, bar } from './module'
-    if (ts.isExportDeclaration(node)) {
-      if (node.exportClause && ts.isNamedExports(node.exportClause)) {
-        node.exportClause.elements.forEach((element) => {
-          const name = element.name.text;
-          const declaration = declarations.get(name);
-
-          exports.set(name, {
-            name,
-            kind: declaration ? getNodeKind(declaration) : "re-export",
-            // Use the actual declaration's signature if found, otherwise just the name
-            signature: declaration
-              ? declaration.getText(sourceFile)
-              : `export { ${name} }`,
-          });
-        });
-      }
-    } else if (
-      ts.canHaveModifiers(node) &&
-      ts.getModifiers(node)?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)
-    ) {
-      // Handle direct exports with 'export' keyword
-      let name: string | undefined;
-      let kind: string = "unknown";
-      const signature: string = node.getText(sourceFile);
-
-      if (ts.isFunctionDeclaration(node) && node.name) {
-        name = node.name.text;
-        kind = "function";
-      } else if (ts.isClassDeclaration(node) && node.name) {
-        name = node.name.text;
-        kind = "class";
-      } else if (ts.isInterfaceDeclaration(node)) {
-        name = node.name.text;
-        kind = "interface";
-      } else if (ts.isTypeAliasDeclaration(node)) {
-        name = node.name.text;
-        kind = "type";
-      } else if (ts.isEnumDeclaration(node)) {
-        name = node.name.text;
-        kind = "enum";
-      } else if (ts.isVariableStatement(node)) {
-        // Handle: export const foo = ...
-        node.declarationList.declarations.forEach((decl) => {
-          if (ts.isIdentifier(decl.name)) {
-            const varName = decl.name.text;
-            exports.set(varName, {
-              name: varName,
-              kind: "variable",
-              signature: node.getText(sourceFile),
-            });
-          }
-        });
-        return; // Don't add to exports again below
-      } else if (ts.isModuleDeclaration(node) && node.name) {
-        name = node.name.text;
-        kind = "namespace";
-      }
-
-      if (name) {
-        exports.set(name, { name, kind, signature });
-      }
-    }
-
-    ts.forEachChild(node, visit);
-  }
-
-  visit(sourceFile);
-  return exports;
 }
 
 function getNodeKind(node: ts.Node): string {
@@ -338,7 +203,8 @@ function getNodeKind(node: ts.Node): string {
   if (ts.isInterfaceDeclaration(node)) return "interface";
   if (ts.isTypeAliasDeclaration(node)) return "type";
   if (ts.isEnumDeclaration(node)) return "enum";
-  if (ts.isVariableStatement(node)) return "variable";
+  if (ts.isVariableStatement(node) || ts.isVariableDeclaration(node))
+    return "variable";
   if (ts.isModuleDeclaration(node)) return "namespace";
   return "unknown";
 }
@@ -346,26 +212,22 @@ function getNodeKind(node: ts.Node): string {
 /**
  * Extracts actual runtime exports from a JavaScript module file
  */
-async function extractRuntimeExports(mjsPath: string): Promise<Set<string>> {
-  const exports = new Set<string>();
-
-  if (!fs.existsSync(mjsPath)) {
-    return exports;
-  }
-
-  try {
-    // Dynamically import the module
-    const module = await import(mjsPath);
-
-    // Get all exported names
-    for (const key of Object.keys(module)) {
-      exports.add(key);
-    }
-  } catch (error) {
-    console.warn(`Failed to load runtime exports from ${mjsPath}:`, error);
-  }
-
-  return exports;
+async function extractRuntimeExports(modulePath: string): Promise<Set<string>> {
+  // Inspect ESM exports without executing setup entrypoints or test-runner integrations.
+  const program = ts.createProgram([modulePath], {
+    allowJs: true,
+    module: ts.ModuleKind.ESNext,
+    moduleResolution: ts.ModuleResolutionKind.Bundler,
+    target: ts.ScriptTarget.ES2022,
+  });
+  const source = program.getSourceFile(modulePath);
+  if (!source) throw new Error(`Missing runtime entrypoint: ${modulePath}`);
+  const checker = program.getTypeChecker();
+  const module = checker.getSymbolAtLocation(source);
+  if (!module) throw new Error(`No runtime module in ${modulePath}`);
+  return new Set(
+    checker.getExportsOfModule(module).map((symbol) => symbol.name),
+  );
 }
 
 /**
@@ -2290,8 +2152,8 @@ describe("isUnionTypeWidening", () => {
 
 describe("areInterfaceSignaturesCompatible", () => {
   test("should allow adding optional fields to interface", () => {
-    const oldInterface = `export interface LogOptions<IsAsyncFlush> { asyncFlush?: IsAsyncFlush; computeMetadataArgs?: Record<string, any>; }`;
-    const newInterface = `export interface LogOptions<IsAsyncFlush> { asyncFlush?: IsAsyncFlush; computeMetadataArgs?: Record<string, any>; linkArgs?: LinkArgs; }`;
+    const oldInterface = `export interface FeatureOptions<Enabled> { enabled?: Enabled; metadata?: Record<string, any>; }`;
+    const newInterface = `export interface FeatureOptions<Enabled> { enabled?: Enabled; metadata?: Record<string, any>; link?: string; }`;
 
     const result = areInterfaceSignaturesCompatible(oldInterface, newInterface);
     expect(result).toBe(true);
@@ -2306,40 +2168,40 @@ describe("areInterfaceSignaturesCompatible", () => {
   });
 
   test("should reject removing fields from interface", () => {
-    const oldInterface = `export interface LogOptions<IsAsyncFlush> { asyncFlush?: IsAsyncFlush; computeMetadataArgs?: Record<string, any>; }`;
-    const newInterface = `export interface LogOptions<IsAsyncFlush> { asyncFlush?: IsAsyncFlush; }`;
+    const oldInterface = `export interface FeatureOptions<Enabled> { enabled?: Enabled; metadata?: Record<string, any>; }`;
+    const newInterface = `export interface FeatureOptions<Enabled> { enabled?: Enabled; }`;
 
     const result = areInterfaceSignaturesCompatible(oldInterface, newInterface);
     expect(result).toBe(false);
   });
 
   test("should reject adding required fields to interface", () => {
-    const oldInterface = `export interface LogOptions<IsAsyncFlush> { asyncFlush?: IsAsyncFlush; }`;
-    const newInterface = `export interface LogOptions<IsAsyncFlush> { asyncFlush?: IsAsyncFlush; requiredField: string; }`;
+    const oldInterface = `export interface FeatureOptions<Enabled> { enabled?: Enabled; }`;
+    const newInterface = `export interface FeatureOptions<Enabled> { enabled?: Enabled; requiredField: string; }`;
 
     const result = areInterfaceSignaturesCompatible(oldInterface, newInterface);
     expect(result).toBe(false);
   });
 
   test("should reject changing field types in interface", () => {
-    const oldInterface = `export interface LogOptions<IsAsyncFlush> { asyncFlush?: IsAsyncFlush; computeMetadataArgs?: Record<string, any>; }`;
-    const newInterface = `export interface LogOptions<IsAsyncFlush> { asyncFlush?: IsAsyncFlush; computeMetadataArgs?: string; }`;
+    const oldInterface = `export interface FeatureOptions<Enabled> { enabled?: Enabled; metadata?: Record<string, any>; }`;
+    const newInterface = `export interface FeatureOptions<Enabled> { enabled?: Enabled; metadata?: string; }`;
 
     const result = areInterfaceSignaturesCompatible(oldInterface, newInterface);
     expect(result).toBe(false);
   });
 
   test("should allow making required field optional", () => {
-    const oldInterface = `export interface LogOptions<IsAsyncFlush> { asyncFlush: IsAsyncFlush; }`;
-    const newInterface = `export interface LogOptions<IsAsyncFlush> { asyncFlush?: IsAsyncFlush; }`;
+    const oldInterface = `export interface FeatureOptions<Enabled> { enabled: Enabled; }`;
+    const newInterface = `export interface FeatureOptions<Enabled> { enabled?: Enabled; }`;
 
     const result = areInterfaceSignaturesCompatible(oldInterface, newInterface);
     expect(result).toBe(true);
   });
 
   test("should reject making optional field required", () => {
-    const oldInterface = `export interface LogOptions<IsAsyncFlush> { asyncFlush?: IsAsyncFlush; }`;
-    const newInterface = `export interface LogOptions<IsAsyncFlush> { asyncFlush: IsAsyncFlush; }`;
+    const oldInterface = `export interface FeatureOptions<Enabled> { enabled?: Enabled; }`;
+    const newInterface = `export interface FeatureOptions<Enabled> { enabled: Enabled; }`;
 
     const result = areInterfaceSignaturesCompatible(oldInterface, newInterface);
     expect(result).toBe(false);
@@ -2644,8 +2506,8 @@ describe("areFunctionSignaturesCompatible", () => {
   test("should allow widening a field inside an options-object parameter", () => {
     // Real-world case: getSpanParentObject's options param widens its nested
     // `parent?` field from `string` to `string | PropagationContext`.
-    const oldFn = `export function getSpanParentObject<IsAsyncFlush extends boolean>(options?: AsyncFlushArg<IsAsyncFlush> & OptionalStateArg & { parent?: string; }): Span`;
-    const newFn = `export function getSpanParentObject<IsAsyncFlush extends boolean>(options?: AsyncFlushArg<IsAsyncFlush> & OptionalStateArg & { parent?: string | PropagationContext; }): Span`;
+    const oldFn = `export function getSpanParentObject<Mode extends boolean>(options?: ModeArg<Mode> & OptionalStateArg & { parent?: string; }): Span`;
+    const newFn = `export function getSpanParentObject<Mode extends boolean>(options?: ModeArg<Mode> & OptionalStateArg & { parent?: string | PropagationContext; }): Span`;
     expect(areFunctionSignaturesCompatible(oldFn, newFn)).toBe(true);
   });
 
@@ -2811,44 +2673,20 @@ describe("areConstArraySignaturesCompatible", () => {
  * Since dist/ files aren't in git, we need to build main first in CI.
  * This checks if a pre-built baseline exists from CI, otherwise returns null.
  */
-async function getMainBranchExports(entrypoint: {
-  name: string;
-  typesPath: string;
-}): Promise<Map<string, ExportedSymbol> | null> {
-  try {
-    // Check if we're in CI and have a baseline directory
-    const baselineDir =
-      process.env.BASELINE_DIR || path.join(os.tmpdir(), "braintrust-baseline");
-    const baselinePath = path.join(baselineDir, "js", entrypoint.typesPath);
-
-    if (fs.existsSync(baselinePath)) {
-      // Baseline exists (built by CI)
-      console.log(`${entrypoint.name}: Using baseline from ${baselinePath}`);
-      const exports = extractExportsFromDts(baselinePath);
-      return exports;
-    }
-
-    // Fallback: try to read from git (won't work for .d.ts but good for testing)
-    const filePath = `js/${entrypoint.typesPath}`;
-    const content = execSync(`git show origin/main:${filePath}`, {
-      encoding: "utf-8",
-      stdio: ["pipe", "pipe", "ignore"], // Suppress stderr
-    });
-
-    // Parse the content as if it were a file
-    const tempFile = path.join(
-      os.tmpdir(),
-      `main-${entrypoint.name}-${Date.now()}.d.ts`,
-    );
-    fs.writeFileSync(tempFile, content);
-    const exports = extractExportsFromDts(tempFile);
-    fs.unlinkSync(tempFile);
-
-    return exports;
-  } catch (error) {
-    // Baseline not available - will fall back to direct comparison
-    return null;
-  }
+async function getMainBranchExports(
+  entrypoint: Entrypoint,
+): Promise<Map<string, ExportedSymbol> | null> {
+  const baselineRoot = path.join(
+    process.env.BASELINE_DIR || path.join(os.tmpdir(), "braintrust-baseline"),
+    "js",
+  );
+  if (!fs.existsSync(path.join(baselineRoot, "package.json"))) return null;
+  const baseline = getEntrypointsFromPackageExports(baselineRoot).find(
+    ({ name }) => name === entrypoint.name,
+  );
+  return baseline
+    ? extractExportsFromDts(path.join(baselineRoot, baseline.typesPath))
+    : null;
 }
 
 interface BreakingChanges {
@@ -2934,12 +2772,12 @@ describe("API Compatibility", () => {
   let versionBumpType: "major" | "minor" | "patch" | "none";
 
   beforeAll(async () => {
-    // Load entrypoints from tsup config
-    const configPath = path.join(__dirname, "..", "..", "tsup.config.ts");
-    const configModule = await import(configPath);
-    ENTRYPOINTS = getEntrypointsFromTsupConfig(configModule.default);
+    // Load entrypoints from the package contract
+    ENTRYPOINTS = getEntrypointsFromPackageExports(
+      path.join(__dirname, "../.."),
+    );
     console.log(
-      `Loaded ${ENTRYPOINTS.length} entrypoints from tsup.config.ts:`,
+      `Loaded ${ENTRYPOINTS.length} entrypoints from package.json:`,
       ENTRYPOINTS.map((e) => e.name).join(", "),
     );
 
@@ -2964,13 +2802,21 @@ describe("API Compatibility", () => {
     // Determine version bump type
     const publishedVersionInfo = parseVersion(publishedVersion);
     const currentVersionInfo = parseVersion(currentVersion);
-    versionBumpType = getVersionBumpType(
+    const packageVersionBumpType = getVersionBumpType(
       publishedVersionInfo,
       currentVersionInfo,
     );
+    const changesetBumpType = getChangesetBumpType("braintrust");
+    const bumpPriority = { none: 0, patch: 1, minor: 2, major: 3 } as const;
+    versionBumpType =
+      changesetBumpType &&
+      bumpPriority[changesetBumpType] > bumpPriority[packageVersionBumpType]
+        ? changesetBumpType
+        : packageVersionBumpType;
 
     console.log(`Published version: ${publishedVersion}`);
     console.log(`Current version: ${currentVersion}`);
+    console.log(`Changeset bump type: ${changesetBumpType ?? "none"}`);
     console.log(`Version bump type: ${versionBumpType}`);
 
     // Create temp directory for downloaded package
@@ -3009,6 +2855,59 @@ describe("API Compatibility", () => {
     expect(fs.existsSync(path.join(tempDir, "package"))).toBe(true);
   });
 
+  test("keeps public declarations free of expanded Zod schema graphs", () => {
+    const declarationRoot = path.join(__dirname, "..", "..");
+    const publicDeclarationPaths = [
+      ...new Set(ENTRYPOINTS.map(({ typesPath }) => typesPath)),
+    ];
+
+    for (const declarationTypesPath of publicDeclarationPaths) {
+      const declarationPath = path.join(declarationRoot, declarationTypesPath);
+      if (!fs.existsSync(declarationPath)) {
+        continue;
+      }
+      const declaration = fs.readFileSync(declarationPath, "utf8");
+
+      expect(declaration).not.toMatch(/z\.infer<typeof/);
+      expect(declaration).not.toMatch(
+        /^declare const [\w$]+: z\.Zod(?:Object|Union|Intersection|DiscriminatedUnion|Record)</m,
+      );
+    }
+
+    const mainDeclaration = fs.readFileSync(
+      path.join(declarationRoot, "dist/node/index.d.ts"),
+      "utf8",
+    );
+    for (const schemaName of [
+      "AttachmentReference",
+      "braintrustStreamChunkSchema",
+      "logs3OverflowUploadSchema",
+      "promptContentsSchema",
+      "promptDefinitionSchema",
+      "promptDefinitionWithToolsSchema",
+    ]) {
+      expect(mainDeclaration).not.toMatch(
+        new RegExp(`(?:declare|export) const ${schemaName}(?::|\\s*=)`),
+      );
+    }
+  });
+
+  test("keeps prompt implementation types out of declaration chunks", () => {
+    const dist = path.join(__dirname, "..", "..", "dist");
+    const declarations = fs
+      .readdirSync(dist, { recursive: true })
+      .filter((file) => /\.d\.(?:ts|mts)$/.test(String(file)))
+      .map((file) => fs.readFileSync(path.join(dist, String(file)), "utf8"))
+      .join("\n");
+
+    expect(declarations).toContain("interface CompiledPromptParams");
+    expect(declarations).not.toContain("_internalSerializeForCache");
+    expect(declarations).not.toMatch(/generated_(?:plain_)?types/);
+    expect(declarations).not.toMatch(
+      /\b(?:FunctionDataType|AnyModelParamsType|PromptType)\b/,
+    );
+  });
+
   test("should not regress public API surface for all entrypoints", async () => {
     if (!publishedVersion) {
       console.log("Skipping test: No published version available");
@@ -3019,11 +2918,12 @@ describe("API Compatibility", () => {
     const failures: string[] = [];
 
     for (const entrypoint of ENTRYPOINTS) {
-      const publishedTypesPath = path.join(
-        tempDir,
-        "package",
-        entrypoint.typesPath,
+      const publishedRoot = path.join(tempDir, "package");
+      const published = getEntrypointsFromPackageExports(publishedRoot).find(
+        ({ name }) => name === entrypoint.name,
       );
+      if (!published) continue; // A new subpath has no previous contract to compare.
+      const publishedTypesPath = path.join(publishedRoot, published.typesPath);
       const currentTypesPath = path.join(
         __dirname,
         "..",
@@ -3033,10 +2933,9 @@ describe("API Compatibility", () => {
 
       // Check if both files exist
       if (!fs.existsSync(publishedTypesPath)) {
-        console.warn(
-          `Published types not found: ${publishedTypesPath}. Skipping ${entrypoint.name}.`,
+        throw new Error(
+          `Published declarations are missing: ${publishedTypesPath}`,
         );
-        continue;
       }
 
       if (!fs.existsSync(currentTypesPath)) {
@@ -3054,9 +2953,11 @@ describe("API Compatibility", () => {
       );
 
       // Verify that current runtime exports match .d.ts declarations
-      const currentMjsPath = path
-        .join(__dirname, "..", entrypoint.typesPath)
-        .replace(/\.d\.ts$/, ".mjs");
+      const currentMjsPath = path.join(
+        __dirname,
+        "../..",
+        entrypoint.runtimePath,
+      );
       if (fs.existsSync(currentMjsPath)) {
         const runtimeExports = await extractRuntimeExports(currentMjsPath);
         const runtimeErrors = verifyRuntimeMatchesTypes(

@@ -44,15 +44,6 @@ const harness = createBrowserHarness(output);
 window.__btBrowserSmokeResults = harness.results;
 
 async function runAllTestSuites() {
-  if (!braintrust._exportsForTestingOnly) {
-    harness.fail(
-      "runtime",
-      "preflight",
-      new Error("_exportsForTestingOnly not available"),
-    );
-    return;
-  }
-
   harness.log("=== Running test suites ===");
 
   const { passed, failed, xfail } = await runTests({

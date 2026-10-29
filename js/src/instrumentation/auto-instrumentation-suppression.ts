@@ -1,4 +1,4 @@
-import iso, { type IsoAsyncLocalStorage } from "../isomorph";
+import iso, { type IsoAsyncLocalStorage } from "#braintrust-platform";
 
 let autoInstrumentationSuppressionStore:
   | IsoAsyncLocalStorage<boolean>

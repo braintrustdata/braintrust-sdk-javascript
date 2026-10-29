@@ -1,5 +1,6 @@
+import { registerInstrumentation } from "../instrumentation/registrations/cursorSDK";
 import { debugLogger } from "../debug-logger";
-import { cursorSDKChannels } from "../instrumentation/plugins/cursor-sdk-interceptors";
+import { cursorSDKChannels } from "../instrumentation/providers/cursor-sdk-interceptors";
 import type {
   CursorSDKAgent,
   CursorSDKAgentClass,
@@ -16,6 +17,7 @@ const WRAPPED_AGENT = Symbol.for("braintrust.cursor-sdk.wrapped-agent");
  * invocation hooks; the Cursor SDK plugin owns span lifecycle.
  */
 export function wrapCursorSDK<T>(sdk: T): T {
+  registerInstrumentation();
   if (!sdk || typeof sdk !== "object") {
     return sdk;
   }

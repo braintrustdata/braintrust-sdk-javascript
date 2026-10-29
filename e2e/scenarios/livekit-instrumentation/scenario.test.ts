@@ -1,6 +1,6 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { expect, test } from "vitest";
+import { expect, test } from "vite-plus/test";
 import { assertAudioTrace } from "./assertions";
 import {
   prepareScenarioDir,
@@ -162,8 +162,9 @@ const spoken = (event: CapturedLogEvent | undefined, pattern: RegExp) =>
 for (const variant of variants) {
   // Fixture playback through each setup path, including idempotent double wrapping.
   for (const mode of ["auto", "wrapped", "wrapped-auto"] as const)
-    test.sequential(
+    test(
       `${variant} ${mode} fixture recording`,
+      { concurrent: false, timeout: 120000 },
       async () => {
         await withScenarioHarness(async (harness) => {
           await harness.runNodeScenarioDir(scenarioOptions(variant, { mode }));
@@ -191,7 +192,6 @@ for (const variant of variants) {
           await snapshotTrace(events, `${variant}-audio`);
         });
       },
-      120000,
     );
 
   // With @braintrust/audio installed, recordings upload as Ogg Opus.
@@ -202,8 +202,9 @@ for (const variant of variants) {
       { codec: { name: "opus", options: { bitrate: 16000 } } },
     ],
   ] as const)
-    test.sequential(
+    test(
       `${variant} compressed recording ${name}`,
+      { concurrent: false, timeout: 120000 },
       async () => {
         await withScenarioHarness(async (harness) => {
           const result = await harness.runNodeScenarioDir(
@@ -244,12 +245,12 @@ for (const variant of variants) {
           expect(result.stderr).not.toContain("uncompressed PCM");
         });
       },
-      120000,
     );
 
   // Turning compression off records raw PCM, without a warning.
-  test.sequential(
+  test(
     `${variant} raw PCM recording with codec pcm`,
+    { concurrent: false, timeout: 120000 },
     async () => {
       await withScenarioHarness(async (harness) => {
         const result = await harness.runNodeScenarioDir(
@@ -276,18 +277,18 @@ for (const variant of variants) {
         expect(result.stderr).not.toContain("uncompressed PCM");
       });
     },
-    120000,
   );
 
-  test.sequential(
+  test(
     `${variant} recording requires attachment capture`,
+    { concurrent: false, timeout: 120000 },
     async () => {
       await withScenarioHarness(async (harness) => {
         // The shared attachment flag alone never records calls.
         await harness.runNodeScenarioDir(
           scenarioOptions(variant, {
             recording: false,
-            env: { BRAINTRUST_CAPTURE_ATTACHMENTS: "true" },
+            env: { BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "true" },
           }),
         );
         const events = assertAudioTrace(harness.events());
@@ -297,12 +298,12 @@ for (const variant of variants) {
         await snapshotTrace(events, `${variant}-disabled`);
       });
     },
-    120000,
   );
 
   for (const mode of ["auto", "wrapped"] as const)
-    test.sequential(
+    test(
       `${variant} ${mode} order conversation`,
+      { concurrent: false, timeout: 120000 },
       async () => {
         await withScenarioHarness(async (harness) => {
           await harness.runNodeScenarioDir(
@@ -316,11 +317,11 @@ for (const variant of variants) {
           await snapshotTrace(events, `${variant}-order`);
         });
       },
-      120000,
     );
 
-  test.sequential(
+  test(
     `${variant} streaming-cascade order conversation`,
+    { concurrent: false, timeout: 120000 },
     async () => {
       await withScenarioHarness(async (harness) => {
         await harness.runNodeScenarioDir(
@@ -358,12 +359,12 @@ for (const variant of variants) {
         await snapshotTrace(events, `${variant}-streaming-cascade`);
       });
     },
-    120000,
   );
 
   for (const recover of [false, true])
-    test.sequential(
+    test(
       `${variant} ${recover ? "recovered" : "interrupted"} order answer`,
+      { concurrent: false, timeout: 120000 },
       async () => {
         await withScenarioHarness(async (harness) => {
           await harness.runNodeScenarioDir(
@@ -393,13 +394,13 @@ for (const variant of variants) {
           );
         });
       },
-      120000,
     );
 
   // Rotation is anchored to session time, so a delayed playback start changes the
   // number of files. Assert complete, contiguous coverage instead of a snapshot.
-  test.sequential(
+  test(
     `${variant} progressive order recording`,
+    { concurrent: false, timeout: 120000 },
     async () => {
       await withScenarioHarness(async (harness) => {
         const result = await harness.runNodeScenarioDir(
@@ -482,13 +483,13 @@ for (const variant of variants) {
         }
       });
     },
-    120000,
   );
 
   // Automatic setup in other runtimes and next to an application OTel provider.
   for (const setup of ["unsampled", "integration-off", "worker"] as const)
-    test.sequential(
+    test(
       `${variant} automatic setup ${setup}`,
+      { concurrent: false, timeout: 90000 },
       async () => {
         await withScenarioHarness(async (harness) => {
           await harness.runNodeScenarioDir(
@@ -510,6 +511,5 @@ for (const variant of variants) {
           spoken(findLatestSpan(events, "agent_speech"), /Fixture playback/);
         });
       },
-      90000,
     );
 }
