@@ -11,6 +11,7 @@ import type {
 } from "../vendor-sdk-types/cursor-sdk";
 
 const wrappedClasses = new WeakMap<CursorSDKAgentClass, CursorSDKAgentClass>();
+const boundAgents = new WeakSet<CursorSDKAgent>();
 
 /**
  * Wraps the Cursor TypeScript SDK with Braintrust tracing. The wrapper emits
@@ -78,7 +79,7 @@ function wrapCursorAgentClass(Agent: CursorSDKAgentClass): CursorSDKAgentClass {
         ): Promise<CursorSDKAgent> {
           return observeResult(
             cursorSDKChannels.create.invoke(value, target, args, {}),
-            patchCursorAgentInPlace,
+            prepareCursorAgent,
             () => {},
           ) as Promise<CursorSDKAgent>;
         };
@@ -92,7 +93,7 @@ function wrapCursorAgentClass(Agent: CursorSDKAgentClass): CursorSDKAgentClass {
         ): Promise<CursorSDKAgent> {
           return observeResult(
             cursorSDKChannels.resume.invoke(value, target, args, {}),
-            patchCursorAgentInPlace,
+            prepareCursorAgent,
             () => {},
           ) as Promise<CursorSDKAgent>;
         };
@@ -126,17 +127,39 @@ function wrapCursorAgentClass(Agent: CursorSDKAgentClass): CursorSDKAgentClass {
   }) as CursorSDKAgentClass;
   wrappedClasses.set(Agent, proxy);
   wrappedClasses.set(proxy, proxy);
-  // Agent.prompt calls factories on the original class internally. Install the
-  // same generic factory wrappers so explicitly wrapped prompts can observe
-  // their returned agents even without the automatic loader.
-  for (const name of ["create", "resume"] as const) {
-    const descriptor = Object.getOwnPropertyDescriptor(Agent, name);
-    if (descriptor?.configurable && typeof descriptor.value === "function") {
-      Object.defineProperty(Agent, name, {
-        ...descriptor,
-        value: Reflect.get(proxy, name),
-      });
-    }
-  }
   return proxy;
+}
+
+function prepareCursorAgent(agent: unknown): void {
+  if (
+    !agent ||
+    typeof agent !== "object" ||
+    typeof Reflect.get(agent, "send") !== "function"
+  )
+    return;
+  const candidate = agent as CursorSDKAgent;
+  patchCursorAgentInPlace(candidate);
+  if (boundAgents.has(candidate) || !Object.isExtensible(candidate)) return;
+
+  // Keep factory promises and their resolved agent identity intact, while
+  // retaining the receiver-safe methods previously provided by the agent proxy.
+  for (const key of [
+    "close",
+    "reload",
+    Symbol.asyncDispose,
+    "listArtifacts",
+    "downloadArtifact",
+  ] as const) {
+    const method = candidate[key];
+    if (typeof method !== "function") continue;
+    const own = Object.getOwnPropertyDescriptor(candidate, key);
+    if (own && !own.configurable && !own.writable) continue;
+    Object.defineProperty(candidate, key, {
+      configurable: own?.configurable ?? true,
+      enumerable: own?.enumerable ?? false,
+      writable: own?.writable ?? true,
+      value: method.bind(candidate),
+    });
+  }
+  boundAgents.add(candidate);
 }

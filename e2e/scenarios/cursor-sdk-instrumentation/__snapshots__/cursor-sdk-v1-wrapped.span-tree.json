@@ -13,7 +13,6 @@
               "children": [],
               "input": "Reply with exactly: CURSOR_PROMPT_OK. Do not modify files.",
               "metadata": {
-                "cursor_sdk.agent_id": "agent-<uuid:2>",
                 "cursor_sdk.duration_ms": 0,
                 "cursor_sdk.local.cwd": "<repo>/e2e/scenarios/cursor-sdk-instrumentation/",
                 "cursor_sdk.model": "composer-2",

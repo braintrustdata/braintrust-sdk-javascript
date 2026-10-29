@@ -29,7 +29,7 @@ describe("Cursor automatic and manual wrapping", () => {
   });
 
   it.each(["manual", "automatic", "combined"] as const)(
-    "captures one prompt task and its tools with %s instrumentation",
+    "captures one task per prompt/send with %s instrumentation",
     async (mode) => {
       plugin.enable();
       const events = [
@@ -42,17 +42,17 @@ describe("Cursor automatic and manual wrapping", () => {
           result: "ok",
         },
       ];
-      const stream = (async function* () {
-        for (const event of events) yield event;
-      })();
-      const run = {
-        status: "finished",
-        stream: () => stream,
-        async wait() {
-          return { status: "finished", result: "ok" };
-        },
+      const agent = {
+        send: vi.fn(async () => ({
+          status: "finished",
+          stream: async function* () {
+            for (const event of events) yield event;
+          },
+          async wait() {
+            return { status: "finished", result: "ok" };
+          },
+        })),
       };
-      const agent = { send: vi.fn(async () => run) };
       const createPromise = Promise.resolve(agent);
       class Agent {
         static #value = "ok";
@@ -63,11 +63,9 @@ describe("Cursor automatic and manual wrapping", () => {
           return createPromise;
         }
         static async prompt(_message: string) {
-          const instance = await this.create({});
+          // Cursor's distributed prompt calls its lexical Agent class, not this.
+          const instance = await Agent.create({});
           const run = await instance.send();
-          for await (const _ of run.stream()) {
-            /* consume */
-          }
           await run.wait();
           return { result: this.#value };
         }
@@ -95,8 +93,18 @@ describe("Cursor automatic and manual wrapping", () => {
       const wrapped =
         mode === "automatic" ? { Agent } : wrapCursorSDK({ Agent });
       expect(await wrapped.Agent.prompt("hi")).toEqual({ result: "ok" });
+      const instance = await wrapped.Agent.create({});
+      const run = await instance.send();
+      for await (const _ of run.stream()) {
+        /* consume */
+      }
+      await run.wait();
       await new Promise((resolve) => setTimeout(resolve, 0));
-      expect(spans.map((span) => span.name)).toEqual(["Cursor Agent", "shell"]);
+      expect(spans.map((span) => span.name)).toEqual([
+        "Cursor Agent",
+        "Cursor Agent",
+        "shell",
+      ]);
       for (const span of spans) expect(span.end).toHaveBeenCalledOnce();
     },
   );

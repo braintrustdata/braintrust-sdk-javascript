@@ -44,6 +44,18 @@ describe("wrapCursorSDK", () => {
       async send() {
         return this.#run;
       }
+      reload() {
+        return Promise.resolve(this.#run);
+      }
+      close() {
+        return this.#run.id;
+      }
+      listArtifacts() {
+        return Promise.resolve([this.#run.id]);
+      }
+      downloadArtifact(path: string) {
+        return Promise.resolve(`${this.#run.id}:${path}`);
+      }
       async [Symbol.asyncDispose]() {
         return this.#run.id;
       }
@@ -66,10 +78,50 @@ describe("wrapCursorSDK", () => {
     const resumed = await wrapped.Agent.resume("agent-1");
     expect(resumed).toBe(created);
     expect(resumed.send).toBe(patchedSend);
-    await expect(resumed.send("hello")).resolves.toBe(run);
+    const {
+      send,
+      reload,
+      close,
+      listArtifacts,
+      downloadArtifact,
+      [Symbol.asyncDispose]: dispose,
+    } = resumed;
+    await expect(send("hello")).resolves.toBe(run);
     expect(originalSend).toHaveBeenCalledExactlyOnceWith("hello");
-    await expect(resumed[Symbol.asyncDispose]()).resolves.toBe("run-1");
+    await expect(reload()).resolves.toBe(run);
+    expect(close()).toBe("run-1");
+    await expect(listArtifacts()).resolves.toEqual(["run-1"]);
+    await expect(downloadArtifact("output.txt")).resolves.toBe(
+      "run-1:output.txt",
+    );
+    await expect(dispose()).resolves.toBe("run-1");
     expect(invoke).toHaveBeenCalledTimes(3);
+  });
+
+  it("leaves original factories and unwrapped subclass dispatch unchanged", async () => {
+    const create = vi.fn(function (this: unknown) {
+      return Promise.resolve({ owner: this, send: vi.fn() });
+    });
+    class Agent {
+      static create = create;
+      static resume = create;
+    }
+    const before = Object.getOwnPropertyDescriptors(Agent);
+    const wrapped = wrapCursorSDK({ Agent });
+    const wrappedAgent = wrapped.Agent;
+    expect(Object.getOwnPropertyDescriptors(Agent)).toEqual(before);
+    class Derived extends Agent {}
+    for (const operation of ["create", "resume"] as const) {
+      const direct = await Agent[operation]();
+      expect(direct.owner).toBe(Agent);
+      const derived = await Derived[operation]();
+      expect(derived.owner).toBe(Derived);
+    }
+    expect(invoke).not.toHaveBeenCalled();
+    const promise = wrappedAgent.create();
+    expect(await promise).toMatchObject({ owner: Agent });
+    expect(invoke).toHaveBeenCalledOnce();
+    expect(Object.getOwnPropertyDescriptors(Agent)).toEqual(before);
   });
 
   it("handles module namespaces and preserves static promises, arguments, and private getters", async () => {
