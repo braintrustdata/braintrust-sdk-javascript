@@ -398,6 +398,78 @@
               }
             },
             {
+              "name": "tools/call report_progress",
+              "type": "tool",
+              "children": [
+                {
+                  "name": "notifications/progress",
+                  "type": "function",
+                  "children": [],
+                  "output": {
+                    "message": "working",
+                    "progress": 1,
+                    "progressToken": 0,
+                    "total": 2
+                  },
+                  "metadata": {
+                    "mcp.client.name": "braintrust-e2e-client",
+                    "mcp.client.version": "1.0.0",
+                    "mcp.method.name": "notifications/progress",
+                    "mcp.notification.direction": "outgoing",
+                    "mcp.progress.current": 1,
+                    "mcp.progress.message": "working",
+                    "mcp.progress.percentage": 50,
+                    "mcp.progress.token": "0",
+                    "mcp.progress.total": 2,
+                    "mcp.protocol.version": "<timestamp>",
+                    "mcp.server.name": "braintrust-e2e-weather",
+                    "mcp.server.version": "1.0.0",
+                    "scenario": "mcp-instrumentation",
+                    "testRunId": "<run:1>"
+                  },
+                  "metrics": {
+                    "end": 0,
+                    "start": 0
+                  },
+                  "context": {
+                    "caller_filename": "<caller>",
+                    "caller_functionname": "<caller>",
+                    "caller_lineno": 0
+                  }
+                }
+              ],
+              "output": {
+                "content": [
+                  {
+                    "text": "done",
+                    "type": "text"
+                  }
+                ]
+              },
+              "metadata": {
+                "gen_ai.operation.name": "execute_tool",
+                "gen_ai.tool.name": "report_progress",
+                "jsonrpc.request.id": "2",
+                "mcp.client.name": "braintrust-e2e-client",
+                "mcp.client.version": "1.0.0",
+                "mcp.method.name": "tools/call",
+                "mcp.protocol.version": "<timestamp>",
+                "mcp.server.name": "braintrust-e2e-weather",
+                "mcp.server.version": "1.0.0",
+                "scenario": "mcp-instrumentation",
+                "testRunId": "<run:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
+              },
+              "context": {
+                "caller_filename": "<caller>",
+                "caller_functionname": "<caller>",
+                "caller_lineno": 0
+              }
+            },
+            {
               "name": "tools/call render_map",
               "type": "tool",
               "children": [],
@@ -413,7 +485,7 @@
               "metadata": {
                 "gen_ai.operation.name": "execute_tool",
                 "gen_ai.tool.name": "render_map",
-                "jsonrpc.request.id": "2",
+                "jsonrpc.request.id": "3",
                 "mcp.client.name": "braintrust-e2e-client",
                 "mcp.client.version": "1.0.0",
                 "mcp.method.name": "tools/call",
@@ -450,7 +522,7 @@
                 "error.type": "tool_error",
                 "gen_ai.operation.name": "execute_tool",
                 "gen_ai.tool.name": "get_alerts",
-                "jsonrpc.request.id": "3",
+                "jsonrpc.request.id": "4",
                 "mcp.client.name": "braintrust-e2e-client",
                 "mcp.client.version": "1.0.0",
                 "mcp.method.name": "tools/call",
@@ -888,6 +960,56 @@
           ],
           "metadata": {
             "operation": "lifecycle",
+            "scenario": "mcp-instrumentation",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "context": {
+            "caller_filename": "<caller>",
+            "caller_functionname": "<caller>",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "mcp-stdio-error-operation",
+          "children": [
+            {
+              "name": "tools/call wait_for_parse_error",
+              "type": "tool",
+              "children": [],
+              "output": {
+                "content": [
+                  {
+                    "text": "completed",
+                    "type": "text"
+                  }
+                ]
+              },
+              "metadata": {
+                "gen_ai.operation.name": "execute_tool",
+                "gen_ai.tool.name": "wait_for_parse_error",
+                "jsonrpc.request.id": "43",
+                "mcp.method.name": "tools/call",
+                "network.transport": "pipe",
+                "scenario": "mcp-instrumentation",
+                "testRunId": "<run:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
+              },
+              "context": {
+                "caller_filename": "<caller>",
+                "caller_functionname": "<caller>",
+                "caller_lineno": 0
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "stdio-error",
             "scenario": "mcp-instrumentation",
             "testRunId": "<run:1>"
           },

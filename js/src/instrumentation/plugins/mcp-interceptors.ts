@@ -46,11 +46,6 @@ export const mcpChannels = defineInterceptor("mcp", {
   >({
     channelName: "httpRequest",
   }),
-  transportError: channel<
-    [unknown, ...unknown[]],
-    unknown,
-    { transport: MCPTransport }
-  >({ channelName: "transportError" }),
   protocolError: channel<[unknown], unknown>({ channelName: "protocolError" }),
   requestHandler: channel<
     [MCPRequest, MCPRequestHandlerExtra],
@@ -117,19 +112,6 @@ export function wrapMCPTransport(
             );
           }
           return mcpChannels.message.invoke(
-            original,
-            this,
-            args as [unknown, ...unknown[]],
-            { transport },
-          );
-        },
-    );
-    wrapMethod(
-      transport,
-      "onerror",
-      (original) =>
-        function (this: unknown, ...args) {
-          return mcpChannels.transportError.invoke(
             original,
             this,
             args as [unknown, ...unknown[]],

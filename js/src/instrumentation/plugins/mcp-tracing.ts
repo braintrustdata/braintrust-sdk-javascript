@@ -49,7 +49,18 @@ const connections = new WeakMap<
   MCPTransport,
   Map<string | number | symbol, PendingRequest>
 >();
-const protocolVersions = new WeakMap<MCPTransport, string>();
+const protocolVersions = new WeakMap<
+  MCPTransport,
+  { sessionId?: string; version: string }
+>();
+
+function negotiatedVersion(transport: MCPTransport): string | undefined {
+  const cached = protocolVersions.get(transport);
+  return canCacheTransportIdentity(transport) &&
+    cached?.sessionId === transport.sessionId
+    ? cached?.version
+    : undefined;
+}
 const sessionIdentities = new WeakMap<
   MCPTransport,
   {
@@ -313,7 +324,7 @@ export function traceMCPMessage<T>(
       return;
     const method = message.method;
     const id = message.id === undefined ? Symbol("notification") : message.id;
-    const protocolVersion = protocolVersions.get(transport);
+    const protocolVersion = negotiatedVersion(transport);
     const cachedSession = sessionIdentities.get(transport);
     const canCacheIdentity = canCacheTransportIdentity(transport);
     const session =
@@ -579,8 +590,11 @@ export function traceMCPSend<T>(
       call(),
       () => {
         if (initialization) {
-          protocolVersions.set(transport, initialization.version);
           if (canCacheTransportIdentity(transport)) {
+            protocolVersions.set(transport, {
+              sessionId: transport.sessionId,
+              version: initialization.version,
+            });
             const prior = sessionIdentities.get(transport);
             sessionIdentities.set(transport, {
               sessionId: transport.sessionId,
@@ -632,7 +646,7 @@ function traceMCPOutgoingNotification<T>(
       cachedSession?.sessionId === transport.sessionId
         ? cachedSession
         : undefined;
-    const version = protocolVersions.get(transport);
+    const version = negotiatedVersion(transport);
     const metadata = {
       "mcp.method.name": method,
       "mcp.notification.direction": "outgoing",
@@ -683,16 +697,6 @@ function traceMCPOutgoingNotification<T>(
     finishNotification(error);
     throw error;
   }
-}
-
-export function traceMCPTransportError<T>(
-  call: () => T,
-  transport: MCPTransport,
-  error: unknown,
-): T {
-  for (const request of connections.get(transport)?.values() ?? [])
-    finish(request, error);
-  return call();
 }
 
 /** Handler settlement observes cancellation; it never starts another span. */

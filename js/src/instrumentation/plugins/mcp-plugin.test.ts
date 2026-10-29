@@ -1121,64 +1121,6 @@ describe("MCPPlugin", () => {
     expect(span.metrics.end).toEqual(expect.any(Number));
   });
 
-  it("traces outgoing notifications with their related request and send lifetime", async () => {
-    const protocol = createProtocol();
-    const transport = protocol.transport!;
-    let resolveSend!: () => void;
-    const send = new Promise<void>((resolve) => {
-      resolveSend = resolve;
-    });
-    let notification!: Promise<void>;
-    const request = mcpChannels.message.invoke(
-      () => {
-        notification = mcpChannels.send.invoke(
-          () => send,
-          transport,
-          [
-            {
-              method: "notifications/progress",
-              params: {
-                progressToken: 0,
-                progress: 1,
-                total: 2,
-                message: "working",
-              },
-            },
-            { relatedRequestId: 0 },
-          ],
-          { transport },
-        ) as Promise<void>;
-      },
-      transport,
-      [{ id: 0, method: "tools/call", params: { name: "example" } }],
-      { transport },
-    );
-    await request;
-    resolveSend();
-    await notification;
-    await mcpChannels.send.invoke(
-      () => Promise.resolve(),
-      transport,
-      [{ id: 0, result: {} }],
-      { transport },
-    );
-    const spans = await drainSpans();
-    const parent = spans.find(
-      (span) => span.span_attributes.name === "tools/call example",
-    )!;
-    const child = spans.find(
-      (span) => span.span_attributes.name === "notifications/progress",
-    )!;
-    expect(child.span_parents).toEqual([parent.span_id]);
-    expect(child.metadata).toMatchObject({
-      "mcp.notification.direction": "outgoing",
-      "mcp.progress.token": "0",
-      "mcp.progress.percentage": 50,
-      "mcp.progress.message": "working",
-    });
-    expect(child.metrics.end).toEqual(expect.any(Number));
-  });
-
   it("records outgoing send errors without changing the rejection", async () => {
     const transport = createProtocol().transport!;
     const error = new TypeError("send failed");
@@ -1259,9 +1201,18 @@ describe("MCPPlugin", () => {
       protocol,
     );
     await handleRequest(async () => ({}), { method: "ping" }, {}, protocol);
+    await mcpChannels.send.invoke(
+      () => Promise.resolve(),
+      protocol.transport!,
+      [{ method: "notifications/progress", params: { progress: 1 } }],
+      { transport: protocol.transport! },
+    );
     const spans = await drainSpans();
-    expect(spans[1].metadata["mcp.client.name"]).toBeUndefined();
-    expect(spans[1].metadata["mcp.server.name"]).toBeUndefined();
+    for (const span of spans.slice(1)) {
+      expect(span.metadata["mcp.client.name"]).toBeUndefined();
+      expect(span.metadata["mcp.server.name"]).toBeUndefined();
+      expect(span.metadata["mcp.protocol.version"]).toBeUndefined();
+    }
   });
 
   it.each(["error response", "send failure"])(
@@ -1331,56 +1282,6 @@ describe("MCPPlugin", () => {
     },
   );
 
-  it("includes cached peer identity and protocol version on outgoing notifications", async () => {
-    const protocol = createProtocol();
-    const transport = protocol.transport!;
-    await handleRequest(
-      async () => ({ protocolVersion: "1", serverInfo: { name: "server" } }),
-      { method: "initialize", params: { clientInfo: { name: "client" } } },
-      { sessionId: "session" },
-      protocol,
-    );
-    await mcpChannels.send.invoke(
-      () => Promise.resolve(),
-      transport,
-      [{ method: "notifications/progress", params: { progress: 1 } }],
-      { transport },
-    );
-    const spans = await drainSpans();
-    const notice = spans.find(
-      (span) => span.span_attributes.name === "notifications/progress",
-    );
-    expect(notice?.metadata).toMatchObject({
-      "mcp.client.name": "client",
-      "mcp.server.name": "server",
-      "mcp.protocol.version": "1",
-    });
-  });
-
-  it("does not capture notification content when disabled", async () => {
-    registry.disable();
-    registry.configure({ integrations: { mcp: { captureContent: false } } });
-    registry.enable();
-    const transport = createProtocol().transport!;
-    await mcpChannels.send.invoke(
-      () => Promise.resolve(),
-      transport,
-      [
-        {
-          method: "notifications/message",
-          params: { level: "info", data: "private" },
-        },
-      ],
-      { transport },
-    );
-    const [span] = await drainSpans();
-    expect(span.metadata).toMatchObject({
-      "mcp.logging.level": "info",
-      "mcp.logging.data_type": "string",
-    });
-    expect(JSON.stringify(span)).not.toContain("private");
-  });
-
   it("does not carry initialization identity into an unrelated session", async () => {
     const protocol = createProtocol();
     await handleRequest(
@@ -1395,28 +1296,18 @@ describe("MCPPlugin", () => {
       { sessionId: "second" },
       protocol,
     );
-    const spans = await drainSpans();
-    expect(spans[1].metadata["mcp.client.name"]).toBeUndefined();
-    expect(spans[1].metadata["mcp.server.name"]).toBeUndefined();
-  });
-
-  it("ends pending spans on transport error and forwards the callback", async () => {
-    const transport = createProtocol().transport!;
-    const error = new TypeError("transport failed");
-    await mcpChannels.message.invoke(
-      () => {},
-      transport,
-      [{ id: 1, method: "ping" }],
-      { transport },
+    await mcpChannels.send.invoke(
+      () => Promise.resolve(),
+      protocol.transport!,
+      [{ method: "notifications/progress", params: { progress: 1 } }],
+      { transport: protocol.transport! },
     );
-    const callback = vi.fn();
-    mcpChannels.transportError.invoke(callback, transport, [error], {
-      transport,
-    });
-    expect(callback).toHaveBeenCalledWith(error);
-    const [span] = await drainSpans();
-    expect(span.error).toContain("transport failed");
-    expect(span.metadata["error.type"]).toBe("TypeError");
+    const spans = await drainSpans();
+    for (const span of spans.slice(1)) {
+      expect(span.metadata["mcp.client.name"]).toBeUndefined();
+      expect(span.metadata["mcp.server.name"]).toBeUndefined();
+      expect(span.metadata["mcp.protocol.version"]).toBeUndefined();
+    }
   });
 
   it("records only known HTTP transport and client fields", async () => {

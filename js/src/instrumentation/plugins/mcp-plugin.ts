@@ -22,7 +22,6 @@ import {
   traceMCPProtocolError,
   traceMCPNotificationHandler,
   traceMCPHttpRequest,
-  traceMCPTransportError,
 } from "./mcp-tracing";
 
 export class MCPPlugin extends BasePlugin {
@@ -85,14 +84,6 @@ export class MCPPlugin extends BasePlugin {
           args[1],
           this.config,
         ),
-      ),
-      mcpChannels.transportError.intercept(
-        (target, receiver, args, { transport }) =>
-          traceMCPTransportError(
-            () => Reflect.apply(target, receiver, args),
-            transport,
-            args[0],
-          ),
       ),
       mcpChannels.close.intercept((target, receiver, args, { transport }) =>
         traceMCPClose(() => Reflect.apply(target, receiver, args), transport),
