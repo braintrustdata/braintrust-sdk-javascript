@@ -42,6 +42,37 @@ if (process.env.LIVEKIT_SEGMENTS === "1") {
     return response;
   });
 }
+// Attachment bytes go to object storage through the global fetch, as a PUT
+// to a signed URL.
+if (process.env.LIVEKIT_PROBE_UPLOADS === "1") {
+  const upload = globalThis.fetch;
+  globalThis.fetch = async (input, init) => {
+    if (init?.method === "PUT" && typeof init.body !== "string")
+      console.log(JSON.stringify({ uploadedAudio: await probe(init.body) }));
+    return upload(input, init);
+  };
+}
+/** Each uploaded file's format, and for Ogg its decoded duration. */
+async function probe(body) {
+  const file = new Uint8Array(await new Response(body).arrayBuffer());
+  return new TextDecoder().decode(file.subarray(0, 4)) === "OggS"
+    ? { format: "ogg", decodedMs: oggDurationMs(file) }
+    : { format: "raw" };
+}
+/** Final granule minus the OpusHead pre-skip, at 48 kHz (RFC 7845). */
+function oggDurationMs(file) {
+  const view = new DataView(file.buffer, file.byteOffset, file.byteLength);
+  const preSkip = view.getUint16(28 + 10, true);
+  let granule = 0;
+  for (let at = 0; at < file.length;) {
+    granule = Number(view.getBigUint64(at + 6, true));
+    const count = file[at + 26];
+    at += file
+      .subarray(at + 27, at + 27 + count)
+      .reduce((sum, n) => sum + n, 27 + count);
+  }
+  return (granule - preSkip) / 48;
+}
 const logger = initLogger({ projectName: scopedName("e2e-livekit") });
 const providerMode = process.env.LIVEKIT_PROVIDER === "1";
 class Output extends voice.AudioOutput {
@@ -117,9 +148,9 @@ const streamingStt = process.env.LIVEKIT_STREAMING_STT === "1";
 let ws;
 if (providerMode) {
   const { LLM, TTS } = await import("@livekit/agents-plugin-openai");
+  // GPT-5 models only support the default temperature.
   options.llm = new LLM({
-    model: "gpt-4.1-nano",
-    temperature: 0,
+    model: "gpt-5.4-nano",
     baseURL: process.env.OPENAI_BASE_URL,
   });
   options.tts = new TTS({
@@ -272,6 +303,10 @@ try {
   await session.close();
   await logger.flush();
   if (provider) assert.equal(telemetry.tracer.getProvider(), provider);
+  // Save or verify the websocket cassette before exiting, which skips `finally`.
+  const cassette = ws;
+  ws = undefined;
+  await cassette?.close();
   // LiveKit's job process exits right after its shutdown callbacks, like this;
   // anything not finished by then is lost.
   await new Promise((resolve) => process.stdout.write("", resolve));

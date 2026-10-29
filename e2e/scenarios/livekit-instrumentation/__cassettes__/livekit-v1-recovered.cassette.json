@@ -2,9 +2,9 @@
   "entries": [
     {
       "callIndex": 0,
-      "id": "0d3776eeb1283b4d",
+      "id": "f1947f1e58647460",
       "matchKey": "POST api.openai.com/v1/chat/completions",
-      "recordedAt": "2026-10-09T05:26:39.565Z",
+      "recordedAt": "2026-10-27T18:42:33.208Z",
       "request": {
         "body": {
           "kind": "json",
@@ -19,7 +19,7 @@
                 "role": "user"
               }
             ],
-            "model": "gpt-4.1-nano",
+            "model": "gpt-5.4-nano",
             "parallel_tool_calls": true,
             "stream": true,
             "stream_options": {
@@ -53,16 +53,16 @@
       "response": {
         "body": {
           "chunks": [
-            "data: {\"id\":\"chatcmpl-EWxPrvKBxueebW5JrZlsERCUdjodi\",\"object\":\"chat.completion.chunk\",\"created\":1791523599,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"index\":0,\"id\":\"call_ThLD0enkAFrFk7EcZVLFKRvh\",\"type\":\"function\",\"function\":{\"name\":\"lookup_order\",\"arguments\":\"\"}}],\"refusal\":null},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"Ss\"}",
-            "data: {\"id\":\"chatcmpl-EWxPrvKBxueebW5JrZlsERCUdjodi\",\"object\":\"chat.completion.chunk\",\"created\":1791523599,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"{\\\"\"}}]},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"TLdEmOPI15aZy\"}",
-            "data: {\"id\":\"chatcmpl-EWxPrvKBxueebW5JrZlsERCUdjodi\",\"object\":\"chat.completion.chunk\",\"created\":1791523599,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"order\"}}]},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"YaqQgnBHBYK\"}",
-            "data: {\"id\":\"chatcmpl-EWxPrvKBxueebW5JrZlsERCUdjodi\",\"object\":\"chat.completion.chunk\",\"created\":1791523599,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"_id\"}}]},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"5l017CAuLI0zt\"}",
-            "data: {\"id\":\"chatcmpl-EWxPrvKBxueebW5JrZlsERCUdjodi\",\"object\":\"chat.completion.chunk\",\"created\":1791523599,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"\\\":\\\"\"}}]},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"H77LAEivqNC\"}",
-            "data: {\"id\":\"chatcmpl-EWxPrvKBxueebW5JrZlsERCUdjodi\",\"object\":\"chat.completion.chunk\",\"created\":1791523599,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"104\"}}]},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"2dprhodfn59eQ\"}",
-            "data: {\"id\":\"chatcmpl-EWxPrvKBxueebW5JrZlsERCUdjodi\",\"object\":\"chat.completion.chunk\",\"created\":1791523599,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"2\"}}]},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"G6vqXW5R0D55fgX\"}",
-            "data: {\"id\":\"chatcmpl-EWxPrvKBxueebW5JrZlsERCUdjodi\",\"object\":\"chat.completion.chunk\",\"created\":1791523599,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"\\\"}\"}}]},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"jJtRk2kLrSGKF\"}",
-            "data: {\"id\":\"chatcmpl-EWxPrvKBxueebW5JrZlsERCUdjodi\",\"object\":\"chat.completion.chunk\",\"created\":1791523599,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{},\"logprobs\":null,\"finish_reason\":\"tool_calls\"}],\"usage\":null,\"obfuscation\":\"1xYxb63MCFuXN6\"}",
-            "data: {\"id\":\"chatcmpl-EWxPrvKBxueebW5JrZlsERCUdjodi\",\"object\":\"chat.completion.chunk\",\"created\":1791523599,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[],\"usage\":{\"prompt_tokens\":84,\"completion_tokens\":16,\"total_tokens\":100,\"prompt_tokens_details\":{\"cached_tokens\":0,\"audio_tokens\":0},\"completion_tokens_details\":{\"reasoning_tokens\":0,\"audio_tokens\":0,\"accepted_prediction_tokens\":0,\"rejected_prediction_tokens\":0}},\"obfuscation\":\"ffiN0se3\"}",
+            "data: {\"id\":\"chatcmpl-EdgPwlfXD99rRcaUiNjaAQHnniHow\",\"object\":\"chat.completion.chunk\",\"created\":1793126552,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"index\":0,\"id\":\"call_cXcKMTItfBdrhF4Z8qbPon7C\",\"type\":\"function\",\"function\":{\"name\":\"lookup_order\",\"arguments\":\"\"}}],\"refusal\":null},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"tzBmuoImIbHFP\"}",
+            "data: {\"id\":\"chatcmpl-EdgPwlfXD99rRcaUiNjaAQHnniHow\",\"object\":\"chat.completion.chunk\",\"created\":1793126552,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"{\\\"\"}}]},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"WUQIk92s\"}",
+            "data: {\"id\":\"chatcmpl-EdgPwlfXD99rRcaUiNjaAQHnniHow\",\"object\":\"chat.completion.chunk\",\"created\":1793126552,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"order\"}}]},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"9KgBBe\"}",
+            "data: {\"id\":\"chatcmpl-EdgPwlfXD99rRcaUiNjaAQHnniHow\",\"object\":\"chat.completion.chunk\",\"created\":1793126552,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"_id\"}}]},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"LYnqXmH1\"}",
+            "data: {\"id\":\"chatcmpl-EdgPwlfXD99rRcaUiNjaAQHnniHow\",\"object\":\"chat.completion.chunk\",\"created\":1793126552,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"\\\":\\\"\"}}]},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"Ttlm5d\"}",
+            "data: {\"id\":\"chatcmpl-EdgPwlfXD99rRcaUiNjaAQHnniHow\",\"object\":\"chat.completion.chunk\",\"created\":1793126552,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"104\"}}]},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"eiy0AtXl\"}",
+            "data: {\"id\":\"chatcmpl-EdgPwlfXD99rRcaUiNjaAQHnniHow\",\"object\":\"chat.completion.chunk\",\"created\":1793126552,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"2\"}}]},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"gwWRIKiQcD\"}",
+            "data: {\"id\":\"chatcmpl-EdgPwlfXD99rRcaUiNjaAQHnniHow\",\"object\":\"chat.completion.chunk\",\"created\":1793126552,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"\\\"}\"}}]},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"yyvQAXWN\"}",
+            "data: {\"id\":\"chatcmpl-EdgPwlfXD99rRcaUiNjaAQHnniHow\",\"object\":\"chat.completion.chunk\",\"created\":1793126552,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"tool_calls\"}],\"usage\":null,\"obfuscation\":\"nFbUNkfcc\"}",
+            "data: {\"id\":\"chatcmpl-EdgPwlfXD99rRcaUiNjaAQHnniHow\",\"object\":\"chat.completion.chunk\",\"created\":1793126552,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[],\"usage\":{\"prompt_tokens\":168,\"completion_tokens\":19,\"total_tokens\":187,\"prompt_tokens_details\":{\"cached_tokens\":0,\"audio_tokens\":0},\"completion_tokens_details\":{\"reasoning_tokens\":0,\"audio_tokens\":0,\"accepted_prediction_tokens\":0,\"rejected_prediction_tokens\":0}},\"obfuscation\":\"dY\"}",
             "data: [DONE]"
           ],
           "kind": "sse"
@@ -71,11 +71,11 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a47af8be4bb213cf-ORD",
+          "cf-ray": "a513d7583a82e829-ORD",
           "content-type": "text/event-stream; charset=utf-8",
-          "date": "Fri, 09 Oct 2026 05:26:39 GMT",
+          "date": "Tue, 27 Oct 2026 18:42:33 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "288",
+          "openai-processing-ms": "494",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -84,129 +84,12 @@
           "x-content-type-options": "nosniff",
           "x-openai-proxy-wasm": "v0.1",
           "x-ratelimit-limit-requests": "30000",
-          "x-ratelimit-limit-tokens": "150000000",
+          "x-ratelimit-limit-tokens": "180000000",
           "x-ratelimit-remaining-requests": "29999",
-          "x-ratelimit-remaining-tokens": "149999950",
+          "x-ratelimit-remaining-tokens": "179999949",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "req_81a35299b53f42fc8411dbd97733e1d4"
-        },
-        "status": 200
-      }
-    },
-    {
-      "callIndex": 1,
-      "id": "a7eff135dadd75cb",
-      "matchKey": "POST api.openai.com/v1/chat/completions",
-      "recordedAt": "2026-10-09T05:26:39.947Z",
-      "request": {
-        "body": {
-          "kind": "json",
-          "value": {
-            "messages": [
-              {
-                "content": "You help customers check orders. Always call lookup_order when an order number is supplied. Answer with one short sentence giving the delivery day.",
-                "role": "system"
-              },
-              {
-                "content": "Hi, could you check order 1042 for me?",
-                "role": "user"
-              },
-              {
-                "role": "assistant",
-                "tool_calls": [
-                  {
-                    "function": {
-                      "arguments": "{\"order_id\":\"1042\"}",
-                      "name": "lookup_order"
-                    },
-                    "id": "call_ThLD0enkAFrFk7EcZVLFKRvh",
-                    "type": "function"
-                  }
-                ]
-              },
-              {
-                "content": "{\"order_id\":\"1042\",\"status\":\"in_transit\",\"delivery\":\"Friday\"}",
-                "role": "tool",
-                "tool_call_id": "call_ThLD0enkAFrFk7EcZVLFKRvh"
-              }
-            ],
-            "model": "gpt-4.1-nano",
-            "parallel_tool_calls": true,
-            "stream": true,
-            "stream_options": {
-              "include_usage": true
-            },
-            "tool_choice": "auto",
-            "tools": [
-              {
-                "function": {
-                  "description": "Look up an order delivery status.",
-                  "name": "lookup_order",
-                  "parameters": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "order_id": {
-                        "type": "string"
-                      }
-                    },
-                    "required": ["order_id"],
-                    "type": "object"
-                  }
-                },
-                "type": "function"
-              }
-            ]
-          }
-        },
-        "headers": {},
-        "method": "POST",
-        "url": "https://api.openai.com/v1/chat/completions"
-      },
-      "response": {
-        "body": {
-          "chunks": [
-            "data: {\"id\":\"chatcmpl-EWxPr0jV0ul1QEAgihHGXxlleYYC7\",\"object\":\"chat.completion.chunk\",\"created\":1791523599,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"6A5IzVrI\"}",
-            "data: {\"id\":\"chatcmpl-EWxPr0jV0ul1QEAgihHGXxlleYYC7\",\"object\":\"chat.completion.chunk\",\"created\":1791523599,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Your\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"xiz4Pv\"}",
-            "data: {\"id\":\"chatcmpl-EWxPr0jV0ul1QEAgihHGXxlleYYC7\",\"object\":\"chat.completion.chunk\",\"created\":1791523599,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" order\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"WEvj\"}",
-            "data: {\"id\":\"chatcmpl-EWxPr0jV0ul1QEAgihHGXxlleYYC7\",\"object\":\"chat.completion.chunk\",\"created\":1791523599,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" \"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"nMhI62PK3\"}",
-            "data: {\"id\":\"chatcmpl-EWxPr0jV0ul1QEAgihHGXxlleYYC7\",\"object\":\"chat.completion.chunk\",\"created\":1791523599,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"104\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"aO66CZX\"}",
-            "data: {\"id\":\"chatcmpl-EWxPr0jV0ul1QEAgihHGXxlleYYC7\",\"object\":\"chat.completion.chunk\",\"created\":1791523599,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"2\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"Mm0eSeGHD\"}",
-            "data: {\"id\":\"chatcmpl-EWxPr0jV0ul1QEAgihHGXxlleYYC7\",\"object\":\"chat.completion.chunk\",\"created\":1791523599,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" will\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"VjuwT\"}",
-            "data: {\"id\":\"chatcmpl-EWxPr0jV0ul1QEAgihHGXxlleYYC7\",\"object\":\"chat.completion.chunk\",\"created\":1791523599,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" be\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"GK4M4vi\"}",
-            "data: {\"id\":\"chatcmpl-EWxPr0jV0ul1QEAgihHGXxlleYYC7\",\"object\":\"chat.completion.chunk\",\"created\":1791523599,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" delivered\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"\"}",
-            "data: {\"id\":\"chatcmpl-EWxPr0jV0ul1QEAgihHGXxlleYYC7\",\"object\":\"chat.completion.chunk\",\"created\":1791523599,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" on\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"BPTbgyz\"}",
-            "data: {\"id\":\"chatcmpl-EWxPr0jV0ul1QEAgihHGXxlleYYC7\",\"object\":\"chat.completion.chunk\",\"created\":1791523599,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" Friday\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"nDa\"}",
-            "data: {\"id\":\"chatcmpl-EWxPr0jV0ul1QEAgihHGXxlleYYC7\",\"object\":\"chat.completion.chunk\",\"created\":1791523599,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\".\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"Ym1Ibo7Co\"}",
-            "data: {\"id\":\"chatcmpl-EWxPr0jV0ul1QEAgihHGXxlleYYC7\",\"object\":\"chat.completion.chunk\",\"created\":1791523599,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":null,\"obfuscation\":\"OKne\"}",
-            "data: {\"id\":\"chatcmpl-EWxPr0jV0ul1QEAgihHGXxlleYYC7\",\"object\":\"chat.completion.chunk\",\"created\":1791523599,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[],\"usage\":{\"prompt_tokens\":125,\"completion_tokens\":12,\"total_tokens\":137,\"prompt_tokens_details\":{\"cached_tokens\":0,\"audio_tokens\":0},\"completion_tokens_details\":{\"reasoning_tokens\":0,\"audio_tokens\":0,\"accepted_prediction_tokens\":0,\"rejected_prediction_tokens\":0}},\"obfuscation\":\"avKEjsT\"}",
-            "data: [DONE]"
-          ],
-          "kind": "sse"
-        },
-        "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
-          "alt-svc": "h3=\":443\"; ma=86400",
-          "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a47af8c17817ead2-ORD",
-          "content-type": "text/event-stream; charset=utf-8",
-          "date": "Fri, 09 Oct 2026 05:26:39 GMT",
-          "openai-organization": "braintrust-data",
-          "openai-processing-ms": "190",
-          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
-          "openai-version": "2020-10-01",
-          "server": "cloudflare",
-          "set-cookie": "[REDACTED]",
-          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-          "x-content-type-options": "nosniff",
-          "x-openai-proxy-wasm": "v0.1",
-          "x-ratelimit-limit-requests": "30000",
-          "x-ratelimit-limit-tokens": "150000000",
-          "x-ratelimit-remaining-requests": "29998",
-          "x-ratelimit-remaining-tokens": "149999835",
-          "x-ratelimit-reset-requests": "4ms",
-          "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "req_7e3d2ad2b0aa49a0a1aa6b660ba03ca6"
+          "x-request-id": "req_f097a0ac14e94aa6a8b80d270298da32"
         },
         "status": 200
       }
@@ -215,7 +98,7 @@
       "callIndex": 0,
       "id": "ca41920661a27eb5",
       "matchKey": "GET api.openai.com/v1/models",
-      "recordedAt": "2026-10-09T05:26:40.018Z",
+      "recordedAt": "2026-10-27T18:42:33.247Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -230,18 +113,60 @@
           "value": {
             "data": [
               {
+                "created": 1706048358,
+                "id": "gpt-3.5-turbo-0125",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1772654062,
+                "id": "gpt-5.4-2026-03-05",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1754426384,
+                "id": "gpt-5-nano",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-12-11"
+              },
+              {
+                "created": 1773451123,
+                "id": "gpt-5.4-mini",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1742251791,
+                "id": "o1-pro",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1762988221,
+                "id": "gpt-5.1-codex",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-07-23"
+              },
+              {
                 "created": 1681940951,
                 "id": "tts-1",
                 "object": "model",
                 "owned_by": "openai-internal",
-                "shutdown_date": null
+                "shutdown_date": "2027-01-06"
               },
               {
                 "created": 1754425928,
                 "id": "gpt-5-mini",
                 "object": "model",
                 "owned_by": "system",
-                "shutdown_date": null
+                "shutdown_date": "2026-12-11"
               },
               {
                 "created": 1754425867,
@@ -249,69 +174,6 @@
                 "object": "model",
                 "owned_by": "system",
                 "shutdown_date": "2026-12-11"
-              },
-              {
-                "created": 1712601677,
-                "id": "gpt-4-turbo-2024-04-09",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": "2026-10-23"
-              },
-              {
-                "created": 1782254706,
-                "id": "gpt-realtime-2.1-mini",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
-              },
-              {
-                "created": 1756271773,
-                "id": "gpt-realtime-2025-08-28",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
-              },
-              {
-                "created": 1687882411,
-                "id": "gpt-4",
-                "object": "model",
-                "owned_by": "openai",
-                "shutdown_date": "2026-10-23"
-              },
-              {
-                "created": 1699046015,
-                "id": "tts-1-hd",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
-              },
-              {
-                "created": 1771461469,
-                "id": "gpt-realtime-1.5",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
-              },
-              {
-                "created": 1756271701,
-                "id": "gpt-realtime",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": "2027-01-20"
-              },
-              {
-                "created": 1765343983,
-                "id": "gpt-5.2-pro",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
-              },
-              {
-                "created": 1754073306,
-                "id": "gpt-5-chat-latest",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": "2026-07-23"
               },
               {
                 "created": 1732734466,
@@ -342,144 +204,137 @@
                 "shutdown_date": null
               },
               {
-                "created": 1754075360,
-                "id": "gpt-5-2025-08-07",
+                "created": 1712601677,
+                "id": "gpt-4-turbo-2024-04-09",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1782254706,
+                "id": "gpt-realtime-2.1-mini",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1756271773,
+                "id": "gpt-realtime-2025-08-28",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2027-01-20"
+              },
+              {
+                "created": 1687882411,
+                "id": "gpt-4",
+                "object": "model",
+                "owned_by": "openai",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1699046015,
+                "id": "tts-1-hd",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2027-01-06"
+              },
+              {
+                "created": 1771461469,
+                "id": "gpt-realtime-1.5",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1756271701,
+                "id": "gpt-realtime",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2027-01-20"
+              },
+              {
+                "created": 1765343983,
+                "id": "gpt-5.2-pro",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1754073306,
+                "id": "gpt-5-chat-latest",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-07-23"
+              },
+              {
+                "created": 1750865219,
+                "id": "o3-deep-research-2025-06-26",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-07-23"
+              },
+              {
+                "created": 1744133506,
+                "id": "o4-mini-2025-04-16",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1739331543,
+                "id": "gpt-4o-2024-11-20",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2027-01-14"
+              },
+              {
+                "created": 1762800673,
+                "id": "gpt-5.1",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2027-04-01"
+              },
+              {
+                "created": 1677532384,
+                "id": "whisper-1",
+                "object": "model",
+                "owned_by": "openai-internal",
+                "shutdown_date": "2027-02-26"
+              },
+              {
+                "created": 1759469822,
+                "id": "gpt-5-pro",
                 "object": "model",
                 "owned_by": "system",
                 "shutdown_date": "2026-12-11"
               },
               {
-                "created": 1699053241,
-                "id": "tts-1-1106",
+                "created": 1778012060,
+                "id": "gpt-realtime-whisper",
                 "object": "model",
                 "owned_by": "system",
                 "shutdown_date": null
               },
               {
-                "created": 1776894470,
-                "id": "gpt-5.5-pro-2026-04-23",
+                "created": 1776894349,
+                "id": "gpt-5.5-pro",
                 "object": "model",
                 "owned_by": "system",
                 "shutdown_date": null
               },
               {
-                "created": 1759512137,
-                "id": "gpt-audio-mini-2025-10-06",
+                "created": 1756256146,
+                "id": "gpt-audio-2025-08-28",
                 "object": "model",
                 "owned_by": "system",
-                "shutdown_date": "2026-07-23"
+                "shutdown_date": "2027-01-20"
               },
               {
-                "created": 1765343959,
-                "id": "gpt-5.2-pro-2025-12-11",
+                "created": 1765610545,
+                "id": "gpt-4o-mini-transcribe-2025-03-20",
                 "object": "model",
                 "owned_by": "system",
-                "shutdown_date": null
-              },
-              {
-                "created": 1706048358,
-                "id": "gpt-3.5-turbo-0125",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": "2026-10-23"
-              },
-              {
-                "created": 1772654062,
-                "id": "gpt-5.4-2026-03-05",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
-              },
-              {
-                "created": 1754426384,
-                "id": "gpt-5-nano",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
-              },
-              {
-                "created": 1773451123,
-                "id": "gpt-5.4-mini",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
-              },
-              {
-                "created": 1742251791,
-                "id": "o1-pro",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": "2026-10-23"
-              },
-              {
-                "created": 1762988221,
-                "id": "gpt-5.1-codex",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": "2026-07-23"
-              },
-              {
-                "created": 1744321707,
-                "id": "gpt-4.1-nano",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": "2026-10-23"
-              },
-              {
-                "created": 1776399795,
-                "id": "gpt-image-2",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
-              },
-              {
-                "created": 1683758102,
-                "id": "gpt-3.5-turbo-16k",
-                "object": "model",
-                "owned_by": "openai-internal",
-                "shutdown_date": null
-              },
-              {
-                "created": 1671217299,
-                "id": "text-embedding-ada-002",
-                "object": "model",
-                "owned_by": "openai-internal",
-                "shutdown_date": null
-              },
-              {
-                "created": 1782254687,
-                "id": "gpt-realtime-2.1",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
-              },
-              {
-                "created": 1744316542,
-                "id": "gpt-4.1",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
-              },
-              {
-                "created": 1776824847,
-                "id": "gpt-5.5",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
-              },
-              {
-                "created": 1762547951,
-                "id": "gpt-5.1-chat-latest",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": "2026-07-23"
-              },
-              {
-                "created": 1715367049,
-                "id": "gpt-4o",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
+                "shutdown_date": "2027-01-20"
               },
               {
                 "created": 1778006032,
@@ -503,137 +358,11 @@
                 "shutdown_date": null
               },
               {
-                "created": 1698959748,
-                "id": "gpt-3.5-turbo-1106",
+                "created": 1754075360,
+                "id": "gpt-5-2025-08-07",
                 "object": "model",
                 "owned_by": "system",
-                "shutdown_date": "2026-09-28"
-              },
-              {
-                "created": 1765610731,
-                "id": "gpt-4o-mini-tts-2025-03-20",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": "2026-07-23"
-              },
-              {
-                "created": 1765313051,
-                "id": "gpt-5.2",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
-              },
-              {
-                "created": 1773450837,
-                "id": "gpt-5.4-nano-2026-03-17",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
-              },
-              {
-                "created": 1734375816,
-                "id": "o1",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": "2026-10-23"
-              },
-              {
-                "created": 1776894349,
-                "id": "gpt-5.5-pro",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
-              },
-              {
-                "created": 1756256146,
-                "id": "gpt-audio-2025-08-28",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
-              },
-              {
-                "created": 1765610545,
-                "id": "gpt-4o-mini-transcribe-2025-03-20",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": "2027-01-20"
-              },
-              {
-                "created": 1750865219,
-                "id": "o3-deep-research-2025-06-26",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": "2026-07-23"
-              },
-              {
-                "created": 1744133506,
-                "id": "o4-mini-2025-04-16",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": "2026-10-23"
-              },
-              {
-                "created": 1739331543,
-                "id": "gpt-4o-2024-11-20",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
-              },
-              {
-                "created": 1762800673,
-                "id": "gpt-5.1",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
-              },
-              {
-                "created": 1677532384,
-                "id": "whisper-1",
-                "object": "model",
-                "owned_by": "openai-internal",
-                "shutdown_date": "2027-02-26"
-              },
-              {
-                "created": 1759469822,
-                "id": "gpt-5-pro",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
-              },
-              {
-                "created": 1778012060,
-                "id": "gpt-realtime-whisper",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
-              },
-              {
-                "created": 1759517133,
-                "id": "gpt-realtime-mini",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": "2027-01-20"
-              },
-              {
-                "created": 1758845821,
-                "id": "gpt-image-1-mini",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": "2026-12-01"
-              },
-              {
-                "created": 1782228459,
-                "id": "gpt-5.6-terra",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
-              },
-              {
-                "created": 1694122472,
-                "id": "gpt-3.5-turbo-instruct-0914",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
+                "shutdown_date": "2026-12-11"
               },
               {
                 "created": 1749166761,
@@ -692,22 +421,36 @@
                 "shutdown_date": null
               },
               {
-                "created": 1788563162,
-                "id": "gpt-image-2.5-sunburst",
+                "created": 1765610407,
+                "id": "gpt-4o-mini-transcribe-2025-12-15",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2027-02-26"
+              },
+              {
+                "created": 1699053241,
+                "id": "tts-1-1106",
                 "object": "model",
                 "owned_by": "system",
                 "shutdown_date": null
               },
               {
-                "created": 1788851006,
-                "id": "gpt-image-2.5-flare-2026-09-08",
+                "created": 1776894470,
+                "id": "gpt-5.5-pro-2026-04-23",
                 "object": "model",
                 "owned_by": "system",
                 "shutdown_date": null
               },
               {
-                "created": 1788889407,
-                "id": "gpt-live-1",
+                "created": 1759512137,
+                "id": "gpt-audio-mini-2025-10-06",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-07-23"
+              },
+              {
+                "created": 1765343959,
+                "id": "gpt-5.2-pro-2025-12-11",
                 "object": "model",
                 "owned_by": "system",
                 "shutdown_date": null
@@ -724,14 +467,14 @@
                 "id": "o3-pro",
                 "object": "model",
                 "owned_by": "system",
-                "shutdown_date": null
+                "shutdown_date": "2026-12-11"
               },
               {
                 "created": 1722814719,
                 "id": "gpt-4o-2024-08-06",
                 "object": "model",
                 "owned_by": "system",
-                "shutdown_date": null
+                "shutdown_date": "2027-01-14"
               },
               {
                 "created": 1749840121,
@@ -745,7 +488,7 @@
                 "id": "o3",
                 "object": "model",
                 "owned_by": "system",
-                "shutdown_date": null
+                "shutdown_date": "2026-12-11"
               },
               {
                 "created": 1741390858,
@@ -776,13 +519,6 @@
                 "shutdown_date": "2026-12-01"
               },
               {
-                "created": 1765610407,
-                "id": "gpt-4o-mini-transcribe-2025-12-15",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
-              },
-              {
                 "created": 1750798887,
                 "id": "gpt-4o-transcribe-diarize",
                 "object": "model",
@@ -808,32 +544,11 @@
                 "id": "gpt-5.1-2025-11-13",
                 "object": "model",
                 "owned_by": "system",
-                "shutdown_date": null
+                "shutdown_date": "2027-04-01"
               },
               {
                 "created": 1771905534,
                 "id": "gpt-4o-search-preview",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
-              },
-              {
-                "created": 1744318173,
-                "id": "gpt-4.1-mini",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
-              },
-              {
-                "created": 1721172741,
-                "id": "gpt-4o-mini",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
-              },
-              {
-                "created": 1787853604,
-                "id": "gpt-6-astra",
                 "object": "model",
                 "owned_by": "system",
                 "shutdown_date": null
@@ -853,6 +568,69 @@
                 "shutdown_date": null
               },
               {
+                "created": 1744321707,
+                "id": "gpt-4.1-nano",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1776399795,
+                "id": "gpt-image-2",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1683758102,
+                "id": "gpt-3.5-turbo-16k",
+                "object": "model",
+                "owned_by": "openai-internal",
+                "shutdown_date": null
+              },
+              {
+                "created": 1671217299,
+                "id": "text-embedding-ada-002",
+                "object": "model",
+                "owned_by": "openai-internal",
+                "shutdown_date": null
+              },
+              {
+                "created": 1782254687,
+                "id": "gpt-realtime-2.1",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1744316542,
+                "id": "gpt-4.1",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2027-01-14"
+              },
+              {
+                "created": 1776824847,
+                "id": "gpt-5.5",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1744318173,
+                "id": "gpt-4.1-mini",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2027-01-14"
+              },
+              {
+                "created": 1721172741,
+                "id": "gpt-4o-mini",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2027-01-14"
+              },
+              {
                 "created": 1759708615,
                 "id": "sora-2",
                 "object": "model",
@@ -867,11 +645,67 @@
                 "shutdown_date": "2026-10-23"
               },
               {
+                "created": 1759517133,
+                "id": "gpt-realtime-mini",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2027-01-20"
+              },
+              {
+                "created": 1758845821,
+                "id": "gpt-image-1-mini",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-12-01"
+              },
+              {
+                "created": 1782228459,
+                "id": "gpt-5.6-terra",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1694122472,
+                "id": "gpt-3.5-turbo-instruct-0914",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1772659601,
+                "id": "gpt-5.4-pro",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1742403959,
+                "id": "gpt-4o-mini-tts",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2027-01-06"
+              },
+              {
+                "created": 1765612007,
+                "id": "gpt-realtime-mini-2025-12-15",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2027-01-20"
+              },
+              {
+                "created": 1763671532,
+                "id": "gpt-5.1-codex-max",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-07-23"
+              },
+              {
                 "created": 1754425777,
                 "id": "gpt-5",
                 "object": "model",
                 "owned_by": "system",
-                "shutdown_date": null
+                "shutdown_date": "2026-12-11"
               },
               {
                 "created": 1742068596,
@@ -934,7 +768,7 @@
                 "id": "gpt-4o-mini-tts-2025-12-15",
                 "object": "model",
                 "owned_by": "system",
-                "shutdown_date": null
+                "shutdown_date": "2027-01-06"
               },
               {
                 "created": 1745517030,
@@ -955,11 +789,25 @@
                 "id": "gpt-5.3-codex",
                 "object": "model",
                 "owned_by": "system",
-                "shutdown_date": null
+                "shutdown_date": "2027-04-01"
               },
               {
                 "created": 1760043960,
                 "id": "gpt-5-search-api-2025-10-14",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1762547951,
+                "id": "gpt-5.1-chat-latest",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-07-23"
+              },
+              {
+                "created": 1699053533,
+                "id": "tts-1-hd-1106",
                 "object": "model",
                 "owned_by": "system",
                 "shutdown_date": null
@@ -976,11 +824,39 @@
                 "id": "gpt-4o-mini-2024-07-18",
                 "object": "model",
                 "owned_by": "system",
-                "shutdown_date": null
+                "shutdown_date": "2027-01-14"
               },
               {
                 "created": 1744315746,
                 "id": "gpt-4.1-2025-04-14",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2027-01-14"
+              },
+              {
+                "created": 1749685485,
+                "id": "o4-mini-deep-research",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-07-23"
+              },
+              {
+                "created": 1772691852,
+                "id": "gpt-5.4",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1771905621,
+                "id": "gpt-4o-search-preview-2025-03-11",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-07-23"
+              },
+              {
+                "created": 1705948997,
+                "id": "text-embedding-3-small",
                 "object": "model",
                 "owned_by": "system",
                 "shutdown_date": null
@@ -1021,88 +897,46 @@
                 "shutdown_date": "2026-07-23"
               },
               {
-                "created": 1772659601,
-                "id": "gpt-5.4-pro",
+                "created": 1715367049,
+                "id": "gpt-4o",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2027-01-14"
+              },
+              {
+                "created": 1698959748,
+                "id": "gpt-3.5-turbo-1106",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-09-28"
+              },
+              {
+                "created": 1765610731,
+                "id": "gpt-4o-mini-tts-2025-03-20",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2027-01-06"
+              },
+              {
+                "created": 1765313051,
+                "id": "gpt-5.2",
                 "object": "model",
                 "owned_by": "system",
                 "shutdown_date": null
               },
               {
-                "created": 1742403959,
-                "id": "gpt-4o-mini-tts",
+                "created": 1773450837,
+                "id": "gpt-5.4-nano-2026-03-17",
                 "object": "model",
                 "owned_by": "system",
-                "shutdown_date": null
+                "shutdown_date": "2027-04-01"
               },
               {
-                "created": 1765612007,
-                "id": "gpt-realtime-mini-2025-12-15",
+                "created": 1734375816,
+                "id": "o1",
                 "object": "model",
                 "owned_by": "system",
-                "shutdown_date": null
-              },
-              {
-                "created": 1763671532,
-                "id": "gpt-5.1-codex-max",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": "2026-07-23"
-              },
-              {
-                "created": 1788563147,
-                "id": "gpt-image-2.5-flare",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
-              },
-              {
-                "created": 1788851010,
-                "id": "gpt-image-2.5-sunburst-2026-09-08",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
-              },
-              {
-                "created": 1699053533,
-                "id": "tts-1-hd-1106",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
-              },
-              {
-                "created": 1789406102,
-                "id": "gpt-6-luna",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
-              },
-              {
-                "created": 1749685485,
-                "id": "o4-mini-deep-research",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": "2026-07-23"
-              },
-              {
-                "created": 1772691852,
-                "id": "gpt-5.4",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
-              },
-              {
-                "created": 1771905621,
-                "id": "gpt-4o-search-preview-2025-03-11",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": "2026-07-23"
-              },
-              {
-                "created": 1705948997,
-                "id": "text-embedding-3-small",
-                "object": "model",
-                "owned_by": "system",
-                "shutdown_date": null
+                "shutdown_date": "2026-10-23"
               },
               {
                 "created": 1772236571,
@@ -1140,6 +974,20 @@
                 "shutdown_date": "2026-10-23"
               },
               {
+                "created": 1789406102,
+                "id": "gpt-6-luna",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1788851010,
+                "id": "gpt-image-2.5-sunburst-2026-09-08",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
                 "created": 1692634301,
                 "id": "davinci-002",
                 "object": "model",
@@ -1151,7 +999,7 @@
                 "id": "gpt-5.4-nano",
                 "object": "model",
                 "owned_by": "system",
-                "shutdown_date": null
+                "shutdown_date": "2027-04-01"
               },
               {
                 "created": 1737146383,
@@ -1172,7 +1020,7 @@
                 "id": "gpt-audio-mini-2025-12-15",
                 "object": "model",
                 "owned_by": "system",
-                "shutdown_date": null
+                "shutdown_date": "2027-01-20"
               },
               {
                 "created": 1742251504,
@@ -1180,6 +1028,27 @@
                 "object": "model",
                 "owned_by": "system",
                 "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1788563147,
+                "id": "gpt-image-2.5-flare",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1791908780,
+                "id": "gpt-6.1-terra",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1788889407,
+                "id": "gpt-live-1",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
               },
               {
                 "created": 1759512027,
@@ -1191,6 +1060,13 @@
               {
                 "created": 1744317547,
                 "id": "gpt-4.1-mini-2025-04-14",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2027-01-14"
+              },
+              {
+                "created": 1787853604,
+                "id": "gpt-6-astra",
                 "object": "model",
                 "owned_by": "system",
                 "shutdown_date": null
@@ -1205,6 +1081,20 @@
               {
                 "created": 1789405937,
                 "id": "gpt-6-sol",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1788563162,
+                "id": "gpt-image-2.5-sunburst",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1788851006,
+                "id": "gpt-image-2.5-flare-2026-09-08",
                 "object": "model",
                 "owned_by": "system",
                 "shutdown_date": null
@@ -1231,29 +1121,8 @@
                 "shutdown_date": "2026-10-23"
               },
               {
-                "created": 1716362623,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9Rac3tn7:ckpt-step-100",
-                "object": "model",
-                "owned_by": "braintrust-data",
-                "shutdown_date": "2026-10-23"
-              },
-              {
-                "created": 1716336302,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RTlWxd8",
-                "object": "model",
-                "owned_by": "braintrust-data",
-                "shutdown_date": "2026-10-23"
-              },
-              {
                 "created": 1716331110,
                 "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RSPmgCG",
-                "object": "model",
-                "owned_by": "braintrust-data",
-                "shutdown_date": "2026-10-23"
-              },
-              {
-                "created": 1713573280,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9FsyeDN8:ckpt-step-90",
                 "object": "model",
                 "owned_by": "braintrust-data",
                 "shutdown_date": "2026-10-23"
@@ -1266,6 +1135,20 @@
                 "shutdown_date": "2026-10-23"
               },
               {
+                "created": 1716336302,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RTlWxd8",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716362623,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9Rac3tn7:ckpt-step-100",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
                 "created": 1715853777,
                 "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9PSErO3L",
                 "object": "model",
@@ -1273,22 +1156,15 @@
                 "shutdown_date": "2026-10-23"
               },
               {
+                "created": 1713573280,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9FsyeDN8:ckpt-step-90",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
                 "created": 1716336351,
                 "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RTmJmyv:ckpt-step-380",
-                "object": "model",
-                "owned_by": "braintrust-data",
-                "shutdown_date": "2026-10-23"
-              },
-              {
-                "created": 1713573280,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9FsyefHN:ckpt-step-80",
-                "object": "model",
-                "owned_by": "braintrust-data",
-                "shutdown_date": "2026-10-23"
-              },
-              {
-                "created": 1716330832,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RSLIfx5:ckpt-step-200",
                 "object": "model",
                 "owned_by": "braintrust-data",
                 "shutdown_date": "2026-10-23"
@@ -1308,13 +1184,6 @@
                 "shutdown_date": "2026-10-23"
               },
               {
-                "created": 1716339335,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RUYRGkA",
-                "object": "model",
-                "owned_by": "braintrust-data",
-                "shutdown_date": "2026-10-23"
-              },
-              {
                 "created": 1716336369,
                 "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RTmbj09:ckpt-step-195",
                 "object": "model",
@@ -1322,8 +1191,22 @@
                 "shutdown_date": "2026-10-23"
               },
               {
-                "created": 1716362498,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9Raa2l8E:ckpt-step-200",
+                "created": 1716339335,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RUYRGkA",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1713573280,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9FsyefHN:ckpt-step-80",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716330832,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RSLIfx5:ckpt-step-200",
                 "object": "model",
                 "owned_by": "braintrust-data",
                 "shutdown_date": "2026-10-23"
@@ -1331,6 +1214,20 @@
               {
                 "created": 1716329335,
                 "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RRx9tlM:ckpt-step-80",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1715851953,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9PRlRlAx:ckpt-step-50",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716362498,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9Raa2Nvc:ckpt-step-100",
                 "object": "model",
                 "owned_by": "braintrust-data",
                 "shutdown_date": "2026-10-23"
@@ -1350,15 +1247,22 @@
                 "shutdown_date": "2026-10-23"
               },
               {
-                "created": 1716362498,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9Raa2Nvc:ckpt-step-100",
+                "created": 1716339335,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RUYRyU2:ckpt-step-380",
                 "object": "model",
                 "owned_by": "braintrust-data",
                 "shutdown_date": "2026-10-23"
               },
               {
-                "created": 1716332961,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RStddp1:ckpt-step-360",
+                "created": 1716362498,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9Raa2l8E:ckpt-step-200",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716331343,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RSTXyGA:ckpt-step-100",
                 "object": "model",
                 "owned_by": "braintrust-data",
                 "shutdown_date": "2026-10-23"
@@ -1371,13 +1275,6 @@
                 "shutdown_date": "2026-10-23"
               },
               {
-                "created": 1716333026,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RSug5k7:ckpt-step-190",
-                "object": "model",
-                "owned_by": "braintrust-data",
-                "shutdown_date": "2026-10-23"
-              },
-              {
                 "created": 1716329249,
                 "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RRvli2C:ckpt-step-50",
                 "object": "model",
@@ -1385,15 +1282,36 @@
                 "shutdown_date": "2026-10-23"
               },
               {
-                "created": 1716339335,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RUYQIXR:ckpt-step-190",
+                "created": 1716331343,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RSTX8uk:ckpt-step-200",
                 "object": "model",
                 "owned_by": "braintrust-data",
                 "shutdown_date": "2026-10-23"
               },
               {
-                "created": 1716336351,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RTmJgKG:ckpt-step-190",
+                "created": 1716332961,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RStddp1:ckpt-step-360",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716333026,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RSug5k7:ckpt-step-190",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716362498,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9Raa2g2t",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716329241,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RRvdpE3:ckpt-step-60",
                 "object": "model",
                 "owned_by": "braintrust-data",
                 "shutdown_date": "2026-10-23"
@@ -1407,56 +1325,28 @@
               },
               {
                 "created": 1716331110,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RSPl83J:ckpt-step-100",
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RSPmMV8:ckpt-step-200",
                 "object": "model",
                 "owned_by": "braintrust-data",
                 "shutdown_date": "2026-10-23"
               },
               {
-                "created": 1715851953,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9PRlRlAx:ckpt-step-50",
+                "created": 1716332961,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RStdzjn:ckpt-step-180",
                 "object": "model",
                 "owned_by": "braintrust-data",
                 "shutdown_date": "2026-10-23"
               },
               {
                 "created": 1716339335,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RUYRyU2:ckpt-step-380",
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RUYQIXR:ckpt-step-190",
                 "object": "model",
                 "owned_by": "braintrust-data",
                 "shutdown_date": "2026-10-23"
               },
               {
-                "created": 1716336302,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RTlWVsA:ckpt-step-190",
-                "object": "model",
-                "owned_by": "braintrust-data",
-                "shutdown_date": "2026-10-23"
-              },
-              {
-                "created": 1716362498,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9Raa2g2t",
-                "object": "model",
-                "owned_by": "braintrust-data",
-                "shutdown_date": "2026-10-23"
-              },
-              {
-                "created": 1716333026,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RSug3RE",
-                "object": "model",
-                "owned_by": "braintrust-data",
-                "shutdown_date": "2026-10-23"
-              },
-              {
-                "created": 1716331343,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RSTXyGA:ckpt-step-100",
-                "object": "model",
-                "owned_by": "braintrust-data",
-                "shutdown_date": "2026-10-23"
-              },
-              {
-                "created": 1716331110,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RSPmMV8:ckpt-step-200",
+                "created": 1716329335,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RRx9zAB",
                 "object": "model",
                 "owned_by": "braintrust-data",
                 "shutdown_date": "2026-10-23"
@@ -1469,22 +1359,29 @@
                 "shutdown_date": "2026-10-23"
               },
               {
-                "created": 1716331343,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RSTX8uk:ckpt-step-200",
+                "created": 1716362078,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RaTGp2X",
                 "object": "model",
                 "owned_by": "braintrust-data",
                 "shutdown_date": "2026-10-23"
               },
               {
-                "created": 1715851953,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9PRlRzXm:ckpt-step-100",
+                "created": 1716333026,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RSug3RE",
                 "object": "model",
                 "owned_by": "braintrust-data",
                 "shutdown_date": "2026-10-23"
               },
               {
-                "created": 1716329241,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RRvdKr0:ckpt-step-80",
+                "created": 1716331110,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RSPl83J:ckpt-step-100",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716336351,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RTmJgKG:ckpt-step-190",
                 "object": "model",
                 "owned_by": "braintrust-data",
                 "shutdown_date": "2026-10-23"
@@ -1504,22 +1401,29 @@
                 "shutdown_date": "2026-10-23"
               },
               {
-                "created": 1716332961,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RStdzjn:ckpt-step-180",
+                "created": 1716329241,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RRvdrgP",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716336302,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RTlWVsA:ckpt-step-190",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1715851953,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9PRlRzXm:ckpt-step-100",
                 "object": "model",
                 "owned_by": "braintrust-data",
                 "shutdown_date": "2026-10-23"
               },
               {
                 "created": 1716329241,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RRvdpE3:ckpt-step-60",
-                "object": "model",
-                "owned_by": "braintrust-data",
-                "shutdown_date": "2026-10-23"
-              },
-              {
-                "created": 1716332961,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RStdh74",
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RRvdKr0:ckpt-step-80",
                 "object": "model",
                 "owned_by": "braintrust-data",
                 "shutdown_date": "2026-10-23"
@@ -1532,29 +1436,8 @@
                 "shutdown_date": "2026-10-23"
               },
               {
-                "created": 1715853272,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9PS6irTy",
-                "object": "model",
-                "owned_by": "braintrust-data",
-                "shutdown_date": "2026-10-23"
-              },
-              {
-                "created": 1716333026,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RSugSr3:ckpt-step-380",
-                "object": "model",
-                "owned_by": "braintrust-data",
-                "shutdown_date": "2026-10-23"
-              },
-              {
-                "created": 1716329335,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RRx9zAB",
-                "object": "model",
-                "owned_by": "braintrust-data",
-                "shutdown_date": "2026-10-23"
-              },
-              {
-                "created": 1716362078,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RaTGp2X",
+                "created": 1716336369,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RTmbTRx",
                 "object": "model",
                 "owned_by": "braintrust-data",
                 "shutdown_date": "2026-10-23"
@@ -1567,15 +1450,8 @@
                 "shutdown_date": "2026-10-23"
               },
               {
-                "created": 1716336369,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RTmbTRx",
-                "object": "model",
-                "owned_by": "braintrust-data",
-                "shutdown_date": "2026-10-23"
-              },
-              {
-                "created": 1716329241,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RRvdrgP",
+                "created": 1716332961,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RStdh74",
                 "object": "model",
                 "owned_by": "braintrust-data",
                 "shutdown_date": "2026-10-23"
@@ -1595,15 +1471,8 @@
                 "shutdown_date": "2026-10-23"
               },
               {
-                "created": 1716362078,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RaTGd3R:ckpt-step-100",
-                "object": "model",
-                "owned_by": "braintrust-data",
-                "shutdown_date": "2026-10-23"
-              },
-              {
-                "created": 1716362623,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9Rac3rrg",
+                "created": 1716333026,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RSugSr3:ckpt-step-380",
                 "object": "model",
                 "owned_by": "braintrust-data",
                 "shutdown_date": "2026-10-23"
@@ -1611,6 +1480,34 @@
               {
                 "created": 1716329335,
                 "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RRx9HqT:ckpt-step-90",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716362623,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9Rac38GU:ckpt-step-50",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716362078,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RaTGd3R:ckpt-step-100",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1715853272,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9PS6irTy",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716362623,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9Rac3rrg",
                 "object": "model",
                 "owned_by": "braintrust-data",
                 "shutdown_date": "2026-10-23"
@@ -1628,13 +1525,6 @@
                 "object": "model",
                 "owned_by": "braintrust-data",
                 "shutdown_date": "2026-10-23"
-              },
-              {
-                "created": 1716362623,
-                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9Rac38GU:ckpt-step-50",
-                "object": "model",
-                "owned_by": "braintrust-data",
-                "shutdown_date": "2026-10-23"
               }
             ],
             "object": "list"
@@ -1644,81 +1534,27 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a47af8be3f96ead2-ORD",
+          "cf-ray": "a513d7583a79e829-ORD",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Fri, 09 Oct 2026 05:26:39 GMT",
-          "openai-processing-ms": "826",
+          "date": "Tue, 27 Oct 2026 18:42:33 GMT",
+          "openai-processing-ms": "743",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
           "x-content-type-options": "nosniff",
           "x-openai-proxy-wasm": "v0.1",
-          "x-request-id": "52d69c17-e803-48f1-9be9-18bf3adb9da6"
+          "x-request-id": "22b5ca43-1037-4c3d-b506-9efa7657e19e"
         },
         "status": 200
       }
     },
     {
-      "callIndex": 0,
-      "id": "f66584bd01355bcc",
-      "matchKey": "POST api.openai.com/v1/audio/speech",
-      "recordedAt": "2026-10-09T05:26:41.094Z",
-      "request": {
-        "body": {
-          "kind": "json",
-          "value": {
-            "input": "Your order 1042 will be delivered on Friday.",
-            "model": "gpt-4o-mini-tts",
-            "response_format": "pcm",
-            "speed": 1,
-            "voice": "alloy"
-          }
-        },
-        "headers": {},
-        "method": "POST",
-        "url": "https://api.openai.com/v1/audio/speech"
-      },
-      "response": {
-        "body": {
-          "contentType": "audio/pcm",
-          "kind": "binary",
-          "path": "livekit-v1-recovered.cassette.blobs/7d9135323fd455ab76a579b0ab4d73793ea36e7689e5bf7e1a713ad5c1129ea5.bin",
-          "sha256": "7d9135323fd455ab76a579b0ab4d73793ea36e7689e5bf7e1a713ad5c1129ea5"
-        },
-        "headers": {
-          "access-control-expose-headers": "X-Request-ID, CF-Ray",
-          "alt-svc": "h3=\":443\"; ma=86400",
-          "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a47af8c3ddc2ead2-ORD",
-          "content-type": "audio/pcm",
-          "date": "Fri, 09 Oct 2026 05:26:40 GMT",
-          "openai-organization": "braintrust-data",
-          "openai-processing-ms": "457",
-          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
-          "openai-version": "2020-10-01",
-          "server": "cloudflare",
-          "set-cookie": "[REDACTED]",
-          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-          "x-content-type-options": "nosniff",
-          "x-openai-proxy-wasm": "v0.1",
-          "x-ratelimit-limit-requests": "30000",
-          "x-ratelimit-limit-tokens": "150000000",
-          "x-ratelimit-remaining-requests": "29999",
-          "x-ratelimit-remaining-tokens": "149999990",
-          "x-ratelimit-reset-requests": "2ms",
-          "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "req_61ff41ba52da40f892e55a27a6fa35ee"
-        },
-        "status": 200
-      }
-    },
-    {
-      "callIndex": 2,
-      "id": "bd047d72a7407d20",
+      "callIndex": 1,
+      "id": "ce8be59777de9805",
       "matchKey": "POST api.openai.com/v1/chat/completions",
-      "recordedAt": "2026-10-09T05:26:41.802Z",
+      "recordedAt": "2026-10-27T18:42:33.963Z",
       "request": {
         "body": {
           "kind": "json",
@@ -1740,7 +1576,7 @@
                       "arguments": "{\"order_id\":\"1042\"}",
                       "name": "lookup_order"
                     },
-                    "id": "call_ThLD0enkAFrFk7EcZVLFKRvh",
+                    "id": "call_cXcKMTItfBdrhF4Z8qbPon7C",
                     "type": "function"
                   }
                 ]
@@ -1748,10 +1584,181 @@
               {
                 "content": "{\"order_id\":\"1042\",\"status\":\"in_transit\",\"delivery\":\"Friday\"}",
                 "role": "tool",
-                "tool_call_id": "call_ThLD0enkAFrFk7EcZVLFKRvh"
+                "tool_call_id": "call_cXcKMTItfBdrhF4Z8qbPon7C"
+              }
+            ],
+            "model": "gpt-5.4-nano",
+            "parallel_tool_calls": true,
+            "stream": true,
+            "stream_options": {
+              "include_usage": true
+            },
+            "tool_choice": "auto",
+            "tools": [
+              {
+                "function": {
+                  "description": "Look up an order delivery status.",
+                  "name": "lookup_order",
+                  "parameters": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "order_id": {
+                        "type": "string"
+                      }
+                    },
+                    "required": ["order_id"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "data: {\"id\":\"chatcmpl-EdgPx5Yzc5l69Vwsbeo2x6321cPXi\",\"object\":\"chat.completion.chunk\",\"created\":1793126553,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"Oat\"}",
+            "data: {\"id\":\"chatcmpl-EdgPx5Yzc5l69Vwsbeo2x6321cPXi\",\"object\":\"chat.completion.chunk\",\"created\":1793126553,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Order\"},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"\"}",
+            "data: {\"id\":\"chatcmpl-EdgPx5Yzc5l69Vwsbeo2x6321cPXi\",\"object\":\"chat.completion.chunk\",\"created\":1793126553,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"content\":\" \"},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"IH5X\"}",
+            "data: {\"id\":\"chatcmpl-EdgPx5Yzc5l69Vwsbeo2x6321cPXi\",\"object\":\"chat.completion.chunk\",\"created\":1793126553,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"content\":\"104\"},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"9I\"}",
+            "data: {\"id\":\"chatcmpl-EdgPx5Yzc5l69Vwsbeo2x6321cPXi\",\"object\":\"chat.completion.chunk\",\"created\":1793126553,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"content\":\"2\"},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"tNlk\"}",
+            "data: {\"id\":\"chatcmpl-EdgPx5Yzc5l69Vwsbeo2x6321cPXi\",\"object\":\"chat.completion.chunk\",\"created\":1793126553,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"content\":\" is\"},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"8x\"}",
+            "data: {\"id\":\"chatcmpl-EdgPx5Yzc5l69Vwsbeo2x6321cPXi\",\"object\":\"chat.completion.chunk\",\"created\":1793126553,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"content\":\" scheduled\"},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"Oj4ZfmwE4px\"}",
+            "data: {\"id\":\"chatcmpl-EdgPx5Yzc5l69Vwsbeo2x6321cPXi\",\"object\":\"chat.completion.chunk\",\"created\":1793126553,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"content\":\" for\"},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"E\"}",
+            "data: {\"id\":\"chatcmpl-EdgPx5Yzc5l69Vwsbeo2x6321cPXi\",\"object\":\"chat.completion.chunk\",\"created\":1793126553,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"content\":\" delivery\"},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"yv45QXlP9Zzu\"}",
+            "data: {\"id\":\"chatcmpl-EdgPx5Yzc5l69Vwsbeo2x6321cPXi\",\"object\":\"chat.completion.chunk\",\"created\":1793126553,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"content\":\" on\"},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"pl\"}",
+            "data: {\"id\":\"chatcmpl-EdgPx5Yzc5l69Vwsbeo2x6321cPXi\",\"object\":\"chat.completion.chunk\",\"created\":1793126553,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"content\":\" Friday\"},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"U1b2HpsNtjZ1yL\"}",
+            "data: {\"id\":\"chatcmpl-EdgPx5Yzc5l69Vwsbeo2x6321cPXi\",\"object\":\"chat.completion.chunk\",\"created\":1793126553,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"content\":\".\"},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"xABl\"}",
+            "data: {\"id\":\"chatcmpl-EdgPx5Yzc5l69Vwsbeo2x6321cPXi\",\"object\":\"chat.completion.chunk\",\"created\":1793126553,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}],\"usage\":null,\"obfuscation\":\"vN2gTrKhr52IBwN\"}",
+            "data: {\"id\":\"chatcmpl-EdgPx5Yzc5l69Vwsbeo2x6321cPXi\",\"object\":\"chat.completion.chunk\",\"created\":1793126553,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[],\"usage\":{\"prompt_tokens\":215,\"completion_tokens\":14,\"total_tokens\":229,\"prompt_tokens_details\":{\"cached_tokens\":0,\"audio_tokens\":0},\"completion_tokens_details\":{\"reasoning_tokens\":0,\"audio_tokens\":0,\"accepted_prediction_tokens\":0,\"rejected_prediction_tokens\":0}},\"obfuscation\":\"6J\"}",
+            "data: [DONE]"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a513d75ddf40e829-ORD",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Tue, 27 Oct 2026 18:42:33 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "407",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "x-content-type-options": "nosniff",
+          "x-openai-proxy-wasm": "v0.1",
+          "x-ratelimit-limit-requests": "30000",
+          "x-ratelimit-limit-tokens": "180000000",
+          "x-ratelimit-remaining-requests": "29999",
+          "x-ratelimit-remaining-tokens": "179999934",
+          "x-ratelimit-reset-requests": "2ms",
+          "x-ratelimit-reset-tokens": "0s",
+          "x-request-id": "req_edf1509c464444ee97751c5e805c460a"
+        },
+        "status": 200
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "faa80f410c82ae17",
+      "matchKey": "POST api.openai.com/v1/audio/speech",
+      "recordedAt": "2026-10-27T18:42:35.471Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "input": "Order 1042 is scheduled for delivery on Friday.",
+            "model": "gpt-4o-mini-tts",
+            "response_format": "pcm",
+            "speed": 1,
+            "voice": "alloy"
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/audio/speech"
+      },
+      "response": {
+        "body": {
+          "contentType": "audio/pcm",
+          "kind": "binary",
+          "path": "livekit-v1-recovered.cassette.blobs/f556e8b152eca397a6d642a8d0100d7d533612e2ff79f172712141e866c4e771.bin",
+          "sha256": "f556e8b152eca397a6d642a8d0100d7d533612e2ff79f172712141e866c4e771"
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a513d7628b4be829-ORD",
+          "content-type": "audio/pcm",
+          "date": "Tue, 27 Oct 2026 18:42:34 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "391",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "x-content-type-options": "nosniff",
+          "x-openai-proxy-wasm": "v0.1",
+          "x-ratelimit-limit-requests": "30000",
+          "x-ratelimit-limit-tokens": "150000000",
+          "x-ratelimit-remaining-requests": "29999",
+          "x-ratelimit-remaining-tokens": "149999990",
+          "x-ratelimit-reset-requests": "2ms",
+          "x-ratelimit-reset-tokens": "0s",
+          "x-request-id": "req_4092aef8fcd54744aee8fe7ae23e1a70"
+        },
+        "status": 200
+      }
+    },
+    {
+      "callIndex": 2,
+      "id": "ad228a1dec1d3354",
+      "matchKey": "POST api.openai.com/v1/chat/completions",
+      "recordedAt": "2026-10-27T18:42:36.344Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "messages": [
+              {
+                "content": "You help customers check orders. Always call lookup_order when an order number is supplied. Answer with one short sentence giving the delivery day.",
+                "role": "system"
               },
               {
-                "content": "Your order 1042 will be delivered on Friday.",
+                "content": "Hi, could you check order 1042 for me?",
+                "role": "user"
+              },
+              {
+                "role": "assistant",
+                "tool_calls": [
+                  {
+                    "function": {
+                      "arguments": "{\"order_id\":\"1042\"}",
+                      "name": "lookup_order"
+                    },
+                    "id": "call_cXcKMTItfBdrhF4Z8qbPon7C",
+                    "type": "function"
+                  }
+                ]
+              },
+              {
+                "content": "{\"order_id\":\"1042\",\"status\":\"in_transit\",\"delivery\":\"Friday\"}",
+                "role": "tool",
+                "tool_call_id": "call_cXcKMTItfBdrhF4Z8qbPon7C"
+              },
+              {
+                "content": "Order 1042 is scheduled for delivery on Friday.",
                 "role": "assistant"
               },
               {
@@ -1759,7 +1766,7 @@
                 "role": "user"
               }
             ],
-            "model": "gpt-4.1-nano",
+            "model": "gpt-5.4-nano",
             "parallel_tool_calls": true,
             "stream": true,
             "stream_options": {
@@ -1793,20 +1800,16 @@
       "response": {
         "body": {
           "chunks": [
-            "data: {\"id\":\"chatcmpl-EWxPtJdfplAU1ympVdsF0yzLIWquO\",\"object\":\"chat.completion.chunk\",\"created\":1791523601,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"d6io50CK\"}",
-            "data: {\"id\":\"chatcmpl-EWxPtJdfplAU1ympVdsF0yzLIWquO\",\"object\":\"chat.completion.chunk\",\"created\":1791523601,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Your\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"cvFQ15\"}",
-            "data: {\"id\":\"chatcmpl-EWxPtJdfplAU1ympVdsF0yzLIWquO\",\"object\":\"chat.completion.chunk\",\"created\":1791523601,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" order\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"4RDq\"}",
-            "data: {\"id\":\"chatcmpl-EWxPtJdfplAU1ympVdsF0yzLIWquO\",\"object\":\"chat.completion.chunk\",\"created\":1791523601,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" \"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"7a6bGlX8F\"}",
-            "data: {\"id\":\"chatcmpl-EWxPtJdfplAU1ympVdsF0yzLIWquO\",\"object\":\"chat.completion.chunk\",\"created\":1791523601,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"104\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"TlRHOXG\"}",
-            "data: {\"id\":\"chatcmpl-EWxPtJdfplAU1ympVdsF0yzLIWquO\",\"object\":\"chat.completion.chunk\",\"created\":1791523601,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"2\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"Oc7bhjoQU\"}",
-            "data: {\"id\":\"chatcmpl-EWxPtJdfplAU1ympVdsF0yzLIWquO\",\"object\":\"chat.completion.chunk\",\"created\":1791523601,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" will\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"MxjEC\"}",
-            "data: {\"id\":\"chatcmpl-EWxPtJdfplAU1ympVdsF0yzLIWquO\",\"object\":\"chat.completion.chunk\",\"created\":1791523601,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" be\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"8EEinwo\"}",
-            "data: {\"id\":\"chatcmpl-EWxPtJdfplAU1ympVdsF0yzLIWquO\",\"object\":\"chat.completion.chunk\",\"created\":1791523601,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" delivered\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"\"}",
-            "data: {\"id\":\"chatcmpl-EWxPtJdfplAU1ympVdsF0yzLIWquO\",\"object\":\"chat.completion.chunk\",\"created\":1791523601,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" on\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"WQa5Ewz\"}",
-            "data: {\"id\":\"chatcmpl-EWxPtJdfplAU1ympVdsF0yzLIWquO\",\"object\":\"chat.completion.chunk\",\"created\":1791523601,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" Friday\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"6hn\"}",
-            "data: {\"id\":\"chatcmpl-EWxPtJdfplAU1ympVdsF0yzLIWquO\",\"object\":\"chat.completion.chunk\",\"created\":1791523601,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\".\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"Ip5G4AdoT\"}",
-            "data: {\"id\":\"chatcmpl-EWxPtJdfplAU1ympVdsF0yzLIWquO\",\"object\":\"chat.completion.chunk\",\"created\":1791523601,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":null,\"obfuscation\":\"bK72\"}",
-            "data: {\"id\":\"chatcmpl-EWxPtJdfplAU1ympVdsF0yzLIWquO\",\"object\":\"chat.completion.chunk\",\"created\":1791523601,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[],\"usage\":{\"prompt_tokens\":152,\"completion_tokens\":12,\"total_tokens\":164,\"prompt_tokens_details\":{\"cached_tokens\":0,\"audio_tokens\":0},\"completion_tokens_details\":{\"reasoning_tokens\":0,\"audio_tokens\":0,\"accepted_prediction_tokens\":0,\"rejected_prediction_tokens\":0}},\"obfuscation\":\"ohaJCZ6\"}",
+            "data: {\"id\":\"chatcmpl-EdgQ0K3sq8zAkZnIULoGUxTTD6alg\",\"object\":\"chat.completion.chunk\",\"created\":1793126556,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"index\":0,\"id\":\"call_oq3Sp64wL5Cdxf1N4nriLQgA\",\"type\":\"function\",\"function\":{\"name\":\"lookup_order\",\"arguments\":\"\"}}],\"refusal\":null},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"swqe6d0zUmYUv\"}",
+            "data: {\"id\":\"chatcmpl-EdgQ0K3sq8zAkZnIULoGUxTTD6alg\",\"object\":\"chat.completion.chunk\",\"created\":1793126556,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"{\\\"\"}}]},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"v2kWO6ql\"}",
+            "data: {\"id\":\"chatcmpl-EdgQ0K3sq8zAkZnIULoGUxTTD6alg\",\"object\":\"chat.completion.chunk\",\"created\":1793126556,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"order\"}}]},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"6q8bqH\"}",
+            "data: {\"id\":\"chatcmpl-EdgQ0K3sq8zAkZnIULoGUxTTD6alg\",\"object\":\"chat.completion.chunk\",\"created\":1793126556,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"_id\"}}]},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"lqOVZF3n\"}",
+            "data: {\"id\":\"chatcmpl-EdgQ0K3sq8zAkZnIULoGUxTTD6alg\",\"object\":\"chat.completion.chunk\",\"created\":1793126556,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"\\\":\\\"\"}}]},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"7dNrah\"}",
+            "data: {\"id\":\"chatcmpl-EdgQ0K3sq8zAkZnIULoGUxTTD6alg\",\"object\":\"chat.completion.chunk\",\"created\":1793126556,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"104\"}}]},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"qR78RrQ9\"}",
+            "data: {\"id\":\"chatcmpl-EdgQ0K3sq8zAkZnIULoGUxTTD6alg\",\"object\":\"chat.completion.chunk\",\"created\":1793126556,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"2\"}}]},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"vAoGNktovv\"}",
+            "data: {\"id\":\"chatcmpl-EdgQ0K3sq8zAkZnIULoGUxTTD6alg\",\"object\":\"chat.completion.chunk\",\"created\":1793126556,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"\\\"}\"}}]},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"wuJdKWW9\"}",
+            "data: {\"id\":\"chatcmpl-EdgQ0K3sq8zAkZnIULoGUxTTD6alg\",\"object\":\"chat.completion.chunk\",\"created\":1793126556,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"tool_calls\"}],\"usage\":null,\"obfuscation\":\"8pa7vbU0k\"}",
+            "data: {\"id\":\"chatcmpl-EdgQ0K3sq8zAkZnIULoGUxTTD6alg\",\"object\":\"chat.completion.chunk\",\"created\":1793126556,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[],\"usage\":{\"prompt_tokens\":244,\"completion_tokens\":19,\"total_tokens\":263,\"prompt_tokens_details\":{\"cached_tokens\":0,\"audio_tokens\":0},\"completion_tokens_details\":{\"reasoning_tokens\":0,\"audio_tokens\":0,\"accepted_prediction_tokens\":0,\"rejected_prediction_tokens\":0}},\"obfuscation\":\"vY\"}",
             "data: [DONE]"
           ],
           "kind": "sse"
@@ -1815,11 +1818,11 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a47af8cc7b0bead2-ORD",
+          "cf-ray": "a513d76d5c6ee829-ORD",
           "content-type": "text/event-stream; charset=utf-8",
-          "date": "Fri, 09 Oct 2026 05:26:41 GMT",
+          "date": "Tue, 27 Oct 2026 18:42:36 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "184",
+          "openai-processing-ms": "382",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -1828,26 +1831,160 @@
           "x-content-type-options": "nosniff",
           "x-openai-proxy-wasm": "v0.1",
           "x-ratelimit-limit-requests": "30000",
-          "x-ratelimit-limit-tokens": "150000000",
-          "x-ratelimit-remaining-requests": "29997",
-          "x-ratelimit-remaining-tokens": "149999675",
-          "x-ratelimit-reset-requests": "6ms",
+          "x-ratelimit-limit-tokens": "180000000",
+          "x-ratelimit-remaining-requests": "29999",
+          "x-ratelimit-remaining-tokens": "179999910",
+          "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "req_98e3dde609ee40ddb28bb7372211c3ff"
+          "x-request-id": "req_ca6b45d1f23946118119a6f513aff541"
+        },
+        "status": 200
+      }
+    },
+    {
+      "callIndex": 3,
+      "id": "db7f37b537bfba29",
+      "matchKey": "POST api.openai.com/v1/chat/completions",
+      "recordedAt": "2026-10-27T18:42:36.955Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "messages": [
+              {
+                "content": "You help customers check orders. Always call lookup_order when an order number is supplied. Answer with one short sentence giving the delivery day.",
+                "role": "system"
+              },
+              {
+                "content": "Hi, could you check order 1042 for me?",
+                "role": "user"
+              },
+              {
+                "role": "assistant",
+                "tool_calls": [
+                  {
+                    "function": {
+                      "arguments": "{\"order_id\":\"1042\"}",
+                      "name": "lookup_order"
+                    },
+                    "id": "call_cXcKMTItfBdrhF4Z8qbPon7C",
+                    "type": "function"
+                  }
+                ]
+              },
+              {
+                "content": "{\"order_id\":\"1042\",\"status\":\"in_transit\",\"delivery\":\"Friday\"}",
+                "role": "tool",
+                "tool_call_id": "call_cXcKMTItfBdrhF4Z8qbPon7C"
+              },
+              {
+                "content": "Order 1042 is scheduled for delivery on Friday.",
+                "role": "assistant"
+              },
+              {
+                "content": "Sorry, please repeat the delivery day.",
+                "role": "user"
+              },
+              {
+                "role": "assistant",
+                "tool_calls": [
+                  {
+                    "function": {
+                      "arguments": "{\"order_id\":\"1042\"}",
+                      "name": "lookup_order"
+                    },
+                    "id": "call_oq3Sp64wL5Cdxf1N4nriLQgA",
+                    "type": "function"
+                  }
+                ]
+              },
+              {
+                "content": "{\"order_id\":\"1042\",\"status\":\"in_transit\",\"delivery\":\"Friday\"}",
+                "role": "tool",
+                "tool_call_id": "call_oq3Sp64wL5Cdxf1N4nriLQgA"
+              }
+            ],
+            "model": "gpt-5.4-nano",
+            "parallel_tool_calls": true,
+            "stream": true,
+            "stream_options": {
+              "include_usage": true
+            },
+            "tool_choice": "auto",
+            "tools": [
+              {
+                "function": {
+                  "description": "Look up an order delivery status.",
+                  "name": "lookup_order",
+                  "parameters": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "order_id": {
+                        "type": "string"
+                      }
+                    },
+                    "required": ["order_id"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "data: {\"id\":\"chatcmpl-EdgQ0y5MOpTg949KlsU3SJl11SNvJ\",\"object\":\"chat.completion.chunk\",\"created\":1793126556,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"lDk\"}",
+            "data: {\"id\":\"chatcmpl-EdgQ0y5MOpTg949KlsU3SJl11SNvJ\",\"object\":\"chat.completion.chunk\",\"created\":1793126556,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Friday\"},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"6NVOq4vOebiighb\"}",
+            "data: {\"id\":\"chatcmpl-EdgQ0y5MOpTg949KlsU3SJl11SNvJ\",\"object\":\"chat.completion.chunk\",\"created\":1793126556,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"content\":\".\"},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"3E0T\"}",
+            "data: {\"id\":\"chatcmpl-EdgQ0y5MOpTg949KlsU3SJl11SNvJ\",\"object\":\"chat.completion.chunk\",\"created\":1793126556,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}],\"usage\":null,\"obfuscation\":\"l9hZQ3ihIp0VAQG\"}",
+            "data: {\"id\":\"chatcmpl-EdgQ0y5MOpTg949KlsU3SJl11SNvJ\",\"object\":\"chat.completion.chunk\",\"created\":1793126556,\"model\":\"gpt-5.4-nano-2026-03-17\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[],\"usage\":{\"prompt_tokens\":291,\"completion_tokens\":5,\"total_tokens\":296,\"prompt_tokens_details\":{\"cached_tokens\":0,\"audio_tokens\":0},\"completion_tokens_details\":{\"reasoning_tokens\":0,\"audio_tokens\":0,\"accepted_prediction_tokens\":0,\"rejected_prediction_tokens\":0}},\"obfuscation\":\"a4a\"}",
+            "data: [DONE]"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a513d7716c02e829-ORD",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Tue, 27 Oct 2026 18:42:36 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "379",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "x-content-type-options": "nosniff",
+          "x-openai-proxy-wasm": "v0.1",
+          "x-ratelimit-limit-requests": "30000",
+          "x-ratelimit-limit-tokens": "180000000",
+          "x-ratelimit-remaining-requests": "29999",
+          "x-ratelimit-remaining-tokens": "179999892",
+          "x-ratelimit-reset-requests": "2ms",
+          "x-ratelimit-reset-tokens": "0s",
+          "x-request-id": "req_38790c3b1f494eb1926900d6a9702cce"
         },
         "status": 200
       }
     },
     {
       "callIndex": 1,
-      "id": "e0307b5406d3d559",
+      "id": "bc4d6d11ee5dde30",
       "matchKey": "POST api.openai.com/v1/audio/speech",
-      "recordedAt": "2026-10-09T05:26:42.715Z",
+      "recordedAt": "2026-10-27T18:42:37.828Z",
       "request": {
         "body": {
           "kind": "json",
           "value": {
-            "input": "Your order 1042 will be delivered on Friday.",
+            "input": "Friday.",
             "model": "gpt-4o-mini-tts",
             "response_format": "pcm",
             "speed": 1,
@@ -1861,19 +1998,18 @@
       "response": {
         "body": {
           "contentType": "audio/pcm",
-          "kind": "binary",
-          "path": "livekit-v1-recovered.cassette.blobs/f1169e6c46641ae906aa1ee671f48e65f4fad3b69a895d1cb172e3ff62565f02.bin",
-          "sha256": "f1169e6c46641ae906aa1ee671f48e65f4fad3b69a895d1cb172e3ff62565f02"
+          "kind": "base64",
+          "value": "FwAXABcAFgAZABcAGQAYABkAGQAYABkAGQAXABkAGQAYABsAGQAaABwAGAAbABoAGAAbABoAGwAcABoAGgAZABkAGQAaABcAGAAZABkAGQAaABkAFwAaABkAGAAaABoAFwAaABoAGAAaABgAFwAYABoAGQAcABwAHAAdABwAGgAdABoAHAAdABwAHQAeABwAGwAeAB0AGwAdAB0AGwAeAB4AHgAdAB4AHQAcAB0AHAAbAB4AGgAbAB4AGwAdACAAGwAgAB0AHQAfABwAHgAfAB8AHwAgACAAHwAjACEAIQAkACAAIQAhAB4AIAAfAB4AHgAfAB8AHgAgAB4AHgAgAB0AIAAfACAAIAAfACEAIQAhACEAIQAjACEAIQAiACEAIQAhACIAIQAhACMAIQAjACMAIQAjACMAIgAjACUAIgAkACQAIwAkACUAJAAlACQAJQAlACYAJQAlACYAJQAmACYAJgAmACYAJgAmACYAJwAnACYAJgAnACYAJgAoACUAJgAnACUAJwAmACYAJQAoACYAJQAoACUAJgAmACUAJwAmACYAJwAmACYAJwAlACcAJgAmACYAJwAmACYAJwAlACgAJgAnACcAJQAoACYAJwAnACgAJgAnACkAJgAoACcAJgApACcAJwAoACcAJwApACgAJwApACYAKQAoACcAKQAnACgAJwApACgAKAAqACcAKAAoACcAKQAoACkAKAAoACoAJwApACkAKAApACkAKAApACoAKAApACkAKAApACoAKAAoACoAJwApACkAJwAqACgAKAAqACgAKAApACgAKAApACgAJwAoACgAJwAoACkAJgAoACkAJQAoACgAJgAoACgAJgAoACkAJQApACgAJgApACYAJwAnACcAJgAnACgAJQAoACYAJgAoACYAJwAnACYAJgAmACYAJgAmACYAJQAnACUAJgAmACQAJwAlACUAJQAnACUAIwAnACQAJQAlACQAJQAlACQAJAAlACQAJQAjACQAJAAjACMAJQAkACIAJAAiACQAIwAjACMAJAAhACMAIgAiACQAIAAlACEAIgAmAB4AJAAiACAAJAAhACIAIgAiACIAIQAjACAAIgAhACEAJAAgACIAIgAhACQAHwAkACIAIAAjACEAIgAiACMAIAAjACMAIQAkACIAIgAjACIAIgAkACIAIwAkACMAJAAjACQAJAAkACUAJAAmACQAJAAmACQAJQAmACQAJAAmACUAJQAmACUAJAAmACUAJQAlACYAJQAmACYAJQAnACYAJQAnACUAJwAnACYAJwAnACcAJQAoACYAJgAnACUAKAAmACcAJgAnACcAJwAnACcAKAAmACgAJwAoACgAKAAoACgAKAAoACgAKQAoACgAKQApACgAKAAqACgAKQAqACgAKQAqACgAKgAqACkAKgArACkAKgAsACkAKwArACkAKgArACkAKgArACoAKQAsACkAKgAqACkAKgApACoAKQAqACoAKQAqACkAKQAoACkAKQApACgAKAAoACkAJwAoACgAJgAqACYAJgArACQAJwAoACUAKAAmACcAJgAoACYAJQAoACQAJgAmACQAJgAlACUAIwAkACUAIwAlACMAJAAjACQAIwAiACQAIQAjACMAIgAhACMAIgAiACIAIQAjACEAIgAhACEAIQAhACIAIAAhACEAIAAhACAAIAAgACEAHwAgAB8AIAAfACAAHgAhACAAHQAgAB8AHQAhAB4AHgAgABwAIAAeAB8AHwAeACAAHQAfAB0AHwAeAB0AHwAcAB8AHAAeAB4AHAAgABwAHQAdAB0AHQAdAB8AHAAfAB0AHgAfAB0AHgAdAB8AHAAfAB4AHAAhAB0AHQAgAB0AHgAeAB4AHwAeACAAHQAhAB8AHgAhAB8AIAAfACAAIQAgACAAIAAhACEAIQAhACIAHwAkACEAIwAjACIAJAAiACQAIQAlACQAIgAmACQAJAAlACYAJQAkACYAJgAkACkAJQAlACoAJAAnACgAJQAoACcAJgAoACcAJgApACcAKAAoACcAKAAoACgAJwAnACkAJwApACcAKAAqACcAKQApACgAKAAqACcAKAAoACgAKAApACYAKQAnACcAKQAnACgAKAAoACcAKAApACcAKQAmACgAKAAoACgAKAAnACgAKAAoACgAJwApACcAJwApACcAKAAnACgAJwAnACcAJwAoACcAJwAnACcAJwAmACgAJgAnACYAJwAmACYAJwAlACgAJQAmACcAJQAnACMAJgAkACUAJQAkACYAIwAjACUAIwAjACUAIgAkACQAIwAkACQAIQAkACQAIAAkACMAIQAjACMAHwAlACEAIAAkAB8AIwAhACEAIAAiACEAHwAjAB0AIQAiABwAIgAfAB4AHwAgAB4AHwAgAB0AIAAfABwAIQAdAB8AHQAeACAAHAAdAB4AHAAcAB4AGwAdAB0AHAAcABwAHAAcABwAGwAcABsAGwAcABoAHAAaABsAGgAbABsAGgAbABoAGgAaABsAGQAaABsAGQAaABoAGgAZABsAGQAaABoAGAAbABkAGgAZABkAGQAYABkAGAAZABgAGAAYABgAGAAZABcAGAAZABcAGQAXABgAGAAYABcAGgAYABkAGgAYABoAGAAaABkAGAAbABgAGgAbABkAGwAbABoAHAAaABwAGgAcABsAGwAdABwAGwAcAB0AGwAeABsAHQAdABwAHQAdABwAHQAdAB0AHAAeABsAHQAdABwAHQAdAB0AHAAdAB0AHAAeAB0AHQAeAB0AHgAdAB4AHQAdAB8AHQAfAB4AHQAfAB0AHgAgAB0AHgAfAB4AHgAfAB0AHwAdAB8AHQAeAB4AHQAeAB4AHQAgAB0AHQAfABwAHgAfAB0AHgAdAB4AHQAeAB0AHQAdABwAHgAdAB0AHQAdABwAHQAdABwAHQAaAB0AHAAbAB0AGgAcAB0AGgAcABoAGgAbABoAGwAaABoAGgAaABoAGAAaABoAGAAZABkAGAAZABgAGAAZABgAGAAZABgAGAAYABgAFwAYABkAFgAaABYAFwAZABUAGAAXABYAFwAXABcAFgAYABUAFgAYABYAFgAXABUAFwAWABYAFwAWABcAFQAVABgAFQAXABYAFAAYABUAFQAYABMAFwAWABUAFgAWABUAFAAYABMAFgAXABMAGAAUABUAFQAVABYAFQAWABUAFgAUABYAFQAUABYAFQAUABUAFQATABcAFAATABcAEQAVABUAEgAVABMAFAAUABQAEwAVABQAEwAVABIAFAAUABQAEwAUABUAEgAUABQAEwAUABUAEgAVABUAEwAVABQAFAAUABQAFAAVABQAFQAUABUAFAAXABMAFQAWABQAFAAWABcAEgAXABYAEwAWABYAFAAUABcAFgAUABcAFQAUABcAFQAWABgAFQAWABcAFQAXABcAFQAZABYAFgAZABYAFgAYABgAFQAYABcAFwAYABcAFwAZABcAGAAYABcAGAAZABcAGAAZABgAGAAaABcAGQAaABcAGgAYABkAGQAYABkAGgAaABgAGAAbABgAGQAaABoAGgAZABsAGQAbABsAGQAcABsAGgAcAB0AGgAcAB4AGgAdAB0AHQAcAB0AHQAeAB0AHQAeAB0AHgAdAB4AHwAeAB4AHwAdAB8AHQAeAB8AHgAdAB8AHAAeAB8AHAAgABwAHQAeABsAHgAcAB4AGwAfABwAGwAgABoAHAAdABoAHAAcABoAHQAbABsAHQAZABwAGwAaABoAGwAZABoAGwAXABwAGQAaABkAGAAaABgAGQAYABsAFwAZABoAGAAZABkAGAAYABoAFwAZABkAFwAZABoAFwAaABgAGgAaABgAGwAYABoAGQAaABoAGgAbABkAGwAaABoAGwAbABwAGQAbAB0AGQAcABwAGgAdABwAGwAbAB0AGwAcABwAHQAbAB4AHAAbAB8AGwAbABwAGgAdABoAGwAdABsAGgAbABsAGgAbABoAGgAbABoAGQAZABwAFwAaABsAFgAaABgAGQAXABoAFgAZABsAEwAbABcAFwAaABYAGAAYABcAFwAYABgAFgAZABcAFgAYABcAFwAYABcAFgAZABcAGAAXABgAFgAZABcAFwAYABYAGAAYABcAGAAZABcAFQAZABYAGAAYABYAGAAXABgAFgAXABcAFwAWABgAFgAXABcAFwAXABcAFwAVABgAFQAXABcAFgAWABcAFQAWABkAEgAaABUAFQAaABIAFwAWABYAFwAVABgAFQAYABYAFQAYABYAFwAXABcAGAAWABgAFgAYABsAFAAaABkAFwAaABkAGAAaABsAFgAbABoAGAAbABkAGAAbABkAGgAbABsAGgAcABsAGwAdABsAHQAdABwAHQAfAB0AHAAeAB0AHQAfAB0AHgAeAB8AHQAgAB8AHQAgAB8AHgAfACAAHwAgACAAHwAhACIAHgAiACEAIQAhACQAIAAjACUAHwAlACMAIQAkACIAIwAiACUAIgAlACQAJQAlACQAJQAkACYAIwAoACYAJQAoACYAJQAoACcAJQApACUAKQAoACgAJwArACgAKAArACcAKQArACcAKQArACYAKgAtACYAKwArACcALQAoACoAKQAsACcAKgAqACkAKwAoACkAKQAqACkAKAAoACgAKQAoACgAKgAnACoAKAAnACkAJwApACUAJwAmACcAJgAlACcAIwApACMAIwAnACMAIwAmACIAJQAjACIAIgAjACAAIAAiAB4AIQAgAB0AHwAeAB0AHAAeABwAHgAeABwAHwAZAB0AHAAZAB0AGAAaABoAHAAVAB4AFgAZABkAFwAYABoAFwAWABkAFQAXABgAEwAXABUAFQAWABUAFQAVABgAEgAUABUAFAAUABcAEwAXABgAEQAXABYAFQAYABQAFwAXABUAGAAXABgAFwAWABoAFwAYABgAGgAXABgAHAAUABsAGQAVABwAFQAbABgAGgAXAB8AFwAbAB4AFgAfABoAHAAfABsAHQAdACAAFgAiABsAHAAeAB4AGwAiAB4AHwAgACIAHwAhACIAHQAmACIAIgAmACIAJQAlACQAJAAoACIAKgAnACMAKwAmACgAJwAsACUALQAnACkALAAlAC4AJwAqACsAKgArACsAKwAqADEAKQAsACwALgAqADAAKQAtADMAJgAwAC8ALAAyACwALAAzACwALAAxACsALwAvACoALQAwACsALgApACsALgAvACkALQAyACkAMgAtAC0AMgArAC4AKQAqACoAKwApACgAKwAmACsAKgAoACsALAApACsALAAsACsALwApAC8AKwAsACcAKAApACcAKgAnACsAJgAtACQAKgAnACoALAAqACwAKQApACoAKwAmACsAJQApACoAIQAhACgAGgAnAB0AKQApACMAKQAoACgALAAoACkALgAfACMAKAAbACcAHwAcACsAHgAeACUAIwAgAC0AHQAmACUAHwAgACIAFgAiAB8AGAAlABcAHwAbACMAFwAnACEAIgArABgALgAaACoAGQApABsAHwAhABQAHgAVABcAGQAeABkAHAAZABoAFQAfABoAGwAhAA8AIwASABsAFQAZABoAGAAQABgAGgAJABoADgAYABIAEQAWABAAEgAOAA4ADQAUAAUAEQAHAAUAEQAAABAABgALAAwADQAKABYACgAPABIADwACABkABAAUAAwADQAGABoAAAAQAA8ABQASABIADgAVABMADwASABMADwATAAsAFAAGABYABQASABAAEQAQABcAEAAQACIABwAiABEAEwAaABEAFgAZABwADAAoABMAHQAcABsAFgAlABAAIAAdAB4AIgAYACIAIwAYACgAHgAmACAAIwAVADIADAAuABEAJwAgABoAIgAgABkAIwAfAB8AJwAgAB0AMgAjAC0AKAAkACUAKAAWACgAIAAdACQAHAAdACUAHwAjADQAHQAvAC0ALgAzADEAKAAzACcAJgAqACEAHAAvABYALAAmACYALwApADcAKwA4AC0AKgAeACcAFQApABsAHwA7ABAALQAoACAALAAZACIAIAAZAB8AHQAYAB0AEQAGACAAIwAfACEAKgAgAC4AJQAYACoAGQAGACsAFQAUADEADgAnABQADQAaABcAGwAVABwAKAAgAC0AEwAVACUAGQAQACcAEAAOABgAAAAAABoA8P8WAAYAAQAJAA4A/P8ZAA0ABQAgAAkAFQAHAAwADQD+/xYA7f8UAPz/DAD//xIAAAAoAA8AHgApAAIAEAAVAP7/CgAKAPf////v//r/9/8EAPH/CAD7/xEACQAqABEAGgAlAB4AJAAbABIA+/8hAN7/AwADAMz/DgDn//P/IAAMABcAJgAQACUAJAD5/ysAHgD8/yUABwARAAQAGgATACEACwAMACgAAAAqABUAJwAhADEAEwAuABYAGgAPAAgACAALAB4AEQAsABoAEAAyADcAIgAuACEAAAAdAO//HAD6/xoAHAD+/xYAMgAKABUAJgADAB8AOwDx/z4AGQAYAEkAPAAAAF0ADwA3ADMACAA1AAAALwD7/zkAEgBOACkAVAAnADQAOwACAFMADgAnADoANgAqADkADQBSAC4AFQA5ABwAJwACAAIA5v/9/xsANABLADwARgACAGIAKAAwAFwABQA6APL/7//j/wsA4f8WAOf/7P86AP//SABVAHUAQgBrAEcAQwA8ACkAPQAEABcAAQALANX/vv/e/9r/EQAZACIADgBkADAAQgAcABwAGAARAAYAEAAVAPD/9P/4/+L/yv/n/zAA+/8PAAAAEgAqACQAPwA1ADUAGwBVACQATAD9/yUAyf/Y/9T/o//X/9H/DwD7/xsAw/9NACYANQAbACEAKgD0/+D/9P/H/6D/8P/X//f/8v8pAEEAawAHAAwAyv/i/6r/+v/u/xIAKAB6AOb/QwAIAPD/DgDi//L//v+//8v/BADr//n//P8DAPf/AAD+/87/FQDE/wYAGgACAPz/QQAcAEAAfQA+ADcAQgDi/9n/JgDR/5j/UwDd/0oATwDz/1QATQC8/wEACACV/yIA+f/3/x0A6/84ADcAHwBhAAAA8/8TAK//EQB0/+//LQDd/zYAUgAyAEUA/P8GAB0A4/9BAOb/5/8eALj/aQD5/8r/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UP9H/1T/OP8y/xv/Af8b/zT/Yv+L/4T/d/9L/y//MP9B/2T/af9y/1v/Sv9H/0f/VP9X/1D/O/89/0j/Rv9b/1z/XP9Z/2//d/+M/5n/mP+g/5b/jf+D/3D/Xv9i/1z/Zv96/4b/pf+d/6j/of+Z/5r/q//E/9v/+//8//v/8P/X/9L/1P/e//f/AQASAAYA8//e/6v/rP+z/8z/4//v/+P/1//d/+L/AwAVACgANAA/AEMARgBFACwAJwAuADYAXQBlAGAAOwAYAP3/GAA9AHIAkgCEAGwAOgAlACYARAB4AJoAuwC2AJwAfwBVAD8ARABQAH8AlACaAIsAXwBUADkAVgBrAIMApgC0ALoAtQCOAHsAXgBrAHcAiwCnAJgAogCQAGkAXAAtADMALwA9AE0ARgBNAEgASABZAFoAZQBkAGgAcAB3AH4AewBjAFQAOAAwAC0AOgBCAEAAOgAiABgAIwASACQAGAAHAAcAAwAAAAAA/P/v/+n/4v/Z/8//yv/E/8v/zP/O/8T/t/+u/6z/qv+z/7H/tf+//8H/y//N/8f/sf+b/4v/jP+c/67/vP+q/5P/Yv84/xr/F/8d/zb/Q/9J/0X/M/8f/xz/Hv8s/0j/Vv9p/3T/df9y/2D/UP89/zj/Mv88/0H/Pv89/zH/N/9C/1T/Yf9Y/0P/L/8X/zD/Rv95/5b/mP+W/3//ef9u/33/jv+h/8b/0v/c/9L/vf+q/5z/nP+3/87/8////wAA+f/k/+j/5v/4/xcALgBQAFIAUQBFADYANQA2AFEAaABtAHcAZQBGAEgAOwBLAGsAewCWAJgAlQCPAIEAiwCeALYA1ADhAOQA2QDSAMkAwgDLANIA3QDuAOsA6wDoANcA3gDyAPwAEgETAQMB9ADYANIA0ADZAOgA9AD/AAUBBQH/APcA8gDvAPAA+AABAQIBFQEbASIBIAEJAeoA1wDJANIA5QDoAOsA0gDFAKwApwC2AMIA2gDgAN0A1wDFAMEAugCvALYApwCnAJ4AjQCCAHYAYABjAGIAaQB2AGwAYwBVAEUATABTAGoAeQByAGQARQAxACwAMwBGAFYAWABMAD0ALQAgAB8AHAAZABYACwD9/+v/3f/W/9P/0v/X/9b/2//h/+P/4f/i/9r/1P/Y/9T/3v/X/9b/yv/H/77/uf+2/67/p/+e/5D/i/+O/5X/nv+o/6X/pP+i/5r/l/+b/5n/qP+u/7X/sv+x/6b/mf+N/33/cf9n/2n/bv90/3b/cf9h/07/P/82/zn/Q/9N/0j/P/8p/xb/Ev8L/xf/If8r/zP/Nv8y/yT/Fv8C//3+//4J/x3/JP8n/yP/GP8Q/wv///4D/wf/DP8R/xL/DP8F/wP/Bf8M/xL/Ev8T/wT//v71/vT++v4J/xf/Gv8c/xH/Ev8U/yr/Pv9Y/2n/dP94/3b/bv9l/2D/X/9z/4f/n/+u/6b/m/+E/3b/df+C/5r/r/++/8z/zv/f/+j/+P8FABAAIAApADwAPgBEAD4AOQA5ADEAMQAxAC0AOQA/AE4AXwB2AIQAnQCvALwAzADOAM4A1ADTAOIA8QD9AAYBCAEBAf0A/wD+AAUBAwEBARABEAEXARwBFgEgASABJwEwASwBMgE6ATgBPwE3AS8BLwExAT4BRgFMAUoBTAFLAVMBVQFWAVEBSAFHATkBOQEwASEBGwEFAQEB7ADhANYAyQDCAL0AsQCwAKwArACzALIAugC7AL4AwwDAAL8AuwCwALEAowCUAIkAcwBoAFkARgBAAC0AIAAaABEAEgARABEACwAFAAQA/f/7//j/8v/r/+P/2//Y/9X/0f/I/8D/rv+o/5z/l/+X/5X/lP+X/5H/jv+I/4X/gf+C/4b/hv+N/43/i/+H/3//ev95/3L/b/9t/2T/YP9X/07/Tf9H/0n/TP9H/1D/T/9P/1P/Uf9Y/13/Y/9u/2r/a/9p/2T/ZP9c/1r/Uv9X/1b/Wf9g/1j/Xf9Y/17/Zv9t/3H/bv9r/2n/Yf9e/2P/Y/9l/2j/ZP9l/2D/Yf9b/1T/U/9O/1P/T/9W/1n/Wf9Z/1z/W/9b/1b/U/9J/0X/Pf8w/zL/Mv87/0b/TP9X/1f/Uv9R/0f/Rf9M/07/XP9i/2n/bf9p/2//av9l/2T/Yf9l/2z/ef98/4r/iP+E/4f/ff96/4r/hv+S/4//gf+B/3b/ff+F/4z/lf+c/6L/qv+p/7P/s/+w/77/tv/B/8X/wv/D/77/t/+8/7j/vP/A/8D/xf/C/8P/yP/S/+b/8f/8////AAD//woADAAWACAAHwAmACAAHgAZABYAEwAXAB0AIgA5AEMAUwBeAGEAXABcAFIAUgBSAFYAWwBdAGIAYwBmAGIAZABqAGsAcwBzAHoAeQB+AHoA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FgAOAAkABAD+//7/9P/4//X/9f/7//f/+/8AAP//BAAGAAUACgAIAA0ADwAMAA8ACgAIAAMAAAD7//X/8v/s/+P/3f/X/9D/yv/G/8P/wf/C/8H/xP/F/8v/zv/Q/9j/2P/Y/93/3P/Y/9r/1f/V/9b/1P/R/8//zP/I/8T/wP++/7z/uv+//7v/u/++/7v/u/+4/7b/tP+0/7P/sf+y/7H/sP+w/63/r/+x/7T/tf+4/7r/vf+//8L/wP/C/8X/w//D/8P/v//C/77/vP+9/7n/u/+8/7r/vP+4/7j/uf++/77/wv/D/8n/yv/N/9P/0v/T/9T/0//U/9X/1P/Y/9X/2v/d/93/5P/k/+j/6v/s//L/8P/s/+3/6v/o/+n/5v/m/+j/6P/o/+r/6f/t//D/8v/8//3/AAADAAMABwAJAAwADQAMAAwADgANABAAEQAQABMADAANAAsACAAIAAUABAABAPz//P/3//j/+f/9/wAAAQAIAAwAEwAaAB0AIAAjACIAJQAgAB8AGAAXABMADwAOAAcAAwAEAAAAAAADAAAAAQABAAQABgAIAAgACAALAAcACAAGAAMAAgD/////+v/7//f/9//3//f//f/8/wIABQAGAAoADgALAA0ACQAGAAMAAAD5//f/8//y//L/8//3//n/+/8AAAEABQAJAA0ADgARABIAEwAVABEAEAANAAwACAAHAAYAAQAEAAIAAQAIAAMACAALAAsADwATABUAFgAZABkAGwAcABkAHAAdAB0AHAAeABwAHQAfAB8AIgAkACQAJQAoACUAJwAnACcAKAAmACcAIwAjACAAIQAfABwAHQAWABcAFwATABUAEgAQABIAEAAPABEADQAMAAoACAAHAAIAAgD8//z/+v/3//n/9v/2//b/+P/3//f/+v/3//n/+P/2//X/9f/1/+//8f/t/+n/6f/m/+X/5f/h/+L/4P/f/9//4v/h/+b/6v/n/+7/7//w//n/9//9////AAAFAAUABgAJAAcABwAIAAYABgACAAQAAAAEAAIAAgAFAAcACgAQABUAGAAfACQAKAAsADIANAA6ADsAPgBAAEAAQQBDAEEAQQBBAD8AQAA6ADsAOAA2ADcANQA1ADgAOQA6AD4AQABBAEYASABJAEoATQBKAEsASwBHAEkARQBFAEMAQwBEAEQAQgBGAEIARgBDAEIAQgA+AEAAPQA4ADoANQAxADIALQAuAC4AKwAvACsALwAtAC8ALwAuADEALgAxADIAMQAyADMAMAAxAC8AMQAuACsAKwArACcAKQAnACgAKgAqACsALQAuADAAMAAwADAALgAxADAALgAvAC0ALAAtACwALgAuAC4ALwAwAC4AMAAuACwALAAsACsAKAAnACgAIwAhACQAIgAeACEAIgAfACIAHwAfACMAHwAiACAAIgAgACAAHgAdAB0AGgAZABYAFwAYABYAGAAaABgAGgAYABgAFwAWABIAEgAOAAsACgAJAAcABgAEAAMABQABAAQAAwAEAAYABwAJAAcACgAJAAkACAAGAAgABAAFAAIAAwADAAMAAwAEAAUABwAHAAoACwAKAAsADAAMAAgACQAIAAMAAwABAAEAAAAAAAEABAADAAgACAAMAA4ADgATABEAEwAVABEAFAARABAADwAMAA4ACgALAAkACgAHAAoACAAJAAoACAAKAAkACQAJAAkACwAMAAsADQAOAA8AEAAQABMAEwAUABMAFgAXABcAGQAYABgAGAAWABgAGAAVABUAFwATABYAFAAWABcAFwAaABkAGwAdAB8AIQAiACEAJQAmACQAKAAmACYAJwAmACYAJQAnACMAJQAoACUAJwAnACcAJwAqACgAKAAsACkAKwAtACsALAApACsAKQAmACkAJgAmACQAIgAiACEAIAAhAB8AHwAiABwAIAAgAB8AIAAhACIAJAAhACQAIwAgACEAIAAcAB4AHAAZABsAFwAYABYAEgAVABQAEwATABMAFAATABQAFAASABcAFQAXABcAFgAXABUAGAAXABUAFgAXABUAFQASABIAEwARABMAEgAQABMAEwARABMAEwASABQAEgAVABQAFQAWABcAFwAaABoAFwAbABkAGAAaABYAFgAXABQAFAAUABIAEQAPABAADQAMAAwADAALAAoACgAJAAgACAAHAAcABgAIAAQABwAEAAYABgAFAAUABQAFAAQABwAFAAUABQAGAAYABAAIAAUABAAHAAIABAAEAAIAAQABAAEAAQD//wAAAAAAAAEAAAAAAAIAAQADAAQABQAGAAcABgAJAAgACgALAAoADQANAAoADwAMAAsAEAALAA4ADgANABAADQAPAA8ADwAOABAADAAMAA0ADQALAA0ADwAMABMAEAASABUAFAAWABYAFwAYABYAFgAXABYAFAAVABQAFgAUABYAFgAUABgAFwAZABgAGQAbABgAGwAZABoAGAAbABkAGQAYABkAGwAZABkAGwAZABwAHgAZAB8AHwAfACEAIgAhACAAIgAgACEAHwAdAB4AHAAdABoAGwAbABoAGwAbABoAGwAbABoAHQAbABsAHQAbABwAHAAbABwAGgAaABsAGAAZAB0AGAAdABsAHQAgAB4AIQAgACEAIAAiACAAIAAhAB8AHgAgAB0AHgAeAB4AHgAfAB4AHgAhAB8AHwAfAB8AIAAeAB8AHwAfAB8AHgAgAB8AHwAfACEAHwAhACMAIQAhACMAIwAiACIAIgAkACQAIgAkACIAIQAlACEAJAAlACMAIwAjACMAHwAhACEAIQAgAB8AIAAhACEAIAAiACMAIgAgACMAHwAdAB8AHQAdABoAGwAaABkAGAAWABUAFAAWABMAFgAWABYAFwAYABcAGQAXABcAGQAVABYAFAARABQADwAPAA8AEAAOAA0ADgAOAAwADAANAA0ADQAOAAwADwANAAwADwAKAA8ACwALAAwACwANAAsADAAPAA0AEAARABAAEwASABQAFAAVABMAFQAUABQAFAAVABQAFAAXABIAFQAXABYAGQAYABsAGwAbACEAHQAgACEAIQAjACUAIgAmACQAJAAlACUAJQAlACUAJgAmACQAJwAmACUAJwAoACcAJwApACUAJwAoACQAJgAjACUAIwAjACMAIgAjACEAIwAkACIAJQAkACcAJAAnACgAKAApACoAKAAsACkAKQArACkAJgApACYAJwAnACUAKAAkACgAJwAoACoAKQAqACoAKwAuACoALAAuACsALgAwAC4AMQAxADEAMQAzADEAMgAyADIAMwAxADIAMgAxADIAMQAxADAALwAsADAALQArAC8ALQAtAC8ALgAuAC0ALQAsACwAKwAqACkAKQAmACgAJQAkACUAIgAiACIAIAAgAB8AHgAdAB4AHQAdABsAHAAbABkAGQAaABgAGAAZABYAFgAXABMAFgAVABUAFAAWABYAFgAXABQAFwAXABMAFQAUABQAFgATABQAFAATABQAFAAUABQAFQAWABUAFgAXABYAFwAYABYAGAAWABgAFgAYABkAFgAcABgAGQAcABcAHAAYABoAGgAYABkAFwAWABgAFgAUABcAFQAUABYAFAAVABMAFQATABMAEgAQABIADQAOAA8ACwANAAsACwALAAkACAAIAAYABwAGAAQABQAEAAQAAgADAAQAAAACAAAAAAACAAAAAAACAAAAAAACAP7/AgABAAAAAQACAAMAAQABAAYAAgAEAAUABAAHAAgACAAIAAsACAAMAAsACQANAAwADAAMAA0AEQALABEAEAAPABQAEwATABYAFQAYABoAGQAbABsAHAAdABsAHAAeABwAGwAeABwAHAAdABsAHwAdAB4AHgAeACEAHwAfAB4AIAAgAB4AHwAfAB8AHgAhAB8AIQAhACAAIQAgACEAIAAfACAAHwAgAB4AHwAgAB4AHwAfAB4AHgAcAB8AHQAcAB4AHQAdAB8AHAAeAB4AHgAdACAAHQAcAB8AHQAeAB4AHgAgAB0AHwAfAB8AHwAcACAAHwAdAB8AHQAdAB0AHAAcABsAHQAaABsAGgAaABoAGQAcABgAGgAcABoAHQAbAB0AHQAeAB0AHgAfAB4AHgAfAB8AHwAgAB8AIQAhAB8AIgAhACEAIQAiACEAIQAhACEAIQAgACEAIQAgACAAHwAhAB8AHwAfACEAHwAfACIAHgAhACEAIAAjACIAJAAjACQAJAAlACQAJAAmACQAJwAnACMAKAAlACYAJwAmACcAJQAqACUAJwApACgAKQArACkAKwArACsAKQAsACsALAArAC0AKwAqACwAKgAqACoAKAApACoAKQAmACsAKgAmACkAJgAqACYAKQAoACcAKAAmACcAJgAkACQAIgAjACEAIQAdAB8AHQAcABwAGQAaABoAGAAXABgAFwAXABUAFAAYABUAFAAZABQAFQAVABYAFQAWABYAFAAYABMAFgAVABUAFgAVABUAFQAVABYAFgAWABcAFgAXABgAFQAWABYAFgAZABQAFwAXABQAEwAXABMAFwAVABQAFwAWABUAFQAWABQAFgAUABUAFgAWABUAFwAXABQAFgAWABUAFQAUABUAFQAVABMAFAAUABIAEgAVABAAEwAVABAAFAASABEAFAAQABIAEAARABEADQATAAwADwAOAA4AEAANAA4ADQAPAA0ADQAOAAwADgANAAwADAAMAAwACwAOAAwACwANAAsACwANAAsACgAOAAsADAAMAAsADQALAA4ADAAOAA0ADQARAA4ADgAQABAAEAARABEAEAARABEADwATABEAEAASABIAEQASABIAEgAUABMAFAAUABYAEwAVABYAFgAWABkAFwAZABkAFwAbABkAGgAaABkAGwAaABsAGwAaABsAHAAbABwAHAAcAB0AHAAfAB0AHgAgAB4AHwAfACAAIAAfACAAHwAiACAAHwAjACEAIQAjACIAIwAiACIAJQAkACIAJQAmACMAJgAnACQAKAAlACcAJgAoACQAJgAoACYAJwAmACYAJwAlACYAJQAlACcAJQAmACYAJwAlACcAJQAkACcAJQAmACUAJAAkACUAJAAjACQAIgAkACIAIQAlACAAIAAjACAAIgAgAB8AIQAhACAAHwAiAB4AHwAgAB8AHgAgAB0AGwAgABwAHgAdAB8AHgAbAB8AHAAeABwAHAAcAB0AHQAZABwAHQAaABsAGgAbABsAGwAbABgAGwAZABoAGQAZABoAGQAaABkAGgAaABsAGgAaABsAGwAaABwAGwAdABwAGwAdAB0AGwAgABsAHQAfABwAHQAeAB8AHgAcAB8AHwAeAB4AHwAeAB8AHgAeAB8AHgAeAB4AHQAeAB4AHQAcAB0AHQAdAB0AHAAdAB0AHAAeABwAHAAeABwAGgAfABwAGwAfABoAHAAdABsAHAAaABwAGwAaAB0AGAAfABsAGgAdABoAHAAbABsAHQAbAB0AHAAdABwAHAAdABwAHAAfABsAIAAdAB0AIAAcAB8AHwAeACAAHgAiAB8AIQAgACEAIgAgACEAIwAhACQAIgAhACUAIgAkACQAIwAlACQAIgAlACQAIgAkACMAIgAjACIAIgAiACMAIQAhACMAIQAjACEAIQAkACAAIgAjACAAIQAhAB8AHwAeAB4AHgAfABwAHgAdAB4AHwAcAB8AHgAeAB0AHgAfAB0AHwAdAB8AHwAeAB4AHQAeAB0AHQAeABsAHQAeABsAHQAcAB0AHAAcABwAGgAcABoAGgAbABoAGgAbABkAGAAZABkAGAAYABgAGQAZABgAGQAZABkAGQAZABkAGQAaABYAGQAXABgAGAAVABoAFgAVABgAFgAVABgAFQAVABYAFgAVABQAFAAVABUAFAAWABQAEwAWABQAEwAVABQAEwAUABMAFAATABMAEgAVABMAEwAUABIAEwATABIAFAATABMAEgAVABIAEgAVABEAFQATABIAFQAUABQAEwAVABUAFQAUABcAFQATABcAFQAXABUAFgAYABUAFwAXABYAFgAZABYAGAAYABYAGQAYABgAGQAXABkAGAAYABoAGAAYABsAGAAYABsAGAAbABkAGQAaABoAGQAZABsAGAAZABoAGgAZABkAGgAYABkAGAAZABkAGAAZABgAGQAbABgAGgAaABkAGwAZAB0AGgAdABsAHAAeABsAHgAeAB4AHgAhAB8AHwAjAB8AIQAjACIAIgAiACMAIwAjACQAIwAkACUAIwAlACUAJQAkACYAJgAnACYAJwAoACcAJwApACYAKAApACgAKAAqACcAKQApACkAKQAqACkAKAArACkAKQAqACkAKgAqACkAKgApACsAKQApACsAKgAqACkAKQAqACkAKQArACgAKAApACgAKQAoACgAKgAnACoAKAApACoAKAApACoAKgAqACgAKQArACgAKwAsACkAKgAqACsAKQArACkAKgApACkAKwAoACkAKwAqACoAKgAqACoAKwAoACoAKgAmACsAKAAoACoAJwApACcAJwApACYAJwAnACYAJgAnACYAJAAmACYAJAAlACQAJQAkACQAJAAjACUAIwAlACMAIwAkACMAIwAjACMAIgAkACEAIQAjACAAIQAiACAAIQAhACAAIQAhAB8AIAAhAB8AIAAfAB8AIQAgAB8AHwAfACAAHwAfACEAHgAgAB8AHgAhAB8AHwAhAB4AIQAfACAAIAAgACEAHgAiAB8AIAAiAB8AIgAgACEAIQAhACIAIAAhACMAIgAhACIAIgAiACEAIwAiACEAIwAhACMAIgAgACQAIAAiACMAIAAjACEAIQAjACAAIQAkACEAIQAjACEAIwAhACMAIQAjACMAIQAiACMAIgAiACQAIwAiACQAJAAkACQAJQAkACUAJAAmACUAJAAlACYAJQAnACQAJwAnACYAJgAnACkAJgAoACgAJgAoACoAJwAoACkAKgAoACkAKQAoACsAKQApACsAKQAqACsAKgArACoAKQAtACkAKQAsACkAKgArACoAKgApACsAKwAqACoAKgArACoAKQApACkAKgAqACgAKAAqACgAKAAqACcAKQAqACcAKAApACgAKAAoACgAKQAoACcAKAAqACgAKAArACgAKQApACkAKQApACoAKQAqACoAKQArACsAKwAqACwAKgAqACwAKwArACwAKwArACsAKwArACwAKgAqACsALAAqACsAKgAqACsAKgAqACoALAApACoAKgAqACsAKQArACgAKQAqACcAKgApACgAKQArACcAKAArACcAKAApACcAKAAoACcAKAAoACYAKAAmACgAJwAmACcAJwAmACYAJgAmACcAJQAnACQAJQAnACQAJQAmACcAJAAmACYAJQAlACYAJQAlACYAJQAnACYAJAAnACYAJgAnACUAJwAmACQAJwAnACUAJgAmACUAJgAnACQAJQAmACUAJgAmACYAJQAlACcAJAAlACUAJAAmACUAJAAkACUAJAAkACQAJAAjACUAIwAjACUAJAAjACQAIwAkACMAIwAlACMAIwAjACQAIwAjACMAIwAjACQAIQAjACQAIAAjACMAIQAjACIAIgAiACEAIQAjACMAIAAjACIAIgAjACIAIQAiACIAIgAjACEAIgAjACEAIQAiACIAIgAiACEAIQAiACIAIgAhACIAIAAjACIAIQAiACAAIgAhACEAIQAjACAAIAAiACAAIQAhAB8AIAAhACAAIAAgAB8AIAAfACEAIAAfACAAIAAgAB8AIAAfAB8AIAAfAB8AIAAeAB8AHwAfACAAHQAiAB0AHwAiABwAHwAfAB0AIAAeAB4AHgAfAB4AHQAfAB0AHgAcAB4AHgAdABwAHQAdAB4AHAAdAB0AHAAdABwAHAAdABwAGwAdAB0AGwAdABsAHAAdABsAGwAdABwAGwAcABsAHAAcABwAHAAcABsAHAAdABsAGwAcABoAGwAcABsAGwAcABsAGwAcABwAGgAcABwAGwAcABoAGwAbABsAGwAbABsAGgAbABoAGwAbABsAGgAaABsAGQAbABoAGgAaABgAGgAZABoAGgAZABkAGgAaABgAGgAZABkAGQAZABkAGQAZABgAGQAZABkAGAAZABgAFwAaABgAFwAaABcAFwAZABgAGAAXABgAGQAYABcAGAAYABcAGAAYABcAGAAYABgAFwAYABYAFgAaABYAFwAYABcAFgAYABYAFgAXABcAFwAXABcAFwAXABcAFgAUABgAFgAXABYAFQAWABYAFAAWABUAFAAWABMAFAAWABQAEwAVABMAFAAVABMAFAAVABMAFAAVABMAFAAUABMAFAAUABMAEgAVABQAFAAUABUAFAATABUAEwAVABQAFAAUABUAFQATABYAFAAUABUAFAAWABUAFQAVABQAFgAVABYAFAAUABUAFQAVABUAFQAVABYAFAAVABUAFQAUABUAFAAVABUAFAAVABUAFAAVABMAFQAVABQAFAATABUAFAASABUAFAATABQAFAATABMAEwASABMAEgASABIAEQAUABIAEgASABIAEgASABIAEQASABEAEwASABEAEgARABEADwASABEADwATABAADwASABAAEAAQABAAEQAQABEADwARABEAEAAQABAAEQAPABEAEAAPABAADwAQABAADwAPAA8ADgAQAA8ADwAPAA8ADwAPAA8ADwAPAA4ADwAQAA0ADwAOAA8ADwANAA8ADwANAA8ADgANAA8ADgAOAA4ADQAOAA0ADQANAA4ADQANAA0ADQANAA0ADQAMAA0ADAAMAAwADAANAAwADAANAAwADAANAAwADAAMAAwADAALAAwACwAMAAwADAALAAwADAALAAwADAAMAAwADAAMAAsADAALAAwADAALAAwACwAMAAsADAAMAAsACwAMAAoADAALAAwACwALAAsACgAMAAsACwALAAoACwALAAoACgAKAAoACQAKAAkACgAKAAkACQAJAAoABwAJAAgACAAIAAcACAAHAAYABwAGAAcABgAFAAYABgAFAAYABQAEAAUABQAEAAMABAAEAAMAAwAEAAIAAgADAAIAAgACAAIAAQACAAAAAgABAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP//AAAAAP//AAD/////AAD+///////////////+/wAA/v/+/////v/+//7//v/+//7////+/////f/+//7//v/+//3//v/+//7//f/9//7//f/9//7//f/8//7//f/8//3//P/+//z//f/9//3//f/8//3//P/9//3//f/8//3//f/8//3//f/9//3//P/9//3//P/+//z//f/9//3//v/9//7//f/9//3//v/9//3//v/9//7//v/+//7//f////7//v/+/////v/+/////v////7////////////+///////+/wAA//8AAP//AAAAAP//AAAAAP//AAAAAAAA//8AAAAAAAD//wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//wAA/////////v////7//v////3////+//7//v/+//7//f////7//v/+//7////9//7////+//7//f/+//z//v/9//z//f/9//3/+//8//z//P/8//v//P/8//v//P/8//v//P/7//v/+//7//v/+//6//v/+//7//r/+v/7//v/+v/6//r/+v/7//r/+f/7//r/+f/7//n/+//5//j/+f/6//n/+f/6//j/+v/6//j/+v/6//n/"
         },
         "headers": {
           "access-control-expose-headers": "X-Request-ID, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a47af8cf6a45ead2-ORD",
+          "cf-ray": "a513d7753be2e829-ORD",
           "content-type": "audio/pcm",
-          "date": "Fri, 09 Oct 2026 05:26:42 GMT",
+          "date": "Tue, 27 Oct 2026 18:42:37 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "235",
+          "openai-processing-ms": "500",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -1883,11 +2019,11 @@
           "x-openai-proxy-wasm": "v0.1",
           "x-ratelimit-limit-requests": "30000",
           "x-ratelimit-limit-tokens": "150000000",
-          "x-ratelimit-remaining-requests": "29998",
-          "x-ratelimit-remaining-tokens": "149999980",
-          "x-ratelimit-reset-requests": "4ms",
+          "x-ratelimit-remaining-requests": "29999",
+          "x-ratelimit-remaining-tokens": "149999997",
+          "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "req_0472cebff19b4915a14d9deb54df8e3e"
+          "x-request-id": "req_62503c2fe5d04400bdb377c6c0e43cc6"
         },
         "status": 200
       }

@@ -1,0 +1,30 @@
+{
+  "name": "@braintrust/e2e-mcp-instrumentation",
+  "private": true,
+  "braintrustScenario": {
+    "bump": {
+      "dependencies": {
+        "mcp-sdk-v1-latest": {
+          "package": "@modelcontextprotocol/sdk",
+          "range": "1"
+        },
+        "mcp-server-v2-latest": {
+          "package": "@modelcontextprotocol/server",
+          "range": "2"
+        },
+        "mcp-client-v2-latest": {
+          "package": "@modelcontextprotocol/client",
+          "range": "2"
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "mcp-client-v2-latest": "npm:@modelcontextprotocol/client@2.4.0",
+    "mcp-sdk-v1": "npm:@modelcontextprotocol/sdk@1.25.0",
+    "mcp-sdk-v1-latest": "npm:@modelcontextprotocol/sdk@1.32.2",
+    "mcp-server-v2": "npm:@modelcontextprotocol/server@2.0.0",
+    "mcp-server-v2-latest": "npm:@modelcontextprotocol/server@2.4.0",
+    "zod": "4.3.6"
+  }
+}

@@ -7,17 +7,35 @@ import semifies from "semifies";
 import { Transformer } from "./transformer";
 import type { InstrumentationConfig } from "./types";
 
+function compileFilePath(filePath: string): (path: string) => boolean {
+  if (!filePath.includes("*")) {
+    return (path) => path === filePath;
+  }
+  const pattern = new RegExp(
+    `^${filePath
+      .split("*")
+      .map((part) => part.replace(/[.+?^${}()|[\]\\]/g, "\\$&"))
+      .join("[^/]*")}$`,
+  );
+  return (path) => pattern.test(path);
+}
+
 /**
  * Matches instrumentation configs against a given module/file/version triple and
  * returns a cached Transformer for matching configs.
  */
 export class InstrumentationMatcher {
   private configs = new Map<string, InstrumentationConfig[]>();
+  private filePathMatchers = new Map<string, (path: string) => boolean>();
   private transformers: Record<string, Transformer> = {};
 
   constructor(configs: InstrumentationConfig[]) {
     for (const config of configs) {
       const name = config.module.name;
+      const { filePath } = config.module;
+      if (!this.filePathMatchers.has(filePath)) {
+        this.filePathMatchers.set(filePath, compileFilePath(filePath));
+      }
       const packageConfigs = this.configs.get(name);
       if (packageConfigs) packageConfigs.push(config);
       else this.configs.set(name, [config]);
@@ -46,7 +64,8 @@ export class InstrumentationMatcher {
 
     const configs = packageConfigs.filter(
       ({ module: mod }) =>
-        mod.filePath === filePath && semifies(version, mod.versionRange),
+        this.filePathMatchers.get(mod.filePath)!(filePath) &&
+        semifies(version, mod.versionRange),
     );
 
     if (configs.length === 0) {

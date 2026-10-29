@@ -10,7 +10,7 @@ import {
   resolveScenarioDir,
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
-import { matchSpanTreeSnapshot } from "../../helpers/span-tree";
+import { matchSpanTreeSnapshot, spanTreeFields } from "../../helpers/span-tree";
 import {
   findAllSpans,
   findChildSpans,
@@ -47,6 +47,13 @@ const eveScenarios = await Promise.all(
       variantKey: "eve-v0-70",
     },
     {
+      dependencyName: "eve-v0-72",
+      label: "v0.72 pinned",
+      provider: true,
+      tasks: true,
+      variantKey: "eve-v0-72",
+    },
+    {
       dependencyName: "eve-v0-latest",
       label: "v0 latest",
       provider: true,
@@ -67,6 +74,11 @@ const TIMEOUT_MS =
 describe("eve instrumentation variants", { concurrent: false }, () => {
   for (const scenario of eveScenarios) {
     describe(`${scenario.label} (${scenario.version})`, () => {
+      // Eve 0.76 moved built-in tools into the eve namespace.
+      const taskWaitName =
+        Number(scenario.version.split(".")[1]) >= 76
+          ? "eve__task_wait"
+          : "task_wait";
       let events: CapturedLogEvent[] = [];
       let payloads: CapturedLogPayload[] = [];
 
@@ -148,6 +160,22 @@ describe("eve instrumentation variants", { concurrent: false }, () => {
           secondRoot?.span.id,
         );
 
+        // One span per requested tool call, including versions which publish
+        // both action.* and tool.call.* for the same execution.
+        const calledTools = findAllSpans(events, "eve.step").flatMap((step) => {
+          const choices = step.output as {
+            message: { tool_calls?: { function: { name: string } }[] };
+          }[];
+          return choices.flatMap((choice) =>
+            (choice.message.tool_calls ?? []).map((call) => call.function.name),
+          );
+        });
+        const toolsById = new Map(
+          events
+            .filter((event) => event.span.type === "tool")
+            .map((event) => [event.span.id, event.span.name]),
+        );
+        expect([...toolsById.values()].sort()).toEqual(calledTools.sort());
         expect(findAllSpans(events, "eve.session")).toEqual([]);
         expect(turns).toHaveLength(4);
         expect(
@@ -201,7 +229,7 @@ describe("eve instrumentation variants", { concurrent: false }, () => {
               finish_reason: "tool_calls",
               message: {
                 tool_calls: [
-                  { function: { name: "task_wait" }, type: "function" },
+                  { function: { name: taskWaitName }, type: "function" },
                 ],
               },
             },
@@ -399,7 +427,7 @@ describe("eve instrumentation variants", { concurrent: false }, () => {
               finish_reason: "tool_calls",
               message: {
                 tool_calls: [
-                  { function: { name: "task_wait" }, type: "function" },
+                  { function: { name: taskWaitName }, type: "function" },
                 ],
               },
             },
@@ -469,7 +497,10 @@ describe("eve instrumentation variants", { concurrent: false }, () => {
             .replace(/\bresearcher-[a-z0-9]{6}\b/g, "researcher-<id>"),
         ) as CapturedLogEvent[];
         await matchSpanTreeSnapshot(
-          snapshotEvents,
+          snapshotEvents.map((event) => ({
+            event,
+            fields: { ...spanTreeFields(event), context: event.row.context },
+          })),
           resolveFileSnapshotPath(
             import.meta.url,
             `${scenario.variantKey}.span-tree.json`,

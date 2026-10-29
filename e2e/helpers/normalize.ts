@@ -75,6 +75,7 @@ const ZERO_NUMBER_KEYS = new Set([
   "duration",
   "github_copilot.context_window.current",
   "time_to_first_token",
+  "wall_time_seconds",
 ]);
 const XACT_VERSION_KEYS = new Set([
   "currentVersion",

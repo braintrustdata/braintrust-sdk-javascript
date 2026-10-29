@@ -15,5 +15,8 @@ export const piCodingAgentChannels = defineInterceptor(
     >({
       channelName: "AgentSession.prompt",
     }),
+    toolExecute: channel<unknown[], unknown>({
+      channelName: "tool.execute",
+    }),
   },
 );

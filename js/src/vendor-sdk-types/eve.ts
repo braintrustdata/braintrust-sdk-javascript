@@ -181,6 +181,51 @@ export interface EveInstrumentationActionFailedEvent {
   readonly type: "action.failed";
 }
 
+/** Eve 0.72+ replaces action events with tool.call events. */
+export interface EveInstrumentationToolCallStartedEvent {
+  readonly callId: string;
+  readonly idempotencyKey: string;
+  readonly input?: unknown;
+  readonly kind?:
+    | "load-skill"
+    | "remote-agent-call"
+    | "subagent-call"
+    | "tool-call";
+  readonly parentCallId?: string;
+  readonly startedAtMs?: number;
+  readonly scope: EveInstrumentationAttemptScope;
+  readonly toolName: string;
+  readonly type: "tool.call.started";
+}
+
+export type EveInstrumentationToolCallTerminalEvent =
+  | {
+      readonly acceptedAtMs?: number;
+      readonly completedAtMs?: number;
+      readonly idempotencyKey: string;
+      readonly outcome?:
+        | "completed"
+        | "abandoned"
+        | "cancelled"
+        | "failed"
+        | "rejected";
+      readonly output:
+        | { readonly output?: unknown; readonly type: "result" }
+        | { readonly error?: unknown; readonly type: "error" };
+      readonly scope: EveInstrumentationAttemptScope;
+      readonly type: "tool.call.completed";
+    }
+  | {
+      readonly acceptedAtMs?: number;
+      readonly completedAtMs?: number;
+      readonly error?: unknown;
+      readonly errorCode?: string;
+      readonly idempotencyKey: string;
+      readonly outcome?: "abandoned" | "cancelled" | "failed" | "rejected";
+      readonly scope: EveInstrumentationAttemptScope;
+      readonly type: "tool.call.failed";
+    };
+
 type EveInstrumentationHandler<TEvent> = (
   event: TEvent,
   context: EveInstrumentationHandlerContext,
@@ -201,6 +246,19 @@ export interface EveInstrumentationDefinition {
         readonly recordOutputs: boolean;
       };
   readonly events: {
+    readonly "tool.call.started": EveInstrumentationHandler<EveInstrumentationToolCallStartedEvent>;
+    readonly "tool.call.completed": EveInstrumentationHandler<
+      Extract<
+        EveInstrumentationToolCallTerminalEvent,
+        { type: "tool.call.completed" }
+      >
+    >;
+    readonly "tool.call.failed": EveInstrumentationHandler<
+      Extract<
+        EveInstrumentationToolCallTerminalEvent,
+        { type: "tool.call.failed" }
+      >
+    >;
     readonly "action.completed": EveInstrumentationHandler<EveInstrumentationActionCompletedEvent>;
     readonly "action.failed": EveInstrumentationHandler<EveInstrumentationActionFailedEvent>;
     readonly "action.started": EveInstrumentationHandler<EveInstrumentationActionStartedEvent>;

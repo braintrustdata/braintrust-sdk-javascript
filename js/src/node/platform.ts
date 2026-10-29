@@ -1,3 +1,6 @@
+import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
+import { getCurrentModuleUrl } from "./module-url";
 import { AsyncLocalStorage } from "node:async_hooks";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
@@ -137,6 +140,20 @@ export function createNodeIsomorph(): Common {
   iso.openFile = fs.open;
   iso.gzip = promisify(zlib.gzip);
   iso.gunzip = promisify(zlib.gunzip);
+  iso.loadOptionalModule = (name) => {
+    const url = getCurrentModuleUrl();
+    const load = createRequire(url);
+    let resolved: string;
+    try {
+      // Look beside the SDK, then in the app, for linked or global SDK installs.
+      resolved = load.resolve(name, {
+        paths: [path.dirname(fileURLToPath(url)), process.cwd()],
+      });
+    } catch {
+      return undefined;
+    }
+    return load(resolved);
+  };
   iso.hash = (data) => crypto.createHash("sha256").update(data).digest("hex");
   iso.hmacSha256 = (key, data) =>
     crypto.createHmac("sha256", key).update(data).digest("hex");

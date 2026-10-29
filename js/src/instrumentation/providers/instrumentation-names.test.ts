@@ -24,6 +24,11 @@ import { huggingFaceChannels } from "./huggingface-interceptors";
 import { langChainChannels } from "./langchain-interceptors";
 import { langGraphSDKChannels } from "./langgraph-sdk-interceptors";
 import { langSmithChannels } from "./langsmith-interceptors";
+import {
+  mcpChannels,
+  mcpSDKChannels,
+  mcpServerChannels,
+} from "./mcp-interceptors";
 import { mistralChannels } from "./mistral-interceptors";
 import { ollamaChannels } from "./ollama-interceptors";
 import { openAIAgentsCoreChannels } from "./openai-agents-interceptors";
@@ -71,6 +76,9 @@ describe("wrapping definitions are independent of span provenance", () => {
     [langGraphSDKChannels.wait, INSTRUMENTATION_NAMES.LANGGRAPH_SDK],
     [langChainChannels.configure, INSTRUMENTATION_NAMES.LANGCHAIN],
     [langSmithChannels.createRun, INSTRUMENTATION_NAMES.LANGSMITH],
+    [mcpChannels.requestHandler, INSTRUMENTATION_NAMES.MCP],
+    [mcpSDKChannels.setRequestHandler, INSTRUMENTATION_NAMES.MCP],
+    [mcpServerChannels.setRequestHandler, INSTRUMENTATION_NAMES.MCP],
     [mistralChannels.chatComplete, INSTRUMENTATION_NAMES.MISTRAL],
     [ollamaChannels.chat, INSTRUMENTATION_NAMES.OLLAMA],
     [

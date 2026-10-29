@@ -521,6 +521,98 @@ describe("registerGoogleGenAIInstrumentation", () => {
       expect(JSON.stringify(span.log.mock.calls)).not.toContain("aGVsbG8=");
       expect(span.end).toHaveBeenCalledTimes(1);
     });
+
+    it("keeps the finish reason of a stream that ends without content", async () => {
+      registerGoogleGenAIInstrumentation();
+      const handlers = subscribeSpy.mock.calls[1][0];
+      const event: any = {
+        arguments: [
+          { contents: "something blocked", model: "gemini-3.8-flash" },
+        ],
+      };
+
+      async function* stream() {
+        yield {
+          candidates: [
+            {
+              finishReason: "SAFETY",
+              safetyRatings: [
+                {
+                  category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+                  probability: "HIGH",
+                },
+              ],
+            },
+          ],
+        };
+        yield { usageMetadata: { promptTokenCount: 3, totalTokenCount: 3 } };
+      }
+
+      handlers.begin(event);
+      event.result = stream();
+      handlers.resolve(event);
+      for await (const _chunk of event.result) {
+        // Consume the provider stream so the instrumentation finalizes it.
+      }
+
+      const span = mockStartSpan.mock.results.at(-1)?.value as {
+        log: ReturnType<typeof vi.fn>;
+      };
+      expect(span.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          output: {
+            candidates: [
+              {
+                finishReason: "SAFETY",
+                safetyRatings: [
+                  {
+                    category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+                    probability: "HIGH",
+                  },
+                ],
+              },
+            ],
+            usageMetadata: { promptTokenCount: 3, totalTokenCount: 3 },
+          },
+        }),
+      );
+    });
+
+    it("keeps the prompt feedback of a stream whose prompt was blocked", async () => {
+      registerGoogleGenAIInstrumentation();
+      const handlers = subscribeSpy.mock.calls[1][0];
+      const event: any = {
+        arguments: [
+          { contents: "something blocked", model: "gemini-3.8-flash" },
+        ],
+      };
+
+      async function* stream() {
+        yield {
+          promptFeedback: { blockReason: "SAFETY" },
+          usageMetadata: { promptTokenCount: 3, totalTokenCount: 3 },
+        };
+      }
+
+      handlers.begin(event);
+      event.result = stream();
+      handlers.resolve(event);
+      for await (const _chunk of event.result) {
+        // Consume the provider stream so the instrumentation finalizes it.
+      }
+
+      const span = mockStartSpan.mock.results.at(-1)?.value as {
+        log: ReturnType<typeof vi.fn>;
+      };
+      expect(span.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          output: {
+            promptFeedback: { blockReason: "SAFETY" },
+            usageMetadata: { promptTokenCount: 3, totalTokenCount: 3 },
+          },
+        }),
+      );
+    });
   });
 
   describe("generateImages channel interception", () => {

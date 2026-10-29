@@ -6,6 +6,33 @@ describe("normalizeForSnapshot", () => {
     const media = `data:image/png;base64,${"a".repeat(3_000_000)}`;
     expect(normalizeForSnapshot(media)).toBe(media);
   });
+  test.each([0, 0.1, 1.2])(
+    "normalizes tool wall time of %s seconds",
+    (seconds) => {
+      expect(
+        normalizeForSnapshot({
+          output: {
+            structuredContent: {
+              exit_code: 0,
+              output: "pi_tool_ok",
+              truncated: false,
+              wall_time_seconds: seconds,
+            },
+          },
+        }),
+      ).toEqual({
+        output: {
+          structuredContent: {
+            exit_code: 0,
+            output: "pi_tool_ok",
+            truncated: false,
+            wall_time_seconds: 0,
+          },
+        },
+      });
+    },
+  );
+
   test("normalizes a foreign repository path ending at a workspace directory", () => {
     expect(
       normalizeForSnapshot(

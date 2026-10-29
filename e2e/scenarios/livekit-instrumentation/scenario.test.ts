@@ -85,6 +85,16 @@ type RunOptions = {
   cassette?: string;
   recording?: boolean;
 };
+/** What the scenario reported about each uploaded audio file, in order. */
+function uploadedAudio(
+  stdout: string,
+): { format: string; decodedMs?: number }[] {
+  return stdout
+    .split("\n")
+    .filter((line) => line.startsWith('{"uploadedAudio":'))
+    .map((line) => JSON.parse(line).uploadedAudio);
+}
+
 function scenarioOptions(
   variant: string,
   {
@@ -183,6 +193,91 @@ for (const variant of variants) {
         });
       },
     );
+
+  // With @braintrust/audio installed, recordings upload as Ogg Opus.
+  for (const [name, audio] of [
+    ["by default", undefined],
+    [
+      "with configured options",
+      { codec: { name: "opus", options: { bitrate: 16000 } } },
+    ],
+  ] as const)
+    test(
+      `${variant} compressed recording ${name}`,
+      { concurrent: false, timeout: 120000 },
+      async () => {
+        await withScenarioHarness(async (harness) => {
+          const result = await harness.runNodeScenarioDir(
+            scenarioOptions(variant, {
+              env: {
+                LIVEKIT_PROBE_UPLOADS: "1",
+                ...(audio ? { LIVEKIT_AUDIO: JSON.stringify(audio) } : {}),
+              },
+            }),
+          );
+          const root = findLatestSpan(
+            assertAudioTrace(harness.events()),
+            "session",
+          )!;
+          const [recording] = root.metadata?.["audio.recordings"] as {
+            duration_ms: number;
+          }[];
+          expect(recording).toMatchObject({
+            id: "call-0000",
+            state: "ready",
+            mime_type: "audio/ogg",
+            sample_rate_hz: 48000,
+            channel_count: 2,
+          });
+          expect(recording).not.toHaveProperty("sample_format");
+          // The uploaded file decodes to exactly the recorded duration.
+          const [upload] = uploadedAudio(result.stdout);
+          expect(upload.format).toBe("ogg");
+          expect(upload.decodedMs).toBeCloseTo(recording.duration_ms, 1);
+          expect(
+            (root.row.input as { audio: Record<string, unknown> }).audio[
+              "call-0000"
+            ],
+          ).toMatchObject({
+            filename: "call-0000.ogg",
+            content_type: "audio/ogg",
+          });
+          expect(result.stderr).not.toContain("uncompressed PCM");
+        });
+      },
+    );
+
+  // Turning compression off records raw PCM, without a warning.
+  test(
+    `${variant} raw PCM recording with codec pcm`,
+    { concurrent: false, timeout: 120000 },
+    async () => {
+      await withScenarioHarness(async (harness) => {
+        const result = await harness.runNodeScenarioDir(
+          scenarioOptions(variant, {
+            env: {
+              LIVEKIT_PROBE_UPLOADS: "1",
+              LIVEKIT_AUDIO: JSON.stringify({ codec: { name: "pcm" } }),
+            },
+          }),
+        );
+        const root = findLatestSpan(
+          assertAudioTrace(harness.events()),
+          "session",
+        )!;
+        expect(root.metadata?.["audio.recordings"]).toMatchObject([
+          {
+            id: "call-0000",
+            state: "ready",
+            mime_type: "audio/pcm",
+            sample_format: "s16le",
+          },
+        ]);
+        expect(uploadedAudio(result.stdout)).toEqual([{ format: "raw" }]);
+        expect(result.stderr).not.toContain("uncompressed PCM");
+      });
+    },
+  );
 
   test(
     `${variant} recording requires attachment capture`,

@@ -444,7 +444,7 @@ class BraintrustContextManager extends ContextManager {
 
   getParentSpanIds(): ContextParentSpanIds | undefined {
     const currentSpan = this._currentSpan.getStore();
-    if (!currentSpan) {
+    if (!currentSpan || currentSpan === NOOP_SPAN) {
       return undefined;
     }
 

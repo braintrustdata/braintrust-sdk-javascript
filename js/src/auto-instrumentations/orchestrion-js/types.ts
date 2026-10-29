@@ -72,7 +72,8 @@ export interface ModuleMatcher {
   versionRange: string;
 
   /**
-   * The path of the file you want to match from the module root.
+   * The path of the file you want to match from the module root. `*` matches
+   * any characters within one path segment, for content-hashed chunks.
    */
   filePath: string;
 }

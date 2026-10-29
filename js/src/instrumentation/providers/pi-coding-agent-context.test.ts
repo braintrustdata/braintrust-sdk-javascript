@@ -5,7 +5,6 @@ import { currentSpan, startSpan, type Span } from "../../logger/core";
 import { configureNode } from "../../node/config";
 import type {
   PiAgentEvent,
-  PiAgentEventListener,
   PiAgentSession,
   PiStreamFunction,
   PiTool,
@@ -132,6 +131,54 @@ describe("Pi tool execution context", () => {
       ).toHaveLength(1);
     },
   );
+
+  it("parents native nested tools and their application spans under the calling tool", async () => {
+    const observed = new Map<string, Span>();
+    const tool: PiTool = {
+      name: "lookup",
+      execute: async (id) => {
+        observed.set(String(id), currentSpan());
+        if (id === "parent") {
+          fixture.start("nested", "parent");
+          await tool.execute!("nested");
+          await fixture.end("nested");
+          expect(currentSpan()).toBe(observed.get("parent"));
+        } else {
+          await nextTurn();
+          startSpan({ name: "nested-child" }).end();
+        }
+      },
+    };
+    const fixture = makeFixture(tool);
+    await experiment.traced(async () => {
+      await fixture.prompt(async () => {
+        fixture.start("parent");
+        await tool.execute!("parent");
+        await fixture.end("parent");
+        // An unavailable native parent must not lose the tool span.
+        await fixture.start("orphan", "unknown");
+        await fixture.end("orphan");
+      });
+    });
+    const rows = (await background.drain()).flatMap((row) =>
+      "span_id" in row ? [row] : [],
+    );
+    const nested = rows.find(
+      (row) => row.span_id === observed.get("nested")?.spanId,
+    );
+    expect(nested?.span_parents).toEqual([observed.get("parent")?.spanId]);
+    expect(
+      rows.find((row) => row.span_attributes?.name === "nested-child")
+        ?.span_parents,
+    ).toEqual([nested?.span_id]);
+    const prompt = rows.find(
+      (row) => row.span_attributes?.name === "AgentSession.prompt",
+    );
+    const orphan = rows.find(
+      (row) => row.metadata?.["gen_ai.tool.call.id"] === "orphan",
+    );
+    expect(orphan?.span_parents).toEqual([prompt?.span_id]);
+  });
 
   it.each(["same prompt", "overlapping prompts"] as const)(
     "isolates concurrent tools in %s",
@@ -320,23 +367,26 @@ function makeFixture(
     throw new Error("This context test must not call a model");
   },
 ) {
-  const listeners = new Set<PiAgentEventListener>();
   const agent: PiAgentSession["agent"] & {
     state: { tools: PiTool[] } | undefined;
   } = {
     state: { tools: [tool] },
     [property]: streamFunction,
-    subscribe(listener: PiAgentEventListener) {
-      listeners.add(listener);
+  };
+  const sessionListeners = new Set<(event: PiAgentEvent) => void>();
+  const session: PiAgentSession = {
+    agent,
+    prompt: async () => {},
+    subscribe(listener) {
+      sessionListeners.add(listener);
       return () => {
-        listeners.delete(listener);
+        sessionListeners.delete(listener);
       };
     },
   };
-  const session: PiAgentSession = { agent, prompt: async () => {} };
-  const emit = async (event: PiAgentEvent) => {
-    for (const listener of listeners)
-      await listener(event, new AbortController().signal);
+  const emit = (event: PiAgentEvent) => {
+    // AgentSession emits to subscribers synchronously without awaiting them.
+    for (const listener of sessionListeners) listener(event);
   };
   return {
     agent,
@@ -347,10 +397,11 @@ function makeFixture(
         ["test", undefined],
         { session },
       ),
-    start: (toolCallId: string) =>
+    start: (toolCallId: string, parentToolCallId?: string) =>
       emit({
         type: "tool_execution_start",
         toolCallId,
+        parentToolCallId,
         toolName: tool.name,
         args: {},
       }),

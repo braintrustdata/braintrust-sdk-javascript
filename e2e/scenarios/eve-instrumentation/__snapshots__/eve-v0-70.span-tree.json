@@ -64,6 +64,11 @@
             "prompt_cached_tokens": 0,
             "prompt_tokens": 2605,
             "tokens": 2989
+          },
+          "context": {
+            "caller_filename": "<node-internal>",
+            "caller_functionname": "<node-internal>",
+            "caller_lineno": 0
           }
         },
         {
@@ -126,6 +131,11 @@
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 1380,
                     "tokens": 1557
+                  },
+                  "context": {
+                    "caller_filename": "<node-internal>",
+                    "caller_functionname": "<node-internal>",
+                    "caller_lineno": 0
                   }
                 },
                 {
@@ -144,6 +154,11 @@
                     "eve.session_id": "<eve.session_id:1>",
                     "scenario": "eve-instrumentation",
                     "testRunId": "<run:1>"
+                  },
+                  "context": {
+                    "caller_filename": "<node-internal>",
+                    "caller_functionname": "<node-internal>",
+                    "caller_lineno": 0
                   }
                 },
                 {
@@ -223,6 +238,11 @@
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 1600,
                     "tokens": 1760
+                  },
+                  "context": {
+                    "caller_filename": "<node-internal>",
+                    "caller_functionname": "<node-internal>",
+                    "caller_lineno": 0
                   }
                 }
               ],
@@ -244,6 +264,11 @@
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 2980,
                 "tokens": 3317
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
@@ -255,6 +280,11 @@
             "eve.session_id": "<eve.session_id:1>",
             "scenario": "eve-instrumentation",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<node-internal>",
+            "caller_functionname": "<node-internal>",
+            "caller_lineno": 0
           }
         },
         {
@@ -274,6 +304,11 @@
             "eve.session_id": "<eve.session_id:1>",
             "scenario": "eve-instrumentation",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<node-internal>",
+            "caller_functionname": "<node-internal>",
+            "caller_lineno": 0
           }
         },
         {
@@ -385,6 +420,11 @@
             "prompt_cached_tokens": 0,
             "prompt_tokens": 2796,
             "tokens": 3188
+          },
+          "context": {
+            "caller_filename": "<node-internal>",
+            "caller_functionname": "<node-internal>",
+            "caller_lineno": 0
           }
         },
         {
@@ -396,6 +436,11 @@
             "eve.session_id": "<eve.session_id:1>",
             "scenario": "eve-instrumentation",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<node-internal>",
+            "caller_functionname": "<node-internal>",
+            "caller_lineno": 0
           }
         },
         {
@@ -534,6 +579,11 @@
             "prompt_cached_tokens": 0,
             "prompt_tokens": 2922,
             "tokens": 3373
+          },
+          "context": {
+            "caller_filename": "<node-internal>",
+            "caller_functionname": "<node-internal>",
+            "caller_lineno": 0
           }
         }
       ],
@@ -555,6 +605,11 @@
         "prompt_cached_tokens": 0,
         "prompt_tokens": 8323,
         "tokens": 9550
+      },
+      "context": {
+        "caller_filename": "<node-internal>",
+        "caller_functionname": "<node-internal>",
+        "caller_lineno": 0
       }
     },
     {
@@ -732,6 +787,11 @@
             "prompt_cached_tokens": 0,
             "prompt_tokens": 3007,
             "tokens": 3443
+          },
+          "context": {
+            "caller_filename": "<node-internal>",
+            "caller_functionname": "<node-internal>",
+            "caller_lineno": 0
           }
         },
         {
@@ -794,6 +854,11 @@
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 1381,
                     "tokens": 1572
+                  },
+                  "context": {
+                    "caller_filename": "<node-internal>",
+                    "caller_functionname": "<node-internal>",
+                    "caller_lineno": 0
                   }
                 },
                 {
@@ -812,6 +877,11 @@
                     "eve.session_id": "<eve.session_id:1>",
                     "scenario": "eve-instrumentation",
                     "testRunId": "<run:1>"
+                  },
+                  "context": {
+                    "caller_filename": "<node-internal>",
+                    "caller_functionname": "<node-internal>",
+                    "caller_lineno": 0
                   }
                 },
                 {
@@ -891,6 +961,11 @@
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 1615,
                     "tokens": 1771
+                  },
+                  "context": {
+                    "caller_filename": "<node-internal>",
+                    "caller_functionname": "<node-internal>",
+                    "caller_lineno": 0
                   }
                 }
               ],
@@ -912,6 +987,11 @@
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 2996,
                 "tokens": 3343
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
@@ -923,6 +1003,11 @@
             "eve.session_id": "<eve.session_id:1>",
             "scenario": "eve-instrumentation",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<node-internal>",
+            "caller_functionname": "<node-internal>",
+            "caller_lineno": 0
           }
         },
         {
@@ -942,6 +1027,11 @@
             "eve.session_id": "<eve.session_id:1>",
             "scenario": "eve-instrumentation",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<node-internal>",
+            "caller_functionname": "<node-internal>",
+            "caller_lineno": 0
           }
         },
         {
@@ -1164,6 +1254,11 @@
             "prompt_cached_tokens": 0,
             "prompt_tokens": 3222,
             "tokens": 3516
+          },
+          "context": {
+            "caller_filename": "<node-internal>",
+            "caller_functionname": "<node-internal>",
+            "caller_lineno": 0
           }
         },
         {
@@ -1175,6 +1270,11 @@
             "eve.session_id": "<eve.session_id:1>",
             "scenario": "eve-instrumentation",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<node-internal>",
+            "caller_functionname": "<node-internal>",
+            "caller_lineno": 0
           }
         },
         {
@@ -1424,6 +1524,11 @@
             "prompt_cached_tokens": 0,
             "prompt_tokens": 3365,
             "tokens": 3655
+          },
+          "context": {
+            "caller_filename": "<node-internal>",
+            "caller_functionname": "<node-internal>",
+            "caller_lineno": 0
           }
         }
       ],
@@ -1445,6 +1550,11 @@
         "prompt_cached_tokens": 0,
         "prompt_tokens": 9594,
         "tokens": 10614
+      },
+      "context": {
+        "caller_filename": "<node-internal>",
+        "caller_functionname": "<node-internal>",
+        "caller_lineno": 0
       }
     },
     {
@@ -1515,6 +1625,11 @@
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 2574,
                 "tokens": 2994
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             },
             {
@@ -1577,6 +1692,11 @@
                         "prompt_cached_tokens": 0,
                         "prompt_tokens": 1384,
                         "tokens": 1547
+                      },
+                      "context": {
+                        "caller_filename": "<node-internal>",
+                        "caller_functionname": "<node-internal>",
+                        "caller_lineno": 0
                       }
                     },
                     {
@@ -1595,6 +1715,11 @@
                         "eve.session_id": "<eve.session_id:1>",
                         "scenario": "eve-instrumentation",
                         "testRunId": "<run:1>"
+                      },
+                      "context": {
+                        "caller_filename": "<node-internal>",
+                        "caller_functionname": "<node-internal>",
+                        "caller_lineno": 0
                       }
                     },
                     {
@@ -1674,6 +1799,11 @@
                         "prompt_cached_tokens": 0,
                         "prompt_tokens": 1596,
                         "tokens": 1731
+                      },
+                      "context": {
+                        "caller_filename": "<node-internal>",
+                        "caller_functionname": "<node-internal>",
+                        "caller_lineno": 0
                       }
                     }
                   ],
@@ -1695,6 +1825,11 @@
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 2980,
                     "tokens": 3278
+                  },
+                  "context": {
+                    "caller_filename": "<node-internal>",
+                    "caller_functionname": "<node-internal>",
+                    "caller_lineno": 0
                   }
                 }
               ],
@@ -1706,6 +1841,11 @@
                 "eve.session_id": "<eve.session_id:1>",
                 "scenario": "eve-instrumentation",
                 "testRunId": "<run:1>"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             },
             {
@@ -1725,6 +1865,11 @@
                 "eve.session_id": "<eve.session_id:1>",
                 "scenario": "eve-instrumentation",
                 "testRunId": "<run:1>"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             },
             {
@@ -1836,6 +1981,11 @@
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 2772,
                 "tokens": 3592
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             },
             {
@@ -1847,6 +1997,11 @@
                 "eve.session_id": "<eve.session_id:1>",
                 "scenario": "eve-instrumentation",
                 "testRunId": "<run:1>"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             },
             {
@@ -1985,6 +2140,11 @@
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 2901,
                 "tokens": 3240
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
@@ -2006,12 +2166,22 @@
             "prompt_cached_tokens": 0,
             "prompt_tokens": 8247,
             "tokens": 9826
+          },
+          "context": {
+            "caller_filename": "<node-internal>",
+            "caller_functionname": "<node-internal>",
+            "caller_lineno": 0
           }
         }
       ],
       "metadata": {
         "scenario": "eve-instrumentation",
         "testRunId": "<run:1>"
+      },
+      "context": {
+        "caller_filename": "<repo>/e2e/scenarios/eve-instrumentation/scenario.ts",
+        "caller_functionname": "runTracedCallerSession",
+        "caller_lineno": 0
       }
     }
   ]

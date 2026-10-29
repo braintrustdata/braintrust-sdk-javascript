@@ -13,58 +13,20 @@ const scenarioDir = await prepareScenarioDir({
 const TIMEOUT_MS = 240_000;
 const piCodingAgentScenarios = await Promise.all(
   [
+    { dependencyName: "pi-coding-agent-v0", provider: "anthropic" as const },
     {
-      autoEntry: "scenario.pi-coding-agent-v079.mjs",
-      autoSnapshotName: "pi-coding-agent-v0-auto-hook",
-      dependencyName: "pi-coding-agent-v0",
-      variantKey: "pi-coding-agent-v0",
-      wrapperEntry: "scenario.pi-coding-agent-v079-wrapped.mjs",
-      wrapperSnapshotName: "pi-coding-agent-v0-wrapped",
-    },
-    {
-      autoEntry: "scenario.pi-coding-agent-v079.mjs",
-      autoSnapshotName: "pi-coding-agent-v0-latest-auto-hook",
       dependencyName: "pi-coding-agent-v0-latest",
-      fakeStream: true,
-      variantKey: "pi-coding-agent-v0-latest",
-      wrapperEntry: "scenario.pi-coding-agent-v079-wrapped.mjs",
-      wrapperSnapshotName: "pi-coding-agent-v0-latest-wrapped",
+      provider: "anthropic" as const,
     },
+    { dependencyName: "pi-coding-agent-v081", provider: "anthropic" as const },
     {
-      autoEntry: "scenario.pi-coding-agent-v079.mjs",
-      autoSnapshotName: "pi-coding-agent-v081-auto-hook",
-      dependencyName: "pi-coding-agent-v081",
-      fakeStream: true,
-      variantKey: "pi-coding-agent-v081",
-      wrapperEntry: "scenario.pi-coding-agent-v079-wrapped.mjs",
-      wrapperSnapshotName: "pi-coding-agent-v081-wrapped",
-    },
-    {
-      autoEntry: "scenario.pi-coding-agent-v079.mjs",
-      autoSnapshotName: "pi-coding-agent-v081-latest-auto-hook",
       dependencyName: "pi-coding-agent-v081-latest",
-      fakeStream: true,
-      variantKey: "pi-coding-agent-v081-latest",
-      wrapperEntry: "scenario.pi-coding-agent-v079-wrapped.mjs",
-      wrapperSnapshotName: "pi-coding-agent-v081-latest-wrapped",
+      provider: "anthropic" as const,
     },
+    { dependencyName: "pi-coding-agent-v1", provider: "openai" as const },
     {
-      autoEntry: "scenario.pi-coding-agent-v079.mjs",
-      autoSnapshotName: "pi-coding-agent-v1-auto-hook",
-      dependencyName: "pi-coding-agent-v1",
-      provider: "openai" as const,
-      variantKey: "pi-coding-agent-v1",
-      wrapperEntry: "scenario.pi-coding-agent-v079-wrapped.mjs",
-      wrapperSnapshotName: "pi-coding-agent-v1-wrapped",
-    },
-    {
-      autoEntry: "scenario.pi-coding-agent-v079.mjs",
-      autoSnapshotName: "pi-coding-agent-v1-latest-auto-hook",
       dependencyName: "pi-coding-agent-v1-latest",
       provider: "openai" as const,
-      variantKey: "pi-coding-agent-v1-latest",
-      wrapperEntry: "scenario.pi-coding-agent-v079-wrapped.mjs",
-      wrapperSnapshotName: "pi-coding-agent-v1-latest-wrapped",
     },
   ].map(async (scenario) => ({
     ...scenario,
@@ -81,70 +43,45 @@ describe.concurrent("variants", () => {
       `pi coding agent ${piCodingAgentScenario.version}`,
       { concurrent: false },
       () => {
-        definePiCodingAgentInstrumentationAssertions({
-          name: "wrapped instrumentation",
-          provider: piCodingAgentScenario.provider,
-          runScenario: async ({ runNodeScenarioDir }) => {
-            await runNodeScenarioDir({
-              entry: piCodingAgentScenario.wrapperEntry,
-              env: {
-                PI_CODING_AGENT_PACKAGE_NAME:
-                  piCodingAgentScenario.dependencyName,
-                ...(piCodingAgentScenario.provider
-                  ? { PI_CODING_AGENT_PROVIDER: piCodingAgentScenario.provider }
-                  : {}),
-                ...(piCodingAgentScenario.fakeStream
-                  ? { PI_CODING_AGENT_FAKE_STREAM: "true" }
-                  : {}),
-              },
-              runContext: {
-                ...(piCodingAgentScenario.fakeStream
-                  ? { cassette: false as const }
-                  : {}),
-                variantKey: piCodingAgentScenario.variantKey,
-                originalScenarioDir,
-              },
-              scenarioDir,
-              timeoutMs: TIMEOUT_MS,
-            });
+        for (const mode of [
+          {
+            name: "wrapped instrumentation",
+            entry: "scenario.pi-coding-agent-v079-wrapped.mjs",
+            suffix: "wrapped",
+            nodeArgs: [],
           },
-          snapshotName: piCodingAgentScenario.wrapperSnapshotName,
-          testFileUrl: import.meta.url,
-          timeoutMs: TIMEOUT_MS,
-        });
-
-        definePiCodingAgentInstrumentationAssertions({
-          name: "auto-hook instrumentation",
-          provider: piCodingAgentScenario.provider,
-          runScenario: async ({ runNodeScenarioDir }) => {
-            await runNodeScenarioDir({
-              entry: piCodingAgentScenario.autoEntry,
-              env: {
-                PI_CODING_AGENT_PACKAGE_NAME:
-                  piCodingAgentScenario.dependencyName,
-                ...(piCodingAgentScenario.provider
-                  ? { PI_CODING_AGENT_PROVIDER: piCodingAgentScenario.provider }
-                  : {}),
-                ...(piCodingAgentScenario.fakeStream
-                  ? { PI_CODING_AGENT_FAKE_STREAM: "true" }
-                  : {}),
-              },
-              nodeArgs: ["--import", "braintrust/hook.mjs"],
-              runContext: {
-                ...(piCodingAgentScenario.fakeStream
-                  ? { cassette: false as const }
-                  : {}),
-                variantKey: piCodingAgentScenario.variantKey,
-                originalScenarioDir,
-              },
-              scenarioDir,
-              timeoutMs: TIMEOUT_MS,
-            });
+          {
+            name: "auto-hook instrumentation",
+            entry: "scenario.pi-coding-agent-v079.mjs",
+            suffix: "auto-hook",
+            nodeArgs: ["--import", "braintrust/hook.mjs"],
           },
-          snapshotName: piCodingAgentScenario.autoSnapshotName,
-          testFileUrl: import.meta.url,
-          timeoutMs: TIMEOUT_MS,
-        });
+        ]) {
+          definePiCodingAgentInstrumentationAssertions({
+            name: mode.name,
+            provider: piCodingAgentScenario.provider,
+            runScenario: async ({ runNodeScenarioDir }) => {
+              await runNodeScenarioDir({
+                entry: mode.entry,
+                nodeArgs: mode.nodeArgs,
+                env: {
+                  PI_CODING_AGENT_PACKAGE_NAME:
+                    piCodingAgentScenario.dependencyName,
+                  PI_CODING_AGENT_PROVIDER: piCodingAgentScenario.provider,
+                },
+                runContext: {
+                  variantKey: piCodingAgentScenario.dependencyName,
+                  originalScenarioDir,
+                },
+                scenarioDir,
+                timeoutMs: TIMEOUT_MS,
+              });
+            },
+            snapshotName: `${piCodingAgentScenario.dependencyName}-${mode.suffix}`,
+            testFileUrl: import.meta.url,
+            timeoutMs: TIMEOUT_MS,
+          });
+        }
       },
     );
   }
