@@ -37,133 +37,74 @@ describe("wrapCursorSDK", () => {
     warnSpy.mockRestore();
   });
 
-  it("wraps Agent.create and returned agent.send", async () => {
-    const run = makeRun();
-    const agent = {
-      agentId: "agent-1",
-      send: vi.fn(async () => run),
-    };
+  it("wraps create/resume agents once and preserves private-field methods", async () => {
+    const run = { id: "run-1" };
+    class PrivateAgent {
+      #run = run;
+      async send() {
+        return this.#run;
+      }
+      async [Symbol.asyncDispose]() {
+        return this.#run.id;
+      }
+    }
+    const agent = new PrivateAgent();
+    const originalSend = vi.spyOn(agent, "send");
     const sdk = {
       Agent: class {
         static async create() {
           return agent;
         }
-      },
-    };
-
-    const wrapped = wrapCursorSDK(sdk as any) as any;
-    const created = await wrapped.Agent.create({ local: { cwd: "/tmp/repo" } });
-    const result = await created.send("hello", {
-      onDelta: vi.fn(),
-      onStep: vi.fn(),
-    });
-
-    expect(result).toBe(run);
-    expect(agent.send).toHaveBeenCalledWith("hello", expect.any(Object));
-    expect(invoke).toHaveBeenCalledTimes(2);
-  });
-
-  it("does not wrap send twice when the plugin already patched the returned agent", async () => {
-    const run = makeRun();
-    const agent = {
-      [Symbol.for("braintrust.cursor-sdk.auto-patched-agent")]: true,
-      send: vi.fn(async () => run),
-    };
-    const sdk = {
-      Agent: class {
-        static async create() {
+        static async resume() {
           return agent;
         }
       },
     };
     const wrapped = wrapCursorSDK(sdk as any) as any;
     const created = await wrapped.Agent.create({});
-    await expect(created.send("hello")).resolves.toBe(run);
-    expect(agent.send).toHaveBeenCalledExactlyOnceWith("hello");
-    expect(invoke).toHaveBeenCalledOnce();
+    const patchedSend = created.send;
+    const resumed = await wrapped.Agent.resume("agent-1");
+    expect(resumed).toBe(created);
+    expect(resumed.send).toBe(patchedSend);
+    await expect(resumed.send("hello")).resolves.toBe(run);
+    expect(originalSend).toHaveBeenCalledExactlyOnceWith("hello");
+    await expect(resumed[Symbol.asyncDispose]()).resolves.toBe("run-1");
+    expect(invoke).toHaveBeenCalledTimes(3);
   });
 
-  it("wraps Agent.resume and preserves private-field-safe method binding", async () => {
-    class PrivateAgent {
-      #run = makeRun();
-      agentId = "agent-2";
-
-      async send() {
-        return this.#run;
+  it("handles module namespaces and preserves static promises, arguments, and private getters", async () => {
+    const agent = { send: vi.fn() };
+    const promise = Object.assign(Promise.resolve(agent), {
+      helper: () => "ok",
+    });
+    class Agent {
+      static #value = "ok";
+      static get value() {
+        return this.#value;
       }
-
-      async [Symbol.asyncDispose]() {
-        return undefined;
+      static create(...args: unknown[]) {
+        expect(args).toEqual([{}]);
+        return promise;
+      }
+      static resume(...args: unknown[]) {
+        expect(args).toEqual(["agent-1"]);
+        return promise;
+      }
+      static prompt(...args: unknown[]) {
+        expect(args).toEqual(["hi"]);
+        return promise;
       }
     }
-
-    const sdk = {
-      Agent: class {
-        static async resume() {
-          return new PrivateAgent();
-        }
-      },
-    };
-
-    const wrapped = wrapCursorSDK(sdk as any) as any;
-    const agent = await wrapped.Agent.resume("agent-2");
-
-    await expect(agent.send("hello")).resolves.toMatchObject({ id: "run-1" });
-    await expect(agent[Symbol.asyncDispose]()).resolves.toBeUndefined();
-  });
-
-  it("wraps Agent.prompt", async () => {
-    const sdk = {
-      Agent: class {
-        static async prompt(message: string) {
-          return { id: "run-1", result: message, status: "finished" };
-        }
-      },
-    };
-
-    const wrapped = wrapCursorSDK(sdk as any) as any;
-    await expect(wrapped.Agent.prompt("hello")).resolves.toMatchObject({
-      result: "hello",
-    });
-    expect(invoke).toHaveBeenCalledTimes(1);
-  });
-
-  it("handles module namespace-like objects", async () => {
-    const Agent = class {
-      static async prompt() {
-        return { status: "finished" };
-      }
-    };
-    const sdk = Object.defineProperty({}, "Agent", {
+    const sdk = Object.defineProperty({ Agent }, "Agent", {
       configurable: false,
-      enumerable: true,
-      value: Agent,
       writable: false,
     });
-
-    const wrapped = wrapCursorSDK(sdk as any) as any;
-
-    await expect(wrapped.Agent.prompt("hello")).resolves.toMatchObject({
-      status: "finished",
-    });
+    const wrapped = wrapCursorSDK(sdk);
+    expect(wrapped.Agent.value).toBe("ok");
+    expect(wrapped.Agent).toBe(wrapped.Agent);
+    expect(wrapped.Agent.create({})).toBe(promise);
+    expect(wrapped.Agent.resume("agent-1")).toBe(promise);
+    expect(wrapped.Agent.prompt("hi")).toBe(promise);
+    await promise;
   });
 });
-
-function makeRun() {
-  return {
-    agentId: "agent-1",
-    async conversation() {
-      return [];
-    },
-    id: "run-1",
-    stream: async function* () {
-      yield {
-        type: "assistant",
-        message: { content: [{ text: "hello", type: "text" }] },
-      };
-    },
-    async wait() {
-      return { id: "run-1", result: "hello", status: "finished" };
-    },
-  };
-}

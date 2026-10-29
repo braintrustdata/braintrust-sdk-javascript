@@ -287,6 +287,7 @@ export interface CursorSDKUsage {
 }
 
 export interface CursorSDKToolCall {
+  callId?: string;
   type?: string;
   name?: string;
   args?: unknown;

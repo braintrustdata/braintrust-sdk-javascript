@@ -1,15 +1,16 @@
 import { debugLogger } from "../debug-logger";
-import { cursorSDKChannels } from "../instrumentation/plugins/cursor-sdk-interceptors";
+import { observeResult } from "../instrumentation/core/observe-result";
+import {
+  cursorSDKChannels,
+  patchCursorAgentInPlace,
+} from "../instrumentation/plugins/cursor-sdk-interceptors";
 import type {
   CursorSDKAgent,
   CursorSDKAgentClass,
-  CursorSDKAgentOptions,
   CursorSDKRunResult,
-  CursorSDKSendOptions,
-  CursorSDKUserMessage,
 } from "../vendor-sdk-types/cursor-sdk";
 
-const WRAPPED_AGENT = Symbol.for("braintrust.cursor-sdk.wrapped-agent");
+const wrappedClasses = new WeakMap<CursorSDKAgentClass, CursorSDKAgentClass>();
 
 /**
  * Wraps the Cursor TypeScript SDK with Braintrust tracing. The wrapper emits
@@ -31,8 +32,8 @@ export function wrapCursorSDK<T>(sdk: T): T {
     : (sdk as Record<PropertyKey, unknown>);
 
   return new Proxy(target, {
-    get(target, prop, receiver) {
-      const value = Reflect.get(target, prop, receiver);
+    get(target, prop) {
+      const value = Reflect.get(target, prop, target);
       if (prop === "Agent" && typeof value === "function") {
         return wrapCursorAgentClass(value as unknown as CursorSDKAgentClass);
       }
@@ -60,55 +61,55 @@ function isModuleNamespace(obj: unknown): boolean {
 }
 
 function wrapCursorAgentClass(Agent: CursorSDKAgentClass): CursorSDKAgentClass {
+  const existing = wrappedClasses.get(Agent);
+  if (existing) return existing;
   const cache = new Map<PropertyKey, unknown>();
 
-  return new Proxy(Agent, {
-    get(target, prop, receiver) {
+  const proxy = new Proxy(Agent, {
+    get(target, prop) {
       if (cache.has(prop)) {
         return cache.get(prop);
       }
 
-      const value = Reflect.get(target, prop, receiver);
+      const value = Reflect.get(target, prop, target);
       if (prop === "create" && typeof value === "function") {
-        const wrapped = async function (
-          options: CursorSDKAgentOptions,
+        const wrapped = function (
+          ...args: Parameters<CursorSDKAgentClass["create"]>
         ): Promise<CursorSDKAgent> {
-          const args = [options] as [CursorSDKAgentOptions];
-          return wrapCursorAgent(
-            await cursorSDKChannels.create.invoke(value, target, args, {}),
-          );
+          return observeResult(
+            cursorSDKChannels.create.invoke(value, target, args, {}),
+            patchCursorAgentInPlace,
+            () => {},
+          ) as Promise<CursorSDKAgent>;
         };
         cache.set(prop, wrapped);
         return wrapped;
       }
 
       if (prop === "resume" && typeof value === "function") {
-        const wrapped = async function (
-          agentId: string,
-          options?: Partial<CursorSDKAgentOptions>,
+        const wrapped = function (
+          ...args: Parameters<CursorSDKAgentClass["resume"]>
         ): Promise<CursorSDKAgent> {
-          const args = [agentId, options] as [
-            string,
-            Partial<CursorSDKAgentOptions> | undefined,
-          ];
-          return wrapCursorAgent(
-            await cursorSDKChannels.resume.invoke(value, target, args, {}),
-          );
+          return observeResult(
+            cursorSDKChannels.resume.invoke(value, target, args, {}),
+            patchCursorAgentInPlace,
+            () => {},
+          ) as Promise<CursorSDKAgent>;
         };
         cache.set(prop, wrapped);
         return wrapped;
       }
 
       if (prop === "prompt" && typeof value === "function") {
-        const wrapped = async function (
-          message: string | CursorSDKUserMessage,
-          options?: CursorSDKAgentOptions,
+        const wrapped = function (
+          ...args: Parameters<CursorSDKAgentClass["prompt"]>
         ): Promise<CursorSDKRunResult> {
-          const args = [message, options] as [
-            string | CursorSDKUserMessage,
-            CursorSDKAgentOptions | undefined,
-          ];
-          return cursorSDKChannels.prompt.invoke(value, target, args, {});
+          return cursorSDKChannels.prompt.invoke(
+            value,
+            target,
+            args,
+            {},
+          ) as Promise<CursorSDKRunResult>;
         };
         cache.set(prop, wrapped);
         return wrapped;
@@ -123,54 +124,19 @@ function wrapCursorAgentClass(Agent: CursorSDKAgentClass): CursorSDKAgentClass {
       return value;
     },
   }) as CursorSDKAgentClass;
-}
-
-function wrapCursorAgent(agent: CursorSDKAgent): CursorSDKAgent {
-  if (!agent || typeof agent !== "object") {
-    return agent;
+  wrappedClasses.set(Agent, proxy);
+  wrappedClasses.set(proxy, proxy);
+  // Agent.prompt calls factories on the original class internally. Install the
+  // same generic factory wrappers so explicitly wrapped prompts can observe
+  // their returned agents even without the automatic loader.
+  for (const name of ["create", "resume"] as const) {
+    const descriptor = Object.getOwnPropertyDescriptor(Agent, name);
+    if (descriptor?.configurable && typeof descriptor.value === "function") {
+      Object.defineProperty(Agent, name, {
+        ...descriptor,
+        value: Reflect.get(proxy, name),
+      });
+    }
   }
-  if ((agent as Record<PropertyKey, unknown>)[WRAPPED_AGENT]) {
-    return agent;
-  }
-
-  const proxy = new Proxy(agent, {
-    get(target, prop, receiver) {
-      if (prop === WRAPPED_AGENT) {
-        return true;
-      }
-
-      const value = Reflect.get(target, prop, receiver);
-      if (
-        prop === "send" &&
-        typeof value === "function" &&
-        !(target as Record<PropertyKey, unknown>)[
-          Symbol.for("braintrust.cursor-sdk.auto-patched-agent")
-        ]
-      ) {
-        return function (
-          message: string | CursorSDKUserMessage,
-          options?: CursorSDKSendOptions,
-        ) {
-          const args = [message, options] as [
-            string | CursorSDKUserMessage,
-            CursorSDKSendOptions | undefined,
-          ];
-          return cursorSDKChannels.send.invoke(
-            value as CursorSDKAgent["send"],
-            target,
-            args,
-            { agent: target, operation: "send" },
-          );
-        };
-      }
-
-      if (typeof value === "function") {
-        return value.bind(target);
-      }
-
-      return value;
-    },
-  });
-
-  return proxy as CursorSDKAgent;
+  return proxy;
 }

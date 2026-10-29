@@ -1,10 +1,12 @@
-import { BasePlugin, toLoggedError } from "../core";
+import { BasePlugin } from "../core";
 import { observeResult, runInstrumentation } from "../core/observe-result";
 
-import { SpanTypeAttribute } from "../../../util/index";
+import { SpanTypeAttribute, isObject } from "../../../util/index";
 import { debugLogger } from "../../debug-logger";
 import type { Span } from "../../logger";
-import { startSpan as startBaseSpan } from "../../logger";
+import { startSpan as startBaseSpan, withCurrent } from "../../logger";
+import iso from "../../isomorph";
+import { patchStreamIfNeeded } from "../core/stream-patcher";
 import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
@@ -27,346 +29,203 @@ import type {
   CursorSDKUsage,
   CursorSDKUserMessage,
 } from "../../vendor-sdk-types/cursor-sdk";
-import type { ChannelMessage } from "../core/tracing-types";
-import { cursorSDKChannels } from "./cursor-sdk-interceptors";
+import {
+  cursorSDKChannels,
+  patchCursorAgentInPlace,
+} from "./cursor-sdk-interceptors";
 
-const PATCHED_AGENT = Symbol.for("braintrust.cursor-sdk.auto-patched-agent");
 const PATCHED_RUN = Symbol.for("braintrust.cursor-sdk.patched-run");
-const WRAPPED_AGENT = Symbol.for("braintrust.cursor-sdk.wrapped-agent");
 
 type ToolState = {
   span: Span;
   subAgentSpan?: Span;
+  ended?: boolean;
 };
 
 type CursorRunState = {
   activeToolSpans: Map<string, ToolState>;
-  agent?: CursorSDKAgent;
+  completedToolSpans: Map<string, ToolState>;
+  observation: Promise<void>;
+  finalizing?: Promise<void>;
+  error?: unknown;
   deltaText: string[];
   streamText: string[];
   stepText: string[];
-  conversationOutput?: unknown;
   conversationText: string[];
   finalized: boolean;
-  input: string | CursorSDKUserMessage;
-  lastResult?: CursorSDKRunResult;
   metadata: Record<string, unknown>;
   metrics: Record<string, number>;
+  usageComplete: boolean;
   run?: CursorSDKRun;
   span: Span;
   startTime: number;
-  streamMessages: CursorSDKMessage[];
   taskText: string[];
 };
 
-type PromptState = {
-  metadata: Record<string, unknown>;
-  span: Span;
-  startTime: number;
-};
+// Scope prompt/send coordination to this invocation, including across awaits.
+let promptStore: ReturnType<typeof iso.newAsyncLocalStorage<CursorRunState>>;
+function promptContext() {
+  return (promptStore ??= iso.newAsyncLocalStorage<CursorRunState>());
+}
 
 export class CursorSDKPlugin extends BasePlugin {
-  private promptDepth = 0;
+  protected onDisable(): void {
+    for (const unsubscribe of this.unsubscribers) unsubscribe();
+    this.unsubscribers = [];
+  }
 
   protected onEnable(): void {
-    this.subscribeToAgentFactories();
-    this.subscribeToPrompt();
-    this.subscribeToSend();
-  }
-
-  protected onDisable(): void {
-    for (const unsubscribe of this.unsubscribers) {
-      unsubscribe();
+    for (const channel of [
+      cursorSDKChannels.create,
+      cursorSDKChannels.resume,
+    ]) {
+      this.unsubscribers.push(
+        channel.intercept((target, receiver, args) =>
+          observeResult(
+            Reflect.apply(target, receiver, args),
+            patchCursorAgentInPlace,
+            () => {},
+          ),
+        ),
+      );
     }
-    this.unsubscribers = [];
-    this.promptDepth = 0;
-  }
-
-  private subscribeToAgentFactories(): void {
-    this.subscribeToAgentFactory(cursorSDKChannels.create);
-    this.subscribeToAgentFactory(cursorSDKChannels.resume);
-  }
-
-  private subscribeToAgentFactory(
-    channel: typeof cursorSDKChannels.create | typeof cursorSDKChannels.resume,
-  ): void {
+    // Preserve the same Cursor run tracing contract for automatic and manual wrapping.
     this.unsubscribers.push(
-      channel.intercept((target, receiver, args) =>
-        observeResult(
-          Reflect.apply(target, receiver, args),
-          patchCursorAgentInPlace,
-          () => {},
+      cursorSDKChannels.prompt.intercept((target, receiver, args, additional) =>
+        traceCursorPrompt(
+          () => Reflect.apply(target, receiver, args),
+          args,
+          additional.moduleVersion,
+        ),
+      ),
+      cursorSDKChannels.send.intercept((target, receiver, args, additional) =>
+        traceCursorSend(
+          (options) => Reflect.apply(target, receiver, [args[0], options]),
+          args,
+          additional.agent,
+          additional.moduleVersion,
         ),
       ),
     );
   }
-
-  private subscribeToPrompt(): void {
-    const channel = cursorSDKChannels.prompt;
-    const states = new WeakMap<object, PromptState>();
-
-    const removeHandlers = channel.intercept(
-      (target, receiver, args, additional) => {
-        const event = {
-          ...additional,
-          arguments: args,
-          self: receiver,
-        } as ChannelMessage<typeof cursorSDKChannels.prompt>;
-        const prepare = (
-          event: ChannelMessage<typeof cursorSDKChannels.prompt>,
-        ) => {
-          this.promptDepth += 1;
-          const message = event.arguments[0];
-          const options = event.arguments[1];
-          const metadata = {
-            ...extractAgentOptionsMetadata(options),
-            "cursor_sdk.operation": "Agent.prompt",
-            provider: "cursor",
-            ...(event.moduleVersion
-              ? { "cursor_sdk.version": event.moduleVersion }
-              : {}),
-          };
-          const span = startBaseSpan(
-            withSpanInstrumentationName(
-              {
-                name: "Cursor Agent",
-                spanAttributes: { type: SpanTypeAttribute.TASK },
-              },
-              INSTRUMENTATION_NAMES.CURSOR_SDK,
-            ),
-          );
-          const startTime = getCurrentUnixTimestamp();
-          safeLog(span, {
-            input: sanitizeUserMessage(message),
-            metadata,
-          });
-          states.set(event, { metadata, span, startTime });
-        };
-        const resolved = (
-          event: ChannelMessage<typeof cursorSDKChannels.prompt>,
-        ) => {
-          this.promptDepth = Math.max(0, this.promptDepth - 1);
-          const state = states.get(event);
-          if (!state) {
-            return;
-          }
-          try {
-            safeLog(state.span, {
-              metadata: {
-                ...state.metadata,
-                ...extractRunResultMetadata(event.result),
-              },
-              metrics: buildDurationMetrics(state.startTime),
-              output: event.result?.result ?? event.result,
-            });
-          } finally {
-            state.span.end();
-            states.delete(event);
-          }
-        };
-        const failed = (
-          event: ChannelMessage<typeof cursorSDKChannels.prompt>,
-        ) => {
-          this.promptDepth = Math.max(0, this.promptDepth - 1);
-          const state = states.get(event);
-          if (!state || !event.error) {
-            return;
-          }
-          safeLog(state.span, { error: event.error.message });
-          state.span.end();
-          states.delete(event);
-        };
-        runInstrumentation(() => prepare(event));
-        let result;
-        try {
-          result = Reflect.apply(target, receiver, args);
-        } catch (error) {
-          Object.assign(event, { error });
-          runInstrumentation(() => failed(event));
-          throw error;
-        }
-        return observeResult(
-          result,
-          (value) => {
-            Object.assign(event, { result: value });
-            resolved(event);
-          },
-          (error) => {
-            Object.assign(event, { error });
-            failed(event);
-          },
-        );
-      },
-    );
-    this.unsubscribers.push(removeHandlers);
-  }
-
-  private subscribeToSend(): void {
-    const channel = cursorSDKChannels.send;
-    const states = new WeakMap<object, CursorRunState>();
-
-    const removeHandlers = channel.intercept(
-      (target, receiver, args, additional) => {
-        const event = {
-          ...additional,
-          arguments: args,
-          self: receiver,
-        } as ChannelMessage<typeof cursorSDKChannels.send>;
-        const prepare = (
-          event: ChannelMessage<typeof cursorSDKChannels.send>,
-        ) => {
-          if (this.promptDepth > 0) {
-            return;
-          }
-
-          const message = event.arguments[0];
-          const sendOptions = event.arguments[1];
-          const agent = event.agent;
-          const metadata = {
-            ...extractSendMetadata(sendOptions),
-            ...(agent ? extractAgentMetadata(agent) : {}),
-            "cursor_sdk.operation": "agent.send",
-            provider: "cursor",
-            ...(event.moduleVersion
-              ? { "cursor_sdk.version": event.moduleVersion }
-              : {}),
-          };
-          const span = startBaseSpan(
-            withSpanInstrumentationName(
-              {
-                name: "Cursor Agent",
-                spanAttributes: { type: SpanTypeAttribute.TASK },
-              },
-              INSTRUMENTATION_NAMES.CURSOR_SDK,
-            ),
-          );
-          const startTime = getCurrentUnixTimestamp();
-          safeLog(span, {
-            input: sanitizeUserMessage(message),
-            metadata,
-          });
-
-          const state: CursorRunState = {
-            activeToolSpans: new Map(),
-            agent,
-            conversationText: [],
-            deltaText: [],
-            finalized: false,
-            input: message,
-            metadata,
-            metrics: {},
-            span,
-            startTime,
-            streamMessages: [],
-            streamText: [],
-            stepText: [],
-            taskText: [],
-          };
-
-          if (hasCursorCallbacks(sendOptions)) {
-            event.arguments[1] = wrapSendOptionsCallbacks(sendOptions, state);
-          }
-          states.set(event, state);
-        };
-        const resolved = (
-          event: ChannelMessage<typeof cursorSDKChannels.send>,
-        ) => {
-          const state = states.get(event);
-          if (!state) {
-            return;
-          }
-
-          if (!event.result) {
-            return;
-          }
-          state.run = event.result;
-          state.metadata = {
-            ...state.metadata,
-            ...extractRunMetadata(event.result),
-          };
-          patchCursorRun(event.result, state);
-        };
-        const failed = (
-          event: ChannelMessage<typeof cursorSDKChannels.send>,
-        ) => {
-          const state = states.get(event);
-          if (!state || !event.error) {
-            return;
-          }
-          safeLog(state.span, { error: event.error.message });
-          endOpenToolSpans(state, event.error.message);
-          state.span.end();
-          state.finalized = true;
-          states.delete(event);
-        };
-        runInstrumentation(() => prepare(event));
-        let result;
-        try {
-          result = Reflect.apply(target, receiver, args);
-        } catch (error) {
-          Object.assign(event, { error });
-          runInstrumentation(() => failed(event));
-          throw error;
-        }
-        return observeResult(
-          result,
-          (value) => {
-            Object.assign(event, { result: value });
-            resolved(event);
-          },
-          (error) => {
-            Object.assign(event, { error });
-            failed(event);
-          },
-        );
-      },
-    );
-    this.unsubscribers.push(removeHandlers);
-  }
 }
 
-function patchCursorAgentInPlace(agent: unknown): void {
-  if (!agent || typeof agent !== "object") {
-    return;
-  }
-  const agentRecord = agent as CursorSDKAgent & Record<PropertyKey, unknown>;
-  if (
-    agentRecord[PATCHED_AGENT] ||
-    agentRecord[WRAPPED_AGENT] ||
-    typeof agentRecord.send !== "function"
-  ) {
-    return;
-  }
-
-  const originalSend = agentRecord.send.bind(agentRecord);
-  try {
-    Object.defineProperty(agentRecord, PATCHED_AGENT, {
-      configurable: false,
-      enumerable: false,
-      value: true,
-    });
-    Object.defineProperty(agentRecord, "send", {
-      configurable: true,
-      value(
-        message: string | CursorSDKUserMessage,
-        options?: CursorSDKSendOptions,
-      ) {
-        const args = [message, options] as [
-          string | CursorSDKUserMessage,
-          CursorSDKSendOptions | undefined,
-        ];
-        return cursorSDKChannels.send.invoke(
-          originalSend,
-          undefined,
-          [...args],
-          { agent: agentRecord, operation: "send" },
-        );
+function createRunState(
+  message: string | CursorSDKUserMessage,
+  metadata: Record<string, unknown>,
+): CursorRunState {
+  const span = startBaseSpan(
+    withSpanInstrumentationName(
+      {
+        name: "Cursor Agent",
+        spanAttributes: { type: SpanTypeAttribute.TASK },
+        event: { input: sanitizeUserMessage(message), metadata },
       },
-      writable: true,
-    });
-  } catch {
-    // Frozen/sealed agents cannot be patched. Leave user behavior untouched.
+      INSTRUMENTATION_NAMES.CURSOR_SDK,
+    ),
+  );
+  return {
+    activeToolSpans: new Map(),
+    completedToolSpans: new Map(),
+    observation: Promise.resolve(),
+    conversationText: [],
+    deltaText: [],
+    finalized: false,
+    metadata,
+    metrics: {},
+    usageComplete: true,
+    span,
+    startTime: getCurrentUnixTimestamp(),
+    streamText: [],
+    stepText: [],
+    taskText: [],
+  };
+}
+
+function traceCursorPrompt(
+  call: () => PromiseLike<CursorSDKRunResult>,
+  args: [string | CursorSDKUserMessage, CursorSDKAgentOptions | undefined],
+  moduleVersion?: string,
+): PromiseLike<CursorSDKRunResult> {
+  if (promptContext().getStore()) return call();
+  const state = runInstrumentation(() =>
+    createRunState(args[0], {
+      ...extractAgentOptionsMetadata(args[1]),
+      "cursor_sdk.operation": "Agent.prompt",
+      provider: "cursor",
+      ...(moduleVersion ? { "cursor_sdk.version": moduleVersion } : {}),
+    }),
+  );
+  if (!state) return call();
+  let result;
+  try {
+    result = promptContext().run(state, () => withCurrent(state.span, call));
+  } catch (error) {
+    void finalizeCursorRun(state, { error });
+    throw error;
   }
+  return observeResult(
+    result,
+    (result) => {
+      void finalizeCursorRun(state, { result });
+    },
+    (error) => {
+      void finalizeCursorRun(state, { error });
+    },
+  );
+}
+
+function traceCursorSend(
+  call: (
+    options: CursorSDKSendOptions | undefined,
+  ) => PromiseLike<CursorSDKRun>,
+  args: [string | CursorSDKUserMessage, CursorSDKSendOptions | undefined],
+  agent?: CursorSDKAgent,
+  moduleVersion?: string,
+): PromiseLike<CursorSDKRun> {
+  const state =
+    promptContext().getStore() ??
+    runInstrumentation(() =>
+      createRunState(args[0], {
+        ...extractSendMetadata(args[1]),
+        ...(agent ? extractAgentMetadata(agent) : {}),
+        "cursor_sdk.operation": "agent.send",
+        provider: "cursor",
+        ...(moduleVersion ? { "cursor_sdk.version": moduleVersion } : {}),
+      }),
+    );
+  if (!state) return call(args[1]);
+  const options =
+    runInstrumentation(() => wrapSendOptionsCallbacks(args[1] ?? {}, state)) ??
+    args[1];
+  let result;
+  try {
+    result = withCurrent(state.span, () => call(options));
+  } catch (error) {
+    void finalizeCursorRun(state, { error });
+    throw error;
+  }
+  return observeResult(
+    result,
+    (run) => {
+      state.run = run;
+      patchCursorRun(run, state);
+    },
+    (error) => {
+      void finalizeCursorRun(state, { error });
+    },
+  );
+}
+
+function observeUpdate(
+  state: CursorRunState,
+  observe: () => void | Promise<void>,
+): void {
+  state.observation = state.observation
+    .then(async () => {
+      if (!state.finalized) await observe();
+    })
+    .catch((error) => logInstrumentationError("Cursor SDK update", error));
 }
 
 function wrapSendOptionsCallbacks(
@@ -378,37 +237,34 @@ function wrapSendOptionsCallbacks(
 
   return {
     ...options,
-    async onDelta(args) {
-      try {
-        await handleInteractionUpdate(state, args.update);
-      } catch (error) {
-        logInstrumentationError("Cursor SDK onDelta", error);
-      }
-      if (originalOnDelta) {
-        return originalOnDelta(args);
-      }
+    onDelta: function (args) {
+      observeUpdate(state, () => handleInteractionUpdate(state, args.update));
+      return (
+        originalOnDelta &&
+        withCurrent(state.span, () =>
+          Reflect.apply(originalOnDelta, this, [args]),
+        )
+      );
     },
-    async onStep(args) {
-      try {
-        handleStepUpdate(state, args.step);
-      } catch (error) {
-        logInstrumentationError("Cursor SDK onStep", error);
-      }
-      if (originalOnStep) {
-        return originalOnStep(args);
-      }
+    onStep: function (args) {
+      observeUpdate(state, () => handleStepUpdate(state, args.step));
+      return (
+        originalOnStep &&
+        withCurrent(state.span, () =>
+          Reflect.apply(originalOnStep, this, [args]),
+        )
+      );
     },
   };
 }
 
-function hasCursorCallbacks(
-  options: CursorSDKSendOptions | undefined,
-): options is CursorSDKSendOptions {
-  return (
-    !!options &&
-    (typeof options.onDelta === "function" ||
-      typeof options.onStep === "function")
-  );
+function callCursorRun<T>(state: CursorRunState, call: () => T): T {
+  try {
+    return withCurrent(state.span, call);
+  } catch (error) {
+    void finalizeCursorRun(state, { error });
+    throw error;
+  }
 }
 
 function patchCursorRun(run: CursorSDKRun, state: CursorRunState): void {
@@ -428,77 +284,78 @@ function patchCursorRun(run: CursorSDKRun, state: CursorRunState): void {
     });
 
     if (typeof runRecord.stream === "function") {
-      const originalStream = runRecord.stream.bind(runRecord);
-      Object.defineProperty(runRecord, "stream", {
-        configurable: true,
-        value() {
-          const stream = originalStream();
-          return patchCursorStream(stream, state);
-        },
-        writable: true,
-      });
+      const originalStream = runRecord.stream;
+      runRecord.stream = function (...args) {
+        const stream = callCursorRun(state, () =>
+          Reflect.apply(originalStream, runRecord, args),
+        );
+        patchStreamIfNeeded<CursorSDKMessage>(stream, {
+          aroundNext: (next) => withCurrent(state.span, next),
+          shouldCollect: (message) => {
+            observeUpdate(state, () => handleStreamMessage(state, message));
+            return false;
+          },
+          onComplete: () => finalizeCursorRun(state),
+          onCancel: () => finalizeCursorRun(state, { cancelled: true }),
+          onError: (error) => finalizeCursorRun(state, { error }),
+        });
+        return stream;
+      };
     }
-
     if (typeof runRecord.wait === "function") {
-      const originalWait = runRecord.wait.bind(runRecord);
-      Object.defineProperty(runRecord, "wait", {
-        configurable: true,
-        async value() {
-          try {
-            const result = await originalWait();
-            state.lastResult = result;
-            await finalizeCursorRun(state, { result });
-            return result;
-          } catch (error) {
-            await finalizeCursorRun(state, { error });
-            throw error;
-          }
-        },
-        writable: true,
-      });
+      const originalWait = runRecord.wait;
+      runRecord.wait = function (...args) {
+        const result = callCursorRun(state, () =>
+          Reflect.apply(originalWait, runRecord, args),
+        );
+        return observeResult(
+          result,
+          (value) => {
+            void finalizeCursorRun(state, { result: value });
+          },
+          (error) => {
+            void finalizeCursorRun(state, { error });
+          },
+        );
+      };
     }
-
     if (typeof runRecord.conversation === "function") {
-      const originalConversation = runRecord.conversation.bind(runRecord);
-      Object.defineProperty(runRecord, "conversation", {
-        configurable: true,
-        async value() {
-          try {
-            const conversation = await originalConversation();
-            await handleConversation(state, conversation);
-            await finalizeCursorRun(state);
-            return conversation;
-          } catch (error) {
-            await finalizeCursorRun(state, { error });
-            throw error;
-          }
-        },
-        writable: true,
-      });
+      const originalConversation = runRecord.conversation;
+      runRecord.conversation = function (...args) {
+        return observeResult(
+          callCursorRun(state, () =>
+            Reflect.apply(originalConversation, runRecord, args),
+          ),
+          (turns) => {
+            observeUpdate(state, () => handleConversation(state, turns));
+            if (run.status && run.status !== "running")
+              void finalizeCursorRun(state);
+          },
+          (error) => {
+            void finalizeCursorRun(state, { error });
+          },
+        );
+      };
     }
-  } catch {
-    // If the Run object is not patchable, finish the span with available data.
-    void finalizeCursorRun(state, { output: run });
-  }
-}
-
-async function* patchCursorStream(
-  stream: AsyncGenerator<CursorSDKMessage, void>,
-  state: CursorRunState,
-): AsyncGenerator<CursorSDKMessage, void> {
-  try {
-    for await (const message of stream) {
-      try {
-        await handleStreamMessage(state, message);
-      } catch (error) {
-        logInstrumentationError("Cursor SDK stream", error);
-      }
-      yield message;
+    if (typeof runRecord.cancel === "function") {
+      const originalCancel = runRecord.cancel;
+      runRecord.cancel = function (...args) {
+        return observeResult(
+          callCursorRun(state, () =>
+            Reflect.apply(originalCancel, runRecord, args),
+          ),
+          () => {
+            void finalizeCursorRun(state, { cancelled: true });
+          },
+          (error) => {
+            void finalizeCursorRun(state, { error });
+          },
+        );
+      };
     }
-    await finalizeCursorRun(state);
   } catch (error) {
-    await finalizeCursorRun(state, { error });
-    throw error;
+    logInstrumentationError("Cursor SDK run patch", error);
+    void finalizeCursorRun(state);
   }
 }
 
@@ -508,15 +365,14 @@ async function handleInteractionUpdate(
 ): Promise<void> {
   switch (update.type) {
     case "text-delta":
-      if (typeof update.text === "string") {
+      if (typeof update.text === "string" && update.text.length > 0) {
+        recordFirstToken(state);
         state.deltaText.push(update.text);
       }
       return;
     case "token-delta":
-      if (typeof update.tokens === "number") {
-        state.metrics["cursor_sdk.delta_tokens"] =
-          (state.metrics["cursor_sdk.delta_tokens"] ?? 0) + update.tokens;
-      }
+      // Token deltas do not distinguish input/output or cache categories.
+      // Only turn-ended usage can establish canonical token totals.
       return;
     case "tool-call-started":
     case "partial-tool-call":
@@ -535,24 +391,12 @@ async function handleInteractionUpdate(
       );
       return;
     case "turn-ended":
-      addUsageMetrics(
-        state.metrics,
-        (update as { usage?: CursorSDKUsage }).usage,
-      );
+      addUsageMetrics(state, (update as { usage?: CursorSDKUsage }).usage);
       return;
     case "summary":
       if (typeof update.summary === "string") {
         state.taskText.push(update.summary);
       }
-      return;
-    case "step-completed":
-      if (typeof update.stepDurationMs === "number") {
-        state.metrics["cursor_sdk.step_duration_ms"] =
-          (state.metrics["cursor_sdk.step_duration_ms"] ?? 0) +
-          update.stepDurationMs;
-      }
-      state.metrics["cursor_sdk.steps"] =
-        (state.metrics["cursor_sdk.steps"] ?? 0) + 1;
       return;
     default:
       return;
@@ -566,60 +410,113 @@ async function handleToolUpdate(
     { type: "tool-call-started" | "partial-tool-call" | "tool-call-completed" }
   >,
 ): Promise<void> {
-  const callId = update.callId;
-  if (!callId) {
+  if (!update.callId) return;
+  await recordTool(
+    state,
+    update.callId,
+    update.toolCall ?? {},
+    update.type === "tool-call-completed",
+    update.status,
+  );
+}
+
+function toolMetadata(
+  toolCall: Pick<CursorSDKToolCall, "truncated">,
+  status?: string,
+): Record<string, unknown> {
+  return {
+    ...(status ? { "cursor_sdk.tool.status": status } : {}),
+    ...(typeof toolCall.truncated?.args === "boolean"
+      ? { "cursor_sdk.tool.args_truncated": toolCall.truncated.args }
+      : {}),
+    ...(typeof toolCall.truncated?.result === "boolean"
+      ? { "cursor_sdk.tool.result_truncated": toolCall.truncated.result }
+      : {}),
+  };
+}
+
+async function recordTool(
+  state: CursorRunState,
+  callId: string,
+  toolCall: CursorSDKToolCall,
+  completed: boolean,
+  reportedStatus?: string,
+  parent?: Span,
+  scope = "",
+  ancestors = new Set<unknown>(),
+): Promise<void> {
+  const key = `${scope}/${callId}`;
+  const finished = state.completedToolSpans.get(key);
+  if (ancestors.has(toolCall)) return;
+  if (finished && !completed) {
+    finished.span.log({
+      ...(toolCall.args !== undefined ? { input: toolCall.args } : {}),
+      metadata: toolMetadata(toolCall),
+    });
     return;
   }
-
-  const toolCall = update.toolCall;
-  const name = extractToolName(toolCall);
-  const args = extractToolArgs(toolCall);
   const result = extractToolResult(toolCall);
-
-  if (
-    update.type === "tool-call-started" ||
-    update.type === "partial-tool-call"
-  ) {
-    if (!state.activeToolSpans.has(callId)) {
-      state.activeToolSpans.set(
-        callId,
-        await startToolSpan(state, {
-          args,
-          callId,
-          name,
-          status: "running",
-          toolCall,
-        }),
+  const resultRecord = asRecord(result);
+  if (resultRecord && ancestors.has(resultRecord)) return;
+  const failed =
+    reportedStatus === "error" ||
+    toolCall.status === "error" ||
+    resultRecord?.status === "error";
+  const status = failed
+    ? "error"
+    : (reportedStatus ??
+      toolCall.status ??
+      (completed ? "completed" : "running"));
+  let toolState = finished ?? state.activeToolSpans.get(key);
+  if (!toolState) {
+    toolState = await startToolSpan(state, {
+      args: toolCall.args,
+      callId,
+      name: extractToolName(toolCall),
+      status,
+      parent,
+      truncated: toolCall.truncated,
+    });
+    state.activeToolSpans.set(key, toolState);
+  } else {
+    toolState.span.log({
+      ...(toolCall.args !== undefined ? { input: toolCall.args } : {}),
+      metadata: toolMetadata(toolCall, status),
+    });
+  }
+  if (!completed) return;
+  // Task results contain normalized SDK steps or protobuf JSON steps.
+  const nested = asRecord(resultRecord?.value)?.conversationSteps;
+  if (toolState.subAgentSpan && Array.isArray(nested)) {
+    const seen = new Set(ancestors).add(toolCall);
+    if (resultRecord) seen.add(resultRecord);
+    for (const [index, step] of nested.entries()) {
+      await handleConversationStep(
+        state,
+        step,
+        toolState.subAgentSpan,
+        key,
+        index,
+        seen,
       );
     }
-    return;
   }
-
-  const toolState =
-    state.activeToolSpans.get(callId) ??
-    (await startToolSpan(state, {
-      args,
-      callId,
-      name,
-      status: "completed",
-      toolCall,
-    }));
-
+  const error = failed
+    ? (resultRecord?.error ?? result ?? new Error("Cursor tool failed"))
+    : undefined;
   finishToolSpan(toolState, {
-    error: toolCall?.status === "error" ? toLoggedError(result) : undefined,
-    metadata: {
-      "cursor_sdk.tool.status": toolCall?.status ?? "completed",
-    },
+    error,
+    metadata: toolMetadata(toolCall, status),
     output: result,
   });
-  state.activeToolSpans.delete(callId);
+  state.activeToolSpans.delete(key);
+  state.completedToolSpans.set(key, toolState);
 }
 
 async function handleStreamMessage(
   state: CursorRunState,
   message: CursorSDKMessage,
 ): Promise<void> {
-  state.streamMessages.push(message);
   if (message.type === "system") {
     const systemMessage = message as Extract<
       CursorSDKMessage,
@@ -647,17 +544,19 @@ async function handleStreamMessage(
       { type: "assistant" }
     >;
     for (const block of assistantMessage.message?.content ?? []) {
-      if (block?.type === "text" && typeof block.text === "string") {
+      if (
+        block?.type === "text" &&
+        typeof block.text === "string" &&
+        block.text.length > 0
+      ) {
+        recordFirstToken(state);
         state.streamText.push(block.text);
       } else if (block?.type === "tool_use" && block.id) {
-        state.activeToolSpans.set(
+        await recordTool(
+          state,
           block.id,
-          await startToolSpan(state, {
-            args: block.input,
-            callId: block.id,
-            name: block.name,
-            status: "running",
-          }),
+          { name: block.name, args: block.input },
+          false,
         );
       }
     }
@@ -677,8 +576,17 @@ async function handleStreamMessage(
     return;
   }
 
-  if (message.type === "status" && message.status) {
-    state.metadata["cursor_sdk.status"] = message.status;
+  if (message.type === "request" && typeof message.request_id === "string") {
+    state.metadata.request_id = message.request_id;
+  }
+  if (message.type === "status" && typeof message.status === "string") {
+    state.metadata["cursor_sdk.status"] = message.status.toLowerCase();
+    if (message.status.toLowerCase() === "error") {
+      state.error =
+        typeof message.message === "string"
+          ? message.message
+          : new Error("Cursor run failed");
+    }
   }
 }
 
@@ -686,61 +594,41 @@ async function handleToolMessage(
   state: CursorRunState,
   message: CursorSDKToolUseMessage,
 ): Promise<void> {
-  const callId = message.call_id;
-  if (!callId) {
-    return;
-  }
-
-  if (message.status === "running") {
-    if (!state.activeToolSpans.has(callId)) {
-      state.activeToolSpans.set(
-        callId,
-        await startToolSpan(state, {
-          args: message.args,
-          callId,
-          name: message.name,
-          status: message.status,
-          truncated: message.truncated,
-        }),
-      );
-    }
-    return;
-  }
-
-  const toolState =
-    state.activeToolSpans.get(callId) ??
-    (await startToolSpan(state, {
-      args: message.args,
-      callId,
+  if (!message.call_id) return;
+  await recordTool(
+    state,
+    message.call_id,
+    {
       name: message.name,
+      args: message.args,
+      result: message.result,
       status: message.status,
       truncated: message.truncated,
-    }));
-  finishToolSpan(toolState, {
-    error:
-      message.status === "error" ? toLoggedError(message.result) : undefined,
-    metadata: {
-      "cursor_sdk.tool.status": message.status,
     },
-    output: message.result,
-  });
-  state.activeToolSpans.delete(callId);
+    message.status !== "running",
+    message.status,
+  );
 }
 
 async function handleConversation(
   state: CursorRunState,
   turns: CursorSDKConversationTurn[],
 ): Promise<void> {
-  state.conversationOutput = turns;
-  for (const turn of turns) {
+  for (const [turnIndex, turn] of turns.entries()) {
     if (turn.type === "agentConversationTurn") {
-      for (const step of turn.turn?.steps ?? []) {
-        await handleConversationStep(state, step);
+      for (const [index, step] of (turn.turn?.steps ?? []).entries()) {
+        await handleConversationStep(
+          state,
+          step,
+          undefined,
+          `turn:${turnIndex}`,
+          index,
+        );
       }
     } else if (turn.type === "shellConversationTurn") {
       const command = turn.turn?.shellCommand?.command;
       if (command) {
-        const callId = `shell:${state.activeToolSpans.size}:${command}`;
+        const callId = `shell:${turnIndex}`;
         const toolState = await startToolSpan(state, {
           args: turn.turn?.shellCommand,
           callId,
@@ -756,50 +644,93 @@ async function handleConversation(
   }
 }
 
+// Protobuf JSON preserves oneof field names instead of the SDK discriminant.
+// Only the known tool variants are accepted; arbitrary properties are never used.
+const protoToolNames = {
+  shellToolCall: "shell",
+  readToolCall: "read",
+  writeToolCall: "write",
+  editToolCall: "edit",
+  deleteToolCall: "delete",
+  globToolCall: "glob",
+  grepToolCall: "grep",
+  lsToolCall: "ls",
+  mcpToolCall: "mcp",
+  readLintsToolCall: "readLints",
+  semSearchToolCall: "semSearch",
+  createPlanToolCall: "createPlan",
+  updateTodosToolCall: "updateTodos",
+  taskToolCall: "task",
+};
+
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  return isObject(value) ? value : undefined;
+}
+
+function normalizeToolCall(value: unknown): CursorSDKToolCall | undefined {
+  const record = asRecord(value);
+  if (!record) return;
+  if (typeof record.type === "string" || typeof record.name === "string")
+    return record as CursorSDKToolCall;
+  for (const [field, name] of Object.entries(protoToolNames)) {
+    const tool = asRecord(record[field]);
+    if (!tool) continue;
+    const result = asRecord(tool.result);
+    return {
+      type: name,
+      args: tool.args,
+      result:
+        result && "success" in result
+          ? { status: "success", value: result.success }
+          : result && "error" in result
+            ? { status: "error", error: result.error }
+            : result,
+    };
+  }
+}
+
 async function handleConversationStep(
   state: CursorRunState,
-  step: CursorSDKConversationStep,
+  value: unknown,
+  parent?: Span,
+  scope = "",
+  index = 0,
+  ancestors = new Set<unknown>(),
 ): Promise<void> {
-  if (
-    step.type === "assistantMessage" &&
-    typeof step.message?.text === "string"
-  ) {
-    state.conversationText.push(step.message.text);
+  const step = asRecord(value);
+  if (!step) return;
+  const assistant = asRecord(
+    step.type === "assistantMessage" ? step.message : step.assistantMessage,
+  );
+  if (typeof assistant?.text === "string") {
+    if (parent) parent.log({ output: assistant.text });
+    else state.conversationText.push(assistant.text);
     return;
   }
-
-  if (step.type !== "toolCall") {
-    return;
-  }
-
-  const toolCall = step.message;
+  const toolCall = normalizeToolCall(
+    step.type === "toolCall" ? step.message : step.toolCall,
+  );
+  if (!toolCall) return;
   const callId =
-    typeof toolCall?.callId === "string"
+    typeof toolCall.callId === "string"
       ? toolCall.callId
-      : `conversation-tool:${state.activeToolSpans.size}`;
-  const toolState = await startToolSpan(state, {
-    args: extractToolArgs(toolCall),
+      : `conversation-tool:${index}`;
+  await recordTool(
+    state,
     callId,
-    name: extractToolName(toolCall),
-    status: toolCall?.status,
     toolCall,
-  });
-  finishToolSpan(toolState, {
-    error:
-      toolCall?.status === "error" ? toLoggedError(toolCall.result) : undefined,
-    metadata: {
-      "cursor_sdk.tool.status": toolCall?.status ?? "completed",
-    },
-    output: extractToolResult(toolCall),
-  });
+    true,
+    undefined,
+    parent,
+    !parent && typeof toolCall.callId === "string" ? "" : scope,
+    ancestors,
+  );
 }
 
 function handleStepUpdate(
   state: CursorRunState,
   step: CursorSDKConversationStep,
 ): void {
-  state.metrics["cursor_sdk.steps"] =
-    (state.metrics["cursor_sdk.steps"] ?? 0) + 1;
   if (step.type) {
     const stepTypes = state.metadata["cursor_sdk.step_types"];
     if (Array.isArray(stepTypes)) {
@@ -825,22 +756,16 @@ async function startToolSpan(
     callId: string;
     name?: string;
     status?: string;
-    toolCall?: CursorSDKToolCall;
     truncated?: { args?: boolean; result?: boolean };
+    parent?: Span;
   },
 ): Promise<ToolState> {
   const name = args.name || "unknown";
   const metadata: Record<string, unknown> = {
-    "cursor_sdk.tool.status": args.status,
+    ...toolMetadata(args, args.status),
     "gen_ai.tool.call.id": args.callId,
     "gen_ai.tool.name": name,
   };
-  if (args.truncated?.args !== undefined) {
-    metadata["cursor_sdk.tool.args_truncated"] = args.truncated.args;
-  }
-  if (args.truncated?.result !== undefined) {
-    metadata["cursor_sdk.tool.result_truncated"] = args.truncated.result;
-  }
 
   const span = startBaseSpan(
     withSpanInstrumentationName(
@@ -849,8 +774,8 @@ async function startToolSpan(
           input: args.args,
           metadata,
         },
-        name: `tool: ${name}`,
-        parent: await state.span.export(),
+        name,
+        parent: await (args.parent ?? state.span).export(),
         spanAttributes: { type: SpanTypeAttribute.TOOL },
       },
       INSTRUMENTATION_NAMES.CURSOR_SDK,
@@ -869,7 +794,7 @@ async function startToolSpan(
               "gen_ai.tool.name": name,
             },
           },
-          name: formatSubAgentSpanName(args.toolCall, args.args),
+          name: "Cursor Subagent",
           parent: await span.export(),
           spanAttributes: { type: SpanTypeAttribute.TASK },
         },
@@ -884,108 +809,83 @@ async function startToolSpan(
 function finishToolSpan(
   toolState: ToolState,
   result: {
-    error?: string;
+    error?: unknown;
     metadata?: Record<string, unknown>;
     output?: unknown;
   },
 ): void {
-  try {
-    if (result.error) {
-      safeLog(toolState.span, {
-        error: result.error,
-        metadata: result.metadata,
-        output: result.output,
-      });
-      if (toolState.subAgentSpan) {
-        safeLog(toolState.subAgentSpan, {
-          error: result.error,
-          metadata: result.metadata,
-          output: result.output,
-        });
-      }
-    } else {
-      safeLog(toolState.span, {
-        metadata: result.metadata,
-        output: result.output,
-      });
-      if (toolState.subAgentSpan) {
-        safeLog(toolState.subAgentSpan, {
-          metadata: result.metadata,
-          output: result.output,
-        });
-      }
-    }
-  } finally {
+  toolState.span.log(result);
+  toolState.subAgentSpan?.log(result);
+  if (!toolState.ended) {
+    toolState.ended = true;
     toolState.subAgentSpan?.end();
     toolState.span.end();
   }
 }
 
-async function finalizeCursorRun(
+function finalizeCursorRun(
   state: CursorRunState,
   params: {
     error?: unknown;
-    output?: unknown;
     result?: CursorSDKRunResult;
+    cancelled?: boolean;
   } = {},
 ): Promise<void> {
-  if (state.finalized) {
-    return;
-  }
-  state.finalized = true;
-
-  const error = params.error;
-  const result = params.result ?? state.lastResult;
-  const output =
-    params.output ??
-    result?.result ??
-    state.run?.result ??
-    (state.conversationText.length > 0
-      ? state.conversationText.join("\n")
-      : undefined) ??
-    state.conversationOutput ??
-    (state.streamText.length > 0 ? state.streamText.join("") : undefined) ??
-    (state.deltaText.length > 0 ? state.deltaText.join("") : undefined) ??
-    (state.stepText.length > 0 ? state.stepText.join("\n") : undefined) ??
-    (state.taskText.length > 0 ? state.taskText.join("\n") : undefined);
-
-  try {
-    const metadata = {
-      ...state.metadata,
-      ...(state.run ? extractRunMetadata(state.run) : {}),
-      ...(result ? extractRunResultMetadata(result) : {}),
-    };
-    if (error) {
-      safeLog(state.span, {
-        error: toLoggedError(error),
+  if (state.finalizing) return state.finalizing;
+  // Drain queued observations before ending, including un-awaited SDK callbacks.
+  state.finalizing = state.observation.then(() => {
+    state.finalized = true;
+    const event = runInstrumentation(() => {
+      const result = params.result;
+      const metadata = {
+        ...state.metadata,
+        ...extractRunMetadata(state.run),
+        ...extractRunResultMetadata(result),
+        ...(params.cancelled ? { "cursor_sdk.status": "cancelled" } : {}),
+      };
+      const error =
+        params.error ??
+        state.error ??
+        (metadata["cursor_sdk.status"] === "error"
+          ? new Error("Cursor run failed")
+          : undefined);
+      const output =
+        result?.result ??
+        state.run?.result ??
+        (state.conversationText.length
+          ? state.conversationText.join("\n")
+          : undefined) ??
+        (state.streamText.length ? state.streamText.join("") : undefined) ??
+        (state.deltaText.length ? state.deltaText.join("") : undefined) ??
+        (state.stepText.length ? state.stepText.join("\n") : undefined) ??
+        (state.taskText.length ? state.taskText.join("\n") : undefined);
+      return {
+        error,
         metadata,
-        metrics: {
-          ...cleanMetrics(state.metrics),
-          ...buildDurationMetrics(state.startTime),
-        },
         output,
-      });
-    } else {
-      safeLog(state.span, {
-        metadata,
         metrics: {
-          ...cleanMetrics(state.metrics),
-          ...buildDurationMetrics(state.startTime),
+          ...state.metrics,
+          start: state.startTime,
+          end: getCurrentUnixTimestamp(),
         },
-        output,
+      };
+    });
+    if (event) state.span.log(event);
+    for (const tool of state.activeToolSpans.values()) {
+      finishToolSpan(tool, {
+        error: event?.error ?? params.error ?? state.error,
+        metadata:
+          params.cancelled ||
+          event?.metadata["cursor_sdk.status"] === "cancelled"
+            ? { "cursor_sdk.tool.status": "cancelled" }
+            : undefined,
       });
     }
-  } finally {
-    endOpenToolSpans(state);
+    state.activeToolSpans.clear();
+    state.completedToolSpans.clear();
     state.span.end();
-  }
-}
-
-function endOpenToolSpans(state: CursorRunState, error?: string): void {
-  for (const [, toolState] of state.activeToolSpans) {
-    finishToolSpan(toolState, { error });
-  }
-  state.activeToolSpans.clear();
+  });
+  return state.finalizing;
 }
 
 function sanitizeUserMessage(
@@ -995,7 +895,7 @@ function sanitizeUserMessage(
     return message;
   }
   return {
-    ...message,
+    text: message.text,
     images: message.images?.map((image) => {
       const imageRecord = image as Record<string, unknown>;
       return {
@@ -1005,7 +905,14 @@ function sanitizeUserMessage(
         ...(typeof imageRecord.mimeType === "string"
           ? { mimeType: imageRecord.mimeType }
           : {}),
-        ...(image.dimension ? { dimension: image.dimension } : {}),
+        ...(image.dimension
+          ? {
+              dimension: {
+                width: image.dimension.width,
+                height: image.dimension.height,
+              },
+            }
+          : {}),
         hasData: typeof imageRecord.data === "string",
       };
     }),
@@ -1126,46 +1033,54 @@ function extractModelMetadata(
   return {
     model: model.id,
     "cursor_sdk.model": model.id,
-    ...(model.params ? { "cursor_sdk.model.params": model.params } : {}),
+    ...(model.params
+      ? {
+          "cursor_sdk.model.params": model.params.map((param) => ({
+            id: param.id,
+            value: param.value,
+          })),
+        }
+      : {}),
   };
 }
 
 function addUsageMetrics(
-  metrics: Record<string, number>,
+  state: CursorRunState,
   usage: CursorSDKUsage | undefined,
 ): void {
-  if (!usage) {
-    return;
+  if (!usage) return;
+  const metrics = state.metrics;
+  const count = (value: unknown): value is number =>
+    typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
+  const add = (name: string, value: unknown) => {
+    if (count(value)) metrics[name] = (metrics[name] ?? 0) + value;
+  };
+  // Cursor reports uncached input and cache reads/writes as separate buckets.
+  // Cache detail metrics are subsets of the inclusive prompt total.
+  if (count(usage.inputTokens)) {
+    add(
+      "prompt_tokens",
+      usage.inputTokens +
+        (count(usage.cacheReadTokens) ? usage.cacheReadTokens : 0) +
+        (count(usage.cacheWriteTokens) ? usage.cacheWriteTokens : 0),
+    );
   }
-  if (usage.inputTokens !== undefined) {
-    metrics.prompt_tokens = (metrics.prompt_tokens ?? 0) + usage.inputTokens;
+  add("completion_tokens", usage.outputTokens);
+  add("prompt_cached_tokens", usage.cacheReadTokens);
+  add("prompt_cache_creation_tokens", usage.cacheWriteTokens);
+  state.usageComplete &&= count(usage.inputTokens) && count(usage.outputTokens);
+  if (state.usageComplete) {
+    metrics.tokens =
+      (metrics.prompt_tokens ?? 0) + (metrics.completion_tokens ?? 0);
+  } else {
+    // An incomplete turn makes the run's computed total incomplete too.
+    delete metrics.tokens;
   }
-  if (usage.outputTokens !== undefined) {
-    metrics.completion_tokens =
-      (metrics.completion_tokens ?? 0) + usage.outputTokens;
-  }
-  if (usage.cacheReadTokens !== undefined) {
-    metrics.prompt_cached_tokens =
-      (metrics.prompt_cached_tokens ?? 0) + usage.cacheReadTokens;
-  }
-  if (usage.cacheWriteTokens !== undefined) {
-    metrics.prompt_cache_creation_tokens =
-      (metrics.prompt_cache_creation_tokens ?? 0) + usage.cacheWriteTokens;
-  }
-  metrics.tokens =
-    (metrics.prompt_tokens ?? 0) +
-    (metrics.completion_tokens ?? 0) +
-    (metrics.prompt_cached_tokens ?? 0) +
-    (metrics.prompt_cache_creation_tokens ?? 0);
 }
 
-function buildDurationMetrics(startTime: number): Record<string, number> {
-  const end = getCurrentUnixTimestamp();
-  return {
-    duration: end - startTime,
-    end,
-    start: startTime,
-  };
+function recordFirstToken(state: CursorRunState): void {
+  state.metrics.time_to_first_token ??=
+    getCurrentUnixTimestamp() - state.startTime;
 }
 
 function extractToolName(toolCall: CursorSDKToolCall | undefined): string {
@@ -1181,10 +1096,6 @@ function extractToolName(toolCall: CursorSDKToolCall | undefined): string {
   return "unknown";
 }
 
-function extractToolArgs(toolCall: CursorSDKToolCall | undefined): unknown {
-  return toolCall && "args" in toolCall ? toolCall.args : undefined;
-}
-
 function extractToolResult(toolCall: CursorSDKToolCall | undefined): unknown {
   return toolCall && "result" in toolCall ? toolCall.result : undefined;
 }
@@ -1193,45 +1104,6 @@ function isSubAgentToolName(name: string): boolean {
   return name === "Agent" || name === "Task" || name === "task";
 }
 
-function formatSubAgentSpanName(
-  toolCall: CursorSDKToolCall | undefined,
-  args: unknown,
-): string {
-  const details = (toolCall ?? args) as Record<string, unknown> | undefined;
-  const description =
-    getString(details, "description") ??
-    getString(details, "subagent_type") ??
-    getString(details, "type") ??
-    getString(details, "name");
-  return description ? `Agent: ${description}` : "Agent: sub-agent";
-}
-
-function getString(
-  obj: Record<string, unknown> | undefined,
-  key: string,
-): string | undefined {
-  const value = obj?.[key];
-  return typeof value === "string" ? value : undefined;
-}
-
-function safeLog(span: Span, event: Parameters<Span["log"]>[0]): void {
-  try {
-    span.log(event);
-  } catch (error) {
-    logInstrumentationError("Cursor SDK span log", error);
-  }
-}
-
 function logInstrumentationError(context: string, error: unknown): void {
   debugLogger.error(`Error processing ${context}:`, error);
-}
-
-function cleanMetrics(metrics: Record<string, number>): Record<string, number> {
-  const cleaned: Record<string, number> = {};
-  for (const [key, value] of Object.entries(metrics)) {
-    if (value !== undefined && Number.isFinite(value)) {
-      cleaned[key] = value;
-    }
-  }
-  return cleaned;
 }

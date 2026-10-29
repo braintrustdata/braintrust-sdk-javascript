@@ -187,10 +187,23 @@ export class Transformer {
       );
     } else if ("methodName" in functionQuery) {
       const { methodName } = functionQuery;
-      queries.push(
-        `ClassBody > [key.name="${methodName}"][key.type=Identifier] > [async]`,
-        `Property[key.name="${methodName}"][key.type=Identifier] > [async]`,
-      );
+      if (functionQuery.classMethods) {
+        // Bundlers can rename classes while retaining their public static API.
+        const shape = functionQuery.classMethods
+          .map(
+            (name) =>
+              `:has(> MethodDefinition[static=true][key.name="${name}"])`,
+          )
+          .join("");
+        queries.push(
+          `ClassBody${shape} > MethodDefinition[static=true][key.name="${methodName}"] > FunctionExpression`,
+        );
+      } else {
+        queries.push(
+          `ClassBody > [key.name="${methodName}"][key.type=Identifier] > [async]`,
+          `Property[key.name="${methodName}"][key.type=Identifier] > [async]`,
+        );
+      }
     }
 
     if ("functionName" in functionQuery) {

@@ -40,3 +40,29 @@ export const cursorSDKChannels = defineInterceptor("@cursor/sdk", {
     channelName: "agent.send",
   }),
 });
+
+// Shared by manual wrappers and automatic factory hooks. This patch only invokes
+// wrapping hooks and remains safe when tracing is disabled.
+export function patchCursorAgentInPlace(agent: unknown): void {
+  if (!agent || typeof agent !== "object") return;
+  const candidate = agent as CursorSDKAgent;
+  const marker = Symbol.for("braintrust.cursor-sdk.auto-patched-agent");
+  if (candidate[marker] || typeof candidate.send !== "function") return;
+  const send = candidate.send;
+  if (!Object.isExtensible(candidate)) return;
+  try {
+    Object.defineProperty(candidate, "send", {
+      configurable: true,
+      writable: true,
+      value(...args: Parameters<CursorSDKAgent["send"]>) {
+        return cursorSDKChannels.send.invoke(send, candidate, args, {
+          agent: candidate,
+          operation: "send",
+        });
+      },
+    });
+    Object.defineProperty(candidate, marker, { value: true });
+  } catch {
+    // A non-writable send method must not prevent use of the agent.
+  }
+}

@@ -11,15 +11,8 @@ span_tree:
     │   }
     │   └── Cursor Agent [task]
     │       input: "Reply with exactly: CURSOR_PROMPT_OK. Do not modify files."
-    │       output: {
-    │         "durationMs": 0,
-    │         "id": "<span:1>",
-    │         "model": {
-    │           "id": "<span:2>"
-    │         },
-    │         "status": "error"
-    │       }
     │       metadata: {
+    │         "cursor_sdk.agent_id": "agent-<uuid:2>",
     │         "cursor_sdk.duration_ms": 0,
     │         "cursor_sdk.local.cwd": "<repo>/e2e/scenarios/cursor-sdk-instrumentation/",
     │         "cursor_sdk.model": "composer-2",
@@ -30,9 +23,7 @@ span_tree:
     │         "model": "composer-2",
     │         "provider": "cursor"
     │       }
-    │       metrics: {
-    │         "duration": 0
-    │       }
+    │       error: "Cursor run failed"
     ├── cursor-sdk-stream-operation
     │   metadata: {
     │     "operation": "stream",
@@ -50,9 +41,7 @@ span_tree:
     │         "model": "composer-2",
     │         "provider": "cursor"
     │       }
-    │       metrics: {
-    │         "duration": 0
-    │       }
+    │       error: "Cursor run failed"
     ├── cursor-sdk-wait-operation
     │   metadata: {
     │     "operation": "wait",
@@ -70,9 +59,7 @@ span_tree:
     │         "model": "composer-2",
     │         "provider": "cursor"
     │       }
-    │       metrics: {
-    │         "duration": 0
-    │       }
+    │       error: "Cursor run failed"
     └── cursor-sdk-resume-conversation-operation
         metadata: {
           "operation": "resume-conversation",
@@ -89,6 +76,4 @@ span_tree:
               "model": "composer-2",
               "provider": "cursor"
             }
-            metrics: {
-              "duration": 0
-            }
+            error: "Cursor run failed"
