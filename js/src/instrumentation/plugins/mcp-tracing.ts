@@ -12,6 +12,7 @@ import {
 import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
+  type SpanInstrumentationName,
 } from "../../span-origin";
 import type {
   MCPTransport,
@@ -42,6 +43,7 @@ type PendingRequest = {
   method: string;
   ended: boolean;
   handlerStarted?: boolean;
+  responseInFlight?: boolean;
   initialClient?: Record<string, string>;
   failure?: unknown;
 };
@@ -79,6 +81,7 @@ function canCacheTransportIdentity(transport: MCPTransport): boolean {
     ![
       "StreamableHTTPServerTransport",
       "WebStandardStreamableHTTPServerTransport",
+      "PerRequestHTTPServerTransport",
       "SSEServerTransport",
     ].includes(transport.constructor.name)
   );
@@ -292,6 +295,7 @@ export function traceMCPMessage<T>(
   transport: MCPTransport,
   message: unknown,
   config: MCPIntegrationConfig = {},
+  instrumentationName: SpanInstrumentationName = INSTRUMENTATION_NAMES.MCP,
 ): T {
   const request = runInstrumentation(() => {
     if (
@@ -371,6 +375,7 @@ export function traceMCPMessage<T>(
       ...([
         "StreamableHTTPServerTransport",
         "WebStandardStreamableHTTPServerTransport",
+        "PerRequestHTTPServerTransport",
         "SSEServerTransport",
       ].includes(transportName)
         ? { "network.protocol.name": "http" }
@@ -435,7 +440,7 @@ export function traceMCPMessage<T>(
             : {}),
         },
       },
-      INSTRUMENTATION_NAMES.MCP,
+      instrumentationName,
     );
     const span = withCurrent(NOOP_SPAN, () => startSpan(spanArgs));
     const state: PendingRequest = {
@@ -493,6 +498,7 @@ export function traceMCPSend<T>(
   message: unknown,
   options?: unknown,
   config: MCPIntegrationConfig = {},
+  instrumentationName: SpanInstrumentationName = INSTRUMENTATION_NAMES.MCP,
 ): T {
   if (
     isObject(message) &&
@@ -505,6 +511,7 @@ export function traceMCPSend<T>(
       message,
       options,
       config,
+      instrumentationName,
     );
   }
   let initialization:
@@ -586,6 +593,7 @@ export function traceMCPSend<T>(
     return state;
   });
   if (!request) return call();
+  request.responseInFlight = true;
   try {
     return observeResult(
       call(),
@@ -624,6 +632,7 @@ function traceMCPOutgoingNotification<T>(
   message: Record<string, unknown>,
   options: unknown,
   config: MCPIntegrationConfig,
+  instrumentationName: SpanInstrumentationName,
 ): T {
   if (isAutoInstrumentationSuppressed()) return call();
   const span = runInstrumentation(() => {
@@ -671,7 +680,7 @@ function traceMCPOutgoingNotification<T>(
                 : {}),
             },
           },
-          INSTRUMENTATION_NAMES.MCP,
+          instrumentationName,
         ),
       ),
     );
@@ -774,10 +783,14 @@ export function traceMCPNotificationHandler<T>(
 
 export function traceMCPClose<T>(call: () => T, transport: MCPTransport): T {
   for (const request of connections.get(transport)?.values() ?? []) {
-    finish(
-      request,
-      new Error("MCP connection closed before the response completed"),
-    );
+    // Per-request HTTP transports close as part of sending the terminal result,
+    // before the send promise settles. Let that promise determine the outcome.
+    if (!request.responseInFlight) {
+      finish(
+        request,
+        new Error("MCP connection closed before the response completed"),
+      );
+    }
   }
   connections.delete(transport);
   protocolVersions.delete(transport);

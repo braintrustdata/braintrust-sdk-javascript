@@ -30,6 +30,7 @@ import { StrandsAgentSDKPlugin } from "./plugins/strands-agent-sdk-plugin";
 import { ElevenLabsPlugin } from "./plugins/elevenlabs-plugin";
 import { LiveKitPlugin } from "./plugins/livekit-plugin";
 import { MCPPlugin } from "./plugins/mcp-plugin";
+import { MCPHandlerPlugin } from "./plugins/mcp-handler-plugin";
 import { VoyageAIPlugin } from "./plugins/voyageai-plugin";
 import { WorkersAIPlugin } from "./plugins/workers-ai-plugin";
 import { TypeSafePlugin } from "./plugins/typesafe-plugin";
@@ -97,6 +98,7 @@ export class BraintrustPlugin extends BasePlugin {
   private liveKitPlugin: LiveKitPlugin | null = null;
   private voyageAIPlugin: VoyageAIPlugin | null = null;
   private mcpPlugin: MCPPlugin | null = null;
+  private mcpHandlerPlugin: MCPHandlerPlugin | null = null;
   private workersAIPlugin: WorkersAIPlugin | null = null;
   private typeSafePlugin: TypeSafePlugin | null = null;
   private cloudflareAIChatPlugin: CloudflareAIChatPlugin | null = null;
@@ -229,6 +231,15 @@ export class BraintrustPlugin extends BasePlugin {
     if (integrations.voyageai !== false) {
       this.voyageAIPlugin = new VoyageAIPlugin();
       this.voyageAIPlugin.enable();
+    }
+
+    if (integrations.mcpHandler !== false) {
+      this.mcpHandlerPlugin = new MCPHandlerPlugin(
+        typeof integrations.mcpHandler === "object"
+          ? integrations.mcpHandler
+          : {},
+      );
+      this.mcpHandlerPlugin.enable();
     }
 
     if (integrations.mcp !== false) {
@@ -429,6 +440,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.mcpPlugin) {
       this.mcpPlugin.disable();
       this.mcpPlugin = null;
+    }
+
+    if (this.mcpHandlerPlugin) {
+      this.mcpHandlerPlugin.disable();
+      this.mcpHandlerPlugin = null;
     }
 
     if (this.workersAIPlugin) {

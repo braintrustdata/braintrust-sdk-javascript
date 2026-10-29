@@ -38,6 +38,7 @@ import { strandsAgentSDKConfigs } from "./strands-agent-sdk";
 import { elevenLabsConfigs } from "./elevenlabs";
 import { voyageAIConfigs } from "./voyageai";
 import { mcpConfigs } from "./mcp";
+import { mcpHandlerConfigs } from "./mcp-handler";
 import { typeSafeConfigs } from "./typesafe";
 
 interface InstrumentationConfigGroup {
@@ -145,6 +146,10 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
     {
       integrations: ["mcp"],
       configs: mcpConfigs,
+    },
+    {
+      integrations: ["mcpHandler"],
+      configs: mcpHandlerConfigs,
     },
     {
       integrations: ["typesafe"],
