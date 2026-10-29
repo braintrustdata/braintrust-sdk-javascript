@@ -6,7 +6,7 @@
   "dependencies": {
     "openai-agents-v0": "npm:@openai/agents@0.0.14",
     "openai-agents-v0-latest": "npm:@openai/agents@0.12.0",
-    "zod": "4.4.3"
+    "zod": "4.6.6"
   },
   "braintrustScenario": {
     "bump": {

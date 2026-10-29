@@ -14,7 +14,7 @@
     "react": "19.2.4",
     "vite": "^8.0.16",
     "wrangler": "^4.103.0",
-    "zod": "4.3.6"
+    "zod": "4.6.6"
   },
   "braintrustScenario": {
     "bump": {
