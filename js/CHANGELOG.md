@@ -1,5 +1,16 @@
 # braintrust
 
+## 3.42.0
+
+### Minor Changes
+
+- feat(mcp): Capture MCP tool and prompt content by default (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2690)
+- feat(mcp): trace server notifications and session metadata (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2692)
+
+### Patch Changes
+
+- fix(pi): align agent instrumentation with tracing spec (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2682)
+
 ## 3.41.0
 
 ### Minor Changes
