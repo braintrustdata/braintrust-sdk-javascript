@@ -30,6 +30,7 @@ import { StrandsAgentSDKPlugin } from "./plugins/strands-agent-sdk-plugin";
 import { ElevenLabsPlugin } from "./plugins/elevenlabs-plugin";
 import { LiveKitPlugin } from "./plugins/livekit-plugin";
 import { MCPPlugin } from "./plugins/mcp-plugin";
+import { FastMCPPlugin } from "./plugins/fastmcp-plugin";
 import { VoyageAIPlugin } from "./plugins/voyageai-plugin";
 import { WorkersAIPlugin } from "./plugins/workers-ai-plugin";
 import { TypeSafePlugin } from "./plugins/typesafe-plugin";
@@ -97,6 +98,7 @@ export class BraintrustPlugin extends BasePlugin {
   private liveKitPlugin: LiveKitPlugin | null = null;
   private voyageAIPlugin: VoyageAIPlugin | null = null;
   private mcpPlugin: MCPPlugin | null = null;
+  private fastMCPPlugin: FastMCPPlugin | null = null;
   private workersAIPlugin: WorkersAIPlugin | null = null;
   private typeSafePlugin: TypeSafePlugin | null = null;
   private cloudflareAIChatPlugin: CloudflareAIChatPlugin | null = null;
@@ -236,6 +238,13 @@ export class BraintrustPlugin extends BasePlugin {
         typeof integrations.mcp === "object" ? integrations.mcp : {},
       );
       this.mcpPlugin.enable();
+    }
+
+    if (integrations.fastmcp !== false) {
+      this.fastMCPPlugin = new FastMCPPlugin(
+        typeof integrations.fastmcp === "object" ? integrations.fastmcp : {},
+      );
+      this.fastMCPPlugin.enable();
     }
 
     if (integrations.workersAI !== false) {
@@ -429,6 +438,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.mcpPlugin) {
       this.mcpPlugin.disable();
       this.mcpPlugin = null;
+    }
+
+    if (this.fastMCPPlugin) {
+      this.fastMCPPlugin.disable();
+      this.fastMCPPlugin = null;
     }
 
     if (this.workersAIPlugin) {

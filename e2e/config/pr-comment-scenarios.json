@@ -616,6 +616,29 @@
     ]
   },
   {
+    "scenarioDirName": "fastmcp-instrumentation",
+    "label": "FastMCP Instrumentation",
+    "metadataScenario": "fastmcp-instrumentation",
+    "variants": [
+      {
+        "variantKey": "fastmcp-v3",
+        "label": "v3 pinned"
+      },
+      {
+        "variantKey": "fastmcp-v3-latest",
+        "label": "v3 latest"
+      },
+      {
+        "variantKey": "fastmcp-v4",
+        "label": "v4 pinned"
+      },
+      {
+        "variantKey": "fastmcp-v4-latest",
+        "label": "v4 latest"
+      }
+    ]
+  },
+  {
     "scenarioDirName": "typesafe-instrumentation",
     "label": "TypeSafe Instrumentation",
     "metadataScenario": "typesafe-instrumentation",

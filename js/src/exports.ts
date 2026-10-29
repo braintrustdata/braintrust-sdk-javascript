@@ -244,6 +244,7 @@ export { wrapOllama } from "./wrappers/ollama";
 export { wrapCohere } from "./wrappers/cohere";
 export { wrapVoyageAI } from "./wrappers/voyageai";
 export { wrapMCPServer } from "./wrappers/mcp";
+export { wrapFastMCP } from "./wrappers/fastmcp";
 export { wrapWorkersAI } from "./wrappers/workers-ai";
 export { wrapTypeSafe } from "./wrappers/typesafe";
 export { wrapGroq } from "./wrappers/groq";

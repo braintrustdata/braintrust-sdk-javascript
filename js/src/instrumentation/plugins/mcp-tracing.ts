@@ -11,6 +11,7 @@ import {
 } from "../../logger";
 import {
   INSTRUMENTATION_NAMES,
+  type SpanInstrumentationName,
   withSpanInstrumentationName,
 } from "../../span-origin";
 import type {
@@ -292,6 +293,7 @@ export function traceMCPMessage<T>(
   transport: MCPTransport,
   message: unknown,
   config: MCPIntegrationConfig = {},
+  instrumentationName: SpanInstrumentationName = INSTRUMENTATION_NAMES.MCP,
 ): T {
   const request = runInstrumentation(() => {
     if (
@@ -435,7 +437,7 @@ export function traceMCPMessage<T>(
             : {}),
         },
       },
-      INSTRUMENTATION_NAMES.MCP,
+      instrumentationName,
     );
     const span = withCurrent(NOOP_SPAN, () => startSpan(spanArgs));
     const state: PendingRequest = {
@@ -493,6 +495,7 @@ export function traceMCPSend<T>(
   message: unknown,
   options?: unknown,
   config: MCPIntegrationConfig = {},
+  instrumentationName: SpanInstrumentationName = INSTRUMENTATION_NAMES.MCP,
 ): T {
   if (
     isObject(message) &&
@@ -505,6 +508,7 @@ export function traceMCPSend<T>(
       message,
       options,
       config,
+      instrumentationName,
     );
   }
   let initialization:
@@ -624,6 +628,7 @@ function traceMCPOutgoingNotification<T>(
   message: Record<string, unknown>,
   options: unknown,
   config: MCPIntegrationConfig,
+  instrumentationName: SpanInstrumentationName,
 ): T {
   if (isAutoInstrumentationSuppressed()) return call();
   const span = runInstrumentation(() => {
@@ -671,7 +676,7 @@ function traceMCPOutgoingNotification<T>(
                 : {}),
             },
           },
-          INSTRUMENTATION_NAMES.MCP,
+          instrumentationName,
         ),
       ),
     );

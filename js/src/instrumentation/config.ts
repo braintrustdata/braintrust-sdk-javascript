@@ -67,6 +67,8 @@ export interface InstrumentationIntegrationsConfig {
   livekit?: boolean | LiveKitIntegrationConfig;
   /** Set to false to disable, or pass options; options keep MCP enabled. */
   mcp?: boolean | MCPIntegrationConfig;
+  /** Set to false to disable, or pass options; options keep FastMCP enabled. */
+  fastmcp?: boolean | MCPIntegrationConfig;
 }
 
 export interface MCPIntegrationConfig {
@@ -239,6 +241,7 @@ const envIntegrationAliases: Record<
   livekit: "livekit",
   "@livekit/agents": "livekit",
   mcp: "mcp",
+  fastmcp: "fastmcp",
   modelcontextprotocol: "mcp",
   "@modelcontextprotocol/sdk": "mcp",
   "@modelcontextprotocol/server": "mcp",
@@ -288,6 +291,7 @@ export function getDefaultInstrumentationIntegrations(): Record<
     elevenlabs: true,
     livekit: true,
     mcp: true,
+    fastmcp: true,
     piCodingAgent: true,
     strandsAgentSDK: true,
     cloudflareAgents: true,
