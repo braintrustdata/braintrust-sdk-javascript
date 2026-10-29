@@ -7,10 +7,11 @@ import {
   interrupt,
 } from "@langchain/langgraph";
 
+// GPT-5 models only support the default temperature, and their output
+// budget includes reasoning tokens.
 const model = new ChatOpenAI({
-  model: "gpt-4.1-nano",
-  temperature: 0,
-  maxTokens: 64,
+  model: "gpt-5.4-nano",
+  maxTokens: 512,
   maxRetries: 0,
   configuration: { baseURL: process.env.OPENAI_BASE_URL },
 });

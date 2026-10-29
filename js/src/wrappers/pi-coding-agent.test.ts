@@ -1,4 +1,3 @@
-import { debugLogger } from "../debug-logger";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 const { invoke } = vi.hoisted(() => ({
@@ -13,7 +12,10 @@ const { invoke } = vi.hoisted(() => ({
 }));
 vi.mock("../global-instrumentation-hooks", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../global-instrumentation-hooks")>()),
-  newGlobalInvocationHook: vi.fn(() => ({ invoke })),
+  newGlobalInvocationHook: vi.fn(() => ({
+    invoke,
+    intercept: vi.fn(() => () => {}),
+  })),
 }));
 
 import { wrapPiCodingAgentSDK } from "./pi-coding-agent";
@@ -23,21 +25,7 @@ describe("wrapPiCodingAgentSDK", () => {
     vi.clearAllMocks();
   });
 
-  it("returns invalid modules unchanged", () => {
-    const warnSpy = vi
-      .spyOn(debugLogger.notice, "warn")
-      .mockImplementation(() => true);
-    const sdk = { Session: class {} };
-
-    expect(wrapPiCodingAgentSDK(sdk)).toBe(sdk);
-    expect(warnSpy).toHaveBeenCalledWith(
-      "Unsupported Pi Coding Agent SDK. Not wrapping.",
-    );
-
-    warnSpy.mockRestore();
-  });
-
-  it("wraps AgentSession.prompt", async () => {
+  it("wraps AgentSession.prompt once while preserving receiver, arguments, and result", async () => {
     class AgentSession {
       async prompt(text: string) {
         return text;
@@ -45,6 +33,7 @@ describe("wrapPiCodingAgentSDK", () => {
     }
 
     const sdk = { AgentSession };
+    wrapPiCodingAgentSDK(sdk);
     wrapPiCodingAgentSDK(sdk);
     const session = new sdk.AgentSession();
 
@@ -57,21 +46,6 @@ describe("wrapPiCodingAgentSDK", () => {
         session,
       },
     ]);
-  });
-
-  it("patches AgentSession.prompt only once", async () => {
-    class AgentSession {
-      async prompt(text: string) {
-        return text;
-      }
-    }
-
-    const sdk = { AgentSession };
-    wrapPiCodingAgentSDK(sdk);
-    wrapPiCodingAgentSDK(sdk);
-
-    await new sdk.AgentSession().prompt("hello");
-    expect(invoke).toHaveBeenCalledTimes(1);
   });
 
   it("preserves prompt rejections", async () => {

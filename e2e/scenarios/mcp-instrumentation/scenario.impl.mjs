@@ -1,0 +1,502 @@
+import { randomUUID } from "node:crypto";
+import { PassThrough } from "node:stream";
+import { traced, wrapMCPServer, injectTraceContext } from "braintrust";
+import { z } from "zod";
+import { MINIMAL_PNG_BASE64 } from "../../helpers/media-fixtures.mjs";
+import {
+  runOperation,
+  runTracedScenario,
+} from "../../helpers/provider-runtime.mjs";
+
+export const ROOT_NAME = "mcp-instrumentation-root";
+export const SCENARIO_NAME = "mcp-instrumentation";
+
+const DEFAULT_PACKAGES = {
+  v1: { server: "mcp-sdk-v1-latest" },
+  v2: { client: "mcp-client-v2-latest", server: "mcp-server-v2-latest" },
+};
+
+/** Load the server and client SDK surface through `import()` or `require()`. */
+export async function loadMCPModules(load) {
+  const line = process.env.MCP_SDK_LINE ?? "v1";
+  const serverPackage =
+    process.env.MCP_SERVER_PACKAGE_NAME ?? DEFAULT_PACKAGES[line].server;
+
+  if (line === "v1") {
+    const [mcp, http, client, clientHttp, inMemory, stdio] = await Promise.all(
+      [
+        "server/mcp.js",
+        "server/webStandardStreamableHttp.js",
+        "client/index.js",
+        "client/streamableHttp.js",
+        "inMemory.js",
+        "server/stdio.js",
+      ].map((path) => load(`${serverPackage}/${path}`)),
+    );
+    return {
+      Client: client.Client,
+      InMemoryTransport: inMemory.InMemoryTransport,
+      McpServer: mcp.McpServer,
+      StdioServerTransport: stdio.StdioServerTransport,
+      // v1 accepts Zod raw shapes for tool and prompt arguments.
+      schema: (shape) => shape,
+      StreamableHTTPClientTransport: clientHttp.StreamableHTTPClientTransport,
+      WebStandardStreamableHTTPServerTransport:
+        http.WebStandardStreamableHTTPServerTransport,
+    };
+  }
+
+  const [server, client, stdio] = await Promise.all([
+    load(serverPackage),
+    load(DEFAULT_PACKAGES.v2.client),
+    load(`${serverPackage}/stdio`),
+  ]);
+  return {
+    Client: client.Client,
+    InMemoryTransport: server.InMemoryTransport,
+    McpServer: server.McpServer,
+    StdioServerTransport: stdio.StdioServerTransport,
+    schema: (shape) => z.object(shape),
+    StreamableHTTPClientTransport: client.StreamableHTTPClientTransport,
+    WebStandardStreamableHTTPServerTransport:
+      server.WebStandardStreamableHTTPServerTransport,
+  };
+}
+
+function createServer(mcp, decorateServer) {
+  const baseServer = new mcp.McpServer({
+    name: "braintrust-e2e-weather",
+    version: "1.0.0",
+  });
+  const server = decorateServer ? decorateServer(baseServer) : baseServer;
+
+  server.registerTool(
+    "get_weather",
+    {
+      description: "Get the current weather for a city",
+      inputSchema: mcp.schema({ city: z.string() }),
+    },
+    async ({ city }) =>
+      traced(
+        async () => ({
+          content: [
+            {
+              type: "text",
+              text: `Sunny in ${city}`,
+              _meta: { private: "omitted" },
+            },
+          ],
+          structuredContent: { _meta: { application: "preserved" } },
+          _meta: {
+            "io.modelcontextprotocol/serverInfo": {
+              name: "braintrust-e2e-weather",
+              version: "1.0.0",
+            },
+            private: "omitted",
+          },
+        }),
+        { name: "weather-lookup" },
+      ),
+  );
+  server.registerTool(
+    "render_map",
+    { description: "Render a weather map" },
+    async () => ({
+      content: [
+        { type: "image", data: MINIMAL_PNG_BASE64, mimeType: "image/png" },
+      ],
+    }),
+  );
+  server.registerTool(
+    "get_alerts",
+    { description: "Get weather alerts" },
+    async () => {
+      throw new Error("Alert service unavailable");
+    },
+  );
+  server.registerResource(
+    "forecast-notes",
+    "notes://forecast",
+    { mimeType: "text/plain" },
+    async (uri) => ({
+      contents: [{ uri: uri.href, text: "Bring an umbrella." }],
+    }),
+  );
+  server.registerPrompt(
+    "forecast",
+    {
+      description: "Ask for a forecast",
+      argsSchema: mcp.schema({ city: z.string() }),
+    },
+    ({ city }) => ({
+      messages: [
+        {
+          role: "user",
+          content: { type: "text", text: `What is the forecast for ${city}?` },
+        },
+      ],
+    }),
+  );
+
+  return baseServer;
+}
+
+function createClient(mcp) {
+  return new mcp.Client({ name: "braintrust-e2e-client", version: "1.0.0" });
+}
+
+function withTraceContext(transport) {
+  const send = transport.send;
+  transport.send = function (message, ...args) {
+    if (typeof message.method === "string") {
+      message = {
+        ...message,
+        params: {
+          ...message.params,
+          _meta: { ...injectTraceContext(), ...message.params?._meta },
+        },
+      };
+    }
+    return send.call(this, message, ...args);
+  };
+  return transport;
+}
+
+async function runHttpSession(mcp, decorateServer) {
+  const server = createServer(mcp, decorateServer);
+  const serverTransport = new mcp.WebStandardStreamableHTTPServerTransport({
+    enableJsonResponse: true,
+    sessionIdGenerator: () => randomUUID(),
+  });
+  await server.connect(serverTransport);
+
+  // Explicit MCP propagation links requests to the client operation.
+  const client = createClient(mcp);
+  await client.connect(
+    withTraceContext(
+      new mcp.StreamableHTTPClientTransport(new URL("http://mcp.test/mcp"), {
+        fetch: (url, init) =>
+          serverTransport.handleRequest(new Request(url, init)),
+      }),
+    ),
+  );
+
+  await client.callTool({ name: "get_weather", arguments: { city: "Vienna" } });
+  await client.callTool({ name: "get_weather", arguments: { city: "Paris" } });
+  await client.readResource({ uri: "notes://forecast" });
+  await client.getPrompt({ name: "forecast", arguments: { city: "Vienna" } });
+
+  await client.close();
+  await server.close();
+}
+
+async function runInMemorySession(mcp, decorateServer) {
+  const server = createServer(mcp, decorateServer);
+  server.server.registerCapabilities({ logging: {} });
+  server.registerTool(
+    "report_progress",
+    { description: "Report progress", inputSchema: mcp.schema({}) },
+    async (_args, extra) => {
+      const requestId = extra.mcpReq?.id ?? extra.requestId;
+      await server.server.notification(
+        {
+          method: "notifications/progress",
+          params: {
+            progressToken: 0,
+            progress: 1,
+            total: 2,
+            message: "working",
+          },
+        },
+        { relatedRequestId: requestId },
+      );
+      await server.server.notification(
+        {
+          method: "notifications/message",
+          params: {
+            level: "info",
+            data: {
+              type: "image",
+              mimeType: "image/png",
+              data: MINIMAL_PNG_BASE64,
+              _meta: { private: "hidden" },
+            },
+          },
+        },
+        { relatedRequestId: requestId },
+      );
+      return { content: [{ type: "text", text: "done" }] };
+    },
+  );
+  const [clientTransport, serverTransport] =
+    mcp.InMemoryTransport.createLinkedPair();
+  withTraceContext(clientTransport);
+  await server.connect(serverTransport);
+
+  const client = createClient(mcp);
+  await client.connect(clientTransport);
+
+  await client.callTool({
+    name: "get_weather",
+    arguments: { city: "Tokyo" },
+    _meta: {
+      "io.modelcontextprotocol/clientInfo": {
+        name: "trace-client",
+        version: "1.0.0",
+        private: "omitted",
+      },
+      private: "omitted",
+    },
+  });
+  await client.callTool({ name: "report_progress", arguments: {} });
+  await client.callTool({ name: "render_map", arguments: {} });
+  await client.callTool({ name: "get_alerts", arguments: {} });
+
+  await client.close();
+  await server.close();
+}
+
+async function runLifecycleSession(mcp, decorateServer) {
+  const server = createServer(mcp, decorateServer);
+  let handlerStarted;
+  let handlerCancelled;
+  const started = new Promise((resolve) => {
+    handlerStarted = resolve;
+  });
+  const cancelled = new Promise((resolve) => {
+    handlerCancelled = resolve;
+  });
+  server.registerTool(
+    "wait_for_cancel",
+    { description: "Wait for cancellation", inputSchema: mcp.schema({}) },
+    async (_args, extra) => {
+      handlerStarted();
+      const signal = extra.mcpReq?.signal ?? extra.signal;
+      await new Promise((resolve) =>
+        signal.addEventListener("abort", resolve, { once: true }),
+      );
+      handlerCancelled();
+      return { content: [] };
+    },
+  );
+  const [clientTransport, serverTransport] =
+    mcp.InMemoryTransport.createLinkedPair();
+  withTraceContext(clientTransport);
+  await server.connect(serverTransport);
+  const client = createClient(mcp);
+  await client.connect(clientTransport);
+
+  // Exercise actual protocol dispatch and validation with raw wire requests,
+  // including requests rejected before a registered handler can run.
+  const responses = new Map();
+  clientTransport.onmessage = (message) => {
+    responses.get(message.id)?.(message);
+  };
+  for (const request of [
+    { id: 100, method: "ping" },
+    { id: 101, method: "tools/list" },
+    { id: 102, method: "acme/missing" },
+    { id: 106, method: "ping", params: { _meta: { traceparent: "invalid" } } },
+    {
+      id: 103,
+      method: "tools/call",
+      params: { name: "get_weather", arguments: { city: 42 } },
+    },
+  ]) {
+    const response = new Promise((resolve) =>
+      responses.set(request.id, resolve),
+    );
+    await clientTransport.send({ jsonrpc: "2.0", ...request });
+    await response;
+    responses.delete(request.id);
+  }
+  let noticeFinished;
+  const noticed = new Promise((resolve) => {
+    noticeFinished = resolve;
+  });
+  server.server.fallbackNotificationHandler = async () => {
+    await Promise.resolve();
+    await traced(async () => {}, { name: "notice-work" });
+    noticeFinished();
+  };
+  let validatedNoticeFinished;
+  const validatedNotice = new Promise((resolve) => {
+    validatedNoticeFinished = resolve;
+  });
+  const onValidatedNotice = async () => {
+    await traced(async () => {}, { name: "validated-notice-work" });
+    validatedNoticeFinished();
+  };
+  if (process.env.MCP_SDK_LINE === "v1") {
+    server.server.setNotificationHandler(
+      z.object({
+        method: z.literal("acme/validated"),
+        params: z.object({ value: z.string() }),
+      }),
+      onValidatedNotice,
+    );
+  } else {
+    server.server.setNotificationHandler(
+      "acme/validated",
+      { params: z.object({ value: z.string() }) },
+      onValidatedNotice,
+    );
+  }
+  await clientTransport.send({
+    jsonrpc: "2.0",
+    method: "acme/validated",
+    params: { value: "valid" },
+  });
+  await validatedNotice;
+  await clientTransport.send({
+    jsonrpc: "2.0",
+    method: "acme/validated",
+    params: { value: 42 },
+  });
+  await new Promise((resolve) => setImmediate(resolve));
+  await clientTransport.send({ jsonrpc: "2.0", method: "acme/notice" });
+  await noticed;
+  await new Promise((resolve) => setImmediate(resolve));
+  await clientTransport.send({
+    jsonrpc: "2.0",
+    id: 104,
+    method: "tools/call",
+    params: { name: "wait_for_cancel", arguments: {} },
+  });
+  await started;
+  await clientTransport.send({
+    jsonrpc: "2.0",
+    method: "notifications/cancelled",
+    params: { requestId: 104, reason: "private cancellation reason" },
+  });
+  await cancelled;
+  // Wait for the handler's settlement before closing its connection.
+  await new Promise((resolve) => setImmediate(resolve));
+
+  const fallbackStarted = new Promise((resolve) => {
+    handlerStarted = resolve;
+  });
+  const fallbackCancelled = new Promise((resolve) => {
+    handlerCancelled = resolve;
+  });
+  // Direct assignments after connect must receive the same lifecycle handling.
+  server.server.fallbackRequestHandler = async (_request, extra) => {
+    handlerStarted();
+    const signal = extra.mcpReq?.signal ?? extra.signal;
+    await new Promise((resolve) =>
+      signal.addEventListener("abort", resolve, { once: true }),
+    );
+    handlerCancelled();
+    return {};
+  };
+  await clientTransport.send({
+    jsonrpc: "2.0",
+    id: 105,
+    method: "acme/cancel",
+  });
+  await fallbackStarted;
+  await clientTransport.send({
+    jsonrpc: "2.0",
+    method: "notifications/cancelled",
+    params: { requestId: 105, reason: "private cancellation reason" },
+  });
+  await fallbackCancelled;
+  await new Promise((resolve) => setImmediate(resolve));
+  await client.close();
+  await server.close();
+}
+
+async function runStdioErrorSession(mcp, decorateServer) {
+  const server = createServer(mcp, decorateServer);
+  let release;
+  let started;
+  const active = new Promise((resolve) => {
+    started = resolve;
+  });
+  const done = new Promise((resolve) => {
+    release = resolve;
+  });
+  server.registerTool(
+    "wait_for_parse_error",
+    { inputSchema: mcp.schema({}) },
+    async () => {
+      started();
+      await done;
+      return { content: [{ type: "text", text: "completed" }] };
+    },
+  );
+  const input = new PassThrough();
+  const output = new PassThrough();
+  const transport = new mcp.StdioServerTransport(input, output);
+  server.server.onerror = () => {};
+  await server.connect(transport);
+  const response = new Promise((resolve) => {
+    let buffer = "";
+    output.on("data", (chunk) => {
+      buffer += chunk.toString();
+      for (const line of buffer.split("\n").slice(0, -1)) {
+        const message = JSON.parse(line);
+        if (message.id === 43) resolve(message);
+      }
+      buffer = buffer.slice(buffer.lastIndexOf("\n") + 1);
+    });
+  });
+  input.write(
+    JSON.stringify({
+      jsonrpc: "2.0",
+      id: 43,
+      method: "tools/call",
+      params: {
+        name: "wait_for_parse_error",
+        arguments: {},
+        _meta: injectTraceContext(),
+      },
+    }) + "\n",
+  );
+  await active;
+  input.write("{invalid json}\n");
+  await new Promise((resolve) => setImmediate(resolve));
+  release();
+  const result = await response;
+  if (!result.result || result.result.isError)
+    throw new Error("valid request did not succeed after parse error");
+  await new Promise((resolve) => setImmediate(resolve));
+  await server.close();
+}
+
+export async function runMCPInstrumentationScenario(
+  mcp,
+  { decorateServer } = {},
+) {
+  await runTracedScenario({
+    callback: async () => {
+      await runOperation("mcp-http-session-operation", "http-session", () =>
+        runHttpSession(mcp, decorateServer),
+      );
+      await runOperation(
+        "mcp-in-memory-session-operation",
+        "in-memory-session",
+        () => runInMemorySession(mcp, decorateServer),
+      );
+      await runOperation("mcp-lifecycle-operation", "lifecycle", () =>
+        runLifecycleSession(mcp, decorateServer),
+      );
+      await runOperation("mcp-stdio-error-operation", "stdio-error", () =>
+        runStdioErrorSession(mcp, decorateServer),
+      );
+    },
+    metadata: {
+      scenario: SCENARIO_NAME,
+    },
+    projectNameBase: "e2e-mcp-instrumentation",
+    rootName: ROOT_NAME,
+  });
+}
+
+export async function runWrappedMCPInstrumentation(mcp) {
+  await runMCPInstrumentationScenario(mcp, { decorateServer: wrapMCPServer });
+}
+
+export async function runAutoMCPInstrumentation(mcp) {
+  await runMCPInstrumentationScenario(mcp);
+}

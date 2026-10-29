@@ -24,6 +24,8 @@ import {
   getExtensionFromMediaType,
 } from "../../wrappers/attachment-utils";
 import type {
+  EveInstrumentationToolCallStartedEvent,
+  EveInstrumentationToolCallTerminalEvent,
   EveInstrumentationActionCompletedEvent,
   EveInstrumentationActionFailedEvent,
   EveInstrumentationActionStartedEvent,
@@ -64,6 +66,8 @@ type TurnState = {
 };
 
 type EveInstrumentationEvent =
+  | EveInstrumentationToolCallStartedEvent
+  | EveInstrumentationToolCallTerminalEvent
   | EveInstrumentationActionCompletedEvent
   | EveInstrumentationActionFailedEvent
   | EveInstrumentationActionStartedEvent
@@ -102,6 +106,9 @@ export function braintrustEveInstrumentation(
       recordOutputs: true,
     }),
     events: {
+      "tool.call.started": (event, context) => bridge.handle(event, context),
+      "tool.call.completed": (event, context) => bridge.handle(event, context),
+      "tool.call.failed": (event, context) => bridge.handle(event, context),
       "action.completed": (event, context) => bridge.handle(event, context),
       "action.failed": (event, context) => bridge.handle(event, context),
       "action.started": (event, context) => bridge.handle(event, context),
@@ -117,7 +124,13 @@ export function braintrustEveInstrumentation(
       "turn.started": (event, context) => bridge.handle(event, context),
     },
     flush: () => flush(),
-    setup: options.setup,
+    setup: (context) => {
+      const [major, minor] = (context.frameworkVersion ?? "0.72")
+        .split(".")
+        .map(Number);
+      bridge.useLegacyActions = major === 0 && minor < 72;
+      return options.setup?.(context);
+    },
   };
   // Eve before 0.47.4 reads capture, while Eve 0.62+ rejects providers with
   // an own capture property. Inherit it to support both version lines.
@@ -165,6 +178,7 @@ class ResumedEveSpan implements EveSpan {
 }
 
 class EveBridge {
+  useLegacyActions = false;
   private turnsByKey = new LRUCache<string, TurnState>({
     max: MAX_EVE_CACHE_ENTRIES,
   });
@@ -199,12 +213,18 @@ class EveBridge {
         case "step.attempt.failed":
           this.handleStepAttemptTerminal(event);
           return;
+        case "tool.call.started":
+          if (this.useLegacyActions) return;
         case "action.started":
           await this.handleActionStarted(event, context);
           return;
+        case "tool.call.completed":
+          if (this.useLegacyActions) return;
         case "action.completed":
           await this.handleActionCompleted(event, context);
           return;
+        case "tool.call.failed":
+          if (this.useLegacyActions) return;
         case "action.failed":
           await this.handleActionFailed(event, context);
           return;
@@ -324,7 +344,9 @@ class EveBridge {
   }
 
   private async handleActionStarted(
-    event: EveInstrumentationActionStartedEvent,
+    event:
+      | EveInstrumentationActionStartedEvent
+      | EveInstrumentationToolCallStartedEvent,
     context: EveInstrumentationHandlerContext,
   ): Promise<void> {
     const turn = await this.turnForScope(event.scope, context);
@@ -342,11 +364,21 @@ class EveBridge {
         ...(input === undefined ? {} : { input }),
         metadata,
       },
-      name: event.name,
+      name: event.type === "tool.call.started" ? event.toolName : event.name,
       [CAPTURE_ATTACHMENTS]: turn.captureAttachments,
       parentSpanIds: {
         rootSpanId: turn.rootSpanId,
-        spanId: turn.spanId,
+        spanId:
+          event.type === "tool.call.started" && event.parentCallId
+            ? (
+                await generateEveIds(
+                  "action",
+                  event.scope.sessionId,
+                  event.scope.turnId,
+                  event.parentCallId,
+                )
+              ).spanId
+            : turn.spanId,
       },
       spanAttributes: { type: SpanTypeAttribute.TOOL },
       spanId: ids.spanId,
@@ -354,7 +386,12 @@ class EveBridge {
   }
 
   private async handleActionCompleted(
-    event: EveInstrumentationActionCompletedEvent,
+    event:
+      | EveInstrumentationActionCompletedEvent
+      | Extract<
+          EveInstrumentationToolCallTerminalEvent,
+          { type: "tool.call.completed" }
+        >,
     context: EveInstrumentationHandlerContext,
   ): Promise<void> {
     const span = await this.resumeActionSpan(event, context);
@@ -365,11 +402,22 @@ class EveBridge {
     } else if (event.output.output !== undefined) {
       span.log({ output: event.output.output });
     }
-    span.end(actionEndArgs(event.acceptedAtMs));
+    span.end(
+      actionEndArgs(
+        "completedAtMs" in event
+          ? (event.completedAtMs ?? event.acceptedAtMs)
+          : event.acceptedAtMs,
+      ),
+    );
   }
 
   private async handleActionFailed(
-    event: EveInstrumentationActionFailedEvent,
+    event:
+      | EveInstrumentationActionFailedEvent
+      | Extract<
+          EveInstrumentationToolCallTerminalEvent,
+          { type: "tool.call.failed" }
+        >,
     context: EveInstrumentationHandlerContext,
   ): Promise<void> {
     const span = await this.resumeActionSpan(event, context);
@@ -381,7 +429,13 @@ class EveBridge {
           : event.errorCode + ": Eve action " + event.outcome,
       ),
     });
-    span.end(actionEndArgs(event.acceptedAtMs));
+    span.end(
+      actionEndArgs(
+        "completedAtMs" in event
+          ? (event.completedAtMs ?? event.acceptedAtMs)
+          : event.acceptedAtMs,
+      ),
+    );
   }
 
   private async handleTurnSettled(
@@ -709,7 +763,8 @@ class EveBridge {
   private async resumeActionSpan(
     event:
       | EveInstrumentationActionCompletedEvent
-      | EveInstrumentationActionFailedEvent,
+      | EveInstrumentationActionFailedEvent
+      | EveInstrumentationToolCallTerminalEvent,
     context: EveInstrumentationHandlerContext,
   ): Promise<EveSpan> {
     const turn = await this.turnForScope(event.scope, context);

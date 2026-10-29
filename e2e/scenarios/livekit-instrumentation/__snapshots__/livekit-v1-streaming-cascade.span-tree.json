@@ -37,8 +37,8 @@
                 "gen_ai.agent.name": "default_agent",
                 "gen_ai.operation.name": "create_agent",
                 "gen_ai.provider.name": "<provider-host>",
-                "gen_ai.request.model": "gpt-4.1-nano",
-                "model": "gpt-4.1-nano",
+                "gen_ai.request.model": "gpt-5.4-nano",
+                "model": "gpt-5.4-nano",
                 "provider": "<provider-host>",
                 "scenario": "livekit-instrumentation",
                 "testRunId": "<run:1>"
@@ -60,7 +60,7 @@
               "children": [],
               "input": [
                 {
-                  "content": "Where is my order, DMO-1042?",
+                  "content": "Where is my order, DMO1042?",
                   "role": "user"
                 }
               ],
@@ -100,7 +100,7 @@
               "children": [],
               "output": [
                 {
-                  "content": "Where is my order, DMO-1042?",
+                  "content": "Where is my order, DMO1042?",
                   "role": "user"
                 }
               ],
@@ -216,7 +216,7 @@
                   "children": [],
                   "metadata": {
                     "contrib.livekit.provider_request_ids": [
-                      "chatcmpl-EWxNr7Hq6VXTQepGZWlDFVu629GIh"
+                      "chatcmpl-EdgPiNv4ocZ6OWjr6Qq8Gc1O5ufVn"
                     ],
                     "contrib.livekit.retry_count": 0,
                     "scenario": "livekit-instrumentation",
@@ -232,7 +232,7 @@
                   "role": "system"
                 },
                 {
-                  "content": "Where is my order, DMO-1042?",
+                  "content": "Where is my order, DMO1042?",
                   "role": "user"
                 }
               ],
@@ -243,7 +243,7 @@
                   "tool_calls": [
                     {
                       "function": {
-                        "arguments": "{\"order_id\":\"DMO-1042\"}",
+                        "arguments": "{\"order_id\":\"DMO1042\"}",
                         "name": "lookup_order"
                       },
                       "id": "<span:1>",
@@ -273,7 +273,7 @@
                     }
                   }
                 ],
-                "model": "gpt-4.1-nano",
+                "model": "gpt-5.4-nano",
                 "provider": "<provider-host>",
                 "scenario": "livekit-instrumentation",
                 "testRunId": "<run:1>",
@@ -303,10 +303,10 @@
                 "turn.reply_to": "<span:2>"
               },
               "metrics": {
-                "completion_tokens": 19,
-                "prompt_tokens": 83,
+                "completion_tokens": 21,
+                "prompt_tokens": 166,
                 "time_to_first_token": 0,
-                "tokens": 102
+                "tokens": 187
               }
             },
             {
@@ -319,7 +319,7 @@
                   "children": [],
                   "metadata": {
                     "contrib.livekit.provider_request_ids": [
-                      "chatcmpl-EWxNri9AsOfhgSiWoIZh2P4EhcHAa"
+                      "chatcmpl-EdgPj1zjcW1yzb4wobbBnzOxtQSvO"
                     ],
                     "contrib.livekit.retry_count": 0,
                     "scenario": "livekit-instrumentation",
@@ -335,7 +335,7 @@
                   "role": "system"
                 },
                 {
-                  "content": "Where is my order, DMO-1042?",
+                  "content": "Where is my order, DMO1042?",
                   "role": "user"
                 },
                 {
@@ -344,7 +344,7 @@
                   "tool_calls": [
                     {
                       "function": {
-                        "arguments": "{\"order_id\":\"DMO-1042\"}",
+                        "arguments": "{\"order_id\":\"DMO1042\"}",
                         "name": "lookup_order"
                       },
                       "id": "<span:1>",
@@ -353,14 +353,14 @@
                   ]
                 },
                 {
-                  "content": "{\"order_id\":\"DMO-1042\",\"status\":\"in_transit\",\"delivery\":\"Friday\"}",
+                  "content": "{\"order_id\":\"DMO1042\",\"status\":\"in_transit\",\"delivery\":\"Friday\"}",
                   "role": "tool",
-                  "tool_call_id": "call_UJSzFQibd36wIeKjjJwuroFp"
+                  "tool_call_id": "call_kndDifYj16ltho0t1qn0gJQj"
                 }
               ],
               "output": [
                 {
-                  "content": "Your order DMO-1042 will be delivered on Friday.",
+                  "content": "Your order will be delivered on Friday.",
                   "role": "assistant"
                 }
               ],
@@ -395,7 +395,7 @@
                     }
                   }
                 ],
-                "model": "gpt-4.1-nano",
+                "model": "gpt-5.4-nano",
                 "provider": "<provider-host>",
                 "scenario": "livekit-instrumentation",
                 "testRunId": "<run:1>",
@@ -426,10 +426,10 @@
                 "turn.reply_to": "<span:2>"
               },
               "metrics": {
-                "completion_tokens": 14,
-                "prompt_tokens": 130,
+                "completion_tokens": 11,
+                "prompt_tokens": 217,
                 "time_to_first_token": 0,
-                "tokens": 144
+                "tokens": 228
               }
             },
             {
@@ -437,11 +437,11 @@
               "type": "tool",
               "children": [],
               "input": {
-                "order_id": "DMO-1042"
+                "order_id": "DMO1042"
               },
               "output": {
                 "delivery": "Friday",
-                "order_id": "DMO-1042",
+                "order_id": "DMO1042",
                 "status": "in_transit"
               },
               "metadata": {
@@ -449,7 +449,7 @@
                 "contrib.livekit.function_tool.name": "lookup_order",
                 "gen_ai.agent.name": "default_agent",
                 "gen_ai.operation.name": "execute_tool",
-                "gen_ai.tool.call.id": "call_UJSzFQibd36wIeKjjJwuroFp",
+                "gen_ai.tool.call.id": "call_kndDifYj16ltho0t1qn0gJQj",
                 "gen_ai.tool.name": "lookup_order",
                 "gen_ai.tool.type": "function",
                 "links": [
@@ -505,7 +505,7 @@
                             "contrib.livekit.tts_metrics": {
                               "audioDurationMs": 0,
                               "cancelled": false,
-                              "charactersCount": 48,
+                              "charactersCount": 39,
                               "durationMs": 0,
                               "inputTokens": 0,
                               "label": "openai.TTS",
@@ -545,7 +545,7 @@
                     "contrib.livekit.tts_metrics": {
                       "audioDurationMs": 0,
                       "cancelled": false,
-                      "charactersCount": 48,
+                      "charactersCount": 39,
                       "durationMs": 0,
                       "inputTokens": 0,
                       "label": "openai.TTS",
@@ -597,7 +597,7 @@
               "children": [],
               "output": [
                 {
-                  "content": "Your order DMO-1042 will be delivered on Friday.",
+                  "content": "Your order will be delivered on Friday.",
                   "role": "assistant"
                 }
               ],
@@ -724,8 +724,8 @@
       "input": {
         "audio": {
           "call-0000": {
-            "content_type": "audio/pcm",
-            "filename": "call-0000.pcm",
+            "content_type": "audio/ogg",
+            "filename": "call-0000.ogg",
             "key": "<uuid:1>",
             "type": "braintrust_attachment"
           }
@@ -741,10 +741,9 @@
             "channel_count": 2,
             "duration_ms": 0,
             "id": "<span:1>",
-            "mime_type": "audio/pcm",
+            "mime_type": "audio/ogg",
             "recording_group_id": "call",
-            "sample_format": "s16le",
-            "sample_rate_hz": 24000,
+            "sample_rate_hz": 48000,
             "sources": [
               {
                 "boundary": "session_input",

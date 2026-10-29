@@ -83,7 +83,7 @@ export function defineCloudflareAIChatAssertions(options: {
         expect.arrayContaining([
           expect.objectContaining({
             metadata: expect.objectContaining({
-              model: "gpt-4.1-nano",
+              model: "gpt-5.4-nano",
               provider: expect.stringContaining("openai"),
             }),
             metrics: expect.objectContaining({ tokens: expect.any(Number) }),

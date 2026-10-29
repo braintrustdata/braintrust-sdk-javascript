@@ -87,7 +87,11 @@ describe("braintrustEveInstrumentation", () => {
       recordInputs: true,
       recordOutputs: true,
     });
-    expect(provider.setup).toBe(setup);
+    provider.setup?.({ agentName: "test", frameworkVersion: "0.72.0" });
+    expect(setup).toHaveBeenCalledWith({
+      agentName: "test",
+      frameworkVersion: "0.72.0",
+    });
     expect(typeof provider.flush).toBe("function");
     expect(Object.keys(provider.events).sort()).toEqual([
       "action.completed",
@@ -98,12 +102,86 @@ describe("braintrustEveInstrumentation", () => {
       "model.call.started",
       "step.attempt.completed",
       "step.attempt.failed",
+      "tool.call.completed",
+      "tool.call.failed",
+      "tool.call.started",
       "turn.cancelled",
       "turn.completed",
       "turn.failed",
       "turn.started",
     ]);
   });
+
+  it.each(["0.70.0", "0.72.0"])(
+    "traces nested tools once with Eve %s",
+    async (version) => {
+      const provider = braintrustEveInstrumentation();
+      await provider.setup?.({ agentName: "test", frameworkVersion: version });
+      const legacy = version === "0.70.0";
+      for (const [callId, parentCallId] of [
+        ["outer", undefined],
+        ["inner", "outer"],
+      ] as const) {
+        const context = providerContext();
+        if (legacy) {
+          await provider.events["action.started"](
+            {
+              type: "action.started",
+              callId,
+              name: callId,
+              idempotencyKey: callId,
+              scope: ATTEMPT_SCOPE,
+            },
+            context,
+          );
+        }
+        await provider.events["tool.call.started"](
+          {
+            type: "tool.call.started",
+            callId,
+            parentCallId,
+            toolName: callId,
+            idempotencyKey: callId,
+            scope: ATTEMPT_SCOPE,
+          },
+          context,
+        );
+        await provider.events["tool.call.completed"](
+          {
+            type: "tool.call.completed",
+            idempotencyKey: callId,
+            scope: ATTEMPT_SCOPE,
+            output: { type: "result", output: "done" },
+          },
+          context,
+        );
+        if (legacy) {
+          await provider.events["action.completed"](
+            {
+              type: "action.completed",
+              idempotencyKey: callId,
+              scope: ATTEMPT_SCOPE,
+              output: { type: "result", output: "done" },
+            },
+            context,
+          );
+        }
+      }
+      const spans = (await backgroundLogger.drain()) as Array<
+        Record<string, any>
+      >;
+      const tools = spans.filter((span) =>
+        ["outer", "inner"].includes(span.span_attributes?.name),
+      );
+      expect(tools).toHaveLength(2);
+      expect(
+        tools.every((span) => span.output === "done" && span.metrics.end),
+      ).toBe(true);
+      if (!legacy) {
+        expect(tools[1].span_parents).toEqual([tools[0].span_id]);
+      }
+    },
+  );
 
   it("exports the Eve provider only from the instrumentation entrypoint", () => {
     expect(braintrustExports).not.toHaveProperty(

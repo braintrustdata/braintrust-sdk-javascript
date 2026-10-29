@@ -36,6 +36,7 @@ import { piCodingAgentConfigs } from "./pi-coding-agent";
 import { strandsAgentSDKConfigs } from "./strands-agent-sdk";
 import { elevenLabsConfigs } from "./elevenlabs";
 import { voyageAIConfigs } from "./voyageai";
+import { mcpConfigs } from "./mcp";
 import { typeSafeConfigs } from "./typesafe";
 
 interface InstrumentationConfigGroup {
@@ -135,6 +136,10 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
     {
       integrations: ["voyageai"],
       configs: voyageAIConfigs,
+    },
+    {
+      integrations: ["mcp"],
+      configs: mcpConfigs,
     },
     {
       integrations: ["typesafe"],
