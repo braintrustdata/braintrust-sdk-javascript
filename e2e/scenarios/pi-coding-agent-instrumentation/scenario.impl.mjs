@@ -10,7 +10,6 @@ export const TOOL_CHILD_SPAN_NAME = "pi-tool-child";
 
 async function runPiCodingAgentScenario({ decorateSDK, sdk }) {
   const instrumentedSDK = decorateSDK ? decorateSDK(sdk) : sdk;
-  const useFakeStream = process.env.PI_CODING_AGENT_FAKE_STREAM === "true";
   const provider = process.env.PI_CODING_AGENT_PROVIDER ?? "anthropic";
   const modelId = provider === "openai" ? "gpt-5-nano" : "claude-haiku-4-5";
   const apiKey =
@@ -35,13 +34,8 @@ async function runPiCodingAgentScenario({ decorateSDK, sdk }) {
   let modelRegistry;
   if (ModelRuntime) {
     modelRuntime = await ModelRuntime.create({ modelsPath: null });
-    if (!useFakeStream) {
-      modelRuntime.registerProvider(provider, { baseUrl });
-    }
-    await modelRuntime.setRuntimeApiKey(
-      provider,
-      useFakeStream ? "pi-coding-agent-e2e-placeholder" : apiKey,
-    );
+    modelRuntime.registerProvider(provider, { baseUrl });
+    await modelRuntime.setRuntimeApiKey(provider, apiKey);
     modelRegistry = new ModelRegistry(modelRuntime);
   } else {
     authStorage = AuthStorage.inMemory();
@@ -104,51 +98,6 @@ async function runPiCodingAgentScenario({ decorateSDK, sdk }) {
               childSpan.end();
             }
           };
-          if (useFakeStream) {
-            let streamCallCount = 0;
-            session.agent.streamFunction = async (streamModel) => {
-              streamCallCount += 1;
-              const message = {
-                api: "anthropic-messages",
-                content:
-                  streamCallCount === 1
-                    ? [
-                        {
-                          arguments: { command: "printf pi_tool_ok" },
-                          id: "tool-call-1",
-                          name: "bash",
-                          type: "toolCall",
-                        },
-                      ]
-                    : [
-                        {
-                          text: "PI_CODING_AGENT_OK pi_tool_ok",
-                          type: "text",
-                        },
-                      ],
-                model: streamModel.id,
-                provider: streamModel.provider,
-                role: "assistant",
-                stopReason: streamCallCount === 1 ? "toolUse" : "stop",
-                timestamp: Date.now(),
-                usage: {
-                  cacheRead: 0,
-                  cacheWrite: 0,
-                  input: 5,
-                  output: 3,
-                  totalTokens: 8,
-                },
-              };
-              return {
-                async *[Symbol.asyncIterator]() {
-                  yield { message, type: "done" };
-                },
-                async result() {
-                  return message;
-                },
-              };
-            };
-          }
           await session.prompt(
             "Use the bash tool to run `printf pi_tool_ok` exactly once, then reply with exactly PI_CODING_AGENT_OK and include the command output.",
             { expandPromptTemplates: false, source: "rpc" },

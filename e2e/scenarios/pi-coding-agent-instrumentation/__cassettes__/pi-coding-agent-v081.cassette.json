@@ -1,0 +1,269 @@
+{
+  "entries": [
+    {
+      "callIndex": 0,
+      "id": "5625e915bcb72d05",
+      "matchKey": "POST api.anthropic.com/v1/messages",
+      "recordedAt": "2026-10-27T00:29:39.615Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "max_tokens": 64000,
+            "messages": [
+              {
+                "content": [
+                  {
+                    "cache_control": {
+                      "type": "ephemeral"
+                    },
+                    "text": "Use the bash tool to run `printf pi_tool_ok` exactly once, then reply with exactly PI_CODING_AGENT_OK and include the command output.",
+                    "type": "text"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "model": "claude-haiku-4-5",
+            "stream": true,
+            "system": [
+              {
+                "cache_control": {
+                  "type": "ephemeral"
+                },
+                "text": "You are an expert coding assistant operating inside pi, a coding agent harness. You help users by reading files, executing commands, editing code, and writing new files.\n\nAvailable tools:\n- bash: Execute bash commands (ls, grep, find, etc.)\n\nIn addition to the tools above, you may have access to other custom tools depending on the project.\n\nGuidelines:\n- Use bash for file operations like ls, rg, find\n- Be concise in your responses\n- Show file paths clearly when working with files\n\nPi documentation (read only when the user asks about pi itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /Users/abhijeetprasad/.superset/worktrees/braintrust-sdk-javascript/compare-instrumentation-pi-d012543b/e2e/.bt-tmp/scenario-deps/pi-coding-agent-instrumentation-4f3d5e05469eaabc/node_modules/.pnpm/@earendil-works+pi-coding-agent@0.81.0_ws@8.21.0_zod@4.4.3/node_modules/@earendil-works/pi-coding-agent/README.md\n- Additional docs: /Users/abhijeetprasad/.superset/worktrees/braintrust-sdk-javascript/compare-instrumentation-pi-d012543b/e2e/.bt-tmp/scenario-deps/pi-coding-agent-instrumentation-4f3d5e05469eaabc/node_modules/.pnpm/@earendil-works+pi-coding-agent@0.81.0_ws@8.21.0_zod@4.4.3/node_modules/@earendil-works/pi-coding-agent/docs\n- Examples: /Users/abhijeetprasad/.superset/worktrees/braintrust-sdk-javascript/compare-instrumentation-pi-d012543b/e2e/.bt-tmp/scenario-deps/pi-coding-agent-instrumentation-4f3d5e05469eaabc/node_modules/.pnpm/@earendil-works+pi-coding-agent@0.81.0_ws@8.21.0_zod@4.4.3/node_modules/@earendil-works/pi-coding-agent/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), pi packages (docs/packages.md)\n- When working on pi topics, read the docs and examples, and follow .md cross-references before implementing\n- Always read pi .md files completely and follow links to related docs (e.g., tui.md for TUI API details)\nCurrent working directory: /Users/abhijeetprasad/.superset/worktrees/braintrust-sdk-javascript/compare-instrumentation-pi-d012543b/e2e/.bt-tmp/run-Y5pgi3/scenarios/pi-coding-agent-instrumentation",
+                "type": "text"
+              }
+            ],
+            "thinking": {
+              "type": "disabled"
+            },
+            "tools": [
+              {
+                "cache_control": {
+                  "type": "ephemeral"
+                },
+                "description": "Execute a bash command in the current working directory. Returns stdout and stderr. Output is truncated to last 2000 lines or 50KB (whichever is hit first). If truncated, full output is saved to a temp file. Optionally provide a timeout in seconds.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "command": {
+                      "description": "Bash command to execute",
+                      "type": "string"
+                    },
+                    "timeout": {
+                      "description": "Timeout in seconds (optional, no default timeout)",
+                      "type": "number"
+                    }
+                  },
+                  "required": ["command"],
+                  "type": "object"
+                },
+                "name": "bash"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_011CgRoB5EKhUC27bPHCWqda\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":1490,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":21,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\",\"speed\":\"standard\"},\"diagnostics\":null}}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_01RqWb7uUvhPmfKf6Bq4ox5x\",\"name\":\"bash\",\"input\":{},\"caller\":{\"type\":\"direct\"}}}",
+            "event: ping\ndata: {\"type\":\"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"command\\\": \\\"printf pi_tool\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"_ok\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\\\"}\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":1490,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":57}}",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "anthropic-organization-id": "27796668-7351-40ac-acc4-024aee8995a5",
+          "anthropic-ratelimit-input-tokens-limit": "10000000",
+          "anthropic-ratelimit-input-tokens-remaining": "9999000",
+          "anthropic-ratelimit-input-tokens-reset": "2026-10-27T00:29:39Z",
+          "anthropic-ratelimit-output-tokens-limit": "2000000",
+          "anthropic-ratelimit-output-tokens-remaining": "2000000",
+          "anthropic-ratelimit-output-tokens-reset": "2026-10-27T00:29:39Z",
+          "anthropic-ratelimit-requests-limit": "20000",
+          "anthropic-ratelimit-requests-remaining": "19999",
+          "anthropic-ratelimit-requests-reset": "2026-10-27T00:29:39Z",
+          "anthropic-ratelimit-tokens-limit": "12000000",
+          "anthropic-ratelimit-tokens-remaining": "11999000",
+          "anthropic-ratelimit-tokens-reset": "2026-10-27T00:29:39Z",
+          "anthropic-workspace-id": "wrkspc_018bFG1FgNVWqx5pthtdGTzS",
+          "cache-control": "no-cache",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a50d966e6b2f39d2-YYZ",
+          "content-encoding": "gzip",
+          "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Tue, 27 Oct 2026 00:29:39 GMT",
+          "request-id": "req_011CgRoB52QrAnDGe3mfofFm",
+          "server": "cloudflare",
+          "server-timing": "x-originResponse;dur=97",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "traceresponse": "00-997927d3a39357f6267a956b016843f4-e15cace116a03d92-01",
+          "vary": "Accept-Encoding",
+          "x-robots-tag": "none"
+        },
+        "status": 200
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "0c74acf5b76aad36",
+      "matchKey": "POST api.anthropic.com/v1/messages",
+      "recordedAt": "2026-10-27T00:29:40.306Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "max_tokens": 64000,
+            "messages": [
+              {
+                "content": [
+                  {
+                    "text": "Use the bash tool to run `printf pi_tool_ok` exactly once, then reply with exactly PI_CODING_AGENT_OK and include the command output.",
+                    "type": "text"
+                  }
+                ],
+                "role": "user"
+              },
+              {
+                "content": [
+                  {
+                    "id": "toolu_01RqWb7uUvhPmfKf6Bq4ox5x",
+                    "input": {
+                      "command": "printf pi_tool_ok"
+                    },
+                    "name": "bash",
+                    "type": "tool_use"
+                  }
+                ],
+                "role": "assistant"
+              },
+              {
+                "content": [
+                  {
+                    "cache_control": {
+                      "type": "ephemeral"
+                    },
+                    "content": "pi_tool_ok",
+                    "is_error": false,
+                    "tool_use_id": "toolu_01RqWb7uUvhPmfKf6Bq4ox5x",
+                    "type": "tool_result"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "model": "claude-haiku-4-5",
+            "stream": true,
+            "system": [
+              {
+                "cache_control": {
+                  "type": "ephemeral"
+                },
+                "text": "You are an expert coding assistant operating inside pi, a coding agent harness. You help users by reading files, executing commands, editing code, and writing new files.\n\nAvailable tools:\n- bash: Execute bash commands (ls, grep, find, etc.)\n\nIn addition to the tools above, you may have access to other custom tools depending on the project.\n\nGuidelines:\n- Use bash for file operations like ls, rg, find\n- Be concise in your responses\n- Show file paths clearly when working with files\n\nPi documentation (read only when the user asks about pi itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /Users/abhijeetprasad/.superset/worktrees/braintrust-sdk-javascript/compare-instrumentation-pi-d012543b/e2e/.bt-tmp/scenario-deps/pi-coding-agent-instrumentation-4f3d5e05469eaabc/node_modules/.pnpm/@earendil-works+pi-coding-agent@0.81.0_ws@8.21.0_zod@4.4.3/node_modules/@earendil-works/pi-coding-agent/README.md\n- Additional docs: /Users/abhijeetprasad/.superset/worktrees/braintrust-sdk-javascript/compare-instrumentation-pi-d012543b/e2e/.bt-tmp/scenario-deps/pi-coding-agent-instrumentation-4f3d5e05469eaabc/node_modules/.pnpm/@earendil-works+pi-coding-agent@0.81.0_ws@8.21.0_zod@4.4.3/node_modules/@earendil-works/pi-coding-agent/docs\n- Examples: /Users/abhijeetprasad/.superset/worktrees/braintrust-sdk-javascript/compare-instrumentation-pi-d012543b/e2e/.bt-tmp/scenario-deps/pi-coding-agent-instrumentation-4f3d5e05469eaabc/node_modules/.pnpm/@earendil-works+pi-coding-agent@0.81.0_ws@8.21.0_zod@4.4.3/node_modules/@earendil-works/pi-coding-agent/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), pi packages (docs/packages.md)\n- When working on pi topics, read the docs and examples, and follow .md cross-references before implementing\n- Always read pi .md files completely and follow links to related docs (e.g., tui.md for TUI API details)\nCurrent working directory: /Users/abhijeetprasad/.superset/worktrees/braintrust-sdk-javascript/compare-instrumentation-pi-d012543b/e2e/.bt-tmp/run-Y5pgi3/scenarios/pi-coding-agent-instrumentation",
+                "type": "text"
+              }
+            ],
+            "thinking": {
+              "type": "disabled"
+            },
+            "tools": [
+              {
+                "cache_control": {
+                  "type": "ephemeral"
+                },
+                "description": "Execute a bash command in the current working directory. Returns stdout and stderr. Output is truncated to last 2000 lines or 50KB (whichever is hit first). If truncated, full output is saved to a temp file. Optionally provide a timeout in seconds.",
+                "eager_input_streaming": true,
+                "input_schema": {
+                  "properties": {
+                    "command": {
+                      "description": "Bash command to execute",
+                      "type": "string"
+                    },
+                    "timeout": {
+                      "description": "Timeout in seconds (optional, no default timeout)",
+                      "type": "number"
+                    }
+                  },
+                  "required": ["command"],
+                  "type": "object"
+                },
+                "name": "bash"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_011CgRoB8p7tu3WfibUMqmjY\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":1564,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\",\"speed\":\"standard\"},\"diagnostics\":null}}",
+            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}",
+            "event: ping\ndata: {\"type\":\"ping\"}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"PI\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"_CODING_\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"AGENT_OK\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\n\\nCommand\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" output:\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" `\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"pi_tool_\"}}",
+            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ok`\"}}",
+            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}",
+            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":1564,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":23}}",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "anthropic-organization-id": "27796668-7351-40ac-acc4-024aee8995a5",
+          "anthropic-ratelimit-input-tokens-limit": "10000000",
+          "anthropic-ratelimit-input-tokens-remaining": "9999000",
+          "anthropic-ratelimit-input-tokens-reset": "2026-10-27T00:29:39Z",
+          "anthropic-ratelimit-output-tokens-limit": "2000000",
+          "anthropic-ratelimit-output-tokens-remaining": "2000000",
+          "anthropic-ratelimit-output-tokens-reset": "2026-10-27T00:29:39Z",
+          "anthropic-ratelimit-requests-limit": "20000",
+          "anthropic-ratelimit-requests-remaining": "19999",
+          "anthropic-ratelimit-requests-reset": "2026-10-27T00:29:39Z",
+          "anthropic-ratelimit-tokens-limit": "12000000",
+          "anthropic-ratelimit-tokens-remaining": "11999000",
+          "anthropic-ratelimit-tokens-reset": "2026-10-27T00:29:39Z",
+          "anthropic-workspace-id": "wrkspc_018bFG1FgNVWqx5pthtdGTzS",
+          "cache-control": "no-cache",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a50d9673cf6939d2-YYZ",
+          "content-encoding": "gzip",
+          "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Tue, 27 Oct 2026 00:29:40 GMT",
+          "request-id": "req_011CgRoB8eT7JCu4c9NijW8T",
+          "server": "cloudflare",
+          "server-timing": "x-originResponse;dur=89",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "traceresponse": "00-5d85db2af12f54ae2b37d82de347746a-f0a346c56583ae0c-01",
+          "vary": "Accept-Encoding",
+          "x-robots-tag": "none"
+        },
+        "status": 200
+      }
+    }
+  ],
+  "meta": {
+    "createdAt": "2026-10-27T00:28:37.931Z"
+  }
+}
