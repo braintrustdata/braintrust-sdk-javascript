@@ -1,5 +1,16 @@
 # braintrust
 
+## 3.42.0
+
+### Minor Changes
+
+- feat(mcp): Capture MCP tool and prompt content by default Thanks @starfolkai[bot]!
+- feat(mcp): trace server notifications and session metadata Trace outgoing MCP notifications and capture session identity, tool call IDs, and transport failures. (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2692)
+
+### Patch Changes
+
+- fix(pi): align agent instrumentation with tracing spec Capture nested session tool calls and their application spans, record tool approval only when execution is observed, and preserve tracing context across SDK copies. Align Pi errors, attachments, usage metrics, and metadata with the instrumentation specification. (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2682)
+
 ## 3.41.0
 
 ### Minor Changes
