@@ -28,6 +28,8 @@ export interface CursorSDKAgent {
   close?: () => void;
   reload?: () => Promise<void>;
   [Symbol.asyncDispose]?: () => Promise<void>;
+  listArtifacts?: () => Promise<unknown[]>;
+  downloadArtifact?: (path: string) => Promise<unknown>;
   [key: string | symbol]: unknown;
 }
 
@@ -287,6 +289,7 @@ export interface CursorSDKUsage {
 }
 
 export interface CursorSDKToolCall {
+  callId?: string;
   type?: string;
   name?: string;
   args?: unknown;
