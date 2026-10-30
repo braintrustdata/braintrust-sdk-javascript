@@ -21,4 +21,4 @@ This template helps you get started with the Braintrust SDK. It's based on our [
 3. Add your API key to your project's [Environment Variables](https://www.val.town/settings/environment-variables) as `BRAINTRUST_API_KEY`
 4. Click **Run** on the `tutorial` val to start experimenting
 
-Want to learn more? Visit our [documentation](https://www.braintrust.dev/docs) or sign up for a [free account](https://www.braintrust.dev/).
+Want to learn more? Visit our [documentation](https://docs.braintrust.dev) or sign up for a [free account](https://www.braintrust.dev/).
