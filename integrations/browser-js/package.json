@@ -45,7 +45,7 @@
     "url": "git+https://github.com/braintrustdata/braintrust-sdk-javascript.git",
     "directory": "integrations/browser-js"
   },
-  "homepage": "https://www.braintrust.dev/docs",
+  "homepage": "https://docs.braintrust.dev",
   "license": "Apache-2.0",
   "publishConfig": {
     "access": "public",

@@ -317,6 +317,6 @@ describe("Translation Evaluation", () => {
 
 ## Additional Resources
 
-- [Braintrust Documentation](https://www.braintrust.dev/docs)
-- [Autoevals Library](https://www.braintrust.dev/docs/autoevals)
+- [Braintrust Documentation](https://docs.braintrust.dev)
+- [Autoevals Library](https://docs.braintrust.dev/sdks/typescript/related/autoevals/overview)
 - [Node.js Test Runner Documentation](https://nodejs.org/api/test.html)

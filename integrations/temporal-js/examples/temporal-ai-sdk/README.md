@@ -169,9 +169,9 @@ Because AI calls happen in activities (not workflows), no special polyfills are 
 
 - [Temporal Documentation](https://docs.temporal.io/)
 - [Vercel AI SDK Documentation](https://sdk.vercel.ai/)
-- [Braintrust Documentation](https://www.braintrust.dev/docs)
+- [Braintrust Documentation](https://docs.braintrust.dev)
 - [Temporal AI SDK Integration](https://github.com/temporalio/samples-typescript/tree/main/ai-sdk)
-- [Braintrust Temporal Integration](https://www.braintrust.dev/docs/guides/temporal)
+- [Braintrust Temporal Integration](https://docs.braintrust.dev/integrations/sdk-integrations/temporal)
 
 ---
 

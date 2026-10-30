@@ -74,7 +74,7 @@
     "url": "git+https://github.com/braintrustdata/braintrust-sdk-javascript.git",
     "directory": "integrations/deepseek-harness"
   },
-  "homepage": "https://www.braintrust.dev/docs",
+  "homepage": "https://docs.braintrust.dev",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/",

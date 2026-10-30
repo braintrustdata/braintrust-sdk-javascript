@@ -39,7 +39,7 @@
     "url": "git+https://github.com/braintrustdata/braintrust-sdk-javascript.git",
     "directory": "integrations/vercel-ai-sdk"
   },
-  "homepage": "https://www.braintrust.dev/docs",
+  "homepage": "https://docs.braintrust.dev",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/",
