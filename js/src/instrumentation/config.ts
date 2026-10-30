@@ -69,6 +69,8 @@ export interface InstrumentationIntegrationsConfig {
   mcp?: boolean | MCPIntegrationConfig;
   /** Set to false to disable, or pass options; options keep FastMCP enabled. */
   fastmcp?: boolean | MCPIntegrationConfig;
+  /** Set to false to disable, or pass options; options keep MCP Handler enabled. */
+  mcpHandler?: boolean | MCPIntegrationConfig;
 }
 
 export interface MCPIntegrationConfig {
@@ -245,6 +247,8 @@ const envIntegrationAliases: Record<
   modelcontextprotocol: "mcp",
   "@modelcontextprotocol/sdk": "mcp",
   "@modelcontextprotocol/server": "mcp",
+  mcphandler: "mcpHandler",
+  "mcp-handler": "mcpHandler",
 };
 
 export function getDefaultInstrumentationIntegrations(): Record<
@@ -292,6 +296,7 @@ export function getDefaultInstrumentationIntegrations(): Record<
     livekit: true,
     mcp: true,
     fastmcp: true,
+    mcpHandler: true,
     piCodingAgent: true,
     strandsAgentSDK: true,
     cloudflareAgents: true,

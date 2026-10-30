@@ -24,6 +24,7 @@ import { PiCodingAgentPlugin } from "./plugins/pi-coding-agent-plugin";
 import { StrandsAgentSDKPlugin } from "./plugins/strands-agent-sdk-plugin";
 import { VoyageAIPlugin } from "./plugins/voyageai-plugin";
 import { MCPPlugin } from "./plugins/mcp-plugin";
+import { MCPHandlerPlugin } from "./plugins/mcp-handler-plugin";
 import { TypeSafePlugin } from "./plugins/typesafe-plugin";
 import { CloudflareAIChatPlugin } from "./plugins/cloudflare-ai-chat-plugin";
 import { CloudflareAgentsPlugin } from "./plugins/cloudflare-agents-plugin";
@@ -142,6 +143,10 @@ vi.mock("./plugins/voyageai-plugin", () => ({
 
 vi.mock("./plugins/mcp-plugin", () => ({
   MCPPlugin: createPluginClassMock(),
+}));
+
+vi.mock("./plugins/mcp-handler-plugin", () => ({
+  MCPHandlerPlugin: createPluginClassMock(),
 }));
 
 vi.mock("./plugins/typesafe-plugin", () => ({
@@ -303,6 +308,28 @@ describe("BraintrustPlugin", () => {
       expect(MCPPlugin).toHaveBeenCalledTimes(1);
       const mockInstance = vi.mocked(MCPPlugin).mock.results[0].value;
       expect(mockInstance.enable).toHaveBeenCalledTimes(1);
+    });
+
+    it("configures MCP Handler independently of MCP and disables it on teardown", () => {
+      const plugin = new BraintrustPlugin({
+        integrations: { mcp: false, mcpHandler: { captureContent: false } },
+      });
+      plugin.enable();
+      expect(MCPPlugin).not.toHaveBeenCalled();
+      expect(MCPHandlerPlugin).toHaveBeenCalledWith({ captureContent: false });
+      const instance = vi.mocked(MCPHandlerPlugin).mock.results[0].value;
+      expect(instance.enable).toHaveBeenCalledTimes(1);
+      plugin.disable();
+      expect(instance.disable).toHaveBeenCalledTimes(1);
+    });
+
+    it("can disable MCP Handler while keeping MCP enabled", () => {
+      const plugin = new BraintrustPlugin({
+        integrations: { mcpHandler: false },
+      });
+      plugin.enable();
+      expect(MCPHandlerPlugin).not.toHaveBeenCalled();
+      expect(MCPPlugin).toHaveBeenCalledTimes(1);
     });
 
     it("should create and enable TypeSafe plugin by default", () => {

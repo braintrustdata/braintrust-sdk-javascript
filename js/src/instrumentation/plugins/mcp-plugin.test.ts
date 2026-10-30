@@ -446,6 +446,36 @@ describe("MCPPlugin", () => {
     expect(span.metadata["jsonrpc.request.id"]).toBe("0");
   });
 
+  it.each([false, true])(
+    "observes send settlement when the transport closes during send (reject=%s)",
+    async (reject) => {
+      const protocol = createProtocol();
+      const transport = protocol.transport!;
+      const failure = new Error("send failed");
+      transport.send = () => {
+        queueMicrotask(() =>
+          mcpChannels.close.invoke(() => {}, transport, [], { transport }),
+        );
+        return reject ? Promise.reject(failure) : Promise.resolve();
+      };
+      const result = handleRequest(
+        async () => ({ content: [] }),
+        {
+          method: "tools/call",
+          params: { name: "close-on-send" },
+        },
+        {},
+        protocol,
+      );
+      if (reject) await expect(result).rejects.toBe(failure);
+      else await result;
+      const [span] = await drainSpans();
+      expect(span.metrics.end).toEqual(expect.any(Number));
+      if (reject) expect(span.error).toContain("send failed");
+      else expect(span.error).toBeUndefined();
+    },
+  );
+
   it("propagates response-send failures and ends the span", async () => {
     const protocol = createProtocol();
     const failure = new Error("send failed");
