@@ -11,8 +11,8 @@ import {
 } from "../../logger";
 import {
   INSTRUMENTATION_NAMES,
-  withSpanInstrumentationName,
   type SpanInstrumentationName,
+  withSpanInstrumentationName,
 } from "../../span-origin";
 import type {
   MCPTransport,

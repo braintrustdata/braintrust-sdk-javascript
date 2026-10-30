@@ -1,0 +1,26 @@
+{
+  "name": "@braintrust/e2e-fastmcp-instrumentation",
+  "private": true,
+  "braintrustScenario": {
+    "bump": {
+      "dependencies": {
+        "fastmcp-v3-latest": {
+          "package": "fastmcp",
+          "range": "3"
+        },
+        "fastmcp-v4-latest": {
+          "package": "fastmcp",
+          "range": "4"
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "fastmcp-v3": "npm:fastmcp@3.35.0",
+    "fastmcp-v3-latest": "npm:fastmcp@3.35.0",
+    "fastmcp-v4": "npm:fastmcp@4.0.0",
+    "fastmcp-v4-latest": "npm:fastmcp@4.23.7",
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "zod": "4.3.6"
+  }
+}

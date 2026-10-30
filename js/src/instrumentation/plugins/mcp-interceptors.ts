@@ -58,8 +58,9 @@ export const mcpChannelDefinitions = {
     { protocol: MCPProtocol }
   >({ channelName: "notificationHandler" }),
 };
+
 export const mcpChannels = defineInterceptor("mcp", mcpChannelDefinitions);
-type MCPInvocationChannels = typeof mcpChannels;
+export type MCPChannels = typeof mcpChannels;
 
 const wrapped = Symbol.for("braintrust.mcp.transport-wrapper");
 function wrapMethod(
@@ -80,7 +81,7 @@ function wrapMethod(
 export function wrapMCPTransport(
   transport: MCPTransport,
   protocol: MCPProtocol,
-  channels: MCPInvocationChannels = mcpChannels,
+  channels: MCPChannels = mcpChannels,
 ): void {
   wrapMethod(
     transport,
@@ -163,7 +164,7 @@ export function wrapMCPTransport(
 export function wrapMCPRequestHandler(
   handler: MCPRequestHandler,
   protocol: MCPProtocol,
-  channels: MCPInvocationChannels = mcpChannels,
+  channels: MCPChannels = mcpChannels,
 ): MCPRequestHandler {
   if (Reflect.get(handler, wrapped) === protocol) return handler;
   const replacement: MCPRequestHandler = function (
@@ -181,7 +182,7 @@ export function wrapMCPRequestHandler(
 
 export function wrapMCPProtocol(
   protocol: MCPProtocol,
-  channels: MCPInvocationChannels = mcpChannels,
+  channels: MCPChannels = mcpChannels,
 ): void {
   wrapMethod(
     protocol,
@@ -254,7 +255,7 @@ export function wrapMCPProtocol(
 function wrapMCPNotificationHandler(
   handler: MCPNotificationHandler,
   protocol: MCPProtocol,
-  channels: MCPInvocationChannels = mcpChannels,
+  channels: MCPChannels = mcpChannels,
 ): MCPNotificationHandler {
   if (Reflect.get(handler, wrapped) === protocol) return handler;
   const replacement: MCPNotificationHandler = function (
