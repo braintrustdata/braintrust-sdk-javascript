@@ -14,7 +14,11 @@ export type AudioSegment = {
   attributes?: Record<string, unknown>;
   reason?: string;
 };
-type AudioMember = { type: string; label?: string };
+type AudioMember = {
+  type: string;
+  label?: string;
+  attributes?: Record<string, unknown>;
+};
 export type AudioSession = {
   sources: Record<string, { label?: string }>;
   participants?: Record<string, AudioMember>;

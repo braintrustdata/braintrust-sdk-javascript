@@ -463,6 +463,77 @@ for (const variant of variants) {
     120000,
   );
 
+  // Two callers share one microphone; diarized STT tells their voices apart.
+  test.sequential(
+    `${variant} diarized two-caller conversation`,
+    async () => {
+      await withScenarioHarness(async (harness) => {
+        await harness.runNodeScenarioDir(
+          scenarioOptions(variant, {
+            cassette: "diarized",
+            env: {
+              LIVEKIT_DIARIZATION: "1",
+              LIVEKIT_WS_PATH: `${originalScenarioDir}/__cassettes__/${variant}-diarized.websocket.json`,
+              BRAINTRUST_E2E_CASSETTE_MODE:
+                process.env.BRAINTRUST_E2E_CASSETTE_MODE ?? "replay",
+              OPENAI_API_KEY: process.env.OPENAI_API_KEY ?? "replay",
+              LIVEKIT_API_KEY: process.env.LIVEKIT_API_KEY ?? "replay",
+              LIVEKIT_API_SECRET: process.env.LIVEKIT_API_SECRET ?? "replay",
+            },
+          }),
+        );
+        const events = assertAudioTrace(harness.events());
+        const { session } = audioSession(findLatestSpan(events, "session"));
+        // Each labeled transcript names its speaker; LiveKit's own label is an
+        // index, kept as a native attribute rather than a display name.
+        const speakers = session?.speakers ?? {};
+        expect(Object.values(speakers)).toEqual([
+          {
+            type: "user",
+            attributes: { "contrib.livekit.speaker_id": expect.any(String) },
+          },
+          {
+            type: "user",
+            attributes: { "contrib.livekit.speaker_id": expect.any(String) },
+          },
+        ]);
+        const labeled = findAllSpans(events, "stt").filter(
+          (span) => span.metadata?.["audio.speaker_ids"],
+        );
+        expect(labeled.length).toBeGreaterThan(1);
+        for (const span of labeled) {
+          const [speaker] = span.metadata?.["audio.speaker_ids"] as string[];
+          expect(
+            speakers[speaker]?.attributes?.["contrib.livekit.speaker_id"],
+          ).toBe(span.metadata?.["contrib.livekit.speaker_id"]);
+        }
+        expect(
+          new Set(
+            labeled.map(
+              (span) => span.metadata?.["contrib.livekit.speaker_id"],
+            ),
+          ),
+        ).toHaveProperty("size", 2);
+        // Speech is audio activity: it names no speaker and links to no transcript.
+        for (const span of findAllSpans(events, "user_speech")) {
+          expect(span.metadata).not.toHaveProperty("audio.speaker_ids");
+          expect(span.metadata?.links).toBeUndefined();
+        }
+        // The answer's context is every transcript of the turn, from both callers.
+        expect(contextLinks(findAllSpans(events, "llm_response")[0])).toEqual(
+          findAllSpans(events, "stt").map((span) => span.span.id),
+        );
+        // No LiveKit room, so no room connections: no participants are invented.
+        expect(session).not.toHaveProperty("participants", expect.anything());
+        expect(
+          findLatestSpan(events, "agent_speech")?.metadata,
+        ).not.toHaveProperty("audio.participant_ids");
+        await snapshotTrace(events, `${variant}-diarized`);
+      });
+    },
+    120000,
+  );
+
   for (const recover of [false, true])
     test.sequential(
       `${variant} ${recover ? "recovered" : "interrupted"} order answer`,
