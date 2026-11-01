@@ -93,13 +93,6 @@ span_tree:
           "time_unix_ms": 0
         }
       ],
-      "contrib.livekit.unassociated_messages": [
-        {
-          "id": "<span:1>",
-          "role": "user",
-          "text": "Hi, could you check order 1042 for me?"
-        }
-      ],
       "gen_ai.operation.name": "invoke_workflow",
       "gen_ai.workflow.name": "agent_session",
       "scenario": "livekit-instrumentation",
@@ -138,22 +131,22 @@ span_tree:
     │     "contrib.livekit.events": [
     │       {
     │         "attributes": {
-    │           "contrib.livekit.generation_id": "<native:4>"
+    │           "contrib.livekit.generation_id": "<native:3>"
     │         },
     │         "name": "generation",
     │         "time_unix_ms": 0
     │       },
     │       {
     │         "attributes": {
-    │           "contrib.livekit.generation_id": "<native:3>",
-    │           "contrib.livekit.parent_generation_id": "<native:4>"
+    │           "contrib.livekit.generation_id": "<native:2>",
+    │           "contrib.livekit.parent_generation_id": "<native:3>"
     │         },
     │         "name": "generation",
     │         "time_unix_ms": 0
     │       }
     │     ],
     │     "contrib.livekit.generation_count": 2,
-    │     "contrib.livekit.generation_id": "<native:3>",
+    │     "contrib.livekit.generation_id": "<native:2>",
     │     "contrib.livekit.interrupted": false,
     │     "contrib.livekit.playback_events": [
     │       {
@@ -166,7 +159,7 @@ span_tree:
     │       }
     │     ],
     │     "contrib.livekit.speech.queue_wait": 0,
-    │     "contrib.livekit.speech_id": "<native:2>",
+    │     "contrib.livekit.speech_id": "<native:1>",
     │     "gen_ai.agent.name": "default_agent",
     │     "gen_ai.operation.name": "invoke_agent",
     │     "scenario": "livekit-instrumentation",
@@ -422,7 +415,7 @@ span_tree:
     │   │       └── livekit.tts_request_run [task]
     │   │           metadata: {
     │   │             "contrib.livekit.provider_request_ids": [
-    │   │               "<native:5>"
+    │   │               "<native:4>"
     │   │             ],
     │   │             "contrib.livekit.retry_count": 0,
     │   │             "scenario": "livekit-instrumentation",
@@ -445,7 +438,7 @@ span_tree:
     │   │                     "modelProvider": "<provider-host>"
     │   │                   },
     │   │                   "outputTokens": 0,
-    │   │                   "requestId": "<native:5>",
+    │   │                   "requestId": "<native:4>",
     │   │                   "streamed": false,
     │   │                   "timestamp": 0,
     │   │                   "ttfbMs": 0,
@@ -478,7 +471,7 @@ span_tree:
     │         },
     │         "audio.source_id": "agent-output",
     │         "contrib.livekit.message_ids": [
-    │           "<native:6>"
+    │           "<native:5>"
     │         ],
     │         "links": [
     │           {

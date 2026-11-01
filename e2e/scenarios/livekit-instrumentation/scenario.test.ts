@@ -96,6 +96,10 @@ function linkTargets(span: CapturedLogEvent | undefined, type: string) {
     .filter((l) => l.attributes["braintrust.relationship.type"] === type)
     .map((l) => l.context.spanId);
 }
+/** The span IDs a model response's context links to, in order. */
+const contextLinks = (span: CapturedLogEvent | undefined) =>
+  linkTargets(span, "uses_context");
+
 /** What the scenario reported about each uploaded audio file, in order. */
 function uploadedAudio(
   stdout: string,
@@ -354,6 +358,14 @@ for (const variant of variants) {
           expect(
             events.filter((e) => e.span.type === "llm").map((e) => e.span.name),
           ).toEqual(["llm_response", "llm_response"]);
+          // Synthesis produced the played audio; the model produced its text.
+          const [tts] = findAllSpans(events, "tts");
+          expect(
+            linkTargets(findLatestSpan(events, "agent_speech"), "generated_by"),
+          ).toEqual([tts.span.id]);
+          expect(linkTargets(tts, "generated_by")).toEqual([
+            findAllSpans(events, "llm_response")[1].span.id,
+          ]);
           await snapshotTrace(events, `${variant}-order`);
         });
       },
@@ -432,26 +444,18 @@ for (const variant of variants) {
           }),
         );
         const events = assertAudioTrace(harness.events());
-        const user = findAllSpans(events, "user_speech").find((e) =>
-          Array.isArray(e.row.input),
-        );
-        // User speech names its source but has no selections: its timing doesn't match the audio.
+        const user = findLatestSpan(events, "user_speech");
+        // User speech is observed audio: its source, no text, and no selections,
+        // since LiveKit's user speech timing doesn't match the recorded audio.
         expect(user?.metadata?.["audio.source_id"]).toBe("session-input");
+        expect(user?.row.input).toBeUndefined();
         expect(selectionsOf(user)).toEqual([]);
-        // LiveKit has no native STT span; each final transcript gets one.
+        // LiveKit has no native STT span; each final transcript gets one, and the
+        // model's context links to the transcripts of the turn it answers.
         const stt = findAllSpans(events, "stt");
         expect(stt.length).toBeGreaterThan(0);
-        expect(user?.metadata?.links).toEqual(
-          expect.arrayContaining(
-            stt.map((span) =>
-              expect.objectContaining({
-                context: expect.objectContaining({ spanId: span.span.id }),
-                attributes: {
-                  "braintrust.relationship.type": "transcribed_by",
-                },
-              }),
-            ),
-          ),
+        expect(contextLinks(findAllSpans(events, "llm_response")[0])).toEqual(
+          stt.map((span) => span.span.id),
         );
         await snapshotTrace(events, `${variant}-streaming-cascade`);
       });

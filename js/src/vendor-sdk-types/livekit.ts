@@ -34,6 +34,8 @@ export interface SpeechEvent {
     confidence?: number;
     language?: string;
     startTime?: number;
+    /** A diarizing STT's label for the voice, scoped to its input. */
+    speakerId?: string | null;
   }[];
   requestId?: string;
   createdAt?: number;

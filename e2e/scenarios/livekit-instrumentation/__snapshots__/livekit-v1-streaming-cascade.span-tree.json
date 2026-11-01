@@ -58,29 +58,8 @@
               "name": "user_speech",
               "type": "task",
               "children": [],
-              "input": [
-                {
-                  "content": "Where is my order, DMO1042?",
-                  "role": "user"
-                }
-              ],
               "metadata": {
                 "audio.source_id": "session-input",
-                "contrib.livekit.message_ids": [
-                  "<native:2>"
-                ],
-                "links": [
-                  {
-                    "attributes": {
-                      "braintrust.relationship.type": "transcribed_by"
-                    },
-                    "context": {
-                      "spanId": "<span:3>",
-                      "traceFlags": 1,
-                      "traceId": "<span:2>"
-                    }
-                  }
-                ],
                 "scenario": "livekit-instrumentation",
                 "testRunId": "<run:1>",
                 "turn.id": "<span:1>"
@@ -248,7 +227,7 @@
                 "links": [
                   {
                     "attributes": {
-                      "braintrust.relationship.type": "input_context"
+                      "braintrust.relationship.type": "uses_context"
                     },
                     "context": {
                       "spanId": "<span:4>",
@@ -360,7 +339,7 @@
                 "links": [
                   {
                     "attributes": {
-                      "braintrust.relationship.type": "input_context"
+                      "braintrust.relationship.type": "uses_context"
                     },
                     "context": {
                       "spanId": "<span:4>",
@@ -498,7 +477,7 @@
                                 "modelProvider": "<provider-host>"
                               },
                               "outputTokens": 0,
-                              "requestId": "<native:6>",
+                              "requestId": "<native:5>",
                               "streamed": false,
                               "timestamp": 0,
                               "ttfbMs": 0,
@@ -513,7 +492,7 @@
                       ],
                       "metadata": {
                         "contrib.livekit.provider_request_ids": [
-                          "<native:6>"
+                          "<native:5>"
                         ],
                         "contrib.livekit.retry_count": 0,
                         "scenario": "livekit-instrumentation",
@@ -538,7 +517,7 @@
                         "modelProvider": "<provider-host>"
                       },
                       "outputTokens": 0,
-                      "requestId": "<native:6>",
+                      "requestId": "<native:5>",
                       "streamed": true,
                       "timestamp": 0,
                       "ttfbMs": 0,
@@ -594,7 +573,7 @@
                 },
                 "audio.source_id": "agent-output",
                 "contrib.livekit.message_ids": [
-                  "<native:7>"
+                  "<native:6>"
                 ],
                 "links": [
                   {
@@ -621,22 +600,22 @@
             "contrib.livekit.events": [
               {
                 "attributes": {
-                  "contrib.livekit.generation_id": "<native:5>"
+                  "contrib.livekit.generation_id": "<native:4>"
                 },
                 "name": "generation",
                 "time_unix_ms": 0
               },
               {
                 "attributes": {
-                  "contrib.livekit.generation_id": "<native:4>",
-                  "contrib.livekit.parent_generation_id": "<native:5>"
+                  "contrib.livekit.generation_id": "<native:3>",
+                  "contrib.livekit.parent_generation_id": "<native:4>"
                 },
                 "name": "generation",
                 "time_unix_ms": 0
               }
             ],
             "contrib.livekit.generation_count": 2,
-            "contrib.livekit.generation_id": "<native:4>",
+            "contrib.livekit.generation_id": "<native:3>",
             "contrib.livekit.interrupted": false,
             "contrib.livekit.on_user_turn_completed_delay": 0,
             "contrib.livekit.playback_events": [
@@ -650,7 +629,7 @@
               }
             ],
             "contrib.livekit.speech.queue_wait": 0,
-            "contrib.livekit.speech_id": "<native:3>",
+            "contrib.livekit.speech_id": "<native:2>",
             "contrib.livekit.transcription_delay": 0,
             "gen_ai.agent.name": "default_agent",
             "gen_ai.operation.name": "invoke_agent",

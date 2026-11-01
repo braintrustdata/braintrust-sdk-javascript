@@ -239,7 +239,7 @@ type SessionState = {
   rowLimitWarned: boolean;
   relationships: Relationships;
   speech: SpeechTracker;
-  /** STT spans per user turn, for transcribed_by links. */
+  /** STT spans per user turn, for context links to the turn's message. */
   transcripts: Map<string, { span: Span; end: number }[]>;
   /** The session clock's epoch, shared with the audio session's timeline. */
   origin: number;
@@ -271,7 +271,7 @@ class LiveKitTracing {
   private context = iso.newAsyncLocalStorage<{
     native: LiveKitSpan;
     row?: Row;
-    inference: { model?: Row };
+    inference: { model?: Row; tts?: Row };
     /** Tool configuration of the enclosing pipeline reply, for its llm spans. */
     request?: Record<string, unknown>;
   }>();
@@ -521,13 +521,16 @@ class LiveKitTracing {
       const origin = Date.now();
       const audio = this.audioSession(row.span, origin, capturing);
       row.span.log({ metadata: audio.session() });
+      const transcripts: SessionState["transcripts"] = new Map();
       this.sessions.set(id, {
         root: row,
         rows,
         rowLimitWarned: false,
         relationships,
-        speech: new SpeechTracker(relationships),
-        transcripts: new Map(),
+        speech: new SpeechTracker(relationships, (turn) =>
+          (transcripts.get(turn) ?? []).map((t) => t.span),
+        ),
+        transcripts,
         origin,
         audio,
         recording: capturing
@@ -544,11 +547,6 @@ class LiveKitTracing {
       state.playback?.speechStarted(id);
     }
     const scope = this.context.getStore();
-    if (name === "user_speaking" || name === "agent_speaking")
-      state.speech.add(row);
-    if (name === "user_speaking")
-      for (const stt of state.transcripts.get(row.turn ?? "") ?? [])
-        state.relationships.link(row.span, stt.span, "transcribed_by");
     if (name === "llm_node" && scope) {
       scope.inference.model = row;
       if (scope.request)
@@ -559,15 +557,17 @@ class LiveKitTracing {
               { tool_choice: scope.request.tool_choice },
         });
     }
-    if (
-      (name === "tts_node" || name === "agent_speaking") &&
-      scope?.inference.model
-    )
-      state.relationships.link(
-        row.span,
-        scope.inference.model.span,
-        "generated_by",
-      );
+    if (name === "tts_node" && scope) scope.inference.tts = row;
+    // Played audio comes from the reply's synthesis when it has one, otherwise
+    // directly from its model response; synthesis comes from the model response.
+    const generator =
+      name === "agent_speaking"
+        ? (scope?.inference.tts ?? scope?.inference.model)
+        : name === "tts_node"
+          ? scope?.inference.model
+          : undefined;
+    if (generator)
+      state.relationships.link(row.span, generator.span, "generated_by");
     const current = scope?.row?.session === row.session ? scope.row : undefined;
     if (name === "function_tool" && current?.name === "llm_node")
       state.relationships.link(row.span, current.span, "requested_by");
@@ -668,7 +668,10 @@ class LiveKitTracing {
     const outer = this.context.getStore();
     const row = found ? (found.owner ?? found) : outer?.row;
     const inference = found
-      ? { model: found.name === "llm_node" ? found : undefined }
+      ? {
+          model: found.name === "llm_node" ? found : undefined,
+          tts: found.name === "tts_node" ? found : undefined,
+        }
       : (outer?.inference ?? {});
     return this.context.run(
       { native, row, inference, request: request ?? outer?.request },
@@ -725,6 +728,9 @@ class LiveKitTracing {
         : {}),
       metadata: {
         "audio.source_id": "session-input",
+        // The room participant LiveKit linked to this turn's input, if any.
+        ...(parent === turn ? participantIds(state, turn.attributes) : {}),
+        ...speakerIds(state, recognition, alternative.speakerId || undefined),
         ...(model ? { model } : {}),
         ...(provider ? { provider } : {}),
         ...(alternative.confidence !== undefined
@@ -745,37 +751,58 @@ class LiveKitTracing {
     if (parent !== turn || transcripts.length >= MAX_EVENTS) return;
     transcripts.push({ span, end });
     state.transcripts.set(turn.id, transcripts);
-    for (const row of state.rows.values())
-      if (row.name === "user_speaking" && row.turn === turn.id)
-        state.relationships.link(row.span, span, "transcribed_by");
   }
 
   conversation(session: AgentSession, item: ChatMessage): void {
     const state = this.sessionOf(session);
     if (item?.type !== "message" || !state) return;
     const current = this.context.getStore()?.row;
+    const scoped =
+      current?.session === state.root.id
+        ? state.rows.get(current.turn ?? "")
+        : undefined;
+    if (item.role === "user") {
+      // LiveKit commits a user turn with that turn's native start, or in its scope.
+      state.speech.user(
+        item,
+        state.speech.turnOf(item) ??
+          (scoped?.name === "user_turn" ? scoped.id : undefined),
+      );
+      return;
+    }
+    if (item.role !== "assistant") return;
     const turn =
-      (current?.session === state.root.id ? current.turn : undefined) ??
-      (item.role === "assistant"
-        ? this.rowOf(session.activity?.currentSpeech?._agentTurnSpan)?.id
-        : undefined);
+      scoped?.name === "agent_turn"
+        ? scoped.id
+        : this.rowOf(session.activity?.currentSpeech?._agentTurnSpan)?.id;
+    // LiveKit commits a reply before it leaves the speaking state, so the speech
+    // that played it is still current. Otherwise, use the turn's only speech.
+    const playing = this.rowOf(session.agentSpeakingSpan);
+    const speeches = [...state.rows.values()].filter(
+      (row) => row.name === "agent_speaking" && turn && row.turn === turn,
+    );
+    const speaking =
+      playing && (!turn || playing.turn === turn)
+        ? playing
+        : speeches.length === 1
+          ? speeches[0]
+          : undefined;
     // LiveKit falls back to the entire generated text on partial playback when
     // its output has no synchronized transcript. That fallback is not heard text.
     // A pipeline commit can include earlier fully played segments followed by the
     // synchronized partial suffix, so keep a verified prefix too.
-    const heard = this.rowOf(session.agentSpeakingSpan)?.playedText;
-    const textContent =
-      item.role === "assistant" && item.interrupted
-        ? heard && item.textContent?.endsWith(heard)
-          ? item.textContent
-          : heard
-        : item.textContent;
-    state.speech.message(
+    const heard = speaking?.playedText;
+    const textContent = item.interrupted
+      ? heard && item.textContent?.endsWith(heard)
+        ? item.textContent
+        : heard
+      : item.textContent;
+    state.speech.assistant(
       {
         ...item,
         textContent: this.piiAllowed(state.root) ? textContent : undefined,
       },
-      turn,
+      speaking,
     );
   }
 
@@ -1145,39 +1172,45 @@ function correlate(
         "consumes_tool_result",
       );
     else if (item?.type === "message" && typeof item.id === "string")
-      relationships.reference(row.span, `speech:${item.id}`, "input_context");
+      relationships.reference(row.span, `speech:${item.id}`, "uses_context");
   }
 }
 
 type Relationship =
-  | "input_context"
+  | "uses_context"
   | "requested_by"
   | "consumes_tool_result"
-  | "generated_by"
-  | "transcribed_by";
+  | "generated_by";
 type Link = {
   context: { traceId: string; spanId: string; traceFlags: number };
   attributes: { "braintrust.relationship.type": Relationship };
 };
 
-/** Session-local identity resolution. A late transcript or tool can resolve an earlier link. */
+/**
+ * Session-local identity resolution. A native identity can name several spans,
+ * such as a user message's transcripts, and a late target still resolves an
+ * earlier reference.
+ */
 class Relationships {
   private warned = false;
-  private targets = new Map<string, Span>();
+  private targets = new Map<string, Span[]>();
   private waiting = new Map<string, Map<Span, Relationship>>();
   private links = new Map<Span, Map<string, Link>>();
 
   register(id: string, target: Span): void {
-    this.targets.set(id, target);
+    const targets = this.targets.get(id) ?? [];
+    if (targets.includes(target) || targets.length >= MAX_EVENTS) return;
+    targets.push(target);
+    this.targets.set(id, targets);
     for (const [source, relationship] of this.waiting.get(id) ?? [])
       this.link(source, target, relationship);
-    this.waiting.delete(id);
   }
 
   reference(source: Span, id: string, relationship: Relationship): void {
-    const target = this.targets.get(id);
-    if (target) this.link(source, target, relationship);
-    else if (this.waiting.size < MAX_ROWS) {
+    for (const target of this.targets.get(id) ?? [])
+      this.link(source, target, relationship);
+    // Later targets for this identity still link to this source.
+    if (this.waiting.size < MAX_ROWS || this.waiting.has(id)) {
       const waiting = this.waiting.get(id) ?? new Map();
       waiting.set(source, relationship);
       this.waiting.set(id, waiting);
@@ -1219,54 +1252,52 @@ class Relationships {
   }
 }
 
-/** Native speech owns transcripts; transcript arrival never changes its timing. */
+/**
+ * Associates committed messages with the spans they describe, using only native
+ * identities and structure, never timing. A user message is the transcript of
+ * its user turn, so it resolves to that turn's STT spans. An assistant message
+ * is committed while LiveKit still holds the speech that played it.
+ */
 class SpeechTracker {
-  private rows: Row[] = [];
-  private recognition = new Map<number, Row | undefined>();
+  /** User turns by LiveKit's native turn start, which its messages carry. */
+  private turns = new Map<number, string | undefined>();
   private owners = new Map<string, Row>();
-  private pending = new Map<string, { item: ChatMessage; turn?: string }>();
+  private pending = new Map<string, ChatMessage>();
 
-  constructor(private relationships: Relationships) {}
+  constructor(
+    private relationships: Relationships,
+    /** A user turn's STT spans, in arrival order. */
+    private transcripts: (turn: string) => Span[],
+  ) {}
 
-  add(row: Row): void {
-    this.rows.push(row);
-    for (const { item, turn } of this.pending.values())
-      if (item.metrics?.startedSpeakingAt !== undefined)
-        this.message(item, turn);
-  }
-
+  /** Keys a user turn by the native start time LiveKit also stamps on its message. */
   recognize(turn: string, startedAt: number): void {
-    const speech = this.rows.filter(
-      (row) => row.name === "user_speaking" && row.turn === turn,
-    );
-    if (speech.length !== 1 || !Number.isFinite(startedAt)) return;
+    if (!Number.isFinite(startedAt)) return;
     const start = startedAt / 1000;
-    this.recognition.set(
+    // Two turns with one native key are ambiguous; neither resolves.
+    this.turns.set(
       start,
-      !this.recognition.has(start) || this.recognition.get(start) === speech[0]
-        ? speech[0]
+      !this.turns.has(start) || this.turns.get(start) === turn
+        ? turn
         : undefined,
     );
   }
 
-  finish(root: Span): void {
-    if (this.pending.size)
-      root.log({
-        metadata: {
-          "contrib.livekit.unassociated_messages": [
-            ...this.pending.values(),
-          ].map(({ item }) => ({
-            id: item.id,
-            role: item.role,
-            text: item.textContent,
-            started_speaking_at: item.metrics?.startedSpeakingAt,
-          })),
-        },
-      });
+  /** The user turn a committed user message transcribes, if LiveKit identifies one. */
+  turnOf(item: ChatMessage): string | undefined {
+    const start = item.metrics?.startedSpeakingAt;
+    return start === undefined ? undefined : this.turns.get(start);
   }
 
-  message(item: ChatMessage, turn?: string): void {
-    if (item.role !== "user" && item.role !== "assistant") return;
+  /** Makes a user message's transcripts the target of model context links. */
+  user(item: ChatMessage, turn: string | undefined): void {
+    if (!turn) return;
+    for (const span of this.transcripts(turn))
+      this.relationships.register(`speech:${item.id}`, span);
+  }
+
+  /** Records an assistant message as the played text of the speech that produced it. */
+  assistant(item: ChatMessage, row: Row | undefined): void {
     // Keep only transcript observations, never ChatMessage audio/context payloads.
     item = {
       type: item.type,
@@ -1274,32 +1305,10 @@ class SpeechTracker {
       role: item.role,
       textContent: item.textContent,
       interrupted: item.interrupted,
-      metrics: item.metrics && {
-        startedSpeakingAt: item.metrics.startedSpeakingAt,
-      },
     };
-    const name = item.role === "user" ? "user_speaking" : "agent_speaking";
-    const start = item.metrics?.startedSpeakingAt;
-    const candidates = this.rows.filter((row) => {
-      if (row.name !== name) return false;
-      if (start !== undefined && Number.isFinite(start))
-        return (
-          start >= row.start - 0.001 &&
-          (row.end === undefined || start <= row.end + 0.001)
-        );
-      if (turn) return row.turn === turn;
-      // A user message can be typed input. Do not assign it to old audio.
-      return item.role === "assistant" && !row.ended;
-    });
-    const row =
-      this.owners.get(item.id) ??
-      (item.role === "user" && start !== undefined
-        ? this.recognition.get(start)
-        : undefined) ??
-      (candidates.length === 1 ? candidates[0] : undefined);
+    row = this.owners.get(item.id) ?? row;
     if (!row) {
-      if (this.pending.size < MAX_ROWS)
-        this.pending.set(item.id, { item, turn });
+      if (this.pending.size < MAX_ROWS) this.pending.set(item.id, item);
       return;
     }
     this.pending.delete(item.id);
@@ -1310,9 +1319,9 @@ class SpeechTracker {
     row.span.log({
       ...(item.textContent !== undefined
         ? {
-            [item.role === "user" ? "input" : "output"]: [...messages.values()]
+            output: [...messages.values()]
               .filter((content) => content !== undefined)
-              .map((content) => ({ role: item.role, content })),
+              .map((content) => ({ role: "assistant", content })),
           }
         : {}),
       metadata: {
@@ -1320,6 +1329,22 @@ class SpeechTracker {
         ...(item.interrupted ? { "contrib.livekit.interrupted": true } : {}),
       },
     });
+  }
+
+  /** Keeps assistant text that LiveKit committed without played speech. */
+  finish(root: Span): void {
+    if (this.pending.size)
+      root.log({
+        metadata: {
+          "contrib.livekit.unassociated_messages": [
+            ...this.pending.values(),
+          ].map((item) => ({
+            id: item.id,
+            role: item.role,
+            text: item.textContent,
+          })),
+        },
+      });
   }
 }
 
@@ -1340,6 +1365,18 @@ type Packet = {
 
 const inputs = new WeakMap<object, Recording>();
 const sinks = new WeakMap<object, Playback>();
+/**
+ * Each recognizer labels its speakers independently: the same label from two
+ * recognizers need not be the same voice. Opaque per-recognizer scope keys.
+ */
+const labelingScopes = new WeakMap<object, number>();
+const labelingScope = (recognition: object) => {
+  let scope = labelingScopes.get(recognition);
+  if (scope === undefined)
+    labelingScopes.set(recognition, (scope = nextLabelingScope++));
+  return scope;
+};
+let nextLabelingScope = 1;
 
 /**
  * Captures a session's LiveKit audio into its AudioSessionRecorder: validates
@@ -1597,6 +1634,26 @@ function participantIds(
   });
   if (added) state.root.span.log({ metadata: added });
   return { "audio.participant_ids": [id] };
+}
+
+/**
+ * The voice a diarizing STT identified in the session's input, by its native
+ * label within the recognizer that assigned it. Published on first sight; the
+ * label is an index, not a name.
+ */
+function speakerIds(
+  state: SessionState,
+  recognition: object,
+  label: string | undefined,
+): Record<string, unknown> {
+  if (!label) return {};
+  const key = JSON.stringify([labelingScope(recognition), label]);
+  const { id, added } = state.audio.speaker("session-input", key, {
+    type: "user",
+    attributes: { "contrib.livekit.speaker_id": label },
+  });
+  if (added) state.root.span.log({ metadata: added });
+  return { "audio.speaker_ids": [id], "contrib.livekit.speaker_id": label };
 }
 
 /** Extends a speech's confirmed playout; contiguous frames grow one interval. */

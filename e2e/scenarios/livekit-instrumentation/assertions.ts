@@ -58,6 +58,24 @@ const SESSION_KEYS = [
   "audio.timeline",
 ];
 
+/** The schema's span kind: tools are named for the tool, so use their type. */
+const kind = (event: CapturedLogEvent) =>
+  event.span.type === "tool" ? "tool" : event.span.name!;
+const SPEECH = ["user_speech", "agent_speech"];
+const LINKS: Record<string, { source: string[]; target: string[] }> = {
+  uses_context: {
+    source: ["llm_response"],
+    target: [...SPEECH, "stt", "transcript_received"],
+  },
+  requested_by: { source: ["tool"], target: ["llm_response"] },
+  consumes_tool_result: { source: ["llm_response"], target: ["tool"] },
+  generated_by: {
+    source: ["agent_speech", "tts"],
+    target: ["llm_response", "tts"],
+  },
+  transcribes: { source: ["stt", "transcript_received"], target: SPEECH },
+};
+
 /** Checks the session audio, speech selections, and turn ownership. */
 export function assertAudioTrace(raw: CapturedLogEvent[]) {
   const events = [...new Set(raw.map((e) => e.span.name))].flatMap((name) =>
@@ -177,13 +195,12 @@ export function assertAudioTrace(raw: CapturedLogEvent[]) {
       const target = events.find((e) => e.span.id === link.context.spanId);
       expect(target, "link target must be an exported span").toBeDefined();
       expect(target!.row.root_span_id).toBe(link.context.traceId);
-      expect([
-        "input_context",
-        "requested_by",
-        "consumes_tool_result",
-        "generated_by",
-        "transcribed_by",
-      ]).toContain(link.attributes["braintrust.relationship.type"]);
+      const type = link.attributes["braintrust.relationship.type"];
+      const allowed = LINKS[type];
+      expect(allowed, `unknown relationship ${type}`).toBeDefined();
+      // Sources and targets as the schema's relationship table allows.
+      expect(allowed.source, type).toContain(kind(source));
+      expect(allowed.target, type).toContain(kind(target!));
     }
   return events;
 }

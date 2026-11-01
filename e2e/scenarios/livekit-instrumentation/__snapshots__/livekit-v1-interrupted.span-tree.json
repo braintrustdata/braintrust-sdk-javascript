@@ -334,7 +334,7 @@
                                 "modelProvider": "<provider-host>"
                               },
                               "outputTokens": 0,
-                              "requestId": "<native:5>",
+                              "requestId": "<native:4>",
                               "streamed": false,
                               "timestamp": 0,
                               "ttfbMs": 0,
@@ -348,7 +348,7 @@
                       ],
                       "metadata": {
                         "contrib.livekit.provider_request_ids": [
-                          "<native:5>"
+                          "<native:4>"
                         ],
                         "contrib.livekit.retry_count": 0,
                         "scenario": "livekit-instrumentation",
@@ -372,7 +372,7 @@
                         "modelProvider": "<provider-host>"
                       },
                       "outputTokens": 0,
-                      "requestId": "<native:5>",
+                      "requestId": "<native:4>",
                       "streamed": true,
                       "timestamp": 0,
                       "ttfbMs": 0,
@@ -421,7 +421,7 @@
                 "audio.source_id": "agent-output",
                 "contrib.livekit.interrupted": true,
                 "contrib.livekit.message_ids": [
-                  "<native:6>"
+                  "<native:5>"
                 ],
                 "links": [
                   {
@@ -445,22 +445,22 @@
             "contrib.livekit.events": [
               {
                 "attributes": {
-                  "contrib.livekit.generation_id": "<native:4>"
+                  "contrib.livekit.generation_id": "<native:3>"
                 },
                 "name": "generation",
                 "time_unix_ms": 0
               },
               {
                 "attributes": {
-                  "contrib.livekit.generation_id": "<native:3>",
-                  "contrib.livekit.parent_generation_id": "<native:4>"
+                  "contrib.livekit.generation_id": "<native:2>",
+                  "contrib.livekit.parent_generation_id": "<native:3>"
                 },
                 "name": "generation",
                 "time_unix_ms": 0
               }
             ],
             "contrib.livekit.generation_count": 2,
-            "contrib.livekit.generation_id": "<native:3>",
+            "contrib.livekit.generation_id": "<native:2>",
             "contrib.livekit.interrupted": false,
             "contrib.livekit.playback_events": [
               {
@@ -473,7 +473,7 @@
               }
             ],
             "contrib.livekit.speech.queue_wait": 0,
-            "contrib.livekit.speech_id": "<native:2>",
+            "contrib.livekit.speech_id": "<native:1>",
             "gen_ai.agent.name": "default_agent",
             "gen_ai.operation.name": "invoke_agent",
             "scenario": "livekit-instrumentation",
@@ -651,13 +651,6 @@
             },
             "name": "agent_state_changed",
             "time_unix_ms": 0
-          }
-        ],
-        "contrib.livekit.unassociated_messages": [
-          {
-            "id": "<span:1>",
-            "role": "user",
-            "text": "Hi, could you check order 1042 for me?"
           }
         ],
         "gen_ai.operation.name": "invoke_workflow",
