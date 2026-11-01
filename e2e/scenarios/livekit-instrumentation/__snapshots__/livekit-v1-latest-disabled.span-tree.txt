@@ -1,6 +1,18 @@
 span_tree:
 └── session [task]
     metadata: {
+      "audio.schema.version": "3.0.0",
+      "audio.sources": {
+        "agent-output": {
+          "label": "Agent audio"
+        },
+        "session-input": {
+          "label": "Agent input audio"
+        }
+      },
+      "audio.timeline": {
+        "origin_unix_ms": 0
+      },
       "contrib.livekit.agent_label": "default_agent",
       "contrib.livekit.events": [
         {
@@ -86,6 +98,7 @@ span_tree:
     │         }
     │       ]
     │       metadata: {
+    │         "audio.source_id": "agent-output",
     │         "contrib.livekit.message_ids": [
     │           "<native:3>"
     │         ],

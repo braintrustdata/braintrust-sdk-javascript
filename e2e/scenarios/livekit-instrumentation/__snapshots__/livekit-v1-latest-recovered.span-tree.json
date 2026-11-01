@@ -394,15 +394,13 @@
               "type": "task",
               "children": [],
               "metadata": {
-                "audio.selections": [
-                  {
-                    "channel_index": 1,
+                "audio.selections": {
+                  "selection-0": {
                     "end_offset_ms": 0,
-                    "recording_id": "call-0000",
-                    "recording_span_id": "<span:4>",
                     "start_offset_ms": 0
                   }
-                ],
+                },
+                "audio.source_id": "agent-output",
                 "contrib.livekit.interrupted": true,
                 "contrib.livekit.message_ids": [
                   "<native:11>"
@@ -426,15 +424,6 @@
             }
           ],
           "metadata": {
-            "audio.selections": [
-              {
-                "channel_index": 1,
-                "end_offset_ms": 0,
-                "recording_id": "call-0000",
-                "recording_span_id": "<span:2>",
-                "start_offset_ms": 0
-              }
-            ],
             "contrib.livekit.events": [
               {
                 "attributes": {
@@ -920,15 +909,13 @@
                 }
               ],
               "metadata": {
-                "audio.selections": [
-                  {
-                    "channel_index": 1,
+                "audio.selections": {
+                  "selection-0": {
                     "end_offset_ms": 0,
-                    "recording_id": "call-0000",
-                    "recording_span_id": "<span:4>",
                     "start_offset_ms": 0
                   }
-                ],
+                },
+                "audio.source_id": "agent-output",
                 "contrib.livekit.message_ids": [
                   "<native:12>"
                 ],
@@ -951,15 +938,6 @@
             }
           ],
           "metadata": {
-            "audio.selections": [
-              {
-                "channel_index": 1,
-                "end_offset_ms": 0,
-                "recording_id": "call-0000",
-                "recording_span_id": "<span:2>",
-                "start_offset_ms": 0
-              }
-            ],
             "contrib.livekit.events": [
               {
                 "attributes": {
@@ -1080,41 +1058,55 @@
       ],
       "input": {
         "audio": {
-          "call-0000": {
+          "part-0": {
             "content_type": "audio/ogg",
-            "filename": "call-0000.ogg",
+            "filename": "part-0.ogg",
             "key": "<uuid:1>",
             "type": "braintrust_attachment"
           }
         }
       },
       "metadata": {
-        "audio.recordings": [
-          {
+        "audio.schema.version": "3.0.0",
+        "audio.segments": {
+          "part-0": {
             "attachment": {
-              "ref": "/input/audio/call-0000",
-              "span_id": "<span:2>"
+              "ref": "/input/audio/part-0"
             },
-            "channel_count": 2,
-            "duration_ms": 0,
-            "id": "<span:1>",
-            "mime_type": "audio/ogg",
-            "recording_group_id": "call",
-            "sample_rate_hz": 48000,
-            "sources": [
-              {
-                "boundary": "local_audio_output",
-                "channel_index": 1
+            "attributes": {
+              "opus.application": "audio",
+              "opus.bitrate_bps": 64000,
+              "opus.complexity": 5
+            },
+            "channels": {
+              "0": {
+                "sources": []
+              },
+              "1": {
+                "sources": [
+                  "agent-output"
+                ]
               }
-            ],
-            "state": "ready",
-            "timeline": {
-              "basis": "local_input_arrival_and_output_playout",
-              "origin_unix_ms": 0,
-              "recording_start_offset_ms": 0
-            }
+            },
+            "duration_ms": 0,
+            "encoding": "opus",
+            "mime_type": "audio/ogg",
+            "sample_rate_hz": 48000,
+            "start_offset_ms": 0,
+            "state": "ready"
           }
-        ],
+        },
+        "audio.sources": {
+          "agent-output": {
+            "label": "Agent audio"
+          },
+          "session-input": {
+            "label": "Agent input audio"
+          }
+        },
+        "audio.timeline": {
+          "origin_unix_ms": 0
+        },
         "contrib.livekit.agent_label": "default_agent",
         "contrib.livekit.audio.input_formats": [],
         "contrib.livekit.audio.output_formats": [
@@ -1183,12 +1175,12 @@
         ],
         "contrib.livekit.unassociated_messages": [
           {
-            "id": "<span:3>",
+            "id": "<span:1>",
             "role": "user",
             "text": "Hi, could you check order 1042 for me?"
           },
           {
-            "id": "<span:4>",
+            "id": "<span:2>",
             "role": "user",
             "text": "Sorry, please repeat the delivery day."
           }

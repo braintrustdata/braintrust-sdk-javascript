@@ -9,7 +9,7 @@ const AUDIO_SCHEMA_VERSION = "3.0.0";
 
 type AudioMemberType = "user" | "agent" | "other" | "unknown";
 /** A participant or speaker, as published in `audio.participants` / `audio.speakers`. */
-type AudioMember = {
+export type AudioMember = {
   type: AudioMemberType;
   label?: string;
   attributes?: Record<string, unknown>;

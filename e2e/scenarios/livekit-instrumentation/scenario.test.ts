@@ -1,7 +1,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { expect, test } from "vitest";
-import { assertAudioTrace } from "./assertions";
+import { assertAudioTrace, audioSession, selectionsOf } from "./assertions";
 import {
   prepareScenarioDir,
   resolveScenarioDir,
@@ -181,8 +181,22 @@ for (const variant of variants) {
           const events = assertAudioTrace(harness.events());
           const root = findAllSpans(events, "session");
           expect(root).toHaveLength(1);
-          expect(root[0].metadata?.["audio.recordings"]).toMatchObject([
-            { id: "call-0000", state: "ready", channel_count: 2 },
+          const { session, segments } = audioSession(root[0]);
+          expect(session?.sources).toEqual({
+            "session-input": { label: "Agent input audio" },
+            "agent-output": { label: "Agent audio" },
+          });
+          expect(segments).toMatchObject([
+            {
+              id: "part-0",
+              state: "ready",
+              start_offset_ms: 0,
+              // Fixture playback has no caller input, so channel 0 names no source.
+              channels: {
+                "0": { sources: [] },
+                "1": { sources: ["agent-output"] },
+              },
+            },
           ]);
           // The ready descriptor is only published after the upload completes.
           const requests = harness.requestsAfter(0);
@@ -229,27 +243,32 @@ for (const variant of variants) {
             assertAudioTrace(harness.events()),
             "session",
           )!;
-          const [recording] = root.metadata?.["audio.recordings"] as {
-            duration_ms: number;
-          }[];
-          expect(recording).toMatchObject({
-            id: "call-0000",
+          const [segment] = audioSession(root).segments;
+          expect(segment).toMatchObject({
+            id: "part-0",
             state: "ready",
             mime_type: "audio/ogg",
+            encoding: "opus",
             sample_rate_hz: 48000,
-            channel_count: 2,
           });
-          expect(recording).not.toHaveProperty("sample_format");
-          // The uploaded file decodes to exactly the recorded duration.
+          // The encoder's settings, defaults included, replace the PCM details.
+          expect(segment.attributes).toEqual({
+            "opus.bitrate_bps": audio ? 16000 : 64000,
+            "opus.complexity": 5,
+            "opus.application": "audio",
+          });
+          // The uploaded file decodes to the recorded duration, within rounding.
           const [upload] = uploadedAudio(result.stdout);
           expect(upload.format).toBe("ogg");
-          expect(upload.decodedMs).toBeCloseTo(recording.duration_ms, 1);
+          expect(
+            Math.abs(upload.decodedMs! - segment.duration_ms!),
+          ).toBeLessThan(1);
           expect(
             (root.row.input as { audio: Record<string, unknown> }).audio[
-              "call-0000"
+              "part-0"
             ],
           ).toMatchObject({
-            filename: "call-0000.ogg",
+            filename: "part-0.ogg",
             content_type: "audio/ogg",
           });
           expect(result.stderr).not.toContain("uncompressed PCM");
@@ -275,12 +294,17 @@ for (const variant of variants) {
           assertAudioTrace(harness.events()),
           "session",
         )!;
-        expect(root.metadata?.["audio.recordings"]).toMatchObject([
+        expect(audioSession(root).segments).toMatchObject([
           {
-            id: "call-0000",
+            id: "part-0",
             state: "ready",
             mime_type: "audio/pcm",
-            sample_format: "s16le",
+            encoding: "pcm",
+            sample_rate_hz: 24000,
+            attributes: {
+              "pcm.sample_format": "s16le",
+              "pcm.channel_layout": "interleaved",
+            },
           },
         ]);
         expect(uploadedAudio(result.stdout)).toEqual([{ format: "raw" }]);
@@ -302,9 +326,11 @@ for (const variant of variants) {
           }),
         );
         const events = assertAudioTrace(harness.events());
-        expect(
-          events.some((e) => e.metadata?.["audio.recordings"] !== undefined),
-        ).toBe(false);
+        // The call is still described, without recorded audio or attachments.
+        const root = findLatestSpan(events, "session")!;
+        expect(audioSession(root).session).toBeDefined();
+        expect(audioSession(root).segments).toEqual([]);
+        expect((root.row.input as { audio?: unknown })?.audio).toBeUndefined();
         await snapshotTrace(events, `${variant}-disabled`);
       });
     },
@@ -402,7 +428,9 @@ for (const variant of variants) {
         const user = findAllSpans(events, "user_speech").find((e) =>
           Array.isArray(e.row.input),
         );
-        expect(user?.metadata?.["audio.selections"]).not.toEqual([]);
+        // User speech names its source but has no selections: its timing doesn't match the audio.
+        expect(user?.metadata?.["audio.source_id"]).toBe("session-input");
+        expect(selectionsOf(user)).toEqual([]);
         // LiveKit has no native STT span; each final transcript gets one.
         const stt = findAllSpans(events, "stt");
         expect(stt.length).toBeGreaterThan(0);
@@ -444,7 +472,7 @@ for (const variant of variants) {
               e.span.name === "agent_speech" &&
               e.metadata?.["contrib.livekit.interrupted"],
           );
-          expect(interrupted?.metadata?.["audio.selections"]).not.toEqual([]);
+          expect(selectionsOf(interrupted)).not.toEqual([]);
           if (recover) {
             const resumed = findLatestSpan(events, "agent_speech");
             expect(resumed?.span.id).not.toBe(interrupted?.span.id);
@@ -476,30 +504,25 @@ for (const variant of variants) {
         );
         const events = assertAudioTrace(harness.events());
         const root = findLatestSpan(events, "session")!;
-        const recordings = root.metadata?.["audio.recordings"] as {
-          id: string;
-          state: string;
-          duration_ms: number;
-          timeline: { recording_start_offset_ms: number };
-        }[];
-        expect(recordings.length).toBeGreaterThan(1);
+        const { segments } = audioSession(root);
+        expect(segments.length).toBeGreaterThan(1);
         const attachments = (
           root.row.input as { audio: Record<string, { key: string }> }
         ).audio;
         expect(Object.keys(attachments).sort()).toEqual(
-          recordings.map((r) => r.id).sort(),
+          segments.map((s) => s.id).sort(),
         );
-        for (const [index, recording] of recordings.entries()) {
-          expect(recording).toMatchObject({
-            id: `call-${String(index).padStart(4, "0")}`,
+        for (const [index, segment] of segments.entries()) {
+          expect(segment).toMatchObject({
+            id: `part-${index}`,
             state: "ready",
           });
-          expect(recording.duration_ms).toBeLessThanOrEqual(200.05);
+          expect(segment.duration_ms).toBeLessThanOrEqual(200);
+          // Whole milliseconds, tiled without drift.
           if (index > 0)
-            expect(recording.timeline.recording_start_offset_ms).toBeCloseTo(
-              recordings[index - 1].timeline.recording_start_offset_ms +
-                recordings[index - 1].duration_ms,
-              1,
+            expect(segment.start_offset_ms).toBe(
+              segments[index - 1].start_offset_ms +
+                segments[index - 1].duration_ms!,
             );
         }
         const { playedDurationMs, completedUploads } = JSON.parse(
@@ -516,33 +539,21 @@ for (const variant of variants) {
               Object.values(attachments).some((a) => a.key === upload.key),
           ),
         ).toBe(true);
-        for (const name of ["agent_turn", "agent_speech"]) {
-          const selections = findLatestSpan(events, name)!.metadata?.[
-            "audio.selections"
-          ] as {
-            recording_id: string;
-            start_offset_ms: number;
-            end_offset_ms: number;
-          }[];
-          expect(selections.map((s) => s.recording_id)).toEqual(
-            recordings.map((r) => r.id),
-          );
-          let selectedMs = 0;
-          let previousEnd: number | undefined;
-          for (const selection of selections) {
-            const offset = recordings.find(
-              (r) => r.id === selection.recording_id,
-            )!.timeline.recording_start_offset_ms;
-            if (previousEnd !== undefined)
-              expect(offset + selection.start_offset_ms).toBeCloseTo(
-                previousEnd,
-                1,
-              );
-            previousEnd = offset + selection.end_offset_ms;
-            selectedMs += selection.end_offset_ms - selection.start_offset_ms;
-          }
-          expect(selectedMs).toBeCloseTo(playedDurationMs, 1);
-        }
+        // Played speech is one interval on the session timeline, even across files.
+        const selections = selectionsOf(findLatestSpan(events, "agent_speech"));
+        expect(selections.length).toBeGreaterThan(0);
+        const first = selections[0];
+        expect(first.start_offset_ms).toBeLessThan(segments[1].start_offset_ms);
+        expect(first.end_offset_ms).toBeGreaterThan(
+          segments[1].start_offset_ms,
+        );
+        const selectedMs = selections.reduce(
+          (sum, s) => sum + s.end_offset_ms - s.start_offset_ms,
+          0,
+        );
+        expect(Math.abs(selectedMs - playedDurationMs)).toBeLessThanOrEqual(
+          selections.length,
+        );
       });
     },
     120000,

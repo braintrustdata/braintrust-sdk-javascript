@@ -113,6 +113,27 @@ const frame = (samples = 480, value = 1234) => ({
   sampleRate: 24000,
   channels: 1,
 });
+const SESSION_SOURCES = {
+  "session-input": { label: "Agent input audio" },
+  "agent-output": { label: "Agent audio" },
+};
+/** A session span's `audio.*` metadata, keyed without the prefix. */
+const audioOf = (metadata: any) =>
+  Object.fromEntries(
+    Object.entries(metadata ?? {})
+      .filter(([key]) => key.startsWith("audio."))
+      .map(([key, value]) => [key.slice("audio.".length), value]),
+  ) as any;
+/** Segments of a session's audio, in recording order. */
+const segmentsOf = (audio: any) =>
+  Object.entries(audio?.segments ?? {})
+    .map(([id, segment]: [string, any]) => ({ id, ...segment }))
+    .sort((a, b) => a.start_offset_ms - b.start_offset_ms);
+/** A span's `audio.selections`: [start, end] in ms, in timeline order. */
+const selectionsOf = (row: any) =>
+  Object.values(row?.metadata?.["audio.selections"] ?? {})
+    .map((s: any) => [s.start_offset_ms, s.end_offset_ms])
+    .sort((a: any, b: any) => a[0] - b[0]);
 const channelSamples = (bytes: Uint8Array, channel: number) => {
   const view = new DataView(bytes.buffer);
   return Array.from({ length: bytes.length / 4 }, (_, i) =>
@@ -483,6 +504,7 @@ describe("tracing", () => {
       root.setAttribute("lk.test", "late");
       root.addEvent("late");
       root.recordException(new Error("late"));
+      await tracing.closeSession(root);
       expect(tracing.sessions.size).toBe(0);
 
       const { all } = await rows();
@@ -493,7 +515,6 @@ describe("tracing", () => {
         metrics: { start: 2.5, end: 2.5 },
         metadata: {
           model: "test-model",
-          ["__proto__"]: "safe",
           "contrib.livekit.test": "value",
           "contrib.livekit.events": [
             {
@@ -638,6 +659,7 @@ describe("tracing", () => {
     const wait = start("eou_wait", turn);
     turn.end([2, 0]);
     root.end([2, 0]);
+    await tracing.closeSession(root);
     expect(tracing.sessions.size).toBe(1);
     tool.setAttribute("lk.pii.function_tool.output", '{"ok":true}');
     tool.end([3, 0]);
@@ -761,6 +783,7 @@ describe("speech", () => {
       { type: "message", id: "typed", role: "user", textContent: "Typed" },
     );
     root.end([3, 0]);
+    await tracing.closeSession(root);
     const { one } = await rows();
     expect(one("user_speech").input).toBeUndefined();
     expect(
@@ -876,6 +899,7 @@ describe("recording", () => {
   ) {
     const root = start("agent_session");
     const turn = start("agent_turn", root);
+    const speaking = start("agent_speaking", turn);
     const sink: any = new EventEmitter();
     Object.assign(sink, {
       captureFrame: captureFrame(sink),
@@ -885,6 +909,7 @@ describe("recording", () => {
     const agentSession: any = {
       sessionSpan: root,
       activity: { currentSpeech: { _agentTurnSpan: turn } },
+      agentSpeakingSpan: speaking,
       output: { audio: sink },
     };
     tracing.output(agentSession);
@@ -896,19 +921,22 @@ describe("recording", () => {
       session: agentSession,
       origin,
       async close() {
+        speaking.end();
         turn.end();
         await tracing.closeSession(root);
         root.end();
         const result = await rows();
-        const recordings =
-          result.named("session")[0].metadata?.["audio.recordings"];
-        const selections = (name: string) =>
-          result
-            .one(name)
-            .metadata?.[
-              "audio.selections"
-            ]?.map((s: any) => [s.recording_id, s.start_offset_ms, s.end_offset_ms]);
-        return { ...result, recordings, selections };
+        const metadata = result.named("session")[0].metadata;
+        const audio = audioOf(metadata);
+        /** A span's selections on the session timeline: [start, end] in ms. */
+        const selections = (name: string) => selectionsOf(result.one(name));
+        return {
+          ...result,
+          audio,
+          segments: segmentsOf(audio),
+          stopReason: metadata?.["contrib.livekit.audio.stop_reason"],
+          selections,
+        };
       },
     };
   }
@@ -925,7 +953,7 @@ describe("recording", () => {
     tracing.output(agentSession);
     expect(stream.getReader).toBe(getReader);
     expect(sink.captureFrame).toBe(captureFrame);
-    expect((await close()).recordings).toBeUndefined();
+    expect((await close()).segments).toEqual([]);
   });
 
   test("user audio alone taps the input and leaves the sink untouched", async () => {
@@ -954,8 +982,17 @@ describe("recording", () => {
       playbackPosition: 0.02,
       interrupted: false,
     });
-    expect((await close()).recordings).toMatchObject([
-      { state: "ready", sources: [{ boundary: "local_audio_output" }] },
+    const { audio, segments } = await close();
+    // The silent caller channel names no source.
+    expect(audio.sources).toEqual(SESSION_SOURCES);
+    expect(segments).toMatchObject([
+      {
+        state: "ready",
+        channels: {
+          "0": { sources: [] },
+          "1": { sources: ["agent-output"] },
+        },
+      },
     ]);
   });
 
@@ -984,10 +1021,8 @@ describe("recording", () => {
     release();
     await closing;
     root.end();
-    const recordings = (await rows()).named("session")[0].metadata?.[
-      "audio.recordings"
-    ];
-    expect(recordings).toMatchObject([{ id: "call-0000", state: "ready" }]);
+    const audio = audioOf((await rows()).named("session")[0].metadata);
+    expect(segmentsOf(audio)).toMatchObject([{ id: "part-0", state: "ready" }]);
   });
 
   test("close keeps LiveKit's error and still finishes the recording", async () => {
@@ -1000,10 +1035,10 @@ describe("recording", () => {
       }),
     ).rejects.toBe(error);
     root.end();
-    const recordings = (await rows()).named("session")[0].metadata?.[
-      "audio.recordings"
-    ];
-    expect(recordings).toBeDefined();
+    const metadata = (await rows()).named("session")[0].metadata;
+    // Unconfirmed playback makes no segment, but the recording still finishes.
+    expect(segmentsOf(audioOf(metadata))).toEqual([]);
+    expect(metadata?.["contrib.livekit.audio.output_formats"]).toEqual([]);
   });
 
   /** Replaces the default tracing with one that runs the given middleware. */
@@ -1031,7 +1066,12 @@ describe("recording", () => {
     await withMiddleware(middleware);
     const { sink, origin, close } = session();
     await playOneFrame(sink, origin);
-    expect((await close()).recordings).toBeUndefined();
+    // The session is still described; no audio is recorded.
+    expect((await close()).audio).toEqual({
+      "schema.version": "3.0.0",
+      sources: SESSION_SOURCES,
+      timeline: { origin_unix_ms: origin },
+    });
     expect(middleware).not.toHaveBeenCalled();
   });
 
@@ -1050,28 +1090,34 @@ describe("recording", () => {
     });
     const { sink, origin, close } = session();
     await playOneFrame(sink, origin);
-    const { recordings, selections, named } = await close();
-    expect(recordings).toMatchObject([
+    const { audio, segments, selections, named } = await close();
+    expect(segments).toEqual([
       {
-        id: "call-0000",
+        id: "part-0",
         state: "ready",
-        mime_type: "audio/x-test",
+        start_offset_ms: 0,
         duration_ms: 30, // Includes the 10 ms before playout started.
-        sources: [{ channel_index: 1 }],
+        attachment: { ref: "/input/audio/part-0" },
+        mime_type: "audio/x-test",
+        encoding: "test",
+        sample_rate_hz: 24000,
+        channels: {
+          "0": { sources: [] },
+          "1": { sources: ["agent-output"] },
+        },
+        // Attributes describe the file; pipeline state is never published.
+        attributes: { "acme.framing": "test" },
       },
     ]);
-    // Only raw PCM publishes a sample format.
-    expect(recordings[0]).not.toHaveProperty("sample_format");
-    // Pipeline attributes and state are not published in the recording descriptor.
-    expect(JSON.stringify(recordings)).not.toContain("acme.");
-    expect(selections("agent_turn")).toEqual([["call-0000", 10, 30]]);
+    expect(JSON.stringify(audio)).not.toContain("acme.header");
+    expect(selections("agent_speech")).toEqual([[10, 30]]);
+    expect(selections("agent_turn")).toEqual([]);
     expect([...uploads[0].slice(0, 4)]).toEqual([0x54, 0x45, 0x53, 0x54]);
     expect(channelSamples(uploads[0].slice(4), 1)[300]).toBe(1234);
-    const audio = named("session").find((row) => row.input?.audio)?.input.audio[
-      "call-0000"
-    ];
-    expect(audio).toMatchObject({
-      filename: "call-0000.x-test",
+    const attachment = named("session").find((row) => row.input?.audio)?.input
+      .audio["part-0"];
+    expect(attachment).toMatchObject({
+      filename: "part-0.x-test",
       content_type: "audio/x-test",
     });
   });
@@ -1083,29 +1129,20 @@ describe("recording", () => {
     });
     const { sink, origin, close } = session();
     await expect(playOneFrame(sink, origin)).resolves.toBeUndefined();
-    const { recordings, selections } = await close();
-    expect(recordings).toEqual([
-      expect.objectContaining({
-        id: "call-0000",
-        state: "omitted",
-        reason: "recording_transform_failed",
-        gaps: [
-          {
-            start_offset_ms: 0,
-            end_offset_ms: 30,
-            reason: "recording_transform_failed",
-          },
-        ],
-      }),
+    const { segments, stopReason, selections } = await close();
+    // An omitted segment keeps its place on the timeline.
+    expect(segments).toEqual([
       {
-        id: "call",
-        recording_group_id: "call",
+        id: "part-0",
         state: "omitted",
+        start_offset_ms: 0,
+        duration_ms: 30,
         reason: "recording_transform_failed",
-        truncated: true,
       },
     ]);
-    expect(selections("agent_turn")).toEqual([]);
+    expect(stopReason).toBe("recording_transform_failed");
+    // Confirmed playback is still on the timeline, though its audio is unavailable.
+    expect(selections("agent_speech")).toEqual([[10, 30]]);
     expect(uploads).toEqual([]);
   });
 
@@ -1139,14 +1176,10 @@ describe("recording", () => {
     expect(uploads).toEqual([]);
     const closing = close();
     release();
-    const { recordings } = await closing;
+    const { segments } = await closing;
     // The empty interval between playouts is skipped, not uploaded as silence.
     expect(
-      recordings.map((r: any) => [
-        r.state,
-        r.timeline.recording_start_offset_ms,
-        r.duration_ms,
-      ]),
+      segments.map((r: any) => [r.state, r.start_offset_ms, r.duration_ms]),
     ).toEqual([
       ["ready", 0, 100],
       ["ready", 1500, 100],
@@ -1172,19 +1205,14 @@ describe("recording", () => {
       interrupted: true,
       synchronizedTranscript: "heard",
     });
-    const { recordings, selections, one } = await close();
-    expect(recordings).toMatchObject([
-      {
-        id: "call-0000",
-        state: "ready",
-        duration_ms: 80,
-        sources: [{ channel_index: 1 }],
-        timeline: { origin_unix_ms: origin, recording_start_offset_ms: 0 },
-      },
+    const { audio, segments, selections, one } = await close();
+    expect(audio.timeline.origin_unix_ms).toBe(origin);
+    expect(segments).toMatchObject([
+      { id: "part-0", state: "ready", start_offset_ms: 0, duration_ms: 80 },
     ]);
-    expect(selections("agent_turn")).toEqual([
-      ["call-0000", 10, 30],
-      ["call-0000", 60, 80],
+    expect(selections("agent_speech")).toEqual([
+      [10, 30],
+      [60, 80],
     ]);
     expect(
       one("agent_turn").metadata["contrib.livekit.playback_events"],
@@ -1210,9 +1238,7 @@ describe("recording", () => {
     });
     origin = rest.origin;
     await sink.captureFrame(frame());
-    expect((await close()).selections("agent_turn")).toEqual([
-      ["call-0000", 10, 30],
-    ]);
+    expect((await close()).selections("agent_speech")).toEqual([[10, 30]]);
   });
 
   test.each([
@@ -1232,15 +1258,9 @@ describe("recording", () => {
         interrupted: true,
       });
     }
-    expect((await close()).recordings).toEqual([
-      {
-        id: "call",
-        recording_group_id: "call",
-        state: "omitted",
-        reason,
-        truncated: true,
-      },
-    ]);
+    const { segments, stopReason } = await close();
+    expect(segments).toEqual([]);
+    expect(stopReason).toBe(reason);
     expect(uploads).toEqual([]);
   });
 
@@ -1256,9 +1276,7 @@ describe("recording", () => {
       interrupted: false,
     });
     expect(accepted).toBe(2);
-    expect((await close()).recordings).toMatchObject([
-      { reason: "capture_byte_limit" },
-    ]);
+    expect((await close()).stopReason).toBe("capture_byte_limit");
   });
 
   test("a sink shared by open sessions stops both recordings without changing playback", async () => {
@@ -1277,12 +1295,12 @@ describe("recording", () => {
     expect((await a.close()).named("session")).toMatchObject([
       {
         metadata: {
-          "audio.recordings": [{ reason: "shared_output_unsupported" }],
+          "contrib.livekit.audio.stop_reason": "shared_output_unsupported",
         },
       },
       {
         metadata: {
-          "audio.recordings": [{ reason: "shared_output_unsupported" }],
+          "contrib.livekit.audio.stop_reason": "shared_output_unsupported",
         },
       },
     ]);
@@ -1311,14 +1329,11 @@ describe("recording", () => {
     }
     const { named, selections } = await close();
     expect(
-      named("agent_speech").map((r) =>
-        r.metadata["audio.selections"].map((s: any) => s.start_offset_ms),
-      ),
+      named("agent_speech")
+        .map((r) => selectionsOf(r).map(([start]) => start))
+        .filter((list) => list.length),
     ).toEqual([[10], [100]]);
-    expect(selections("agent_turn")).toEqual([
-      ["call-0000", 10, 30],
-      ["call-0000", 100, 120],
-    ]);
+    expect(selections("agent_turn")).toEqual([]);
   });
 
   test("confirmed playback rotates files during an open utterance; interruption discards the queued tail", async () => {
@@ -1337,9 +1352,9 @@ describe("recording", () => {
       playbackPosition: 0.02,
       interrupted: true,
     });
-    const { recordings, selections } = await close();
-    expect(recordings).toMatchObject([{ id: "call-0000", duration_ms: 20 }]);
-    expect(selections("agent_turn")).toEqual([["call-0000", 0, 20]]);
+    const { segments, selections } = await close();
+    expect(segments).toMatchObject([{ id: "part-0", duration_ms: 20 }]);
+    expect(selections("agent_speech")).toEqual([[0, 20]]);
   });
 
   test("input taps reads in sample time, preserving values, silence, cancellation and locks", async () => {
@@ -1374,10 +1389,16 @@ describe("recording", () => {
     ]);
   });
 
-  test("user turns and speech select only captured input", async () => {
+  test("user speech names its source and LiveKit's room participant, without selections", async () => {
     const { root, session: agentSession, origin, close } = session();
     const user = start("user_turn", root);
-    const speech = start("user_speaking", user, {}, origin + 5);
+    // LiveKit stamps user speech with the room participant whose track it heard.
+    const speech = start(
+      "user_speaking",
+      user,
+      { "lk.participant_id": "PA_1", "lk.participant_kind": "SIP" },
+      origin + 5,
+    );
     const stream = new ReadableStream({
       start(controller) {
         controller.enqueue(frame(2400));
@@ -1395,11 +1416,129 @@ describe("recording", () => {
       },
     );
     speech.end(origin + 500);
+    start("user_speaking", user, {}, origin + 600).end(origin + 700);
     user.end();
-    const { selections } = await close();
-    expect(selections("user_turn")).toEqual([["call-0000", 0, 40]]);
-    expect(selections("user_speech")).toEqual([["call-0000", 5, 100]]);
+    const { audio, named, selections } = await close();
+    expect(named("user_speech").map((r) => r.metadata)).toEqual([
+      expect.objectContaining({
+        "audio.source_id": "session-input",
+        "audio.participant_ids": ["participant-1"],
+      }),
+      expect.not.objectContaining({
+        "audio.participant_ids": expect.anything(),
+      }),
+    ]);
+    expect(audio.participants).toEqual({
+      "participant-1": {
+        type: "user",
+        attributes: {
+          "contrib.livekit.participant_id": "PA_1",
+          "contrib.livekit.participant_kind": "SIP",
+        },
+      },
+    });
+    // LiveKit's user speech timing does not match the recorded audio.
+    expect(selections("user_turn")).toEqual([]);
+    expect(named("user_speech").map(selectionsOf)).toEqual([[], []]);
+    expect(audio.segments["part-0"].channels["0"]).toEqual({
+      sources: ["session-input"],
+    });
   });
+
+  test("agent speech names the agent's room connection, the same across handoffs", async () => {
+    const {
+      root,
+      turn,
+      sink,
+      origin,
+      session: agentSession,
+      close,
+    } = session();
+    for (const [label, at] of [
+      ["support", 10],
+      ["billing", 100],
+    ] as const) {
+      // A handoff starts a new agent activity on the same room connection.
+      start("start_agent_activity", root, { "lk.agent_label": label }).end();
+      const speaking = start("agent_speaking", turn);
+      speaking.setAttributes({
+        "lk.participant_id": "PA_agent",
+        "lk.participant_kind": "AGENT",
+      });
+      agentSession.agentSpeakingSpan = speaking;
+      await sink.captureFrame(frame());
+      sink.emit("playbackProgressed", {
+        startedAt: origin + at,
+        offset: 0,
+        duration: 20,
+      });
+      sink.emit("playbackFinished", {
+        playbackPosition: 0.02,
+        interrupted: false,
+      });
+      speaking.end();
+    }
+    const { audio, named } = await close();
+    // The session fixture's own speech has no connection stamped on it.
+    expect(
+      named("agent_speech")
+        .filter((r) => r.metadata?.["audio.participant_ids"])
+        .map((r) => [
+          r.metadata["audio.source_id"],
+          r.metadata["audio.participant_ids"],
+        ]),
+    ).toEqual([
+      ["agent-output", ["participant-1"]],
+      ["agent-output", ["participant-1"]],
+    ]);
+    // The agent's name identifies the activity, not a member of the call.
+    expect(audio.participants).toEqual({
+      "participant-1": {
+        type: "agent",
+        attributes: {
+          "contrib.livekit.participant_id": "PA_agent",
+          "contrib.livekit.participant_kind": "AGENT",
+        },
+      },
+    });
+  });
+
+  test("without a room there are no participants", async () => {
+    const { root, turn, close } = session();
+    start("start_agent_activity", root, { "lk.agent_label": "support" }).end();
+    start("user_speaking", start("user_turn", root)).end();
+    start("agent_speaking", turn).end();
+    const { audio, named } = await close();
+    expect(audio).not.toHaveProperty("participants");
+    for (const name of ["user_speech", "agent_speech"])
+      expect(named(name)[0].metadata).not.toHaveProperty(
+        "audio.participant_ids",
+      );
+  });
+
+  test.each([
+    ["STANDARD", "user"],
+    ["CONNECTOR", "user"],
+    ["INGRESS", "other"],
+    ["EGRESS", "other"],
+    ["FUTURE_KIND", "unknown"],
+  ])(
+    "a %s participant has type %s and keeps its native kind",
+    async (kind, type) => {
+      const { root, close } = session();
+      start("user_speaking", start("user_turn", root), {
+        "lk.participant_id": "PA_1",
+        "lk.participant_kind": kind,
+      }).end();
+      expect((await close()).audio.participants["participant-1"]).toEqual({
+        type,
+        attributes: {
+          "contrib.livekit.participant_id": "PA_1",
+          "contrib.livekit.participant_kind": kind,
+        },
+      });
+    },
+  );
 
   test("input source replacement and shared input are explicit", async () => {
     const a = session();
@@ -1421,7 +1560,7 @@ describe("recording", () => {
     await Promise.all([b, c].map((span) => tracing.closeSession(span)));
     const reasons = (await a.close())
       .named("session")
-      .map((r) => r.metadata["audio.recordings"][0].reason);
+      .map((r) => r.metadata["contrib.livekit.audio.stop_reason"]);
     expect(reasons).toEqual([
       "shared_input_unsupported",
       "shared_input_unsupported",
@@ -1434,7 +1573,7 @@ describe("recording files", () => {
   const packet = (
     at: number,
     length = 24000,
-    source: "session_input" | "local_audio_output" = "session_input",
+    source: "session-input" | "agent-output" = "session-input",
   ) => ({
     pcm: Int16Array.from({ length }, (_, i) => ((i * 31) % 30000) - 15000),
     at,
@@ -1442,38 +1581,66 @@ describe("recording files", () => {
     channels: 1,
     source,
   });
-  /** A recording whose wall-clock hold no longer limits uploads. */
+  /**
+   * The plugin's session audio, uploading to a session span, with LiveKit
+   * capture on top. Its wall-clock hold no longer limits uploads.
+   */
   function recording(chunkBytes = DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES) {
     const log = vi.fn();
-    const turn = vi.fn();
-    const r = new Recording({ spanId: "root", log } as any, chunkBytes, (id) =>
-      id === "turn" ? ({ span: { log: turn } } as any) : undefined,
+    const speech = { spanId: "speech", log: vi.fn() };
+    const origin = Date.now();
+    const plugin = new LiveKitTracing(chunkBytes);
+    const audio = Reflect.get(plugin, "audioSession").call(
+      plugin,
+      { spanId: "root", log },
+      origin,
+      true,
+    );
+    const row = { name: "agent_speaking", span: speech } as any;
+    const r = new Recording(audio, origin, (id) =>
+      id === "speech" ? row : undefined,
     );
     now += 3_600_000;
-    const last = (fn: typeof log, key: string) =>
-      fn.mock.calls
-        .map(([event]) => event.metadata?.[key])
-        .filter(Boolean)
-        .at(-1);
+    /** What the session span has published, merged as Braintrust merges rows. */
+    const published = () => {
+      const segments: Record<string, any> = {};
+      for (const [event] of log.mock.calls)
+        Object.assign(segments, event.metadata?.["audio.segments"]);
+      return segments;
+    };
     return {
       r,
-      log,
+      audio,
+      origin,
+      /** Closes the session, publishing the speech's selections. */
+      finish: async () => {
+        await audio.finish();
+        r.publish(["speech"]);
+      },
       files: () =>
-        (last(log, "audio.recordings") as any[]).map((f) => [
+        segmentsOf({ segments: published() }).map((f: any) => [
           f.id,
           f.state,
-          f.timeline?.recording_start_offset_ms,
+          f.start_offset_ms,
           f.duration_ms,
         ]),
+      segment: (id: string) => published()[id],
       selections: () =>
-        (last(turn, "audio.selections") as any[])?.map((s) => [
-          s.recording_id,
-          s.start_offset_ms,
-          s.end_offset_ms,
-        ]),
+        selectionsOf({
+          metadata: Object.assign(
+            {},
+            ...speech.log.mock.calls.map(([event]) => event.metadata),
+          ),
+        }),
+      /** Attachment keys logged on the session span, in order. */
+      attachments: () =>
+        log.mock.calls.flatMap(([event]) =>
+          Object.keys(event.input?.audio ?? {}),
+        ),
     };
   }
-  test("publishes attachment references and selections only after upload succeeds", async () => {
+
+  test("a segment is ready with its attachment only after upload succeeds", async () => {
     let complete!: () => void;
     const blocked = new Promise<void>((resolve) => {
       complete = resolve;
@@ -1482,28 +1649,36 @@ describe("recording files", () => {
       await blocked;
       return { upload_status: "done" };
     });
-    const { r, log, files, selections } = recording(96000);
-    r.select("turn", 0, 1000, "session_input");
-    r.publish(["turn"]);
+    const { r, finish, files, segment, attachments } = recording(96000);
     r.record(packet(0));
     r.advance();
-    // Pending once the segment leaves the (empty) middleware stack.
+    // The upload starts during the call; nothing references it until it succeeds.
     await vi.waitFor(() =>
-      expect(files()).toEqual([["call-0000", "pending", 0, undefined]]),
+      expect(Attachment.prototype.upload).toHaveBeenCalledTimes(1),
     );
-    expect(log.mock.calls.some(([event]) => event.input)).toBe(false);
-    expect(selections()).toEqual([]);
+    expect(attachments()).toEqual([]);
     complete();
-    await r.finish();
-    expect(files()).toEqual([["call-0000", "ready", 0, 1000]]);
-    expect(
-      log.mock.calls.some(([event]) => event.input?.audio?.["call-0000"]),
-    ).toBe(true);
-    expect(selections()).toEqual([["call-0000", 0, 1000]]);
+    await finish();
+    expect(files()).toEqual([["part-0", "ready", 0, 1000]]);
+    expect(segment("part-0")).toMatchObject({
+      attachment: { ref: "/input/audio/part-0" },
+      mime_type: "audio/pcm",
+      encoding: "pcm",
+      sample_rate_hz: 24000,
+      channels: {
+        "0": { sources: ["session-input"] },
+        "1": { sources: [] },
+      },
+      attributes: {
+        "pcm.sample_format": "s16le",
+        "pcm.channel_layout": "interleaved",
+      },
+    });
+    expect(attachments()).toEqual(["part-0"]);
   });
 
   test("progressive digests reconstruct both sources exactly across file boundaries", async () => {
-    const { r, files } = recording(96000);
+    const { r, finish, files } = recording(96000);
     const length = 3 * 24000 + 1777;
     const expected = Buffer.alloc(length * 4);
     for (let at = 0; at < length; at += 719) {
@@ -1518,7 +1693,7 @@ describe("recording files", () => {
             at: at / 24,
             rate: 24000,
             channels: 1,
-            source: channel ? "local_audio_output" : "session_input",
+            source: channel ? "agent-output" : "session-input",
           }),
         ).toBe(true);
         for (let i = 0; i < pcm.length; i++)
@@ -1526,17 +1701,19 @@ describe("recording files", () => {
       }
       r.advance();
     }
+    // Segments upload during the call, before the session closes.
     await vi.waitFor(() => expect(uploads).toHaveLength(3));
-    await r.finish();
+    await finish();
     expect(uploads.map((f) => f.length / 4)).toEqual([
       24000, 24000, 24000, 1777,
     ]);
     expect(Buffer.concat(uploads)).toEqual(expected);
-    expect(files().map(([id]) => id)).toEqual([
-      "call-0000",
-      "call-0001",
-      "call-0002",
-      "call-0003",
+    // One complete result, including the final partial segment.
+    expect(files()).toEqual([
+      ["part-0", "ready", 0, 1000],
+      ["part-1", "ready", 1000, 1000],
+      ["part-2", "ready", 2000, 1000],
+      ["part-3", "ready", 3000, 74],
     ]);
   });
 
@@ -1549,29 +1726,30 @@ describe("recording files", () => {
       await blocked;
       return { upload_status: "done" };
     });
-    const { r, files } = recording(8 * 1024 * 1024);
+    const { r, finish, files } = recording(8 * 1024 * 1024);
     const samples = 2 * 1024 * 1024;
     r.record(packet(0, samples));
     r.advance();
     for (let i = 1; i <= 9; i++) r.record(packet((i * samples) / 24, samples));
     expect(r.reason).toBe("capture_byte_limit");
     complete();
-    await r.finish();
-    expect(files().map(([, state]) => state)).toEqual([
-      ...Array(9).fill("ready"),
-      "omitted",
-    ]);
+    await finish();
+    expect(files().map(([, state]) => state)).toEqual(Array(9).fill("ready"));
+    expect(r.metadata()["contrib.livekit.audio.stop_reason"]).toBe(
+      "capture_byte_limit",
+    );
   });
 
-  test("a failed upload omits its file and selections without invalidating earlier files", async () => {
+  test("a failed upload omits its segment without invalidating earlier segments or selections", async () => {
     vi.mocked(Attachment.prototype.upload)
       .mockResolvedValueOnce({ upload_status: "done" })
       .mockResolvedValueOnce({
         upload_status: "error",
         error_message: "offline",
       });
-    const { r, files, selections } = recording(96000);
-    r.select("turn", 0, 2000, "session_input");
+    const { r, finish, files, segment, selections, attachments } =
+      recording(96000);
+    r.select("speech", 0, 2000);
     for (let i = 0; i < 2; i++) {
       r.record(packet(i * 1000));
       r.advance();
@@ -1579,71 +1757,75 @@ describe("recording files", () => {
         expect(Attachment.prototype.upload).toHaveBeenCalledTimes(i + 1),
       );
     }
-    await r.finish();
+    await finish();
     expect(files()).toEqual([
-      ["call-0000", "ready", 0, 1000],
-      ["call-0001", "omitted", 1000, undefined],
-      ["call", "omitted", undefined, undefined],
+      ["part-0", "ready", 0, 1000],
+      ["part-1", "omitted", 1000, 1000],
     ]);
-    expect(r.reason).toBe("recording_export_failed");
-    expect(selections()).toEqual([["call-0000", 0, 1000]]);
+    expect(segment("part-1")).toMatchObject({
+      reason: "recording_export_failed",
+    });
+    expect(segment("part-1")).not.toHaveProperty("attachment");
+    expect(attachments()).toEqual(["part-0"]);
+    expect(r.metadata()["contrib.livekit.audio.stop_reason"]).toBe(
+      "recording_export_failed",
+    );
+    expect(selections()).toEqual([[0, 2000]]);
   });
 
-  test("late selections split across ready files and merge adjacent intervals", async () => {
-    const { r, selections } = recording(96000);
-    r.record(packet(0, 48000, "local_audio_output"));
-    await r.finish();
-    r.select("turn", 500, 1000, "local_audio_output");
-    r.select("turn", 1000, 1500, "local_audio_output");
-    r.publish(["turn"]);
-    expect(selections()).toEqual([
-      ["call-0000", 500, 1000],
-      ["call-0001", 0, 500],
-    ]);
+  test("agent speech is one interval across segment boundaries; other spans get none", async () => {
+    const { r, finish, files, selections } = recording(96000);
+    r.record(packet(0, 48000, "agent-output"));
+    r.select("speech", 500, 1000);
+    r.select("speech", 1000, 1500);
+    r.select("turn", 0, 2000);
+    await finish();
+    expect(files().map(([, , start]) => start)).toEqual([0, 1000]);
+    expect(selections()).toEqual([[500, 1500]]);
   });
 
   test("the duration limit keeps accepted audio and finish is idempotent", async () => {
-    const { r, files } = recording();
+    const { r, audio, finish, files } = recording();
     expect(r.record(packet(0))).toBe(true);
     expect(r.record(packet(30 * 60 * 1000 - 500))).toBe(false);
-    const finishing = r.finish();
-    expect(r.finish()).toBe(finishing);
-    await finishing;
+    expect(audio.finish()).toBe(audio.finish());
+    await finish();
     expect(r.reason).toBe("duration_limit");
-    expect(files()).toEqual([
-      ["call-0000", "ready", 0, 1000],
-      ["call", "omitted", undefined, undefined],
-    ]);
+    expect(files()).toEqual([["part-0", "ready", 0, 1000]]);
+    expect(r.metadata()["contrib.livekit.audio.stop_reason"]).toBe(
+      "duration_limit",
+    );
     expect(r.record(packet(1000))).toBe(false);
   });
 
-  test("empty calls publish an omission without creating attachments", async () => {
-    const { r, log } = recording();
-    await r.finish();
+  test("empty calls publish sources and timeline without segments or attachments", async () => {
+    const { r, audio, origin, finish, files } = recording();
+    expect(audio.session()).toEqual({
+      "audio.schema.version": "3.0.0",
+      "audio.sources": SESSION_SOURCES,
+      "audio.timeline": { origin_unix_ms: origin },
+    });
+    await finish();
+    expect(files()).toEqual([]);
     expect(uploads).toEqual([]);
-    expect(log.mock.lastCall?.[0].metadata["audio.recordings"]).toEqual([
-      {
-        id: "call",
-        recording_group_id: "call",
-        state: "omitted",
-        reason: "no_audio_observed",
-      },
-    ]);
+    expect(r.metadata()).not.toHaveProperty(
+      "contrib.livekit.audio.stop_reason",
+    );
   });
 
   test("empty leading intervals are skipped and a late watermark drains without new input", async () => {
-    const { r, files } = recording(9600);
+    const { r, finish, files } = recording(9600);
     r.record(packet(200));
     r.advance();
     await vi.waitFor(() => expect(uploads).toHaveLength(10));
+    await finish();
     expect(files().map(([, , start, duration]) => [start, duration])).toEqual(
       Array.from({ length: 10 }, (_, i) => [200 + i * 100, 100]),
     );
-    await r.finish();
   });
 
   test("holds delay cuts to a safe boundary and close flushes the remainder", async () => {
-    const { r, files } = recording(192000);
+    const { r, finish, files } = recording(192000);
     r.record(packet(0, 72000));
     const hold = {};
     r.holds.set(hold, 1000);
@@ -1652,10 +1834,10 @@ describe("recording files", () => {
     r.holds.set(hold, 2000);
     r.advance();
     await vi.waitFor(() => expect(uploads).toHaveLength(1));
-    await r.finish();
+    await finish();
     expect(files()).toEqual([
-      ["call-0000", "ready", 0, 2000],
-      ["call-0001", "ready", 2000, 1000],
+      ["part-0", "ready", 0, 2000],
+      ["part-1", "ready", 2000, 1000],
     ]);
   });
 });

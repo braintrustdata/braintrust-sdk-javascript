@@ -1,5 +1,5 @@
 /** An observed interval on the session timeline, in milliseconds from its origin. */
-type AudioInterval = { start: number; end: number };
+export type AudioInterval = { start: number; end: number };
 
 type AudioSelection = { start_offset_ms: number; end_offset_ms: number };
 

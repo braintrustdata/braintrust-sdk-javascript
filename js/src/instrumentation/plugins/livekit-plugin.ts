@@ -44,15 +44,16 @@ import {
   type AudioEncodingConfig,
 } from "../config";
 import { pcmBytesToMs, msToSamples, samplesToMs } from "../../pcm-buffer";
-import { AudioRecorder } from "../../audio-recorder";
+import {
+  AudioSessionRecorder,
+  type AudioMember,
+} from "../../audio-session-recorder";
+import { audioSelections, type AudioInterval } from "../../audio-selections";
 import {
   audioEncodingStack,
   type AudioEncodingDefaults,
 } from "../../audio-compression";
-import type {
-  AudioMiddlewareStack,
-  AudioSegmentMeta,
-} from "../../audio-middleware";
+import type { AudioMiddlewareStack } from "../../audio-middleware";
 
 // Bounds on per-session observation state, independent of the attachment threshold.
 const MAX_ROWS = 8192;
@@ -227,6 +228,8 @@ type Row = {
   }[];
   status: { code: number; message?: string };
   playedText?: string;
+  /** Confirmed playout on the session timeline, for this speech's selections. */
+  played?: AudioInterval[];
   messages?: Map<string, string | undefined>;
 };
 type SessionState = {
@@ -238,6 +241,9 @@ type SessionState = {
   speech: SpeechTracker;
   /** STT spans per user turn, for transcribed_by links. */
   transcripts: Map<string, { span: Span; end: number }[]>;
+  /** Describes the session's audio, and records it when capture is enabled. */
+  audio: AudioSessionRecorder;
+  /** Captures audio into `audio`; only when attachment capture is enabled. */
   recording?: Recording;
   playback?: Playback;
   /**
@@ -285,6 +291,60 @@ class LiveKitTracing {
       ? row
       : undefined;
   }
+  /**
+   * The session's audio recorder. Audio is recorded only when capture is
+   * enabled; each segment uploads as an attachment on the session span.
+   */
+  private audioSession(
+    span: Span,
+    origin: number,
+    capturing: boolean,
+  ): AudioSessionRecorder {
+    // Each recording builds its own stack, so plugin state is never shared.
+    let middleware: AudioMiddlewareStack = [];
+    let failed = false;
+    if (capturing)
+      try {
+        middleware = this.audioMiddleware?.() ?? [];
+      } catch (error) {
+        failed = true;
+        debugLogger.notice.warn(
+          "LiveKit audio middleware failed to start.",
+          error,
+        );
+      }
+    const audio = new AudioSessionRecorder({
+      origin,
+      sources: SOURCES,
+      ...(capturing && {
+        audio: {
+          sampleRate: SAMPLE_RATE,
+          segmentBytes: this.streamingAttachmentBufferBytes,
+          maxDurationMs: MAX_RECORDING_MS,
+          middleware,
+        },
+      }),
+      onFile: async ({ id, data, mimeType, metadata }) => {
+        if (!data || !mimeType) return span.log({ metadata });
+        const attachment = new Attachment({
+          data,
+          filename: `${id}.${fileExtension(mimeType)}`,
+          contentType: mimeType,
+        });
+        const status = await attachment.upload();
+        if (status.upload_status !== "done")
+          throw new Error(status.error_message ?? "attachment_upload_failed");
+        // The file and the entry that describes it land in one write.
+        span.log({
+          input: { audio: { [id]: attachment.reference } },
+          metadata,
+        });
+      },
+    });
+    if (failed) audio.stop("recording_transform_failed");
+    return audio;
+  }
+
   private sessionOf(session: AgentSession): SessionState | undefined {
     return this.sessions.get(this.rowOf(session.sessionSpan)?.id ?? "");
   }
@@ -455,6 +515,10 @@ class LiveKitTracing {
         input: isEnvFlagEnabled(CAPTURE_USER_AUDIO),
         output: isEnvFlagEnabled(CAPTURE_AGENT_AUDIO),
       };
+      const capturing = captures.input || captures.output;
+      const origin = Date.now();
+      const audio = this.audioSession(row.span, origin, capturing);
+      row.span.log({ metadata: audio.session() });
       this.sessions.set(id, {
         root: row,
         rows,
@@ -462,22 +526,18 @@ class LiveKitTracing {
         relationships,
         speech: new SpeechTracker(relationships),
         transcripts: new Map(),
-        recording:
-          captures.input || captures.output
-            ? new Recording(
-                row.span,
-                this.streamingAttachmentBufferBytes,
-                (id) => rows.get(id),
-                captures,
-                this.audioMiddleware,
-              )
-            : undefined,
+        audio,
+        recording: capturing
+          ? new Recording(audio, origin, (id) => rows.get(id), captures)
+          : undefined,
         closed: false,
       });
     }
     if (owner) return row;
     const state = this.sessions.get(row.session)!;
     state.rows.set(id, row);
+    if (name === "agent_speaking")
+      row.span.log({ metadata: { "audio.source_id": "agent-output" } });
     const scope = this.context.getStore();
     if (name === "user_speaking" || name === "agent_speaking")
       state.speech.add(row);
@@ -534,12 +594,15 @@ class LiveKitTracing {
     if (!row.owner) {
       row.span.log(endEvent(row, attrs, events));
       if (state) correlate(row, identities, state.relationships);
-      if (row.name === "user_speaking")
-        state?.recording?.selectInput(
-          row.id,
-          row.start * 1000,
-          row.end! * 1000,
-        );
+      if (state && row.name === "user_speaking")
+        row.span.log({
+          metadata: {
+            "audio.source_id": "session-input",
+            ...participantIds(state, native),
+          },
+        });
+      if (state && row.name === "agent_speaking")
+        row.span.log({ metadata: participantIds(state, native) });
       row.span.end({ endTime: row.end });
     } else {
       // Native request spans duplicate the public inference lifecycle.
@@ -656,6 +719,7 @@ class LiveKitTracing {
         ? { output: [{ role: "user", content: alternative.text }] }
         : {}),
       metadata: {
+        "audio.source_id": "session-input",
         ...(model ? { model } : {}),
         ...(provider ? { provider } : {}),
         ...(alternative.confidence !== undefined
@@ -737,13 +801,9 @@ class LiveKitTracing {
   userTurn(activity: AgentActivity, info: EndOfTurnInfo): void {
     const state = this.sessionOf(activity.agentSession);
     const turn = this.rowOf(info.userTurnSpan)?.id;
-    const { startedSpeakingAt, stoppedSpeakingAt } = info;
+    const { startedSpeakingAt } = info;
     if (!state || !turn || startedSpeakingAt === undefined) return;
     state.speech.recognize(turn, startedSpeakingAt);
-    // Native recognition speech boundaries share the local wall clock. Clip actual captured
-    // samples; never derive selection from the broader user_turn span's start/end timestamps.
-    if (stoppedSpeakingAt !== undefined)
-      state.recording?.selectInput(turn, startedSpeakingAt, stoppedSpeakingAt);
   }
 
   /**
@@ -776,9 +836,15 @@ class LiveKitTracing {
         state.closed = true;
         this.clearSession(state.root.id);
       };
-      state.closing = state.recording
-        ? state.recording.finish().then(done)
-        : Promise.resolve(done());
+      state.closing = (async () => {
+        try {
+          await state.audio.finish();
+          if (state.recording)
+            state.root.span.log({ metadata: state.recording.metadata() });
+        } finally {
+          done();
+        }
+      })();
     }
     return state.closing;
   }
@@ -1250,8 +1316,12 @@ class SpeechTracker {
   }
 }
 
-/** Recorder source keys, published as each recording channel's boundary. */
-type Source = "session_input" | "local_audio_output";
+/** LiveKit's native audio boundaries, published as the session's source IDs. */
+type Source = "session-input" | "agent-output";
+const SOURCES: Record<Source, { label: string }> = {
+  "session-input": { label: "Agent input audio" },
+  "agent-output": { label: "Agent audio" },
+};
 type Packet = {
   pcm: Int16Array;
   rate: number;
@@ -1260,82 +1330,45 @@ type Packet = {
   /** Session-clock offset in milliseconds; relative to its run while staged. */
   at: number;
 };
-type Interval = { start: number; end: number; source: Source };
-type AudioFile = {
-  id: string;
-  start: number;
-  end: number;
-  /** Each source heard in the file and its channel. */
-  sources: { channel: number; name: string }[];
-  metadata?: Record<string, unknown>;
-  state: "pending" | "ready" | "omitted";
-  reason?: string;
-};
 
 const inputs = new WeakMap<object, Recording>();
 const sinks = new WeakMap<object, Playback>();
 
-/** LiveKit's call clock, uploads, and speech-to-file references. AudioRecorder owns the audio. */
+/**
+ * Captures a session's LiveKit audio into its AudioSessionRecorder: validates
+ * frames, keeps the input and playout clocks, and decides when it is safe to cut.
+ */
 class Recording {
-  readonly origin = Date.now();
   /** Session-clock playout that each pending output run may still add audio before. */
   readonly holds = new Map<object, number>();
-  private recorder: AudioRecorder;
-  private files: AudioFile[] = [];
   private formats: Record<
     Source,
     Map<string, { sample_rate_hz: number; channel_count: number }>
-  > = { session_input: new Map(), local_audio_output: new Map() };
-  private selections = new Map<string, Interval[]>();
+  > = { "session-input": new Map(), "agent-output": new Map() };
   private playbackEvents = new Map<string, unknown[]>();
   private inputStream?: object;
-  private inputStart?: number;
   private inputEnd?: number;
-  private finishing?: Promise<void>;
 
   constructor(
-    private span: Span,
-    chunkBytes: number,
+    private audio: AudioSessionRecorder,
+    /** The session clock's epoch, shared with the audio session's timeline. */
+    readonly origin: number,
     private resolve: (owner: string) => Row | undefined,
     /** Which directions this recording captures: caller input, agent output. */
     readonly captures = { input: true, output: true },
-    middleware?: () => AudioMiddlewareStack,
-  ) {
-    // Each recording builds its own stack, so plugin state is never shared.
-    let stack: AudioMiddlewareStack = [];
-    let failed = false;
-    try {
-      stack = middleware?.() ?? [];
-    } catch (error) {
-      failed = true;
-      debugLogger.notice.warn(
-        "LiveKit audio middleware failed to start.",
-        error,
-      );
-    }
-    this.recorder = new AudioRecorder({
-      sampleRate: SAMPLE_RATE,
-      sources: ["session_input", "local_audio_output"],
-      segmentBytes: chunkBytes,
-      maxDurationMs: MAX_RECORDING_MS,
-      middleware: stack,
-      onFlush: (segment, meta) => this.upload(segment, meta),
-      onError: (meta, reason) => this.omit(meta, reason),
-    });
-    if (failed) this.stop("recording_transform_failed");
-  }
+  ) {}
 
   get active(): boolean {
-    return this.recorder.active;
+    return this.audio.active;
   }
   get closed(): boolean {
-    return this.recorder.closed;
+    return this.audio.closed;
   }
   get reason(): string | undefined {
-    return this.recorder.reason;
+    return this.audio.reason;
   }
   stop(reason: string): void {
-    this.recorder.stop(reason);
+    this.audio.stop(reason);
   }
 
   /** Validates a LiveKit frame, returning its samples while capture continues. */
@@ -1357,7 +1390,7 @@ class Recording {
 
   record(packet: Packet): boolean {
     if (
-      !this.recorder.record(packet.source, packet.pcm, {
+      !this.audio.record(packet.source, packet.pcm, {
         sampleRate: packet.rate,
         channelCount: packet.channels,
         offsetMs: packet.at,
@@ -1374,12 +1407,12 @@ class Recording {
   /** Copies an output frame until playout confirms or discards it. */
   stage(frame: AudioFrame): Int16Array | undefined {
     const data = this.samples(frame);
-    if (!data || !this.recorder.reserve(data.byteLength)) return;
+    if (!data || !this.audio.reserve(data.byteLength)) return;
     // LiveKit may reuse the frame while captureFrame is awaiting the sink.
     return data.slice();
   }
   unstage(pcm: Int16Array): void {
-    this.recorder.release(pcm.byteLength);
+    this.audio.release(pcm.byteLength);
   }
 
   attachInput(stream: ReadableStream<AudioFrame>): void {
@@ -1417,52 +1450,23 @@ class Recording {
         pcm,
         rate: frame.sampleRate,
         channels: frame.channels,
-        source: "session_input",
+        source: "session-input",
         at,
       })
     )
       return;
-    this.inputStart ??= at;
     this.inputEnd = at + duration;
     this.advance();
   }
 
-  /** Select captured input between two wall-clock times for a span. */
-  selectInput(owner: string, fromUnixMs: number, toUnixMs: number): void {
-    if (
-      this.inputStart === undefined ||
-      !Number.isFinite(fromUnixMs) ||
-      !Number.isFinite(toUnixMs)
-    )
-      return;
-    this.select(
-      owner,
-      Math.max(this.inputStart, fromUnixMs - this.origin),
-      Math.min(this.inputEnd!, toUnixMs - this.origin),
-      "session_input",
-    );
-    this.publish([owner]);
-  }
-
-  select(owner: string, start: number, end: number, source: Source): void {
-    if (!(end > start)) return;
-    const list = this.selections.get(owner) ?? [];
-    const previous = list.at(-1);
-    if (
-      previous &&
-      previous.source === source &&
-      start >= previous.start &&
-      start <= previous.end + samplesToMs(1)
-    ) {
-      previous.end = Math.max(previous.end, end);
-      return;
-    }
-    if (list.length >= MAX_RANGES) {
-      this.stop("selection_limit");
-      return;
-    }
-    list.push({ start, end, source });
-    this.selections.set(owner, list);
+  /**
+   * Places confirmed agent playout on the timeline for its speech span. Only
+   * playout shares the recording's clock; LiveKit's user speech timing does not.
+   */
+  select(owner: string, start: number, end: number): void {
+    const row = this.resolve(owner);
+    if (row && !row.owner && row.name === "agent_speaking")
+      played(row, { start, end });
   }
 
   playbackEvent(owner: string, event: unknown): void {
@@ -1471,10 +1475,26 @@ class Recording {
     this.playbackEvents.set(owner, events);
   }
 
+  /** Publishes each owner's selections and native playback events on its span. */
+  publish(owners: Iterable<string>): void {
+    for (const owner of owners) {
+      const row = this.resolve(owner);
+      const events = this.playbackEvents.get(owner);
+      const selections = row?.played && audioSelections(row.played);
+      if (row && !row.owner && (events || selections))
+        row.span.log({
+          metadata: {
+            ...(selections ? { "audio.selections": selections } : {}),
+            ...(events ? { "contrib.livekit.playback_events": events } : {}),
+          },
+        });
+    }
+  }
+
   /** Only cut where neither input nor a queued playback run can still add audio. */
   advance(): void {
     const wall = Date.now() - this.origin - 1000;
-    this.recorder.advance(
+    this.audio.advance(
       Math.min(
         wall,
         this.inputStream ? (this.inputEnd ?? 0) : wall,
@@ -1483,185 +1503,70 @@ class Recording {
     );
   }
 
-  finish(): Promise<void> {
-    return (this.finishing ??= this.recorder
-      .finish()
-      .then(() => this.publishFiles()));
-  }
-
-  /** One ordinary SDK attachment upload per segment; capture continues meanwhile. */
-  private async upload(
-    segment: Uint8Array,
-    meta: AudioSegmentMeta,
-  ): Promise<void> {
-    const file = this.file(meta);
-    file.metadata = {
-      mime_type: meta.mimeType,
-      sample_rate_hz: meta.sampleRate,
-      channel_count: meta.channels.length,
-      // Headerless PCM needs its sample format published; files such as Ogg carry their own.
-      ...(meta.mimeType === "audio/pcm" && {
-        sample_format: meta.attributes?.["pcm.sample_format"],
-      }),
-      duration_ms: meta.durationMs,
+  /** LiveKit's native capture details for the session span. */
+  metadata(): Record<string, unknown> {
+    return {
+      "contrib.livekit.audio.input_formats": [
+        ...this.formats["session-input"].values(),
+      ],
+      "contrib.livekit.audio.output_formats": [
+        ...this.formats["agent-output"].values(),
+      ],
+      // The schema has no recording-level outcome; keep LiveKit's reason natively.
+      ...(this.reason
+        ? { "contrib.livekit.audio.stop_reason": this.reason }
+        : {}),
     };
-    this.publishFiles();
-    const attachment = new Attachment({
-      data: segment,
-      filename: `${file.id}.${fileExtension(meta.mimeType)}`,
-      contentType: meta.mimeType,
-    });
-    try {
-      const status = await attachment.upload();
-      file.state = status.upload_status === "done" ? "ready" : "omitted";
-    } catch {
-      file.state = "omitted";
-    }
-    if (file.state === "ready") {
-      this.span.log({ input: { audio: { [file.id]: attachment.reference } } });
-    } else {
-      file.reason = "recording_export_failed";
-      this.stop(file.reason);
-    }
-    this.publishFiles();
-    if (file.state === "ready")
-      this.publish(
-        [...this.selections]
-          .filter(([, list]) =>
-            list.some((s) => s.start < file.end && s.end > file.start),
-          )
-          .map(([owner]) => owner),
-      );
   }
+}
 
-  private omit(meta: AudioSegmentMeta, reason: string): void {
-    const file = this.file(meta);
-    file.state = "omitted";
-    file.reason = reason;
-    this.publishFiles();
-  }
+/** The schema's role for LiveKit's native participant kinds. */
+const PARTICIPANT_TYPES: Record<string, AudioMember["type"]> = {
+  STANDARD: "user",
+  SIP: "user",
+  // Bridges an outside user, e.g. from a messaging platform, into the room.
+  CONNECTOR: "user",
+  AGENT: "agent",
+  INGRESS: "other",
+  EGRESS: "other",
+};
 
-  /** The file for a segment, keyed by its position in the recording. */
-  private file(meta: AudioSegmentMeta): AudioFile {
-    const id = `call-${String(meta.index).padStart(4, "0")}`;
-    let file = this.files.find((f) => f.id === id);
-    if (!file) {
-      file = {
-        id,
-        start: meta.startOffsetMs,
-        end: meta.startOffsetMs + meta.durationMs,
-        sources: meta.channels.flatMap((c, channel) =>
-          c.sources.map((name) => ({ channel, name })),
-        ),
-        state: "pending",
-      };
-      this.files.push(file);
-    }
-    return file;
-  }
-
-  private publishFiles(): void {
-    const recordings: Record<string, unknown>[] = this.files.map((f) => ({
-      id: f.id,
-      recording_group_id: "call",
-      state: f.state,
-      ...(f.reason ? { reason: f.reason } : {}),
-      ...(f.state === "ready"
-        ? {
-            attachment: {
-              span_id: this.span.spanId,
-              ref: `/input/audio/${f.id}`,
-            },
-            ...f.metadata,
-          }
+/**
+ * The room connection LiveKit stamped on a span: the caller whose audio it
+ * heard, or the agent's own connection. Published on first sight; a session
+ * without a room has no participants.
+ */
+function participantIds(
+  state: SessionState,
+  native: Map<string, unknown>,
+): { "audio.participant_ids"?: string[] } {
+  const sid = native.get("lk.participant_id");
+  if (typeof sid !== "string" || !sid) return {};
+  const kind = native.get("lk.participant_kind");
+  const { id, added } = state.audio.participant(sid, {
+    type: (typeof kind === "string" && PARTICIPANT_TYPES[kind]) || "unknown",
+    attributes: {
+      "contrib.livekit.participant_id": sid,
+      ...(typeof kind === "string"
+        ? { "contrib.livekit.participant_kind": kind }
         : {}),
-      sources: f.sources.map((s) => ({
-        channel_index: s.channel,
-        boundary: s.name,
-      })),
-      timeline: {
-        origin_unix_ms: this.origin,
-        basis: "local_input_arrival_and_output_playout",
-        recording_start_offset_ms: f.start,
-      },
-      ...(f.state === "omitted"
-        ? {
-            gaps: [
-              {
-                start_offset_ms: f.start,
-                end_offset_ms: f.end,
-                reason: f.reason,
-              },
-            ],
-          }
-        : {}),
-    }));
-    if (this.reason)
-      recordings.push({
-        id: "call",
-        recording_group_id: "call",
-        state: "omitted",
-        reason: this.reason,
-        truncated: true,
-      });
-    else if (!recordings.length && this.closed)
-      recordings.push({
-        id: "call",
-        recording_group_id: "call",
-        state: "omitted",
-        reason: "no_audio_observed",
-      });
-    this.span.log({
-      metadata: {
-        "audio.recordings": recordings,
-        "contrib.livekit.audio.input_formats": [
-          ...this.formats.session_input.values(),
-        ],
-        "contrib.livekit.audio.output_formats": [
-          ...this.formats.local_audio_output.values(),
-        ],
-      },
-    });
-  }
+    },
+  });
+  if (added) state.root.span.log({ metadata: added });
+  return { "audio.participant_ids": [id] };
+}
 
-  /** Publish each owner's selections within the files uploaded so far. */
-  publish(owners: Iterable<string>): void {
-    const ready = this.files.filter((f) => f.state === "ready");
-    const toSample = (ms: number) => samplesToMs(Math.round(msToSamples(ms)));
-    for (const owner of owners) {
-      const row = this.resolve(owner);
-      const intervals = this.selections.get(owner);
-      if (!row || row.owner || !intervals) continue;
-      const events = this.playbackEvents.get(owner);
-      row.span.log({
-        metadata: {
-          "audio.selections": ready.flatMap((f) =>
-            intervals.flatMap((s) => {
-              // The file describes which channel holds each source, if any.
-              const channel = f.sources.find(
-                (x) => x.name === s.source,
-              )?.channel;
-              const selection = {
-                recording_span_id: this.span.spanId,
-                recording_id: f.id,
-                channel_index: channel,
-                start_offset_ms: Math.max(0, toSample(s.start - f.start)),
-                end_offset_ms: Math.min(
-                  f.end - f.start,
-                  toSample(s.end - f.start),
-                ),
-              };
-              return channel !== undefined &&
-                selection.end_offset_ms > selection.start_offset_ms
-                ? [selection]
-                : [];
-            }),
-          ),
-          ...(events ? { "contrib.livekit.playback_events": events } : {}),
-        },
-      });
-    }
-  }
+/** Extends a speech's confirmed playout; contiguous frames grow one interval. */
+function played(row: Row, interval: AudioInterval): void {
+  const list = (row.played ??= []);
+  const last = list.at(-1);
+  if (
+    last &&
+    interval.start >= last.start &&
+    interval.start <= last.end + samplesToMs(1)
+  )
+    last.end = Math.max(last.end, interval.end);
+  else if (list.length < MAX_RANGES) list.push(interval);
 }
 
 function fileExtension(mimeType: string): string {
@@ -1816,7 +1721,7 @@ class Playback {
           pcm,
           rate: frame.sampleRate,
           channels: frame.channels,
-          source: "local_audio_output",
+          source: "agent-output",
           at: run.duration,
         });
         run.duration += pcmBytesToMs(
@@ -1911,12 +1816,7 @@ class Playback {
     run.speaking ??= observedId(this.session.agentSpeakingSpan);
     if (run.speaking)
       for (const played of run.unclaimed.splice(0))
-        recording.select(
-          run.speaking,
-          played.start,
-          played.end,
-          "local_audio_output",
-        );
+        recording.select(run.speaking, played.start, played.end);
     const ranges = run.ranges.splice(0);
     if (finished && !run.hadProgress) {
       // Sinks without progress events confirm one contiguous run from its start.
@@ -1963,20 +1863,8 @@ class Playback {
           start: at,
           end: at + pcmBytesToMs(pcm.byteLength, frame.rate, frame.channels),
         };
-        if (run.owner)
-          recording.select(
-            run.owner,
-            played.start,
-            played.end,
-            "local_audio_output",
-          );
         if (run.speaking)
-          recording.select(
-            run.speaking,
-            played.start,
-            played.end,
-            "local_audio_output",
-          );
+          recording.select(run.speaking, played.start, played.end);
         else if (run.unclaimed.length < MAX_RANGES) run.unclaimed.push(played);
         else recording.stop("selection_limit");
       }
