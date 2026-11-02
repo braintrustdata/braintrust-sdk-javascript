@@ -19,6 +19,9 @@ import type {
   MCPRequest,
 } from "../vendor-sdk-types/mcp";
 import { wrapMCPServer } from "./mcp";
+import { wrapMCPHandler } from "./mcp-handler";
+import { registry } from "../instrumentation/registry";
+import { resetInstrumentationForTest } from "../instrumentation/test-utils/reset";
 
 try {
   configureNode();
@@ -61,6 +64,7 @@ describe("MCP server wrapper", () => {
   });
 
   beforeEach(() => {
+    resetInstrumentationForTest();
     backgroundLogger = _exportsForTestingOnly.useTestBackgroundLogger();
     initLogger({
       projectName: "mcp.test.ts",
@@ -135,5 +139,85 @@ describe("MCP server wrapper", () => {
 
     expect(wrapMCPServer(value)).toBe(value);
     expect(warn).toHaveBeenCalledWith("Unsupported MCP server. Not wrapping.");
+  });
+
+  it("wraps servers before initialization and preserves factory and callback semantics", async () => {
+    const protocol = new FakeProtocol();
+    const server = { server: protocol };
+    const receiver = {};
+    const initReceiver = {};
+    const options = {};
+    const config = {};
+    const ready = Promise.resolve();
+    const handler = async () => new Response();
+    const initialize = vi.fn(function (
+      this: unknown,
+      value: typeof server,
+      extra: unknown,
+    ) {
+      expect(this).toBe(initReceiver);
+      expect(value).toBe(server);
+      expect(extra).toBe("extra");
+      value.server.setRequestHandler("tools/call", async () => ({
+        content: [],
+      }));
+      return ready;
+    });
+    const factory = vi.fn(function (
+      this: unknown,
+      init: typeof initialize,
+      receivedOptions: unknown,
+      receivedConfig: unknown,
+    ) {
+      expect(this).toBe(receiver);
+      expect(receivedOptions).toBe(options);
+      expect(receivedConfig).toBe(config);
+      expect(init.call(initReceiver, server, "extra")).toBe(ready);
+      return handler;
+    });
+    const wrapped = wrapMCPHandler(factory);
+    expect(wrapMCPHandler(factory)).toBe(wrapped);
+    expect(wrapMCPHandler(wrapped)).toBe(wrapped);
+    expect(wrapped.call(receiver, initialize, options, config)).toBe(handler);
+    expect(factory).toHaveBeenCalledTimes(1);
+    expect(initialize).toHaveBeenCalledTimes(1);
+
+    await protocol.connect({ start() {}, send() {} });
+    await protocol.handle("tools/call", { name: "from-handler" });
+    expect(await spanNames()).toEqual(["tools/call from-handler"]);
+  });
+
+  it("preserves initializer failures without retrying", () => {
+    const error = new Error("initialization failed");
+    const initialize = vi.fn((_server: { server: FakeProtocol }) => {
+      throw error;
+    });
+    const factory = (init: typeof initialize) =>
+      init({ server: new FakeProtocol() });
+    expect(() => wrapMCPHandler(factory)(initialize)).toThrow(error);
+    expect(initialize).toHaveBeenCalledTimes(1);
+  });
+
+  it("passes factory arguments through unchanged when instrumentation is disabled", () => {
+    registry.configure({ integrations: { mcpHandler: false } });
+    const initialize = () => {};
+    const handler = () => {};
+    const factory = vi.fn(() => handler);
+    const options = {};
+    expect(
+      Reflect.apply(wrapMCPHandler(factory), null, [initialize, options]),
+    ).toBe(handler);
+    expect(factory).toHaveBeenCalledWith(initialize, options);
+  });
+
+  it("returns unsupported MCP handler factories unchanged", () => {
+    const warn = vi
+      .spyOn(debugLogger.notice, "warn")
+      .mockImplementation(() => true);
+    const value = {};
+    expect(wrapMCPHandler(value)).toBe(value);
+    expect(warn).toHaveBeenCalledWith(
+      "Unsupported MCP handler factory. Not wrapping.",
+    );
   });
 });

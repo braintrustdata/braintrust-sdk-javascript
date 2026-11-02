@@ -24,7 +24,7 @@ export const mcpServerChannels = defineInterceptor(
   "@modelcontextprotocol/server",
   protocolChannels,
 );
-export const mcpChannels = defineInterceptor("mcp", {
+export const mcpChannelDefinitions = {
   connect: channel<[MCPTransport, ...unknown[]], unknown>({
     channelName: "connect",
   }),
@@ -57,7 +57,10 @@ export const mcpChannels = defineInterceptor("mcp", {
     unknown,
     { protocol: MCPProtocol }
   >({ channelName: "notificationHandler" }),
-});
+};
+
+export const mcpChannels = defineInterceptor("mcp", mcpChannelDefinitions);
+export type MCPChannels = typeof mcpChannels;
 
 const wrapped = Symbol.for("braintrust.mcp.transport-wrapper");
 function wrapMethod(
@@ -78,13 +81,14 @@ function wrapMethod(
 export function wrapMCPTransport(
   transport: MCPTransport,
   protocol: MCPProtocol,
+  channels: MCPChannels = mcpChannels,
 ): void {
   wrapMethod(
     transport,
     "handleRequest",
     (original) =>
       function (this: unknown, ...args) {
-        return mcpChannels.httpRequest.invoke(
+        return channels.httpRequest.invoke(
           original,
           this,
           args as [unknown, ...unknown[]],
@@ -103,15 +107,17 @@ export function wrapMCPTransport(
             protocol.fallbackRequestHandler = wrapMCPRequestHandler(
               protocol.fallbackRequestHandler,
               protocol,
+              channels,
             );
           }
           if (protocol.fallbackNotificationHandler) {
             protocol.fallbackNotificationHandler = wrapMCPNotificationHandler(
               protocol.fallbackNotificationHandler,
               protocol,
+              channels,
             );
           }
-          return mcpChannels.message.invoke(
+          return channels.message.invoke(
             original,
             this,
             args as [unknown, ...unknown[]],
@@ -124,7 +130,7 @@ export function wrapMCPTransport(
       "onclose",
       (original) =>
         function (this: unknown, ...args) {
-          return mcpChannels.close.invoke(original, this, args, { transport });
+          return channels.close.invoke(original, this, args, { transport });
         },
     );
   };
@@ -144,7 +150,7 @@ export function wrapMCPTransport(
     "send",
     (original) =>
       function (this: unknown, ...args) {
-        return mcpChannels.send.invoke(
+        return channels.send.invoke(
           original,
           this,
           args as [unknown, ...unknown[]],
@@ -158,6 +164,7 @@ export function wrapMCPTransport(
 export function wrapMCPRequestHandler(
   handler: MCPRequestHandler,
   protocol: MCPProtocol,
+  channels: MCPChannels = mcpChannels,
 ): MCPRequestHandler {
   if (Reflect.get(handler, wrapped) === protocol) return handler;
   const replacement: MCPRequestHandler = function (
@@ -165,7 +172,7 @@ export function wrapMCPRequestHandler(
     request,
     extra,
   ) {
-    return mcpChannels.requestHandler.invoke(handler, this, [request, extra], {
+    return channels.requestHandler.invoke(handler, this, [request, extra], {
       protocol,
     });
   };
@@ -173,13 +180,16 @@ export function wrapMCPRequestHandler(
   return replacement;
 }
 
-export function wrapMCPProtocol(protocol: MCPProtocol): void {
+export function wrapMCPProtocol(
+  protocol: MCPProtocol,
+  channels: MCPChannels = mcpChannels,
+): void {
   wrapMethod(
     protocol,
     "connect",
     (original) =>
       function (this: unknown, ...args) {
-        return mcpChannels.connect.invoke(
+        return channels.connect.invoke(
           original,
           this,
           args as [MCPTransport, ...unknown[]],
@@ -197,6 +207,7 @@ export function wrapMCPProtocol(protocol: MCPProtocol): void {
           args[index] = wrapMCPRequestHandler(
             args[index] as MCPRequestHandler,
             protocol,
+            channels,
           );
         return Reflect.apply(original, this, args);
       },
@@ -211,7 +222,7 @@ export function wrapMCPProtocol(protocol: MCPProtocol): void {
         for (const [method, handler] of protocol._notificationHandlers ?? []) {
           protocol._notificationHandlers!.set(
             method,
-            wrapMCPNotificationHandler(handler, protocol),
+            wrapMCPNotificationHandler(handler, protocol, channels),
           );
         }
         return result;
@@ -222,34 +233,36 @@ export function wrapMCPProtocol(protocol: MCPProtocol): void {
     "_onerror",
     (original) =>
       function (this: unknown, error) {
-        return mcpChannels.protocolError.invoke(original, this, [error], {});
+        return channels.protocolError.invoke(original, this, [error], {});
       },
   );
   for (const [method, handler] of protocol._requestHandlers ?? []) {
     protocol._requestHandlers!.set(
       method,
-      wrapMCPRequestHandler(handler, protocol),
+      wrapMCPRequestHandler(handler, protocol, channels),
     );
   }
   for (const [method, handler] of protocol._notificationHandlers ?? []) {
     protocol._notificationHandlers!.set(
       method,
-      wrapMCPNotificationHandler(handler, protocol),
+      wrapMCPNotificationHandler(handler, protocol, channels),
     );
   }
-  if (protocol.transport) wrapMCPTransport(protocol.transport, protocol);
+  if (protocol.transport)
+    wrapMCPTransport(protocol.transport, protocol, channels);
 }
 
 function wrapMCPNotificationHandler(
   handler: MCPNotificationHandler,
   protocol: MCPProtocol,
+  channels: MCPChannels = mcpChannels,
 ): MCPNotificationHandler {
   if (Reflect.get(handler, wrapped) === protocol) return handler;
   const replacement: MCPNotificationHandler = function (
     this: unknown,
     ...args
   ) {
-    return mcpChannels.notificationHandler.invoke(handler, this, args, {
+    return channels.notificationHandler.invoke(handler, this, args, {
       protocol,
     });
   };

@@ -2,6 +2,8 @@ import type {
   MCPProtocol,
   MCPRequestHandler,
 } from "../../vendor-sdk-types/mcp";
+import { registerMCPTracing } from "./mcp-tracing-plugin";
+import { INSTRUMENTATION_NAMES } from "../../span-origin";
 import type { MCPIntegrationConfig } from "../config";
 import { runInstrumentation } from "../core/observe-result";
 import {
@@ -12,19 +14,11 @@ import {
   wrapMCPTransport,
   wrapMCPRequestHandler,
 } from "./mcp-interceptors";
-import {
-  traceMCPMessage,
-  traceMCPSend,
-  traceMCPClose,
-  traceMCPHandler,
-  traceMCPProtocolError,
-  traceMCPNotificationHandler,
-  traceMCPHttpRequest,
-} from "./mcp-tracing";
 
 export function registerMCPInstrumentation(
   config: MCPIntegrationConfig = {},
 ): void {
+  registerMCPTracing(mcpChannels, config, INSTRUMENTATION_NAMES.MCP);
   void [
     ...[
       mcpChannels.connect,
@@ -62,55 +56,6 @@ export function registerMCPInstrumentation(
         }
         return Reflect.apply(target, receiver, wrappedArgs);
       }),
-    ),
-    mcpChannels.message.intercept((target, receiver, args, { transport }) =>
-      traceMCPMessage(
-        () => Reflect.apply(target, receiver, args),
-        transport,
-        args[0],
-        config,
-      ),
-    ),
-    mcpChannels.send.intercept((target, receiver, args, { transport }) =>
-      traceMCPSend(
-        () => Reflect.apply(target, receiver, args),
-        transport,
-        args[0],
-        args[1],
-        config,
-      ),
-    ),
-    mcpChannels.close.intercept((target, receiver, args, { transport }) =>
-      traceMCPClose(() => Reflect.apply(target, receiver, args), transport),
-    ),
-    mcpChannels.requestHandler.intercept(
-      (target, receiver, args, { protocol }) =>
-        traceMCPHandler(
-          () => Reflect.apply(target, receiver, args),
-          protocol,
-          args[0],
-          args[1],
-        ),
-    ),
-    mcpChannels.protocolError.intercept((target, receiver, args) =>
-      traceMCPProtocolError(
-        () => Reflect.apply(target, receiver, args),
-        args[0],
-      ),
-    ),
-    mcpChannels.notificationHandler.intercept(
-      (target, receiver, args, { protocol }) =>
-        traceMCPNotificationHandler(
-          () => Reflect.apply(target, receiver, args),
-          protocol,
-        ),
-    ),
-    mcpChannels.httpRequest.intercept((target, receiver, args, { transport }) =>
-      traceMCPHttpRequest(
-        () => Reflect.apply(target, receiver, args),
-        transport,
-        args[0],
-      ),
     ),
   ];
 }

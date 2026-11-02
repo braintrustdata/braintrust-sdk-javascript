@@ -329,8 +329,19 @@ export function createFinalValuePassThroughStream<
   const textChunks: string[] = [];
   const jsonChunks: string[] = [];
   const reasoningChunks: string[] = [];
+  const flushDecoder = (
+    controller: TransformStreamDefaultController<BraintrustStreamChunk>,
+  ) => {
+    const tail = decoder.decode();
+    if (tail) {
+      textChunks.push(tail);
+      controller.enqueue({ type: "text_delta", data: tail });
+    }
+  };
   const transformStream = new TransformStream<T, BraintrustStreamChunk>({
     transform(chunk, controller) {
+      // A non-byte chunk ends the current byte run, so flush it in order.
+      if (!(chunk instanceof Uint8Array)) flushDecoder(controller);
       if (typeof chunk === "string") {
         textChunks.push(chunk);
         controller.enqueue({
@@ -338,11 +349,14 @@ export function createFinalValuePassThroughStream<
           data: chunk,
         });
       } else if (chunk instanceof Uint8Array) {
-        textChunks.push(decoder.decode(chunk));
-        controller.enqueue({
-          type: "text_delta",
-          data: decoder.decode(chunk),
-        });
+        const text = decoder.decode(chunk, { stream: true });
+        textChunks.push(text);
+        if (text) {
+          controller.enqueue({
+            type: "text_delta",
+            data: text,
+          });
+        }
       } else if (braintrustStreamChunkSchema.safeParse(chunk).success) {
         const chunkType = chunk.type;
         switch (chunkType) {
@@ -373,6 +387,7 @@ export function createFinalValuePassThroughStream<
       }
     },
     flush(controller) {
+      flushDecoder(controller);
       if (jsonChunks.length > 0) {
         // If we received both text and json deltas in the same stream, we
         // only return the json delta

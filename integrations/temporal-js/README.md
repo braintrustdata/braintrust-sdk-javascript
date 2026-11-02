@@ -71,5 +71,5 @@ See the examples in `examples/temporal-cjs`, `examples/temporal-esm`, and `examp
 
 ## Documentation
 
-- Braintrust docs: [https://www.braintrust.dev/docs](https://www.braintrust.dev/docs)
+- Braintrust docs: [https://docs.braintrust.dev](https://docs.braintrust.dev)
 - Temporal docs: [https://docs.temporal.io/](https://docs.temporal.io/)

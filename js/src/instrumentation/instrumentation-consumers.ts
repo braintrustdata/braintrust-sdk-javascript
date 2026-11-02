@@ -1,3 +1,5 @@
+import { registerInstrumentation as mcpHandler } from "./registrations/mcpHandler";
+import { registerInstrumentation as fastmcp } from "./registrations/fastmcp";
 import { registerInstrumentation as mcp } from "./registrations/mcp";
 import { registerInstrumentation as livekit } from "./registrations/livekit";
 import { registerInstrumentation as workersAI } from "./registrations/workersAI";
@@ -37,6 +39,8 @@ import { registerInstrumentation as mastra } from "./registrations/mastra";
 /** Register every enabled provider. Only explicit auto setup imports this module. */
 export function registerInstrumentationConsumers(): void {
   mcp();
+  mcpHandler();
+  fastmcp();
   livekit();
   workersAI();
   openai();

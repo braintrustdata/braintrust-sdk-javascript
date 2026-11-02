@@ -1,0 +1,27 @@
+{
+  "name": "@braintrust/e2e-mcp-handler-instrumentation",
+  "private": true,
+  "braintrustScenario": {
+    "bump": {
+      "dependencies": {
+        "mcp-handler-v1-latest": {
+          "package": "mcp-handler",
+          "range": "1"
+        },
+        "mcp-handler-v2-latest": {
+          "package": "mcp-handler",
+          "range": "2"
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.26.0",
+    "@modelcontextprotocol/server": "2.4.0",
+    "mcp-handler-v1": "npm:mcp-handler@1.0.5",
+    "mcp-handler-v1-latest": "npm:mcp-handler@1.1.0",
+    "mcp-handler-v2": "npm:mcp-handler@2.0.0",
+    "mcp-handler-v2-latest": "npm:mcp-handler@2.3.0",
+    "zod": "4.3.6"
+  }
+}
