@@ -2,7 +2,7 @@
 
 # Braintrust JavaScript SDKs
 
-[Braintrust](https://www.braintrust.dev/) is a platform for evaluating and shipping AI products. Learn more at [braintrust.dev](https://www.braintrust.dev/) and in the [docs](https://www.braintrust.dev/docs).
+[Braintrust](https://www.braintrust.dev/) is a platform for evaluating and shipping AI products. Learn more at [braintrust.dev](https://www.braintrust.dev/) and in the [docs](https://docs.braintrust.dev).
 
 This repository contains Braintrust's JavaScript/TypeScript SDKs and integrations, including:
 
@@ -54,13 +54,13 @@ BRAINTRUST_API_KEY=<YOUR_API_KEY> npx braintrust eval tutorial.eval.ts
 ## CLI `bt`
 
 The `bt` cli is installed alongside `braintrust`, use it with `npx bt` or `pnpm exec bt`.
-See the [documentation](https://www.braintrust.dev/docs/reference/cli/quickstart).
+See the [documentation](https://docs.braintrust.dev/reference/cli/quickstart).
 
 ## Documentation
 
 - Publishing packages: [PUBLISHING.md](PUBLISHING.md)
-- TypeScript SDK docs: https://www.braintrust.dev/docs/reference/sdks/typescript
-- Release notes: https://www.braintrust.dev/docs/reference/release-notes
+- TypeScript SDK docs: https://docs.braintrust.dev/sdks/typescript/versions/latest
+- Release notes: https://docs.braintrust.dev/changelog
 
 ## License
 

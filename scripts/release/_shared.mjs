@@ -10,7 +10,7 @@ const REPO_ROOT = path.resolve(__dirname, "../..");
 const NPM_REGISTRY = "https://registry.npmjs.org/";
 export const GITHUB_REPO_URL =
   "git+https://github.com/braintrustdata/braintrust-sdk-javascript.git";
-export const DOCS_HOMEPAGE = "https://www.braintrust.dev/docs";
+export const DOCS_HOMEPAGE = "https://docs.braintrust.dev";
 
 export const PUBLISHABLE_PACKAGES = [
   { dir: "js", name: "braintrust" },

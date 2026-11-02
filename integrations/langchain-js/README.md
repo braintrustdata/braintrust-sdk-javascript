@@ -55,5 +55,5 @@ explicitly for scoped instrumentation.
 
 ## Documentation
 
-- Braintrust docs: [https://www.braintrust.dev/docs](https://www.braintrust.dev/docs)
+- Braintrust docs: [https://docs.braintrust.dev](https://docs.braintrust.dev)
 - LangChain callback docs: [https://js.langchain.com/docs/how_to/#callbacks](https://js.langchain.com/docs/how_to/#callbacks)

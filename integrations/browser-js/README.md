@@ -68,7 +68,7 @@ Browser-compatible features include:
 
 ## Documentation
 
-For full documentation, visit [https://www.braintrust.dev/docs](https://www.braintrust.dev/docs)
+For full documentation, visit [https://docs.braintrust.dev](https://docs.braintrust.dev)
 
 ## License
 

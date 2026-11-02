@@ -4,7 +4,7 @@
 
 [![npm version](https://img.shields.io/npm/v/braintrust.svg)](https://www.npmjs.com/package/braintrust)
 
-An isomorphic JavaScript/TypeScript SDK for logging, tracing, and evaluating AI applications with [Braintrust](https://www.braintrust.dev/). For more details, see the [TypeScript SDK docs](https://www.braintrust.dev/docs/reference/sdks/typescript).
+An isomorphic JavaScript/TypeScript SDK for logging, tracing, and evaluating AI applications with [Braintrust](https://www.braintrust.dev/). For more details, see the [TypeScript SDK docs](https://docs.braintrust.dev/sdks/typescript/versions/latest).
 
 ## Installation
 
@@ -108,17 +108,17 @@ For deeper details, see the [auto-instrumentation architecture docs](src/auto-in
 
 ### Upgrading from 2.x to 3.x
 
-See the [Migrate from v2.x to v3.x guide](https://www.braintrust.dev/docs/reference/sdks/typescript/migrations/v2-to-v3).
+See the [Migrate from v2.x to v3.x guide](https://docs.braintrust.dev/sdks/typescript/migrations/v2-to-v3).
 
 In 3.x, browser usage should move to `@braintrust/browser` instead of relying on the legacy `braintrust/browser` path.
 
 ### Upgrading from 1.x to 2.x
 
-See the [Migrate from v1.x to v2.x guide](https://www.braintrust.dev/docs/reference/sdks/typescript/migrations/v1-to-v2).
+See the [Migrate from v1.x to v2.x guide](https://docs.braintrust.dev/sdks/typescript/migrations/v1-to-v2).
 
 ### Upgrading from 0.x to 1.x
 
-See the [Migrate from v1.x to v2.x guide](https://www.braintrust.dev/docs/reference/sdks/typescript/migrations/v0-to-v1).
+See the [Migrate from v1.x to v2.x guide](https://docs.braintrust.dev/sdks/typescript/migrations/v0-to-v1).
 
 ## Compatibility
 

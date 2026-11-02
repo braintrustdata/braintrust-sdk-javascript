@@ -7,7 +7,7 @@
     "url": "git+https://github.com/braintrustdata/braintrust-sdk-javascript.git",
     "directory": "js"
   },
-  "homepage": "https://www.braintrust.dev/docs",
+  "homepage": "https://docs.braintrust.dev",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",

@@ -222,6 +222,6 @@ The following environment variables can be used to configure the integration:
 
 ## Documentation
 
-- [Braintrust Documentation](https://www.braintrust.dev/docs)
+- [Braintrust Documentation](https://docs.braintrust.dev)
 - [OpenTelemetry Documentation](https://opentelemetry.io/docs/)
-- [Braintrust OTEL Guide](https://www.braintrust.dev/docs/integrations/sdk-integrations/opentelemetry)
+- [Braintrust OTEL Guide](https://docs.braintrust.dev/integrations/sdk-integrations/opentelemetry/send-traces-and-logs)

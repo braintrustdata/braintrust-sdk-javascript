@@ -70,5 +70,5 @@ new OpenAIAgentsTraceProcessor(options?: OpenAIAgentsTraceProcessorOptions)
 
 ## Documentation
 
-- Braintrust docs: [https://www.braintrust.dev/docs](https://www.braintrust.dev/docs)
+- Braintrust docs: [https://docs.braintrust.dev](https://docs.braintrust.dev)
 - OpenAI Agents docs: [https://openai.github.io/openai-agents-js/](https://openai.github.io/openai-agents-js/)

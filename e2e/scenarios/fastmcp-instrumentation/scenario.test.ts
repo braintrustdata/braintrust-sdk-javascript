@@ -27,7 +27,7 @@ const variants = await Promise.all(
   ),
 );
 
-describe.concurrent("variants", () => {
+describe.concurrent("variants", { timeout: 60_000 }, () => {
   for (const { dependency, version } of variants) {
     describeVariant(`${dependency} ${version}`, () => {
       for (const mode of ["wrapped", "auto", "both"]) {
@@ -39,6 +39,8 @@ describe.concurrent("variants", () => {
               await harness.runNodeScenarioDir({
                 scenarioDir,
                 entry: "scenario.mjs",
+                // Hook startup and both HTTP servers can exceed 15s under CI load.
+                timeoutMs: 45_000,
                 nodeArgs: [
                   "--import",
                   `${scenarioDir}/configure.mjs`,
