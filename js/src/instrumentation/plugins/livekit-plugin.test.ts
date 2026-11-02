@@ -1306,6 +1306,108 @@ describe("recording", () => {
     ]);
   });
 
+  /** Plays one frame the way LiveKit sequences it: the sink reports playback, then speech starts. */
+  async function playThenSpeak(
+    ctx: ReturnType<typeof session>,
+    at: number,
+    progress: boolean,
+  ) {
+    ctx.session.agentSpeakingSpan = undefined;
+    await ctx.sink.captureFrame(frame());
+    ctx.sink.emit("playbackStarted", { createdAt: ctx.origin + at });
+    const speaking = start("agent_speaking", ctx.turn);
+    ctx.session.agentSpeakingSpan = speaking;
+    if (progress)
+      ctx.sink.emit("playbackProgressed", {
+        startedAt: ctx.origin + at,
+        offset: 0,
+        duration: 20,
+      });
+    return speaking;
+  }
+
+  test.each([
+    ["with", true],
+    ["without", false],
+  ])(
+    "playback that finishes after its speech ends keeps its selection (%s progress events)",
+    async (_name, progress) => {
+      const ctx = session();
+      const speaking = await playThenSpeak(ctx, 10, progress);
+      // The speech span ends before the sink reports the end of playback.
+      speaking.end();
+      ctx.session.agentSpeakingSpan = undefined;
+      ctx.sink.emit("playbackFinished", {
+        playbackPosition: 0.02,
+        interrupted: false,
+      });
+      const { named } = await ctx.close();
+      expect(named("agent_speech").map(selectionsOf)).toContainEqual([
+        [10, 30],
+      ]);
+    },
+  );
+
+  test.each([
+    ["with", true],
+    ["without", false],
+  ])(
+    "agent speech is selected without recording audio (%s progress events)",
+    async (_name, progress) => {
+      vi.stubEnv("BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS", "");
+      vi.stubEnv("BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS", "");
+      const ctx = session();
+      const { captureFrame } = ctx.sink;
+      const speaking = await playThenSpeak(ctx, 10, progress);
+      ctx.sink.emit("playbackFinished", {
+        playbackPosition: 0.02,
+        interrupted: false,
+      });
+      speaking.end();
+      const { named, segments } = await ctx.close();
+      // Nothing was recorded, and the sink was left untouched.
+      expect(segments).toEqual([]);
+      expect(ctx.sink.captureFrame).toBe(captureFrame);
+      expect(named("agent_speech").map(selectionsOf)).toContainEqual([
+        [10, 30],
+      ]);
+    },
+  );
+
+  test("a repeated playback start during one playout is not a new playout", async () => {
+    vi.stubEnv("BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS", "");
+    const ctx = session();
+    const speaking = await playThenSpeak(ctx, 10, false);
+    ctx.sink.emit("playbackStarted", { createdAt: ctx.origin + 15 });
+    ctx.sink.emit("playbackFinished", {
+      playbackPosition: 0.02,
+      interrupted: false,
+    });
+    speaking.end();
+    const { named } = await ctx.close();
+    expect(named("agent_speech").map(selectionsOf)).toContainEqual([[10, 30]]);
+  });
+
+  test("selections are observed playout, not clipped to recorded audio", async () => {
+    const ctx = session();
+    // An unsupported frame stops the recording before the speech plays.
+    await ctx.sink.captureFrame({
+      data: new Int16Array(3),
+      sampleRate: 24000,
+      channels: 2,
+    });
+    const speaking = await playThenSpeak(ctx, 10, true);
+    ctx.sink.emit("playbackFinished", {
+      playbackPosition: 0.02,
+      interrupted: false,
+    });
+    speaking.end();
+    const { named, segments, stopReason } = await ctx.close();
+    expect(segments).toEqual([]);
+    expect(stopReason).toBe("unsupported_frame_format");
+    expect(named("agent_speech").map(selectionsOf)).toContainEqual([[10, 30]]);
+  });
+
   test("multiple playback runs in one turn keep selections on each speaking span", async () => {
     const { sink, turn, session: agentSession, origin, close } = session();
     for (const [name, at] of [
@@ -1587,7 +1689,6 @@ describe("recording files", () => {
    */
   function recording(chunkBytes = DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES) {
     const log = vi.fn();
-    const speech = { spanId: "speech", log: vi.fn() };
     const origin = Date.now();
     const plugin = new LiveKitTracing(chunkBytes);
     const audio = Reflect.get(plugin, "audioSession").call(
@@ -1596,10 +1697,7 @@ describe("recording files", () => {
       origin,
       true,
     );
-    const row = { name: "agent_speaking", span: speech } as any;
-    const r = new Recording(audio, origin, (id) =>
-      id === "speech" ? row : undefined,
-    );
+    const r = new Recording(audio, origin);
     now += 3_600_000;
     /** What the session span has published, merged as Braintrust merges rows. */
     const published = () => {
@@ -1612,11 +1710,8 @@ describe("recording files", () => {
       r,
       audio,
       origin,
-      /** Closes the session, publishing the speech's selections. */
-      finish: async () => {
-        await audio.finish();
-        r.publish(["speech"]);
-      },
+      /** Records the remaining audio and waits for every file. */
+      finish: () => audio.finish(),
       files: () =>
         segmentsOf({ segments: published() }).map((f: any) => [
           f.id,
@@ -1625,13 +1720,6 @@ describe("recording files", () => {
           f.duration_ms,
         ]),
       segment: (id: string) => published()[id],
-      selections: () =>
-        selectionsOf({
-          metadata: Object.assign(
-            {},
-            ...speech.log.mock.calls.map(([event]) => event.metadata),
-          ),
-        }),
       /** Attachment keys logged on the session span, in order. */
       attachments: () =>
         log.mock.calls.flatMap(([event]) =>
@@ -1740,16 +1828,14 @@ describe("recording files", () => {
     );
   });
 
-  test("a failed upload omits its segment without invalidating earlier segments or selections", async () => {
+  test("a failed upload omits its segment without invalidating earlier segments", async () => {
     vi.mocked(Attachment.prototype.upload)
       .mockResolvedValueOnce({ upload_status: "done" })
       .mockResolvedValueOnce({
         upload_status: "error",
         error_message: "offline",
       });
-    const { r, finish, files, segment, selections, attachments } =
-      recording(96000);
-    r.select("speech", 0, 2000);
+    const { r, finish, files, segment, attachments } = recording(96000);
     for (let i = 0; i < 2; i++) {
       r.record(packet(i * 1000));
       r.advance();
@@ -1770,18 +1856,6 @@ describe("recording files", () => {
     expect(r.metadata()["contrib.livekit.audio.stop_reason"]).toBe(
       "recording_export_failed",
     );
-    expect(selections()).toEqual([[0, 2000]]);
-  });
-
-  test("agent speech is one interval across segment boundaries; other spans get none", async () => {
-    const { r, finish, files, selections } = recording(96000);
-    r.record(packet(0, 48000, "agent-output"));
-    r.select("speech", 500, 1000);
-    r.select("speech", 1000, 1500);
-    r.select("turn", 0, 2000);
-    await finish();
-    expect(files().map(([, , start]) => start)).toEqual([0, 1000]);
-    expect(selections()).toEqual([[500, 1500]]);
   });
 
   test("the duration limit keeps accepted audio and finish is idempotent", async () => {

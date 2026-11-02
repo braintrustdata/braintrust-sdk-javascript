@@ -331,6 +331,10 @@ for (const variant of variants) {
         expect(audioSession(root).session).toBeDefined();
         expect(audioSession(root).segments).toEqual([]);
         expect((root.row.input as { audio?: unknown })?.audio).toBeUndefined();
+        // Played speech is still on the timeline: audio is opt-in, timing isn't.
+        expect(
+          selectionsOf(findLatestSpan(events, "agent_speech")),
+        ).not.toEqual([]);
         await snapshotTrace(events, `${variant}-disabled`);
       });
     },
@@ -403,6 +407,9 @@ for (const variant of variants) {
           expect(
             findLatestSpan(events, "llm_response")?.metadata,
           ).toMatchObject({ model: expect.any(String) });
+          expect(
+            selectionsOf(findLatestSpan(events, "agent_speech")),
+          ).not.toEqual([]);
         });
       },
       120000,

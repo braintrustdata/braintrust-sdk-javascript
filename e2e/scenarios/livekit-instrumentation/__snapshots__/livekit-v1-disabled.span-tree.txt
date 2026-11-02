@@ -82,6 +82,16 @@ span_tree:
     │     ],
     │     "contrib.livekit.generation_count": 1,
     │     "contrib.livekit.generation_id": "<native:2>",
+    │     "contrib.livekit.playback_events": [
+    │       {
+    │         "attributes": {
+    │           "interrupted": false,
+    │           "playbackPosition": 0
+    │         },
+    │         "name": "playbackFinished",
+    │         "time_unix_ms": 0
+    │       }
+    │     ],
     │     "contrib.livekit.speech.queue_wait": 0,
     │     "contrib.livekit.speech_id": "<native:1>",
     │     "gen_ai.agent.name": "default_agent",
@@ -98,6 +108,12 @@ span_tree:
     │         }
     │       ]
     │       metadata: {
+    │         "audio.selections": {
+    │           "selection-0": {
+    │             "end_offset_ms": 0,
+    │             "start_offset_ms": 0
+    │           }
+    │         },
     │         "audio.source_id": "agent-output",
     │         "contrib.livekit.message_ids": [
     │           "<native:3>"

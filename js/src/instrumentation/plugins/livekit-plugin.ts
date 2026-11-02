@@ -241,6 +241,8 @@ type SessionState = {
   speech: SpeechTracker;
   /** STT spans per user turn, for transcribed_by links. */
   transcripts: Map<string, { span: Span; end: number }[]>;
+  /** The session clock's epoch, shared with the audio session's timeline. */
+  origin: number;
   /** Describes the session's audio, and records it when capture is enabled. */
   audio: AudioSessionRecorder;
   /** Captures audio into `audio`; only when attachment capture is enabled. */
@@ -526,9 +528,10 @@ class LiveKitTracing {
         relationships,
         speech: new SpeechTracker(relationships),
         transcripts: new Map(),
+        origin,
         audio,
         recording: capturing
-          ? new Recording(audio, origin, (id) => rows.get(id), captures)
+          ? new Recording(audio, origin, captures)
           : undefined,
         closed: false,
       });
@@ -536,8 +539,10 @@ class LiveKitTracing {
     if (owner) return row;
     const state = this.sessions.get(row.session)!;
     state.rows.set(id, row);
-    if (name === "agent_speaking")
+    if (name === "agent_speaking") {
       row.span.log({ metadata: { "audio.source_id": "agent-output" } });
+      state.playback?.speechStarted(id);
+    }
     const scope = this.context.getStore();
     if (name === "user_speaking" || name === "agent_speaking")
       state.speech.add(row);
@@ -788,6 +793,8 @@ class LiveKitTracing {
       ? new Playback(
           sink,
           session,
+          state.origin,
+          (id) => state.rows.get(id),
           (text) => {
             const row = this.rowOf(session.agentSpeakingSpan);
             if (row) row.playedText = text;
@@ -1345,7 +1352,6 @@ class Recording {
     Source,
     Map<string, { sample_rate_hz: number; channel_count: number }>
   > = { "session-input": new Map(), "agent-output": new Map() };
-  private playbackEvents = new Map<string, unknown[]>();
   private inputStream?: object;
   private inputEnd?: number;
 
@@ -1353,7 +1359,6 @@ class Recording {
     private audio: AudioSessionRecorder,
     /** The session clock's epoch, shared with the audio session's timeline. */
     readonly origin: number,
-    private resolve: (owner: string) => Row | undefined,
     /** Which directions this recording captures: caller input, agent output. */
     readonly captures = { input: true, output: true },
   ) {}
@@ -1460,35 +1465,73 @@ class Recording {
   }
 
   /**
-   * Places confirmed agent playout on the timeline for its speech span. Only
-   * playout shares the recording's clock; LiveKit's user speech timing does not.
+   * Records the staged frames that confirmed playout covers, then releases
+   * frames that can no longer play. Only confirmed output advances a run's
+   * hold; generated or queued audio never does.
    */
-  select(owner: string, start: number, end: number): void {
-    const row = this.resolve(owner);
-    if (row && !row.owner && row.name === "agent_speaking")
-      played(row, { start, end });
-  }
-
-  playbackEvent(owner: string, event: unknown): void {
-    const events = this.playbackEvents.get(owner) ?? [];
-    if (events.length < MAX_EVENTS) events.push(event);
-    this.playbackEvents.set(owner, events);
-  }
-
-  /** Publishes each owner's selections and native playback events on its span. */
-  publish(owners: Iterable<string>): void {
-    for (const owner of owners) {
-      const row = this.resolve(owner);
-      const events = this.playbackEvents.get(owner);
-      const selections = row?.played && audioSelections(row.played);
-      if (row && !row.owner && (events || selections))
-        row.span.log({
-          metadata: {
-            ...(selections ? { "audio.selections": selections } : {}),
-            ...(events ? { "contrib.livekit.playback_events": events } : {}),
-          },
-        });
+  confirm(
+    run: Run,
+    ranges: PlaybackProgressedEvent[],
+    unmapped: boolean,
+  ): void {
+    if (!this.active) return this.drop(run);
+    if (unmapped && run.duration) {
+      this.stop("output_playout_mapping_unavailable");
+      return this.drop(run);
     }
+    for (const range of ranges) {
+      if (
+        ![range.startedAt, range.offset, range.duration].every(
+          Number.isFinite,
+        ) ||
+        range.offset < run.processed - samplesToMs(1) ||
+        range.duration < 0
+      ) {
+        this.stop("invalid_playout_range");
+        break;
+      }
+      const end = range.offset + range.duration;
+      for (const frame of run.frames) {
+        const frameEnd =
+          frame.at +
+          pcmBytesToMs(frame.pcm.byteLength, frame.rate, frame.channels);
+        const from = Math.max(frame.at, range.offset);
+        const to = Math.min(frameEnd, end);
+        if (to <= from) continue;
+        const pcm = frame.pcm.subarray(
+          Math.round(msToSamples(from - frame.at, frame.rate)) * frame.channels,
+          Math.round(msToSamples(to - frame.at, frame.rate)) * frame.channels,
+        );
+        const at = Math.max(
+          0,
+          range.startedAt - this.origin + from - range.offset,
+        );
+        this.record({ ...frame, pcm, at });
+      }
+      run.processed = end;
+      this.holds.set(
+        run,
+        Math.max(0, range.startedAt - this.origin + range.duration),
+      );
+    }
+    run.frames = run.frames.filter((frame) => {
+      const consumed =
+        run.finished ||
+        !this.active ||
+        frame.at +
+          pcmBytesToMs(frame.pcm.byteLength, frame.rate, frame.channels) <=
+          run.processed + samplesToMs(1);
+      if (consumed) this.unstage(frame.pcm);
+      return !consumed;
+    });
+    if (run.finished) this.holds.delete(run);
+    this.advance();
+  }
+
+  /** Releases a run's staged frames and its hold. */
+  drop(run: Run): void {
+    for (const frame of run.frames.splice(0)) this.unstage(frame.pcm);
+    this.holds.delete(run);
   }
 
   /** Only cut where neither input nor a queued playback run can still add audio. */
@@ -1629,8 +1672,8 @@ type Run = {
   /** The agent_turn and agent_speaking rows this playout belongs to. */
   owner?: string;
   speaking?: string;
-  /** Played ranges recorded before the speaking row is known. */
-  unclaimed: { start: number; end: number }[];
+  /** Played intervals seen before the speaking row is known. */
+  unclaimed: AudioInterval[];
   started?: number;
   ranges: PlaybackProgressedEvent[];
   finished?: PlaybackFinishedEvent;
@@ -1639,22 +1682,38 @@ type Run = {
   hadProgress: boolean;
 };
 
-/** One session's audio sink: heard transcripts and, when recording, confirmed playout. */
+/**
+ * One session's audio sink. Its playback events always place played speech on
+ * the timeline and report heard text; when recording, confirmed frames are
+ * also recorded.
+ */
 class Playback {
   private runs: Run[] = [];
   private current?: Run;
   private listeners: [string, (event: any) => void][];
   private recording?: Recording;
+  private playbackEvents = new Map<string, unknown[]>();
 
   constructor(
     readonly sink: AudioOutput,
     private session: AgentSession,
+    /** The session clock's epoch, shared with the audio session's timeline. */
+    private origin: number,
+    private resolve: (id: string) => Row | undefined,
     private heard: (text: string | undefined) => void,
     /** Whether heard text may be kept in native playback events. */
     private piiAllowed: () => boolean,
     recording?: Recording,
   ) {
     this.listeners = [
+      [
+        "playbackStarted",
+        (event) => runInstrumentation(() => this.started(event)),
+      ],
+      [
+        "playbackProgressed",
+        (event) => runInstrumentation(() => this.progressed(event)),
+      ],
       [
         "playbackFinished",
         (event) => runInstrumentation(() => this.finished(event)),
@@ -1668,19 +1727,6 @@ class Playback {
       this.recording = recording;
       sinks.set(sink, this);
       patchSink(sink);
-      this.listeners.push(
-        [
-          "playbackStarted",
-          (event) =>
-            runInstrumentation(() => {
-              if (this.runs[0]) this.runs[0].started = event.createdAt;
-            }),
-        ],
-        [
-          "playbackProgressed",
-          (event) => runInstrumentation(() => this.progressed(event)),
-        ],
-      );
     }
     for (const [event, listener] of this.listeners)
       sink.on(event as "playbackFinished", listener);
@@ -1699,6 +1745,18 @@ class Playback {
 
   endRun(): void {
     this.current = undefined;
+  }
+
+  /**
+   * LiveKit starts agent speech in response to its first playback, after the
+   * sink reports it. Claim that playout for the new speech now, so it keeps its
+   * selections even if playback finishes after the speech span ends.
+   */
+  speechStarted(id: string): void {
+    const run = this.runs.find((r) => !r.speaking);
+    if (!run) return;
+    run.speaking = id;
+    this.claim(run);
   }
 
   async capture(frame: AudioFrame, call: () => Promise<void>): Promise<void> {
@@ -1750,6 +1808,8 @@ class Playback {
       frames: [],
       duration: 0,
       owner: observedId(this.session.activity?.currentSpeech?._agentTurnSpan),
+      // A later segment of speech already in progress.
+      speaking: observedId(this.session.agentSpeakingSpan),
       unclaimed: [],
       ranges: [],
       inFlight: 0,
@@ -1757,18 +1817,27 @@ class Playback {
       hadProgress: false,
     };
     this.runs.push(run);
-    this.recording!.holds.set(
+    this.recording?.holds.set(
       run,
-      Math.max(0, Date.now() - this.recording!.origin - 1000),
+      Math.max(0, Date.now() - this.origin - 1000),
     );
     return run;
+  }
+
+  private started(event: { createdAt: number }): void {
+    // Captured frames start a run; otherwise playback is the first sign of one.
+    // A repeated start while a run is still playing is not a new run.
+    const run =
+      this.runs.find((r) => r.started === undefined) ??
+      (this.runs.length ? undefined : this.startRun());
+    if (run) run.started = event.createdAt;
   }
 
   private progressed(event: PlaybackProgressedEvent): void {
     const run = this.runs[0];
     if (!run) return;
     if (run.ranges.length >= MAX_RANGES) {
-      this.recording!.stop("playout_range_limit");
+      this.recording?.stop("playout_range_limit");
       return;
     }
     run.hadProgress = true;
@@ -1786,21 +1855,18 @@ class Playback {
         ? event.synchronizedTranscript
         : undefined,
     );
-    const run = this.recording && this.runs.find((r) => !r.finished);
+    const run = this.runs.find((r) => !r.finished);
     if (!run) return;
     run.finished = event;
     this.settle(run);
   }
 
   private discard(run: Run): void {
-    for (const frame of run.frames.splice(0))
-      this.recording!.unstage(frame.pcm);
-    this.recording!.holds.delete(run);
+    this.recording?.drop(run);
   }
 
-  /** Map confirmed playout ranges onto staged frames, recording only heard audio. */
+  /** Confirmed playout: speech selections always; heard frames when recording. */
   private settle(run: Run): void {
-    const recording = this.recording!;
     const { finished } = run;
     if (
       run.inFlight ||
@@ -1812,83 +1878,58 @@ class Playback {
       this.runs.splice(this.runs.indexOf(run), 1);
       if (this.current === run) this.current = undefined;
     }
-    if (!recording.active) return this.discard(run);
     run.speaking ??= observedId(this.session.agentSpeakingSpan);
-    if (run.speaking)
-      for (const played of run.unclaimed.splice(0))
-        recording.select(run.speaking, played.start, played.end);
     const ranges = run.ranges.splice(0);
-    if (finished && !run.hadProgress) {
-      // Sinks without progress events confirm one contiguous run from its start.
-      if (run.started !== undefined && !finished.interrupted)
-        ranges.push({
-          startedAt: run.started,
-          offset: 0,
-          duration: Math.min(run.duration, finished.playbackPosition * 1000),
-        });
-      else if (run.duration) {
-        recording.stop("output_playout_mapping_unavailable");
-        return this.discard(run);
-      }
-    }
-    for (const range of ranges) {
-      if (
-        ![range.startedAt, range.offset, range.duration].every(
+    // Sinks without progress events confirm one contiguous run from its start.
+    const contiguous =
+      finished &&
+      !run.hadProgress &&
+      run.started !== undefined &&
+      !finished.interrupted;
+    if (contiguous)
+      ranges.push({
+        startedAt: run.started!,
+        offset: 0,
+        duration: this.recording
+          ? Math.min(run.duration, finished.playbackPosition * 1000)
+          : finished.playbackPosition * 1000,
+      });
+    const valid = ranges.filter(
+      (range) =>
+        [range.startedAt, range.offset, range.duration].every(
           Number.isFinite,
-        ) ||
-        range.offset < run.processed - samplesToMs(1) ||
-        range.duration < 0
-      ) {
-        recording.stop("invalid_playout_range");
-        break;
-      }
-      const end = range.offset + range.duration;
-      for (const frame of run.frames) {
-        const frameEnd =
-          frame.at +
-          pcmBytesToMs(frame.pcm.byteLength, frame.rate, frame.channels);
-        const from = Math.max(frame.at, range.offset);
-        const to = Math.min(frameEnd, end);
-        if (to <= from) continue;
-        const pcm = frame.pcm.subarray(
-          Math.round(msToSamples(from - frame.at, frame.rate)) * frame.channels,
-          Math.round(msToSamples(to - frame.at, frame.rate)) * frame.channels,
-        );
-        const at = Math.max(
-          0,
-          range.startedAt - recording.origin + from - range.offset,
-        );
-        if (!recording.record({ ...frame, pcm, at })) continue;
-        const played = {
-          start: at,
-          end: at + pcmBytesToMs(pcm.byteLength, frame.rate, frame.channels),
-        };
-        if (run.speaking)
-          recording.select(run.speaking, played.start, played.end);
-        else if (run.unclaimed.length < MAX_RANGES) run.unclaimed.push(played);
-        else recording.stop("selection_limit");
-      }
-      run.processed = end;
-      // Only confirmed output advances this hold. Generated/queued audio never does.
-      recording.holds.set(
-        run,
-        Math.max(0, range.startedAt - recording.origin + range.duration),
-      );
+        ) && range.duration >= 0,
+    );
+    for (const range of valid) {
+      const start = range.startedAt - this.origin;
+      this.play(run, { start, end: start + range.duration });
     }
-    run.frames = run.frames.filter((frame) => {
-      const consumed =
-        finished ||
-        !recording.active ||
-        frame.at +
-          pcmBytesToMs(frame.pcm.byteLength, frame.rate, frame.channels) <=
-          run.processed + samplesToMs(1);
-      if (consumed) recording.unstage(frame.pcm);
-      return !consumed;
-    });
-    if (finished) {
-      recording.holds.delete(run);
-      if (run.owner)
-        recording.playbackEvent(run.owner, {
+    this.recording?.confirm(
+      run,
+      ranges,
+      !!finished && !run.hadProgress && !contiguous,
+    );
+    if (finished) this.publish(run, finished);
+  }
+
+  /** Places played speech on its speech row once that row is known. */
+  private play(run: Run, interval: AudioInterval): void {
+    if (run.unclaimed.length < MAX_RANGES) run.unclaimed.push(interval);
+    this.claim(run);
+  }
+
+  private claim(run: Run): void {
+    const row = run.speaking && this.resolve(run.speaking);
+    if (!row || row.owner || row.name !== "agent_speaking") return;
+    for (const interval of run.unclaimed.splice(0)) played(row, interval);
+  }
+
+  /** Publishes a finished run's selections and native playback event. */
+  private publish(run: Run, finished: PlaybackFinishedEvent): void {
+    if (run.owner) {
+      const events = this.playbackEvents.get(run.owner) ?? [];
+      if (events.length < MAX_EVENTS)
+        events.push({
           name: "playbackFinished",
           time_unix_ms: Date.now(),
           attributes: {
@@ -1900,11 +1941,21 @@ class Playback {
               : {}),
           },
         });
-      recording.publish(
-        [run.owner, run.speaking].filter((id): id is string => !!id),
-      );
+      this.playbackEvents.set(run.owner, events);
     }
-    recording.advance();
+    for (const id of [run.owner, run.speaking]) {
+      const row = id ? this.resolve(id) : undefined;
+      if (!row || row.owner) continue;
+      const events = this.playbackEvents.get(id!);
+      const selections = row.played && audioSelections(row.played);
+      if (events || selections)
+        row.span.log({
+          metadata: {
+            ...(selections ? { "audio.selections": selections } : {}),
+            ...(events ? { "contrib.livekit.playback_events": events } : {}),
+          },
+        });
+    }
   }
 }
 
