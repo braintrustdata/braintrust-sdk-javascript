@@ -84,6 +84,8 @@ export interface ChatMessage {
 }
 
 export interface LiveKitSpan {
+  /** OTel SDK spans' attributes, including those span processors set at start. */
+  attributes?: Record<string, unknown>;
   isRecording(): boolean;
   spanContext(): { spanId: string };
   setAttribute(key: string, value: unknown): this;
@@ -128,7 +130,12 @@ export interface PipelineOptions {
   toolCtx?: { functionTools: Record<string, FunctionTool> };
   modelSettings?: { toolChoice?: unknown };
 }
+/** LiveKit's per-job context; it carries the LiveKit Cloud project's redaction setting. */
+export interface JobContext {
+  _redactionEnabled?: boolean;
+}
 export interface LiveKitModule {
   voice: { AgentSession: new (...args: unknown[]) => AgentSession };
   telemetry: { tracer: LiveKitTracer };
+  getJobContext?: (required?: boolean) => JobContext | undefined;
 }

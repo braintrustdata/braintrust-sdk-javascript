@@ -85,6 +85,17 @@ type RunOptions = {
   cassette?: string;
   recording?: boolean;
 };
+/** The span IDs a span links to with this relationship, in order. */
+function linkTargets(span: CapturedLogEvent | undefined, type: string) {
+  return (
+    (span?.metadata?.links ?? []) as {
+      context: { spanId: string };
+      attributes: Record<string, string>;
+    }[]
+  )
+    .filter((l) => l.attributes["braintrust.relationship.type"] === type)
+    .map((l) => l.context.spanId);
+}
 /** What the scenario reported about each uploaded audio file, in order. */
 function uploadedAudio(
   stdout: string,
@@ -314,6 +325,58 @@ for (const variant of variants) {
             events.filter((e) => e.span.type === "llm").map((e) => e.span.name),
           ).toEqual(["llm_response", "llm_response"]);
           await snapshotTrace(events, `${variant}-order`);
+        });
+      },
+      120000,
+    );
+
+  // A LiveKit Cloud project with redaction: LiveKit's own PII setting wins.
+  for (const mode of ["auto", "wrapped"] as const)
+    test.sequential(
+      `${variant} ${mode} order conversation in a redacted LiveKit job`,
+      async () => {
+        await withScenarioHarness(async (harness) => {
+          await harness.runNodeScenarioDir(
+            scenarioOptions(variant, {
+              mode,
+              entry: "redacted.mjs",
+              cassette: "order",
+              recording: false,
+            }),
+          );
+          const events = assertAudioTrace(harness.events());
+          // Nothing the caller or the model said, and no tool payloads.
+          for (const name of ["llm_response", "agent_turn", "tts"])
+            for (const span of findAllSpans(events, name)) {
+              expect(span.row.input, name).toBeUndefined();
+              if (name !== "agent_turn")
+                expect(span.row.output, name).toBeUndefined();
+            }
+          expect(
+            findLatestSpan(events, "lookup_order")?.row.input,
+          ).toBeUndefined();
+          expect(
+            findLatestSpan(events, "lookup_order")?.row.output,
+          ).toBeUndefined();
+          expect(JSON.stringify(events.map((e) => e.row))).not.toMatch(
+            /order 1042|Friday/i,
+          );
+          // Links still connect the call, holding only span IDs.
+          const tool = findLatestSpan(events, "lookup_order");
+          expect(linkTargets(tool, "requested_by")).toHaveLength(1);
+          expect(
+            linkTargets(
+              findAllSpans(events, "llm_response")[1],
+              "consumes_tool_result",
+            ),
+          ).toEqual([tool?.span.id]);
+          // The call's shape, models and timing remain.
+          expect(
+            events.filter((e) => e.span.type === "llm").map((e) => e.span.name),
+          ).toEqual(["llm_response", "llm_response"]);
+          expect(
+            findLatestSpan(events, "llm_response")?.metadata,
+          ).toMatchObject({ model: expect.any(String) });
         });
       },
       120000,
