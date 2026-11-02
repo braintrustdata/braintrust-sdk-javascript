@@ -1,0 +1,310 @@
+span_tree:
+├── mcp-handler-instrumentation-root [task]
+│   metadata: {
+│     "scenario": "mcp-handler-instrumentation",
+│     "testRunId": "<run:1>"
+│   }
+│   metrics: {
+│     "end": 0,
+│     "start": 0
+│   }
+│   context: {
+│     "caller_filename": "<caller>",
+│     "caller_functionname": "<caller>",
+│     "caller_lineno": 0
+│   }
+│   ├── initialize [function]
+│   │   metadata: {
+│   │     "jsonrpc.request.id": "1",
+│   │     "mcp.client.name": "braintrust-e2e-client",
+│   │     "mcp.client.version": "1.0.0",
+│   │     "mcp.method.name": "initialize",
+│   │     "mcp.protocol.version": "<timestamp>",
+│   │     "mcp.server.name": "braintrust-e2e-weather",
+│   │     "mcp.server.version": "1.0.0",
+│   │     "network.protocol.name": "http",
+│   │     "scenario": "mcp-handler-instrumentation",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   │   metrics: {
+│   │     "end": 0,
+│   │     "start": 0
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<caller>",
+│   │     "caller_functionname": "<caller>",
+│   │     "caller_lineno": 0
+│   │   }
+│   ├── tools/call get_weather [tool]
+│   │   metadata: {
+│   │     "gen_ai.operation.name": "execute_tool",
+│   │     "gen_ai.tool.name": "get_weather",
+│   │     "jsonrpc.request.id": "1",
+│   │     "mcp.method.name": "tools/call",
+│   │     "network.protocol.name": "http",
+│   │     "scenario": "mcp-handler-instrumentation",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   │   metrics: {
+│   │     "end": 0,
+│   │     "start": 0
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<caller>",
+│   │     "caller_functionname": "<caller>",
+│   │     "caller_lineno": 0
+│   │   }
+│   │   └── weather-lookup
+│   │       metadata: {
+│   │         "scenario": "mcp-handler-instrumentation",
+│   │         "testRunId": "<run:1>"
+│   │       }
+│   │       metrics: {
+│   │         "end": 0,
+│   │         "start": 0
+│   │       }
+│   │       context: {
+│   │         "caller_filename": "<caller>",
+│   │         "caller_functionname": "<caller>",
+│   │         "caller_lineno": 0
+│   │       }
+│   ├── tools/call get_weather [tool]
+│   │   metadata: {
+│   │     "gen_ai.operation.name": "execute_tool",
+│   │     "gen_ai.tool.name": "get_weather",
+│   │     "jsonrpc.request.id": "1",
+│   │     "mcp.method.name": "tools/call",
+│   │     "network.protocol.name": "http",
+│   │     "scenario": "mcp-handler-instrumentation",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   │   metrics: {
+│   │     "end": 0,
+│   │     "start": 0
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<caller>",
+│   │     "caller_functionname": "<caller>",
+│   │     "caller_lineno": 0
+│   │   }
+│   │   └── weather-lookup
+│   │       metadata: {
+│   │         "scenario": "mcp-handler-instrumentation",
+│   │         "testRunId": "<run:1>"
+│   │       }
+│   │       metrics: {
+│   │         "end": 0,
+│   │         "start": 0
+│   │       }
+│   │       context: {
+│   │         "caller_filename": "<caller>",
+│   │         "caller_functionname": "<caller>",
+│   │         "caller_lineno": 0
+│   │       }
+│   ├── tools/call report_progress [tool]
+│   │   metadata: {
+│   │     "gen_ai.operation.name": "execute_tool",
+│   │     "gen_ai.tool.name": "report_progress",
+│   │     "jsonrpc.request.id": "1",
+│   │     "mcp.method.name": "tools/call",
+│   │     "network.protocol.name": "http",
+│   │     "scenario": "mcp-handler-instrumentation",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   │   metrics: {
+│   │     "end": 0,
+│   │     "start": 0
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<caller>",
+│   │     "caller_functionname": "<caller>",
+│   │     "caller_lineno": 0
+│   │   }
+│   │   └── notifications/progress [function]
+│   │       metadata: {
+│   │         "mcp.method.name": "notifications/progress",
+│   │         "mcp.notification.direction": "outgoing",
+│   │         "mcp.progress.current": 1,
+│   │         "mcp.progress.percentage": 100,
+│   │         "mcp.progress.token": "progress",
+│   │         "mcp.progress.total": 1,
+│   │         "scenario": "mcp-handler-instrumentation",
+│   │         "testRunId": "<run:1>"
+│   │       }
+│   │       metrics: {
+│   │         "end": 0,
+│   │         "start": 0
+│   │       }
+│   │       context: {
+│   │         "caller_filename": "<caller>",
+│   │         "caller_functionname": "<caller>",
+│   │         "caller_lineno": 0
+│   │       }
+│   ├── tools/list [function]
+│   │   metadata: {
+│   │     "jsonrpc.request.id": "1",
+│   │     "mcp.method.name": "tools/list",
+│   │     "network.protocol.name": "http",
+│   │     "scenario": "mcp-handler-instrumentation",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   │   metrics: {
+│   │     "end": 0,
+│   │     "start": 0
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<caller>",
+│   │     "caller_functionname": "<caller>",
+│   │     "caller_lineno": 0
+│   │   }
+│   ├── resources/read [function]
+│   │   metadata: {
+│   │     "jsonrpc.request.id": "1",
+│   │     "mcp.method.name": "resources/read",
+│   │     "mcp.resource.uri": "notes://forecast",
+│   │     "network.protocol.name": "http",
+│   │     "scenario": "mcp-handler-instrumentation",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   │   metrics: {
+│   │     "end": 0,
+│   │     "start": 0
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<caller>",
+│   │     "caller_functionname": "<caller>",
+│   │     "caller_lineno": 0
+│   │   }
+│   ├── prompts/get forecast [function]
+│   │   metadata: {
+│   │     "gen_ai.prompt.name": "forecast",
+│   │     "jsonrpc.request.id": "1",
+│   │     "mcp.method.name": "prompts/get",
+│   │     "network.protocol.name": "http",
+│   │     "scenario": "mcp-handler-instrumentation",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   │   metrics: {
+│   │     "end": 0,
+│   │     "start": 0
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<caller>",
+│   │     "caller_functionname": "<caller>",
+│   │     "caller_lineno": 0
+│   │   }
+│   ├── tools/call get_alerts [tool]
+│   │   metadata: {
+│   │     "error.type": "tool_error",
+│   │     "gen_ai.operation.name": "execute_tool",
+│   │     "gen_ai.tool.name": "get_alerts",
+│   │     "jsonrpc.request.id": "1",
+│   │     "mcp.method.name": "tools/call",
+│   │     "network.protocol.name": "http",
+│   │     "scenario": "mcp-handler-instrumentation",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   │   metrics: {
+│   │     "end": 0,
+│   │     "start": 0
+│   │   }
+│   │   error: "Tool returned an error result"
+│   │   context: {
+│   │     "caller_filename": "<caller>",
+│   │     "caller_functionname": "<caller>",
+│   │     "caller_lineno": 0
+│   │   }
+│   ├── tools/call get_weather [tool]
+│   │   metadata: {
+│   │     "error.type": "tool_error",
+│   │     "gen_ai.operation.name": "execute_tool",
+│   │     "gen_ai.tool.name": "get_weather",
+│   │     "jsonrpc.request.id": "1",
+│   │     "mcp.method.name": "tools/call",
+│   │     "network.protocol.name": "http",
+│   │     "scenario": "mcp-handler-instrumentation",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   │   metrics: {
+│   │     "end": 0,
+│   │     "start": 0
+│   │   }
+│   │   error: "Tool returned an error result"
+│   │   context: {
+│   │     "caller_filename": "<caller>",
+│   │     "caller_functionname": "<caller>",
+│   │     "caller_lineno": 0
+│   │   }
+│   ├── acme/missing [function]
+│   │   metadata: {
+│   │     "jsonrpc.request.id": "1",
+│   │     "mcp.method.name": "acme/missing",
+│   │     "network.protocol.name": "http",
+│   │     "rpc.response.status_code": "-32601",
+│   │     "scenario": "mcp-handler-instrumentation",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   │   metrics: {
+│   │     "end": 0,
+│   │     "start": 0
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<caller>",
+│   │     "caller_functionname": "<caller>",
+│   │     "caller_lineno": 0
+│   │   }
+│   └── tools/call get_weather [tool]
+│       metadata: {
+│         "gen_ai.operation.name": "execute_tool",
+│         "gen_ai.tool.name": "get_weather",
+│         "jsonrpc.request.id": "1",
+│         "mcp.client.name": "braintrust-e2e-client",
+│         "mcp.client.version": "1.0.0",
+│         "mcp.method.name": "tools/call",
+│         "mcp.protocol.version": "<timestamp>",
+│         "mcp.server.name": "braintrust-e2e-weather",
+│         "mcp.server.version": "1.0.0",
+│         "network.protocol.name": "http",
+│         "scenario": "mcp-handler-instrumentation",
+│         "testRunId": "<run:1>"
+│       }
+│       metrics: {
+│         "end": 0,
+│         "start": 0
+│       }
+│       context: {
+│         "caller_filename": "<caller>",
+│         "caller_functionname": "<caller>",
+│         "caller_lineno": 0
+│       }
+│       └── weather-lookup
+│           metadata: {
+│             "scenario": "mcp-handler-instrumentation",
+│             "testRunId": "<run:1>"
+│           }
+│           metrics: {
+│             "end": 0,
+│             "start": 0
+│           }
+│           context: {
+│             "caller_filename": "<caller>",
+│             "caller_functionname": "<caller>",
+│             "caller_lineno": 0
+│           }
+└── ping [function]
+    metadata: {
+      "jsonrpc.request.id": "1",
+      "mcp.method.name": "ping",
+      "network.protocol.name": "http",
+      "scenario": "mcp-handler-instrumentation",
+      "testRunId": "<run:1>"
+    }
+    metrics: {
+      "end": 0,
+      "start": 0
+    }
+    context: {
+      "caller_filename": "<caller>",
+      "caller_functionname": "<caller>",
+      "caller_lineno": 0
+    }

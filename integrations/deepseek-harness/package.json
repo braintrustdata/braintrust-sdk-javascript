@@ -35,7 +35,7 @@
   "dependencies": {
     "@deepseek-ai/schemastery": "^3.18.1",
     "braintrust": "workspace:^",
-    "zod": "^3.25.34 || ^4.0"
+    "zod": "4.6.7"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": ">=4.0.1",
@@ -71,7 +71,7 @@
     "url": "git+https://github.com/braintrustdata/braintrust-sdk-javascript.git",
     "directory": "integrations/deepseek-harness"
   },
-  "homepage": "https://www.braintrust.dev/docs",
+  "homepage": "https://docs.braintrust.dev",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/",

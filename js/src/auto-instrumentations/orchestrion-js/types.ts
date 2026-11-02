@@ -29,7 +29,7 @@ export type FunctionQuery = {
       methodName: string;
       isExportAlias?: boolean;
     }
-  | { methodName: string }
+  | { methodName: string; classMethods?: string[] }
   | {
       functionName: string;
       isExportAlias?: boolean;

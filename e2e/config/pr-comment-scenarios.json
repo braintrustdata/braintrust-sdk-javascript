@@ -593,6 +593,17 @@
     ]
   },
   {
+    "scenarioDirName": "mcp-handler-instrumentation",
+    "label": "MCP Handler Instrumentation",
+    "metadataScenario": "mcp-handler-instrumentation",
+    "variants": [
+      { "variantKey": "mcp-handler-v1", "label": "v1 pinned" },
+      { "variantKey": "mcp-handler-v1-latest", "label": "v1 latest" },
+      { "variantKey": "mcp-handler-v2", "label": "v2 pinned" },
+      { "variantKey": "mcp-handler-v2-latest", "label": "v2 latest" }
+    ]
+  },
+  {
     "scenarioDirName": "mcp-instrumentation",
     "label": "MCP Instrumentation",
     "metadataScenario": "mcp-instrumentation",
@@ -612,6 +623,29 @@
       {
         "variantKey": "mcp-server-v2-latest",
         "label": "server v2 latest"
+      }
+    ]
+  },
+  {
+    "scenarioDirName": "fastmcp-instrumentation",
+    "label": "FastMCP Instrumentation",
+    "metadataScenario": "fastmcp-instrumentation",
+    "variants": [
+      {
+        "variantKey": "fastmcp-v3",
+        "label": "v3 pinned"
+      },
+      {
+        "variantKey": "fastmcp-v3-latest",
+        "label": "v3 latest"
+      },
+      {
+        "variantKey": "fastmcp-v4",
+        "label": "v4 pinned"
+      },
+      {
+        "variantKey": "fastmcp-v4-latest",
+        "label": "v4 latest"
       }
     ]
   },

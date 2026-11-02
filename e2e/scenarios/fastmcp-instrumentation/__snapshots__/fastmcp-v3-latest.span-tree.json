@@ -1,0 +1,742 @@
+{
+  "span_tree": [
+    {
+      "name": "fastmcp-instrumentation-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "fastmcp-session",
+          "children": [
+            {
+              "name": "initialize",
+              "type": "function",
+              "children": [],
+              "metadata": {
+                "client.address": "127.0.0.1",
+                "client.port": "<port>",
+                "jsonrpc.request.id": "0",
+                "mcp.client.name": "braintrust-e2e-client",
+                "mcp.client.version": "1.0.0",
+                "mcp.method.name": "initialize",
+                "mcp.protocol.version": "<timestamp>",
+                "mcp.server.name": "braintrust-e2e-fastmcp",
+                "mcp.server.version": "1.0.0",
+                "mcp.session.id": "<uuid:1>",
+                "network.protocol.name": "http",
+                "network.protocol.version": "1.1",
+                "network.transport": "tcp",
+                "scenario": "fastmcp-instrumentation",
+                "testRunId": "<run:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
+              },
+              "context": {
+                "caller_filename": "<caller>",
+                "caller_functionname": "<caller>",
+                "caller_lineno": 0
+              }
+            },
+            {
+              "name": "notifications/initialized",
+              "type": "function",
+              "children": [],
+              "metadata": {
+                "client.address": "127.0.0.1",
+                "client.port": "<port>",
+                "mcp.client.name": "braintrust-e2e-client",
+                "mcp.client.version": "1.0.0",
+                "mcp.lifecycle.phase": "initialization_complete",
+                "mcp.method.name": "notifications/initialized",
+                "mcp.notification.direction": "incoming",
+                "mcp.protocol.ready": 1,
+                "mcp.protocol.version": "<timestamp>",
+                "mcp.server.name": "braintrust-e2e-fastmcp",
+                "mcp.server.version": "1.0.0",
+                "mcp.session.id": "<uuid:1>",
+                "network.protocol.name": "http",
+                "network.protocol.version": "1.1",
+                "network.transport": "tcp",
+                "scenario": "fastmcp-instrumentation",
+                "testRunId": "<run:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
+              },
+              "context": {
+                "caller_filename": "<caller>",
+                "caller_functionname": "<caller>",
+                "caller_lineno": 0
+              }
+            },
+            {
+              "name": "tools/list",
+              "type": "function",
+              "children": [],
+              "metadata": {
+                "client.address": "127.0.0.1",
+                "client.port": "<port>",
+                "jsonrpc.request.id": "1",
+                "mcp.client.name": "braintrust-e2e-client",
+                "mcp.client.version": "1.0.0",
+                "mcp.method.name": "tools/list",
+                "mcp.protocol.version": "<timestamp>",
+                "mcp.server.name": "braintrust-e2e-fastmcp",
+                "mcp.server.version": "1.0.0",
+                "mcp.session.id": "<uuid:1>",
+                "network.protocol.name": "http",
+                "network.protocol.version": "1.1",
+                "network.transport": "tcp",
+                "scenario": "fastmcp-instrumentation",
+                "testRunId": "<run:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
+              },
+              "context": {
+                "caller_filename": "<caller>",
+                "caller_functionname": "<caller>",
+                "caller_lineno": 0
+              }
+            },
+            {
+              "name": "tools/call get_weather",
+              "type": "tool",
+              "children": [
+                {
+                  "name": "weather-lookup",
+                  "children": [],
+                  "metadata": {
+                    "scenario": "fastmcp-instrumentation",
+                    "testRunId": "<run:1>"
+                  },
+                  "metrics": {
+                    "end": 0,
+                    "start": 0
+                  },
+                  "context": {
+                    "caller_filename": "<caller>",
+                    "caller_functionname": "<caller>",
+                    "caller_lineno": 0
+                  }
+                }
+              ],
+              "input": {
+                "city": "Vienna"
+              },
+              "output": {
+                "content": [
+                  {
+                    "text": "Sunny in Vienna",
+                    "type": "text"
+                  }
+                ]
+              },
+              "metadata": {
+                "client.address": "127.0.0.1",
+                "client.port": "<port>",
+                "gen_ai.operation.name": "execute_tool",
+                "gen_ai.tool.name": "get_weather",
+                "jsonrpc.request.id": "2",
+                "mcp.client.name": "braintrust-e2e-client",
+                "mcp.client.version": "1.0.0",
+                "mcp.method.name": "tools/call",
+                "mcp.protocol.version": "<timestamp>",
+                "mcp.server.name": "braintrust-e2e-fastmcp",
+                "mcp.server.version": "1.0.0",
+                "mcp.session.id": "<uuid:1>",
+                "network.protocol.name": "http",
+                "network.protocol.version": "1.1",
+                "network.transport": "tcp",
+                "scenario": "fastmcp-instrumentation",
+                "testRunId": "<run:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
+              },
+              "context": {
+                "caller_filename": "<caller>",
+                "caller_functionname": "<caller>",
+                "caller_lineno": 0
+              }
+            },
+            {
+              "name": "tools/call get_alerts",
+              "type": "tool",
+              "children": [],
+              "output": {
+                "content": [
+                  {
+                    "text": "Alert service unavailable",
+                    "type": "text"
+                  }
+                ],
+                "isError": true
+              },
+              "metadata": {
+                "client.address": "127.0.0.1",
+                "client.port": "<port>",
+                "error.type": "tool_error",
+                "gen_ai.operation.name": "execute_tool",
+                "gen_ai.tool.name": "get_alerts",
+                "jsonrpc.request.id": "3",
+                "mcp.client.name": "braintrust-e2e-client",
+                "mcp.client.version": "1.0.0",
+                "mcp.method.name": "tools/call",
+                "mcp.protocol.version": "<timestamp>",
+                "mcp.server.name": "braintrust-e2e-fastmcp",
+                "mcp.server.version": "1.0.0",
+                "mcp.session.id": "<uuid:1>",
+                "network.protocol.name": "http",
+                "network.protocol.version": "1.1",
+                "network.transport": "tcp",
+                "scenario": "fastmcp-instrumentation",
+                "testRunId": "<run:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
+              },
+              "error": "Alert service unavailable",
+              "context": {
+                "caller_filename": "<caller>",
+                "caller_functionname": "<caller>",
+                "caller_lineno": 0
+              }
+            },
+            {
+              "name": "tools/call render_map",
+              "type": "tool",
+              "children": [],
+              "output": {
+                "content": [
+                  {
+                    "data": "<omitted>",
+                    "mimeType": "image/png",
+                    "type": "image"
+                  }
+                ]
+              },
+              "metadata": {
+                "client.address": "127.0.0.1",
+                "client.port": "<port>",
+                "gen_ai.operation.name": "execute_tool",
+                "gen_ai.tool.name": "render_map",
+                "jsonrpc.request.id": "4",
+                "mcp.client.name": "braintrust-e2e-client",
+                "mcp.client.version": "1.0.0",
+                "mcp.method.name": "tools/call",
+                "mcp.protocol.version": "<timestamp>",
+                "mcp.server.name": "braintrust-e2e-fastmcp",
+                "mcp.server.version": "1.0.0",
+                "mcp.session.id": "<uuid:1>",
+                "network.protocol.name": "http",
+                "network.protocol.version": "1.1",
+                "network.transport": "tcp",
+                "scenario": "fastmcp-instrumentation",
+                "testRunId": "<run:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
+              },
+              "context": {
+                "caller_filename": "<caller>",
+                "caller_functionname": "<caller>",
+                "caller_lineno": 0
+              }
+            },
+            {
+              "name": "resources/read",
+              "type": "function",
+              "children": [],
+              "input": {
+                "uri": "notes://forecast"
+              },
+              "output": {
+                "contents": [
+                  {
+                    "mimeType": "text/plain",
+                    "name": "forecast-notes",
+                    "text": "Bring an umbrella.",
+                    "uri": "notes://forecast"
+                  }
+                ]
+              },
+              "metadata": {
+                "client.address": "127.0.0.1",
+                "client.port": "<port>",
+                "jsonrpc.request.id": "5",
+                "mcp.client.name": "braintrust-e2e-client",
+                "mcp.client.version": "1.0.0",
+                "mcp.method.name": "resources/read",
+                "mcp.protocol.version": "<timestamp>",
+                "mcp.resource.uri": "notes://forecast",
+                "mcp.server.name": "braintrust-e2e-fastmcp",
+                "mcp.server.version": "1.0.0",
+                "mcp.session.id": "<uuid:1>",
+                "network.protocol.name": "http",
+                "network.protocol.version": "1.1",
+                "network.transport": "tcp",
+                "scenario": "fastmcp-instrumentation",
+                "testRunId": "<run:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
+              },
+              "context": {
+                "caller_filename": "<caller>",
+                "caller_functionname": "<caller>",
+                "caller_lineno": 0
+              }
+            },
+            {
+              "name": "prompts/get forecast",
+              "type": "function",
+              "children": [],
+              "input": {
+                "city": "Vienna"
+              },
+              "output": {
+                "messages": [
+                  {
+                    "content": {
+                      "text": "What is the forecast for Vienna?",
+                      "type": "text"
+                    },
+                    "role": "user"
+                  }
+                ]
+              },
+              "metadata": {
+                "client.address": "127.0.0.1",
+                "client.port": "<port>",
+                "gen_ai.prompt.name": "forecast",
+                "jsonrpc.request.id": "6",
+                "mcp.client.name": "braintrust-e2e-client",
+                "mcp.client.version": "1.0.0",
+                "mcp.method.name": "prompts/get",
+                "mcp.protocol.version": "<timestamp>",
+                "mcp.server.name": "braintrust-e2e-fastmcp",
+                "mcp.server.version": "1.0.0",
+                "mcp.session.id": "<uuid:1>",
+                "network.protocol.name": "http",
+                "network.protocol.version": "1.1",
+                "network.transport": "tcp",
+                "scenario": "fastmcp-instrumentation",
+                "testRunId": "<run:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
+              },
+              "context": {
+                "caller_filename": "<caller>",
+                "caller_functionname": "<caller>",
+                "caller_lineno": 0
+              }
+            },
+            {
+              "name": "ping",
+              "type": "function",
+              "children": [],
+              "metadata": {
+                "client.address": "127.0.0.1",
+                "client.port": "<port>",
+                "jsonrpc.request.id": "7",
+                "mcp.client.name": "braintrust-e2e-client",
+                "mcp.client.version": "1.0.0",
+                "mcp.method.name": "ping",
+                "mcp.protocol.version": "<timestamp>",
+                "mcp.server.name": "braintrust-e2e-fastmcp",
+                "mcp.server.version": "1.0.0",
+                "mcp.session.id": "<uuid:1>",
+                "network.protocol.name": "http",
+                "network.protocol.version": "1.1",
+                "network.transport": "tcp",
+                "scenario": "fastmcp-instrumentation",
+                "testRunId": "<run:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
+              },
+              "context": {
+                "caller_filename": "<caller>",
+                "caller_functionname": "<caller>",
+                "caller_lineno": 0
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "mcp",
+            "scenario": "fastmcp-instrumentation",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "context": {
+            "caller_filename": "<caller>",
+            "caller_functionname": "<caller>",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "fastmcp-stateless",
+          "children": [
+            {
+              "name": "initialize",
+              "type": "function",
+              "children": [],
+              "metadata": {
+                "client.address": "127.0.0.1",
+                "client.port": "<port>",
+                "jsonrpc.request.id": "0",
+                "mcp.client.name": "braintrust-e2e-client",
+                "mcp.client.version": "1.0.0",
+                "mcp.method.name": "initialize",
+                "mcp.protocol.version": "<timestamp>",
+                "mcp.server.name": "braintrust-e2e-fastmcp",
+                "mcp.server.version": "1.0.0",
+                "network.protocol.name": "http",
+                "network.protocol.version": "1.1",
+                "network.transport": "tcp",
+                "scenario": "fastmcp-instrumentation",
+                "testRunId": "<run:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
+              },
+              "context": {
+                "caller_filename": "<caller>",
+                "caller_functionname": "<caller>",
+                "caller_lineno": 0
+              }
+            },
+            {
+              "name": "notifications/initialized",
+              "type": "function",
+              "children": [],
+              "metadata": {
+                "client.address": "127.0.0.1",
+                "client.port": "<port>",
+                "mcp.lifecycle.phase": "initialization_complete",
+                "mcp.method.name": "notifications/initialized",
+                "mcp.notification.direction": "incoming",
+                "mcp.protocol.ready": 1,
+                "network.protocol.name": "http",
+                "network.protocol.version": "1.1",
+                "network.transport": "tcp",
+                "scenario": "fastmcp-instrumentation",
+                "testRunId": "<run:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
+              },
+              "context": {
+                "caller_filename": "<caller>",
+                "caller_functionname": "<caller>",
+                "caller_lineno": 0
+              }
+            },
+            {
+              "name": "tools/list",
+              "type": "function",
+              "children": [],
+              "metadata": {
+                "client.address": "127.0.0.1",
+                "client.port": "<port>",
+                "jsonrpc.request.id": "1",
+                "mcp.method.name": "tools/list",
+                "network.protocol.name": "http",
+                "network.protocol.version": "1.1",
+                "network.transport": "tcp",
+                "scenario": "fastmcp-instrumentation",
+                "testRunId": "<run:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
+              },
+              "context": {
+                "caller_filename": "<caller>",
+                "caller_functionname": "<caller>",
+                "caller_lineno": 0
+              }
+            },
+            {
+              "name": "tools/call get_weather",
+              "type": "tool",
+              "children": [
+                {
+                  "name": "weather-lookup",
+                  "children": [],
+                  "metadata": {
+                    "scenario": "fastmcp-instrumentation",
+                    "testRunId": "<run:1>"
+                  },
+                  "metrics": {
+                    "end": 0,
+                    "start": 0
+                  },
+                  "context": {
+                    "caller_filename": "<caller>",
+                    "caller_functionname": "<caller>",
+                    "caller_lineno": 0
+                  }
+                }
+              ],
+              "input": {
+                "city": "Vienna"
+              },
+              "output": {
+                "content": [
+                  {
+                    "text": "Sunny in Vienna",
+                    "type": "text"
+                  }
+                ]
+              },
+              "metadata": {
+                "client.address": "127.0.0.1",
+                "client.port": "<port>",
+                "gen_ai.operation.name": "execute_tool",
+                "gen_ai.tool.name": "get_weather",
+                "jsonrpc.request.id": "2",
+                "mcp.method.name": "tools/call",
+                "network.protocol.name": "http",
+                "network.protocol.version": "1.1",
+                "network.transport": "tcp",
+                "scenario": "fastmcp-instrumentation",
+                "testRunId": "<run:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
+              },
+              "context": {
+                "caller_filename": "<caller>",
+                "caller_functionname": "<caller>",
+                "caller_lineno": 0
+              }
+            },
+            {
+              "name": "tools/call get_alerts",
+              "type": "tool",
+              "children": [],
+              "output": {
+                "content": [
+                  {
+                    "text": "Alert service unavailable",
+                    "type": "text"
+                  }
+                ],
+                "isError": true
+              },
+              "metadata": {
+                "client.address": "127.0.0.1",
+                "client.port": "<port>",
+                "error.type": "tool_error",
+                "gen_ai.operation.name": "execute_tool",
+                "gen_ai.tool.name": "get_alerts",
+                "jsonrpc.request.id": "3",
+                "mcp.method.name": "tools/call",
+                "network.protocol.name": "http",
+                "network.protocol.version": "1.1",
+                "network.transport": "tcp",
+                "scenario": "fastmcp-instrumentation",
+                "testRunId": "<run:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
+              },
+              "error": "Alert service unavailable",
+              "context": {
+                "caller_filename": "<caller>",
+                "caller_functionname": "<caller>",
+                "caller_lineno": 0
+              }
+            },
+            {
+              "name": "tools/call render_map",
+              "type": "tool",
+              "children": [],
+              "output": {
+                "content": [
+                  {
+                    "data": "<omitted>",
+                    "mimeType": "image/png",
+                    "type": "image"
+                  }
+                ]
+              },
+              "metadata": {
+                "client.address": "127.0.0.1",
+                "client.port": "<port>",
+                "gen_ai.operation.name": "execute_tool",
+                "gen_ai.tool.name": "render_map",
+                "jsonrpc.request.id": "4",
+                "mcp.method.name": "tools/call",
+                "network.protocol.name": "http",
+                "network.protocol.version": "1.1",
+                "network.transport": "tcp",
+                "scenario": "fastmcp-instrumentation",
+                "testRunId": "<run:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
+              },
+              "context": {
+                "caller_filename": "<caller>",
+                "caller_functionname": "<caller>",
+                "caller_lineno": 0
+              }
+            },
+            {
+              "name": "resources/read",
+              "type": "function",
+              "children": [],
+              "input": {
+                "uri": "notes://forecast"
+              },
+              "output": {
+                "contents": [
+                  {
+                    "mimeType": "text/plain",
+                    "name": "forecast-notes",
+                    "text": "Bring an umbrella.",
+                    "uri": "notes://forecast"
+                  }
+                ]
+              },
+              "metadata": {
+                "client.address": "127.0.0.1",
+                "client.port": "<port>",
+                "jsonrpc.request.id": "5",
+                "mcp.method.name": "resources/read",
+                "mcp.resource.uri": "notes://forecast",
+                "network.protocol.name": "http",
+                "network.protocol.version": "1.1",
+                "network.transport": "tcp",
+                "scenario": "fastmcp-instrumentation",
+                "testRunId": "<run:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
+              },
+              "context": {
+                "caller_filename": "<caller>",
+                "caller_functionname": "<caller>",
+                "caller_lineno": 0
+              }
+            },
+            {
+              "name": "prompts/get forecast",
+              "type": "function",
+              "children": [],
+              "input": {
+                "city": "Vienna"
+              },
+              "output": {
+                "messages": [
+                  {
+                    "content": {
+                      "text": "What is the forecast for Vienna?",
+                      "type": "text"
+                    },
+                    "role": "user"
+                  }
+                ]
+              },
+              "metadata": {
+                "client.address": "127.0.0.1",
+                "client.port": "<port>",
+                "gen_ai.prompt.name": "forecast",
+                "jsonrpc.request.id": "6",
+                "mcp.method.name": "prompts/get",
+                "network.protocol.name": "http",
+                "network.protocol.version": "1.1",
+                "network.transport": "tcp",
+                "scenario": "fastmcp-instrumentation",
+                "testRunId": "<run:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
+              },
+              "context": {
+                "caller_filename": "<caller>",
+                "caller_functionname": "<caller>",
+                "caller_lineno": 0
+              }
+            },
+            {
+              "name": "ping",
+              "type": "function",
+              "children": [],
+              "metadata": {
+                "client.address": "127.0.0.1",
+                "client.port": "<port>",
+                "jsonrpc.request.id": "7",
+                "mcp.method.name": "ping",
+                "network.protocol.name": "http",
+                "network.protocol.version": "1.1",
+                "network.transport": "tcp",
+                "scenario": "fastmcp-instrumentation",
+                "testRunId": "<run:1>"
+              },
+              "metrics": {
+                "end": 0,
+                "start": 0
+              },
+              "context": {
+                "caller_filename": "<caller>",
+                "caller_functionname": "<caller>",
+                "caller_lineno": 0
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "mcp",
+            "scenario": "fastmcp-instrumentation",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "end": 0,
+            "start": 0
+          },
+          "context": {
+            "caller_filename": "<caller>",
+            "caller_functionname": "<caller>",
+            "caller_lineno": 0
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "fastmcp-instrumentation",
+        "testRunId": "<run:1>"
+      },
+      "metrics": {
+        "end": 0,
+        "start": 0
+      },
+      "context": {
+        "caller_filename": "<caller>",
+        "caller_functionname": "<caller>",
+        "caller_lineno": 0
+      }
+    }
+  ]
+}

@@ -20,5 +20,5 @@ A simple example showing how to use the Braintrust SDK to evaluate an AI functio
 
 ## Documentation
 
-- [Braintrust documentation](https://www.braintrust.dev/docs)
+- [Braintrust documentation](https://docs.braintrust.dev)
 - [Val Town documentation](https://docs.val.town)

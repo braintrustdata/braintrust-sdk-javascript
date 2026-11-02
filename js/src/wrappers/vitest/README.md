@@ -579,6 +579,6 @@ const myScorer: ScorerFunction = ({ output, expected, input, metadata }) => {
 
 ## Additional Resources
 
-- [Braintrust Documentation](https://www.braintrust.dev/docs)
-- [Autoevals Library](https://www.braintrust.dev/docs/autoevals)
+- [Braintrust Documentation](https://docs.braintrust.dev)
+- [Autoevals Library](https://docs.braintrust.dev/sdks/typescript/related/autoevals/overview)
 - [Vitest Documentation](https://vitest.dev/)
