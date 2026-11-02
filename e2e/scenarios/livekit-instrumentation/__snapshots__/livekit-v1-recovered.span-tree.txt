@@ -151,6 +151,12 @@ span_tree:
     │             "testRunId": "<run:1>"
     │           }
     ├── agent_turn [task]
+    │   input: [
+    │     {
+    │       "content": "Hi, could you check order 1042 for me?",
+    │       "role": "user"
+    │     }
+    │   ]
     │   metadata: {
     │     "contrib.livekit.events": [
     │       {
@@ -527,6 +533,12 @@ span_tree:
     │         "turn.id": "<span:3>"
     │       }
     ├── agent_turn [task]
+    │   input: [
+    │     {
+    │       "content": "Sorry, please repeat the delivery day.",
+    │       "role": "user"
+    │     }
+    │   ]
     │   metadata: {
     │     "contrib.livekit.events": [
     │       {

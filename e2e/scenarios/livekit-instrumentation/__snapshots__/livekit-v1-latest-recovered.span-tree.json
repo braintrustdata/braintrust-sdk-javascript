@@ -423,6 +423,12 @@
               }
             }
           ],
+          "input": [
+            {
+              "content": "Hi, could you check order 1042 for me?",
+              "role": "user"
+            }
+          ],
           "metadata": {
             "contrib.livekit.events": [
               {
@@ -935,6 +941,12 @@
                 "testRunId": "<run:1>",
                 "turn.id": "<span:3>"
               }
+            }
+          ],
+          "input": [
+            {
+              "content": "Sorry, please repeat the delivery day.",
+              "role": "user"
             }
           ],
           "metadata": {

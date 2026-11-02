@@ -441,6 +441,12 @@
               }
             }
           ],
+          "input": [
+            {
+              "content": "Hi, could you check order 1042 for me?",
+              "role": "user"
+            }
+          ],
           "metadata": {
             "contrib.livekit.events": [
               {

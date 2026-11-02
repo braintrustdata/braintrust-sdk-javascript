@@ -450,6 +450,12 @@ span_tree:
     │         "turn.id": "<span:1>"
     │       }
     ├── agent_turn [task]
+    │   input: [
+    │     {
+    │       "content": "Hi. I'm calling with my partner, who has a question about our order. Where is order demo one zero four two? It was supposed to arrive this week. And we haven't heard anything.",
+    │       "role": "user"
+    │     }
+    │   ]
     │   metadata: {
     │     "contrib.livekit.e2e_latency": 0,
     │     "contrib.livekit.end_of_turn_delay": 0,

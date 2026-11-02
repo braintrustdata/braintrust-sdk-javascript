@@ -1020,9 +1020,15 @@ function content(name: string, attrs: Record<string, unknown>) {
       ...(output?.length ? { output } : {}),
     };
   }
-  if (name === "user_turn") {
-    // The turn's final transcripts, as LiveKit joins them for the turn.
-    const text = attrs["contrib.livekit.pii.user_transcript"];
+  if (name === "user_turn" || name === "agent_turn") {
+    // A user turn's final transcripts as LiveKit joins them, or the user
+    // message (spoken or typed) that prompted an agent turn.
+    const text =
+      attrs[
+        name === "user_turn"
+          ? "contrib.livekit.pii.user_transcript"
+          : "contrib.livekit.pii.user_input"
+      ];
     return typeof text === "string" && text
       ? { input: [{ role: "user", content: text }] }
       : {};

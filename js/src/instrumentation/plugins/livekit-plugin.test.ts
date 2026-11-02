@@ -894,6 +894,22 @@ describe("speech", () => {
     expect(empty.input).toBeUndefined();
   });
 
+  test("an agent turn's input is the user message LiveKit reports prompting it", async () => {
+    const root = start("agent_session");
+    // Typed input has no user turn: the agent turn is the only turn with it.
+    const typed = start("agent_turn", root);
+    typed.setAttributes({ "lk.pii.user_input": "QX7-48B2-ZZ1" });
+    typed.end();
+    // A reply LiveKit starts on its own, such as a greeting, has no user input.
+    const greeting = start("agent_turn", root);
+    greeting.setAttributes({ "lk.pii.user_input": "" });
+    greeting.end();
+    const [turn, unprompted] = (await rows()).named("agent_turn");
+    expect(turn.input).toEqual([{ role: "user", content: "QX7-48B2-ZZ1" }]);
+    expect(JSON.stringify(turn.metadata)).not.toContain("QX7");
+    expect(unprompted.input).toBeUndefined();
+  });
+
   test("a committed user message adds its native ID and speaking times to its turn", async () => {
     const root = start("agent_session");
     const user = start("user_turn", root);

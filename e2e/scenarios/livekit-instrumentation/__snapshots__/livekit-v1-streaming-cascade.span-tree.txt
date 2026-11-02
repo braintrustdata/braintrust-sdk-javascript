@@ -257,6 +257,12 @@ span_tree:
     │         "turn.id": "<span:1>"
     │       }
     ├── agent_turn [task]
+    │   input: [
+    │     {
+    │       "content": "Where is my order, DMO1042?",
+    │       "role": "user"
+    │     }
+    │   ]
     │   metadata: {
     │     "contrib.livekit.e2e_latency": 0,
     │     "contrib.livekit.end_of_turn_delay": 0,

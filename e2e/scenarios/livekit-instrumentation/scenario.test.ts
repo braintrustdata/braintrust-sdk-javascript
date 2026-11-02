@@ -358,6 +358,14 @@ for (const variant of variants) {
           expect(
             events.filter((e) => e.span.type === "llm").map((e) => e.span.name),
           ).toEqual(["llm_response", "llm_response"]);
+          // Typed input isn't heard, so no user turn has it; the agent turn it
+          // prompted carries it.
+          expect(
+            findAllSpans(events, "user_turn").map((e) => e.row.input),
+          ).not.toContainEqual(expect.anything());
+          expect(findAllSpans(events, "agent_turn")[0]?.row.input).toEqual([
+            { role: "user", content: expect.stringMatching(/order 1042/i) },
+          ]);
           // Synthesis produced the played audio; the model produced its text.
           const [tts] = findAllSpans(events, "tts");
           expect(
