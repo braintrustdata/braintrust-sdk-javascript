@@ -58,6 +58,8 @@ export interface PlaybackFinishedEvent {
   synchronizedTranscript?: string;
 }
 export interface AudioOutput {
+  /** Whether LiveKit can pause playout on this sink (and those it forwards to). */
+  readonly canPause?: boolean;
   captureFrame(frame: AudioFrame): Promise<void>;
   flush(): void;
   clearBuffer(): void;

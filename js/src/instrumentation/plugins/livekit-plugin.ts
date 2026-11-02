@@ -229,7 +229,11 @@ type Row = {
     attributes?: Record<string, unknown>;
   }[];
   status: { code: number; message?: string };
-  playedText?: string;
+  /**
+   * An interrupted playout of this speech came without the sink's transcript
+   * of what was heard, so LiveKit's text for it may include unplayed words.
+   */
+  unheard?: boolean;
   /** Confirmed playout on the session timeline, for this speech's selections. */
   played?: AudioInterval[];
   messages?: Map<string, string | undefined>;
@@ -278,7 +282,7 @@ class LiveKitTracing {
   private context = iso.newAsyncLocalStorage<{
     native: LiveKitSpan;
     row?: Row;
-    inference: { model?: Row; tts?: Row };
+    inference: { model?: Row; tts?: Row[]; speaking?: Row };
     /** Tool configuration of the enclosing pipeline reply, for its llm spans. */
     request?: Record<string, unknown>;
   }>();
@@ -564,17 +568,32 @@ class LiveKitTracing {
               { tool_choice: scope.request.tool_choice },
         });
     }
-    if (name === "tts_node" && scope) scope.inference.tts = row;
-    // Played audio comes from the reply's synthesis when it has one, otherwise
-    // directly from its model response; synthesis comes from the model response.
-    const generator =
-      name === "agent_speaking"
-        ? (scope?.inference.tts ?? scope?.inference.model)
-        : name === "tts_node"
-          ? scope?.inference.model
-          : undefined;
-    if (generator)
-      state.relationships.link(row.span, generator.span, "generated_by");
+    // Played audio comes from every synthesis in the reply (one per segment
+    // when the app splits its text), otherwise directly from its model
+    // response; synthesis comes from the model response.
+    const inference = scope?.inference;
+    if (inference && name === "tts_node") {
+      (inference.tts ??= []).push(row);
+      if (inference.model)
+        state.relationships.link(
+          row.span,
+          inference.model.span,
+          "generated_by",
+        );
+      // A later segment of speech that is already playing.
+      if (inference.speaking)
+        state.relationships.link(
+          inference.speaking.span,
+          row.span,
+          "generated_by",
+        );
+    }
+    if (inference && name === "agent_speaking") {
+      inference.speaking = row;
+      for (const generator of inference.tts ??
+        (inference.model ? [inference.model] : []))
+        state.relationships.link(row.span, generator.span, "generated_by");
+    }
     const current = scope?.row?.session === row.session ? scope.row : undefined;
     if (name === "function_tool" && current?.name === "llm_node")
       state.relationships.link(row.span, current.span, "requested_by");
@@ -677,12 +696,11 @@ class LiveKitTracing {
     // Unobserved spans keep parenting local but inherit the enclosing session row.
     const outer = this.context.getStore();
     const row = found ? (found.owner ?? found) : outer?.row;
-    const inference = found
-      ? {
-          model: found.name === "llm_node" ? found : undefined,
-          tts: found.name === "tts_node" ? found : undefined,
-        }
-      : (outer?.inference ?? {});
+    // A model response starts its own inference; its synthesis belongs to the reply's.
+    const inference =
+      found && found.name !== "tts_node"
+        ? { model: found.name === "llm_node" ? found : undefined }
+        : (outer?.inference ?? (found ? { tts: [found] } : {}));
     return this.context.run(
       { native, row, inference, request: request ?? outer?.request },
       () => (found ? withCurrent(row!.span, fn) : fn()),
@@ -811,16 +829,13 @@ class LiveKitTracing {
         : speeches.length === 1
           ? speeches[0]
           : undefined;
-    // LiveKit falls back to the entire generated text on partial playback when
-    // its output has no synchronized transcript. That fallback is not heard text.
-    // A pipeline commit can include earlier fully played segments followed by the
-    // synchronized partial suffix, so keep a verified prefix too.
-    const heard = speaking?.playedText;
-    const textContent = item.interrupted
-      ? heard && item.textContent?.endsWith(heard)
-        ? item.textContent
-        : heard
-      : item.textContent;
+    // LiveKit builds an interrupted reply's text from the sink's transcript of
+    // what was heard, or, when the sink has none, from all the text it sent to
+    // be spoken. Only the former describes the speech.
+    const textContent =
+      item.interrupted && (!speaking || speaking.unheard)
+        ? undefined
+        : item.textContent;
     state.speech.assistant(
       {
         ...item,
@@ -849,10 +864,6 @@ class LiveKitTracing {
           session,
           state.origin,
           (id) => state.rows.get(id),
-          (text) => {
-            const row = this.rowOf(session.agentSpeakingSpan);
-            if (row) row.playedText = text;
-          },
           () => this.piiAllowed(state.root),
           state.recording?.captures.output ? state.recording : undefined,
         )
@@ -1832,7 +1843,6 @@ class Playback {
     /** The session clock's epoch, shared with the audio session's timeline. */
     private origin: number,
     private resolve: (id: string) => Row | undefined,
-    private heard: (text: string | undefined) => void,
     /** Whether heard text may be kept in native playback events. */
     private piiAllowed: () => boolean,
     recording?: Recording,
@@ -1982,12 +1992,18 @@ class Playback {
   }
 
   private finished(event: PlaybackFinishedEvent): void {
-    this.heard(
-      typeof event.synchronizedTranscript === "string"
-        ? event.synchronizedTranscript
-        : undefined,
-    );
     const run = this.runs.find((r) => !r.finished);
+    // The playout's own speech; sinks that never report a start have no run.
+    const speaking = run
+      ? (run.speaking ??= observedId(this.session.agentSpeakingSpan))
+      : observedId(this.session.agentSpeakingSpan);
+    const row = speaking ? this.resolve(speaking) : undefined;
+    if (
+      row &&
+      event.interrupted &&
+      typeof event.synchronizedTranscript !== "string"
+    )
+      row.unheard = true;
     if (!run) return;
     run.finished = event;
     this.settle(run);
@@ -2017,7 +2033,9 @@ class Playback {
       finished &&
       !run.hadProgress &&
       run.started !== undefined &&
-      !finished.interrupted;
+      !finished.interrupted &&
+      // LiveKit can pause a sink that supports it mid-playout.
+      !this.sink.canPause;
     if (contiguous)
       ranges.push({
         startedAt: run.started!,
