@@ -527,6 +527,19 @@ for (const variant of variants) {
             ),
           ),
         ).toHaveProperty("size", 2);
+        // Each recognition is a span from its first result to its final, under
+        // the user turn it began in.
+        for (const span of findAllSpans(events, "stt")) {
+          const parent = events.find(
+            (e) => e.span.id === span.span.parentIds[0],
+          );
+          expect(parent?.span.name).toBe("user_turn");
+          const { start, end } = span.row.metrics as {
+            start: number;
+            end: number;
+          };
+          expect(end).toBeGreaterThan(start);
+        }
         // Speech is audio activity: it names no speaker and links to no transcript.
         for (const span of findAllSpans(events, "user_speech")) {
           expect(span.metadata).not.toHaveProperty("audio.speaker_ids");

@@ -872,6 +872,146 @@ describe("speech", () => {
     );
   });
 
+  /** A final transcript event, as LiveKit's recognizer reports it. */
+  const final = (text: string, createdAt: number) => ({
+    type: 2,
+    alternatives: [{ text }],
+    createdAt,
+  });
+
+  test("an STT span is the recognition: first result to final, under the turn it began in", async () => {
+    const root = start("agent_session");
+    const user = start("user_turn", root);
+    const recognition: { userTurnSpan?: NativeSpan } = { userTurnSpan: user };
+    tracing.stt(recognition, {
+      type: 1,
+      alternatives: [{ text: "and we" }],
+      createdAt: 1_100,
+    });
+    tracing.stt(recognition, {
+      type: 1,
+      alternatives: [{ text: "and we haven't" }],
+      createdAt: 1_400,
+    });
+    // LiveKit closes the turn on silence before the final transcript arrives.
+    user.end([1, 500_000_000]);
+    recognition.userTurnSpan = undefined;
+    tracing.stt(recognition, final("and we haven't heard anything.", 1_900));
+    const { one } = await rows();
+    expect(one("stt")).toMatchObject({
+      span_parents: [one("user_turn").span_id],
+      metrics: { start: 1.1, end: 1.9 },
+      output: [{ role: "user", content: "and we haven't heard anything." }],
+      metadata: { "turn.id": one("user_turn").span_id },
+    });
+  });
+
+  test("each utterance's recognition starts after the previous final", async () => {
+    const root = start("agent_session");
+    const user = start("user_turn", root);
+    const recognition = { userTurnSpan: user };
+    for (const [text, at] of [
+      ["Hi.", 1_000],
+      ["Hi, I'm calling", 1_200],
+    ] as const)
+      tracing.stt(recognition, {
+        type: 1,
+        alternatives: [{ text }],
+        createdAt: at,
+      });
+    tracing.stt(recognition, final("Hi, I'm calling.", 1_500));
+    // Between utterances the provider sends empty interims: no recognition yet.
+    tracing.stt(recognition, {
+      type: 1,
+      alternatives: [{ text: "" }],
+      createdAt: 1_600,
+    });
+    tracing.stt(recognition, {
+      type: 1,
+      alternatives: [{ text: "Where is" }],
+      createdAt: 2_000,
+    });
+    tracing.stt(recognition, final("Where is my order?", 2_600));
+    user.end();
+    expect(
+      (await rows()).named("stt").map((r) => [r.metrics.start, r.metrics.end]),
+    ).toEqual([
+      [1, 1.5],
+      [2, 2.6],
+    ]);
+  });
+
+  test("non-streaming recognition starts at the speech the adapter reports", async () => {
+    const root = start("agent_session");
+    const user = start("user_turn", root);
+    const recognition = { userTurnSpan: user };
+    tracing.stt(recognition, { type: 0, createdAt: 1_000 });
+    tracing.stt(recognition, { type: 3, createdAt: 2_000 });
+    tracing.stt(recognition, final("Where is my order?", 2_700));
+    user.end();
+    const { one } = await rows();
+    expect(one("stt")).toMatchObject({
+      span_parents: [one("user_turn").span_id],
+      metrics: { start: 1, end: 2.7 },
+      metadata: { "turn.id": one("user_turn").span_id },
+    });
+  });
+
+  test("an END_OF_SPEECH trailing its final does not begin the next recognition", async () => {
+    const root = start("agent_session");
+    const first = start("user_turn", root);
+    const recognition = { userTurnSpan: first };
+    tracing.stt(recognition, {
+      type: 1,
+      alternatives: [{ text: "Hi" }],
+      createdAt: 1_100,
+    });
+    tracing.stt(recognition, final("Hi.", 1_200));
+    // LiveKit's inference STT reports the end of speech after its final.
+    tracing.stt(recognition, { type: 3, createdAt: 1_201 });
+    first.end();
+    const second = start("user_turn", root);
+    recognition.userTurnSpan = second;
+    tracing.stt(recognition, { type: 0, createdAt: 2_000 });
+    tracing.stt(recognition, {
+      type: 1,
+      alternatives: [{ text: "Where" }],
+      createdAt: 2_100,
+    });
+    tracing.stt(recognition, final("Where is my order?", 2_200));
+    second.end();
+    const { named } = await rows();
+    const [a, b] = named("user_turn").map((turn) => turn.span_id);
+    expect(named("stt")).toMatchObject([
+      {
+        span_parents: [a],
+        metrics: { start: 1.1, end: 1.2 },
+        metadata: { "turn.id": a },
+      },
+      {
+        span_parents: [b],
+        metrics: { start: 2, end: 2.2 },
+        metadata: { "turn.id": b },
+      },
+    ]);
+  });
+
+  test("a final with nothing before it is an instant, under the session when no turn is open", async () => {
+    const root = start("agent_session");
+    tracing.stt(
+      {
+        userTurnSpan: undefined,
+        rootSpanContext: { getValue: () => root },
+      },
+      final("Hello?", 3_000),
+    );
+    const { one } = await rows();
+    expect(one("stt")).toMatchObject({
+      span_parents: [one("session").span_id],
+      metrics: { start: 3, end: 3 },
+    });
+  });
+
   test("a user turn's input is the transcript LiveKit reports for it", async () => {
     const root = start("agent_session");
     const user = start("user_turn", root);

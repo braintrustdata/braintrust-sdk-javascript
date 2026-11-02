@@ -63,7 +63,9 @@ const MAX_RECORDING_MS = 30 * 60 * 1000;
 const SAMPLE_RATE = 24000;
 // The OTel API shares its context key through Symbol.for, including across copies.
 const OTEL_SPAN_KEY = Symbol.for("OpenTelemetry Context Key SPAN");
-const FINAL_TRANSCRIPT = 2; // SpeechEventType.FINAL_TRANSCRIPT
+// SpeechEventType values.
+const START_OF_SPEECH = 0;
+const FINAL_TRANSCRIPT = 2;
 // Voice audio is personal data, so each direction has its own explicit flag rather
 // than the shared BRAINTRUST_CAPTURE_ATTACHMENTS, which also enables other media.
 const CAPTURE_USER_AUDIO = "BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS";
@@ -695,33 +697,38 @@ class LiveKitTracing {
       : fn();
   }
 
-  /** LiveKit records STT only as user turn attributes; give each final transcript a span. */
+  /**
+   * LiveKit has no native STT span. Each utterance's recognition gets one, from
+   * the first result STT emits for it to its final transcript, under the turn
+   * open when recognition began: LiveKit can close a turn on silence before
+   * its final transcript arrives.
+   */
   stt(recognition: AudioRecognition, event: SpeechEvent): void {
+    const at = event.createdAt ?? Date.now();
     const alternative = event.alternatives?.[0];
-    if (event.type !== FINAL_TRANSCRIPT || !alternative?.text) return;
-    const turn = this.rowOf(recognition.userTurnSpan);
+    if (event.type !== FINAL_TRANSCRIPT) {
+      // Recognition begins at speech or at text. Empty interims are keepalives
+      // between utterances, and END_OF_SPEECH can trail the final it belongs to.
+      const recognizes = event.type === START_OF_SPEECH || !!alternative?.text;
+      if (recognizes && !recognizing.has(recognition))
+        recognizing.set(recognition, { at, turn: this.openTurn(recognition) });
+      return;
+    }
+    if (!alternative?.text) return;
+    const begun = recognizing.get(recognition);
+    recognizing.delete(recognition);
+    const turn = begun?.turn ?? this.openTurn(recognition);
     const parent =
-      turn && !turn.ended
-        ? turn
-        : this.rowOf(
-            recognition.rootSpanContext?.getValue(OTEL_SPAN_KEY) as
-              | LiveKitSpan
-              | undefined,
-          );
+      turn ??
+      this.rowOf(
+        recognition.rootSpanContext?.getValue(OTEL_SPAN_KEY) as
+          | LiveKitSpan
+          | undefined,
+      );
     const state = parent && this.sessions.get(parent.session);
     if (!parent || !state) return;
-    const transcripts =
-      parent === turn ? (state.transcripts.get(turn.id) ?? []) : [];
-    const end = event.createdAt ?? Date.now();
-    // Providers without word timing (such as OpenAI STT) report startTime 0.
-    const aligned =
-      alternative.startTime && recognition.inputStartedAt !== undefined
-        ? recognition.inputStartedAt + alternative.startTime * 1000
-        : undefined;
-    const start = Math.min(
-      end,
-      aligned ?? transcripts.at(-1)?.end ?? parent.start * 1000,
-    );
+    const end = at;
+    const start = Math.min(end, begun?.at ?? end);
     const { model = recognition.sttModel, provider = recognition.sttProvider } =
       recognition.sttIdentity?.() ?? {};
     const span = parent.span.startSpan(
@@ -737,7 +744,7 @@ class LiveKitTracing {
       metadata: {
         "audio.source_id": "session-input",
         // The room participant LiveKit linked to this turn's input, if any.
-        ...(parent === turn ? participantIds(state, turn.attributes) : {}),
+        ...(turn ? participantIds(state, turn.attributes) : {}),
         ...speakerIds(state, recognition, alternative.speakerId || undefined),
         ...(model ? { model } : {}),
         ...(provider ? { provider } : {}),
@@ -756,9 +763,17 @@ class LiveKitTracing {
       },
     });
     span.end({ endTime: end / 1000 });
-    if (parent !== turn || transcripts.length >= MAX_EVENTS) return;
+    if (!turn) return;
+    const transcripts = state.transcripts.get(turn.id) ?? [];
+    if (transcripts.length >= MAX_EVENTS) return;
     transcripts.push({ span, end });
     state.transcripts.set(turn.id, transcripts);
+  }
+
+  /** The user turn LiveKit has open for this recognizer, if any. */
+  private openTurn(recognition: AudioRecognition): Row | undefined {
+    const turn = this.rowOf(recognition.userTurnSpan);
+    return turn && !turn.ended ? turn : undefined;
   }
 
   conversation(session: AgentSession, item: ChatMessage): void {
@@ -1414,6 +1429,8 @@ type Packet = {
 };
 
 const inputs = new WeakMap<object, Recording>();
+/** Recognition in progress per recognizer: when it began, and in which turn. */
+const recognizing = new WeakMap<object, { at: number; turn?: Row }>();
 const sinks = new WeakMap<object, Playback>();
 /**
  * Each recognizer labels its speakers independently: the same label from two
