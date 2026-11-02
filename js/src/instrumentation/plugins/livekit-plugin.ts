@@ -147,9 +147,10 @@ export class LiveKitPlugin extends BasePlugin {
       }),
       // Each reply re-checks the session's sink, so replaced outputs are observed.
       livekitChannels.pipeline.intercept((target, self, args) => {
-        runInstrumentation(() =>
-          tracing.output((self as AgentActivity).agentSession),
-        );
+        runInstrumentation(() => {
+          tracing.output((self as AgentActivity).agentSession);
+          tracing.reply(args[0]);
+        });
         return tracing.scope(
           args[0].span,
           () => Reflect.apply(target, self, args),
@@ -178,11 +179,15 @@ export class LiveKitPlugin extends BasePlugin {
           () => Reflect.apply(target, self, args),
         ),
       ),
+      // LiveKit can start a reply from a final transcript (preemptive
+      // generation); scope it to the user turn it answers.
       livekitChannels.stt.intercept((target, self, args) => {
         runInstrumentation(() =>
           tracing.stt(self as AudioRecognition, args[0]),
         );
-        return Reflect.apply(target, self, args);
+        return tracing.scope((self as AudioRecognition).userTurnSpan, () =>
+          Reflect.apply(target, self, args),
+        );
       }),
       livekitChannels.userCompleted.intercept((target, self, args) =>
         tracing.scope(args[0].userTurnSpan, () =>
@@ -870,6 +875,16 @@ class LiveKitTracing {
       : undefined;
   }
 
+  /**
+   * LiveKit starts a reply within the user turn it answers, preemptively while
+   * the user speaks or when the turn completes, handing it the turn's message.
+   */
+  reply({ newMessage }: PipelineOptions): void {
+    const row = this.context.getStore()?.row;
+    if (!newMessage || row?.name !== "user_turn") return;
+    this.sessions.get(row.session)?.speech.answers(newMessage, row.id);
+  }
+
   userTurn(activity: AgentActivity, info: EndOfTurnInfo): void {
     const state = this.sessionOf(activity.agentSession);
     const turn = this.rowOf(info.userTurnSpan)?.id;
@@ -1335,6 +1350,8 @@ class Relationships {
  * is committed while LiveKit still holds the speech that played it.
  */
 class SpeechTracker {
+  /** User turns by the messages LiveKit replied to within them. */
+  private answered = new Map<string, string>();
   /** User turns by LiveKit's native turn start, which its messages carry. */
   private turns = new Map<number, string | undefined>();
   private owners = new Map<string, Row>();
@@ -1359,8 +1376,20 @@ class SpeechTracker {
     );
   }
 
-  /** The user turn a committed user message transcribes, if LiveKit identifies one. */
+  /** Records that LiveKit replied to this message within this user turn. */
+  answers(item: ChatMessage, turn: string): void {
+    if (this.answered.size >= MAX_ROWS) return;
+    this.answered.set(item.id, turn);
+    this.user(item, turn);
+  }
+
+  /**
+   * The user turn a committed user message belongs to: the turn LiveKit replied
+   * to it within, or else the turn whose native start the message carries.
+   */
   turnOf(item: ChatMessage): string | undefined {
+    const answered = this.answered.get(item.id);
+    if (answered) return answered;
     const start = item.metrics?.startedSpeakingAt;
     return start === undefined ? undefined : this.turns.get(start);
   }

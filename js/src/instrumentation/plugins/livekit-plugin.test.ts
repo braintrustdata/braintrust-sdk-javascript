@@ -1084,6 +1084,47 @@ describe("speech", () => {
     expect(unprompted.input).toBeUndefined();
   });
 
+  test("a reply started within its user turn answers that turn, by identity rather than timing", async () => {
+    const root = start("agent_session");
+    const user = start("user_turn", root);
+    tracing.stt({ userTurnSpan: user }, final("Where is my order?", 1_500));
+    const session = { sessionSpan: root };
+    // LiveKit starts the reply (preemptively, or at turn completion) within the
+    // turn's own call, handing it the turn's message, which has no speaking times.
+    const message = {
+      type: "message",
+      id: "item_9c21",
+      role: "user",
+      textContent: "Where is my order?",
+    };
+    const turn = tracing.scope(user, () => {
+      const reply = start("agent_turn", root);
+      tracing.reply({ span: reply, newMessage: message });
+      return reply;
+    });
+    user.end();
+    tracing.conversation(session, message);
+    const model = start("llm_node", turn, {
+      "lk.pii.chat_ctx": JSON.stringify({
+        items: [
+          { type: "message", id: "item_9c21", role: "user", content: [] },
+        ],
+      }),
+    });
+    model.end();
+    turn.end();
+    const { one } = await rows();
+    expect(one("agent_turn").metadata["turn.reply_to"]).toBe(
+      one("user_turn").span_id,
+    );
+    expect(one("user_turn").metadata["contrib.livekit.message_id"]).toBe(
+      "item_9c21",
+    );
+    expect(
+      one("llm_response").metadata.links.map((l: any) => l.context.spanId),
+    ).toEqual([one("stt").span_id]);
+  });
+
   test("a committed user message adds its native ID and speaking times to its turn", async () => {
     const root = start("agent_session");
     const user = start("user_turn", root);

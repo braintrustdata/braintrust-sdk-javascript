@@ -140,6 +140,8 @@ export interface FunctionTool {
 }
 export interface PipelineOptions {
   span: LiveKitSpan;
+  /** The user message this reply answers, when a user turn prompted it. */
+  newMessage?: ChatMessage;
   toolCtx?: { functionTools: Record<string, FunctionTool> };
   modelSettings?: { toolChoice?: unknown };
 }
