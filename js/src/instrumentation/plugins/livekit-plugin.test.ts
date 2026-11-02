@@ -872,6 +872,78 @@ describe("speech", () => {
     );
   });
 
+  test("a user turn's input is the transcript LiveKit reports for it", async () => {
+    const root = start("agent_session");
+    const user = start("user_turn", root);
+    // LiveKit stamps the turn's joined final transcripts when the turn ends.
+    user.setAttributes({
+      "lk.pii.user_transcript": "Hi. Where is order 1042?",
+      "lk.transcript_confidence": 0.98,
+    });
+    user.end();
+    const silent = start("user_turn", root);
+    silent.setAttributes({ "lk.pii.user_transcript": "" });
+    silent.end();
+    const [turn, empty] = (await rows()).named("user_turn");
+    expect(turn).toMatchObject({
+      input: [{ role: "user", content: "Hi. Where is order 1042?" }],
+      metadata: { "contrib.livekit.transcript_confidence": 0.98 },
+    });
+    // The transcript is content, not metadata.
+    expect(JSON.stringify(turn.metadata)).not.toContain("order 1042");
+    expect(empty.input).toBeUndefined();
+  });
+
+  test("a committed user message adds its native ID and speaking times to its turn", async () => {
+    const root = start("agent_session");
+    const user = start("user_turn", root);
+    const session = { sessionSpan: root };
+    tracing.userTurn(
+      { agentSession: session },
+      { userTurnSpan: user, startedSpeakingAt: 1500, stoppedSpeakingAt: 4200 },
+    );
+    user.end();
+    tracing.conversation(session, {
+      type: "message",
+      id: "item_abc",
+      role: "user",
+      textContent: "Hi. Where is order 1042?",
+      metrics: {
+        startedSpeakingAt: 1.5,
+        stoppedSpeakingAt: 4.2,
+        onUserTurnCompletedDelay: 0.002,
+      },
+    });
+    expect((await rows()).one("user_turn").metadata).toMatchObject({
+      "contrib.livekit.message_id": "item_abc",
+      "contrib.livekit.started_speaking_at": 1.5,
+      "contrib.livekit.stopped_speaking_at": 4.2,
+      "contrib.livekit.on_user_turn_completed_delay": 0.002,
+    });
+  });
+
+  test("a user message without LiveKit's turn key decorates no turn", async () => {
+    const root = start("agent_session");
+    const user = start("user_turn", root);
+    const session = { sessionSpan: root };
+    tracing.userTurn(
+      { agentSession: session },
+      { userTurnSpan: user, startedSpeakingAt: 1500, stoppedSpeakingAt: 4200 },
+    );
+    user.end();
+    // A late transcript's turn commits a message without speaking times.
+    tracing.conversation(session, {
+      type: "message",
+      id: "item_late",
+      role: "user",
+      textContent: "and we haven't heard anything.",
+      metrics: { onUserTurnCompletedDelay: 0 },
+    });
+    expect((await rows()).one("user_turn").metadata).not.toHaveProperty(
+      "contrib.livekit.message_id",
+    );
+  });
+
   test("a user message without a native turn links to nothing", async () => {
     const root = start("agent_session");
     const user = start("user_turn", root);
@@ -2217,6 +2289,9 @@ describe("PII", () => {
   test("by default LiveKit allows PII, so content is traced", async () => {
     const { one } = await exchange();
     expect(one("stt").output).toEqual([
+      { role: "user", content: "SECRET order 1042" },
+    ]);
+    expect(one("user_turn").input).toEqual([
       { role: "user", content: "SECRET order 1042" },
     ]);
     expect(one("llm_response").output).toEqual([

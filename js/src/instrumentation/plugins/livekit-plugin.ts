@@ -763,11 +763,12 @@ class LiveKitTracing {
         : undefined;
     if (item.role === "user") {
       // LiveKit commits a user turn with that turn's native start, or in its scope.
-      state.speech.user(
-        item,
+      const turn =
         state.speech.turnOf(item) ??
-          (scoped?.name === "user_turn" ? scoped.id : undefined),
-      );
+        (scoped?.name === "user_turn" ? scoped.id : undefined);
+      state.speech.user(item, turn);
+      if (turn)
+        state.rows.get(turn)?.span.log({ metadata: messageMetadata(item) });
       return;
     }
     if (item.role !== "assistant") return;
@@ -1003,6 +1004,13 @@ function content(name: string, attrs: Record<string, unknown>) {
       ...(output?.length ? { output } : {}),
     };
   }
+  if (name === "user_turn") {
+    // The turn's final transcripts, as LiveKit joins them for the turn.
+    const text = attrs["contrib.livekit.pii.user_transcript"];
+    return typeof text === "string" && text
+      ? { input: [{ role: "user", content: text }] }
+      : {};
+  }
   if (name === "tts_node") {
     const text = attrs["contrib.livekit.pii.input_text"];
     return typeof text === "string"
@@ -1015,6 +1023,26 @@ function content(name: string, attrs: Record<string, unknown>) {
       output: parse(attrs["contrib.livekit.pii.function_tool.output"]),
     };
   return {};
+}
+
+/** LiveKit's record of a committed user turn: its message ID and speaking times. */
+function messageMetadata(item: ChatMessage) {
+  const metrics = item.metrics ?? {};
+  return {
+    "contrib.livekit.message_id": item.id,
+    ...(metrics.startedSpeakingAt !== undefined
+      ? { "contrib.livekit.started_speaking_at": metrics.startedSpeakingAt }
+      : {}),
+    ...(metrics.stoppedSpeakingAt !== undefined
+      ? { "contrib.livekit.stopped_speaking_at": metrics.stoppedSpeakingAt }
+      : {}),
+    ...(metrics.onUserTurnCompletedDelay !== undefined
+      ? {
+          "contrib.livekit.on_user_turn_completed_delay":
+            metrics.onUserTurnCompletedDelay,
+        }
+      : {}),
+  };
 }
 
 // Tools are long-lived, so convert each parameter schema once.

@@ -82,7 +82,12 @@ export interface ChatMessage {
   role?: string;
   textContent?: string;
   interrupted?: boolean;
-  metrics?: { startedSpeakingAt?: number };
+  /** LiveKit's metrics report, in seconds; a user message's turn timing. */
+  metrics?: {
+    startedSpeakingAt?: number;
+    stoppedSpeakingAt?: number;
+    onUserTurnCompletedDelay?: number;
+  };
 }
 
 export interface LiveKitSpan {

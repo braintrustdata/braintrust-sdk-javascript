@@ -519,6 +519,16 @@ for (const variant of variants) {
           expect(span.metadata).not.toHaveProperty("audio.speaker_ids");
           expect(span.metadata?.links).toBeUndefined();
         }
+        // The turn carries LiveKit's transcript for it, and its message's identity.
+        const turn = findAllSpans(events, "user_turn").find((e) => e.row.input);
+        expect(turn?.row.input).toEqual([
+          { role: "user", content: expect.stringMatching(/heard anything/i) },
+        ]);
+        expect(turn?.metadata).toMatchObject({
+          "contrib.livekit.message_id": expect.any(String),
+          "contrib.livekit.started_speaking_at": expect.any(Number),
+          "contrib.livekit.stopped_speaking_at": expect.any(Number),
+        });
         // The answer's context is every transcript of the turn, from both callers.
         expect(contextLinks(findAllSpans(events, "llm_response")[0])).toEqual(
           findAllSpans(events, "stt").map((span) => span.span.id),

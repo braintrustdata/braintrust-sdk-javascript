@@ -256,11 +256,21 @@
               }
             }
           ],
+          "input": [
+            {
+              "content": "Hi. I'm calling with my partner, who has a question about our order. Where is order demo one zero four two? It was supposed to arrive this week. And we haven't heard anything.",
+              "role": "user"
+            }
+          ],
           "metadata": {
             "contrib.livekit.end_of_turn_delay": 0,
+            "contrib.livekit.message_id": "<native:1>",
+            "contrib.livekit.on_user_turn_completed_delay": 0,
             "contrib.livekit.provider_request_ids": [
               "session_fixture_1"
             ],
+            "contrib.livekit.started_speaking_at": 0,
+            "contrib.livekit.stopped_speaking_at": 0,
             "contrib.livekit.stt.events": [
               {
                 "received_at": 0,
@@ -770,7 +780,7 @@
                                 "modelProvider": "<provider-host>"
                               },
                               "outputTokens": 0,
-                              "requestId": "<native:4>",
+                              "requestId": "<native:5>",
                               "streamed": false,
                               "timestamp": 0,
                               "ttfbMs": 0,
@@ -785,7 +795,7 @@
                       ],
                       "metadata": {
                         "contrib.livekit.provider_request_ids": [
-                          "<native:4>"
+                          "<native:5>"
                         ],
                         "contrib.livekit.retry_count": 0,
                         "scenario": "livekit-instrumentation",
@@ -848,7 +858,7 @@
                 },
                 "audio.source_id": "agent-output",
                 "contrib.livekit.message_ids": [
-                  "<native:5>"
+                  "<native:6>"
                 ],
                 "links": [
                   {
@@ -875,22 +885,22 @@
             "contrib.livekit.events": [
               {
                 "attributes": {
-                  "contrib.livekit.generation_id": "<native:3>"
+                  "contrib.livekit.generation_id": "<native:4>"
                 },
                 "name": "generation",
                 "time_unix_ms": 0
               },
               {
                 "attributes": {
-                  "contrib.livekit.generation_id": "<native:2>",
-                  "contrib.livekit.parent_generation_id": "<native:3>"
+                  "contrib.livekit.generation_id": "<native:3>",
+                  "contrib.livekit.parent_generation_id": "<native:4>"
                 },
                 "name": "generation",
                 "time_unix_ms": 0
               }
             ],
             "contrib.livekit.generation_count": 2,
-            "contrib.livekit.generation_id": "<native:2>",
+            "contrib.livekit.generation_id": "<native:3>",
             "contrib.livekit.interrupted": false,
             "contrib.livekit.on_user_turn_completed_delay": 0,
             "contrib.livekit.playback_events": [
@@ -904,7 +914,7 @@
               }
             ],
             "contrib.livekit.speech.queue_wait": 0,
-            "contrib.livekit.speech_id": "<native:1>",
+            "contrib.livekit.speech_id": "<native:2>",
             "contrib.livekit.transcription_delay": 0,
             "gen_ai.agent.name": "default_agent",
             "gen_ai.operation.name": "invoke_agent",
