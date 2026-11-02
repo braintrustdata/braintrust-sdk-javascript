@@ -1,5 +1,5 @@
 import { debugLogger } from "./debug-logger";
-import { Attachment } from "./logger";
+import { Attachment } from "./logger/core";
 import { uint8ArrayToBase64 } from "../util/bytes";
 import { isObject } from "../util/type_util";
 import {
@@ -156,8 +156,11 @@ export function prepareTypedAttachments(value: unknown): unknown {
 export class TypedAttachmentProcessor {
   private uploadFailed = false;
 
-  async process<T extends object>(record: T): Promise<T> {
-    if (this.uploadFailed || !isAutoCaptureAttachmentsEnabled()) return record;
+  async process<T extends object>(
+    record: T,
+    captureAttachments = isAutoCaptureAttachmentsEnabled(),
+  ): Promise<T> {
+    if (this.uploadFailed || !captureAttachments) return record;
     const payload = record as { input?: unknown; output?: unknown };
     const input =
       isObject(payload.input) &&

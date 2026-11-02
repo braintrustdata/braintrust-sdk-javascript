@@ -1,5 +1,5 @@
 import { debugLogger } from "../debug-logger";
-import iso from "../isomorph";
+import iso from "#braintrust-platform";
 import { canUseDiskCache, DiskCache } from "./disk-cache";
 import { LRUCache } from "../lru-cache";
 

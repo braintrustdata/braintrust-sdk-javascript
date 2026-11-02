@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, test } from "vite-plus/test";
 import { LazyValue } from "./util";
 
 test("LazyValue evaluates exactly once", async () => {

@@ -1,5 +1,5 @@
 import { debugLogger } from "../debug-logger";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 const { invoke } = vi.hoisted(() => ({
   invoke: vi.fn(
@@ -13,7 +13,10 @@ const { invoke } = vi.hoisted(() => ({
 }));
 vi.mock("../global-instrumentation-hooks", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../global-instrumentation-hooks")>()),
-  newGlobalInvocationHook: vi.fn(() => ({ invoke })),
+  newGlobalInvocationHook: vi.fn(() => ({
+    invoke,
+    intercept: vi.fn(() => vi.fn()),
+  })),
 }));
 
 import { wrapCursorSDK } from "./cursor-sdk";

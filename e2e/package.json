@@ -9,9 +9,9 @@
     "test:e2e:cassettes": "node ./scripts/run-e2e-tests.mjs --check-cassettes"
   },
   "devDependencies": {
+    "@braintrust/browser": "workspace:^",
     "@braintrust/audio": "workspace:^",
     "@braintrust/deepseek-harness": "workspace:^",
-    "@braintrust/langchain-js": "workspace:^",
     "@braintrust/otel": "workspace:^",
     "@braintrust/seinfeld": "workspace:^",
     "@opentelemetry/api": ">=1.9.0",
@@ -21,7 +21,8 @@
     "braintrust": "workspace:^",
     "tsx": "^4.21.0",
     "typescript": "5.4.4",
-    "vitest": "4.1.11",
-    "zod": "4.3.6"
+    "vitest": "catalog:",
+    "zod": "4.3.6",
+    "vite-plus": "catalog:"
   }
 }

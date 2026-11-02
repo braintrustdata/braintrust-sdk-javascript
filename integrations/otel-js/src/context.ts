@@ -1,11 +1,10 @@
 import {
   ContextManager,
-  BRAINTRUST_CURRENT_SPAN_STORE,
-  _internalIso as iso,
   type ContextParentSpanIds,
   type CurrentSpanStore,
   type Span,
 } from "braintrust";
+import { AsyncLocalStorage } from "node:async_hooks";
 
 import { trace as otelTrace, context as otelContext } from "@opentelemetry/api";
 import { getOtelParentFromSpan } from "./otel";
@@ -91,29 +90,11 @@ export class OtelContextManager extends ContextManager {
     return (otelContext as any)._getContextManager?.()._asyncLocalStorage;
   }
 
-  constructor() {
-    super();
-    // Expose whichever ALS is in use via BRAINTRUST_CURRENT_SPAN_STORE so that
-    // TracingChannel's bindStore can propagate span context. We prefer OTEL's own
-    // ALS (AsyncLocalStorageContextManager._asyncLocalStorage) so that spans
-    // stored by runStores are visible to OTEL's context APIs. If the active OTEL
-    // context manager doesn't expose an ALS (e.g. AsyncHooksContextManager), we
-    // fall back to our own IsoAsyncLocalStorage<Span> and behave like the default
-    // BraintrustContextManager for TracingChannel binding.
-    //
-    // A lazy getter is required because the global OTEL context manager may not be
-    // registered until after this instance is constructed.
-    const self = this;
-    Object.defineProperty(this, BRAINTRUST_CURRENT_SPAN_STORE, {
-      get(): CurrentSpanStore {
-        const otelAls = self._getOtelAls();
-        if (otelAls) return otelAls;
-        if (!self._ownAls) self._ownAls = iso.newAsyncLocalStorage<unknown>();
-        return self._ownAls;
-      },
-      configurable: true,
-      enumerable: false,
-    });
+  getCurrentSpanStore(): CurrentSpanStore {
+    const otelAls = this._getOtelAls();
+    if (otelAls) return otelAls;
+    if (!this._ownAls) this._ownAls = new AsyncLocalStorage<unknown>();
+    return this._ownAls;
   }
 
   wrapSpanForStore(span: Span): unknown {

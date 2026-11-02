@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
-import { expect, it } from "vitest";
+import { expect, it } from "vite-plus/test";
 
 it("links published runs while preserving legacy records and excluding local-only runs", async () => {
   const dir = await mkdtemp(path.join(tmpdir(), "braintrust-e2e-links-"));

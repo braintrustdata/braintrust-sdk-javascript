@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach } from "vite-plus/test";
 import OpenAI from "openai";
 import { wrapOpenAI } from "./oai";
-import { Attachment, initLogger } from "../logger";
+import { Attachment, initLogger } from "../logger/core";
 
 const PROJECT_NAME = "test-project-openai-attachment-processing";
 const TEST_MODEL = "gpt-4o-mini";
@@ -11,7 +11,6 @@ describe("OpenAI attachment processing", () => {
     initLogger({
       projectName: PROJECT_NAME,
       apiKey: "test-key",
-      asyncFlush: false,
     });
   });
 

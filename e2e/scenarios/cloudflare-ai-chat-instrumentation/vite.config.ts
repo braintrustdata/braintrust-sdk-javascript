@@ -25,9 +25,7 @@ export default defineConfig({
     __OPENAI_BASE_URL__: JSON.stringify(process.env.OPENAI_BASE_URL),
   },
   plugins: [
-    ...(mode === "auto"
-      ? [braintrustVitePlugin({ useDiagnosticChannelCompatShim: true })]
-      : []),
+    ...(mode === "auto" ? [braintrustVitePlugin({ browser: true })] : []),
     cloudflare({ configPath: "./wrangler.toml", inspectorPort: 0 }),
   ],
   resolve: {

@@ -1,5 +1,5 @@
-import { test, expect, describe, afterAll, beforeAll } from "vitest";
-import { currentSpan } from "../../logger";
+import { test, expect, describe, afterAll, beforeAll } from "vite-plus/test";
+import { currentSpan } from "../../logger/core";
 import { initNodeTestSuite } from "./suite";
 import {
   setupNodeTestEnv,

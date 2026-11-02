@@ -14,7 +14,7 @@ import {
   openaiBatchesRetrieveTraced,
   openaiFilesCreateTraced,
 } from "braintrust";
-import { configureInstrumentation } from "braintrust/instrumentation";
+import "./configure.mjs";
 import { once } from "node:events";
 import { Writable } from "node:stream";
 
@@ -329,7 +329,7 @@ async function runOpenAIMediaOperations(client, openAIMajorVersion) {
         throw new Error("Expected a WAV speech response");
       }
       let pcm;
-      for (let offset = 12; offset + 8 <= wav.length; ) {
+      for (let offset = 12; offset + 8 <= wav.length;) {
         const length = wav.readUInt32LE(offset + 4);
         if (wav.toString("ascii", offset, offset + 4) === "data") {
           pcm = wav.subarray(offset + 8);
@@ -1045,29 +1045,9 @@ export async function runOpenAIInstrumentationScenario(options) {
         );
         for (const mode of ["images", "images-redacted", "images-disabled"]) {
           await flush();
-          const capture = process.env.BRAINTRUST_CAPTURE_ATTACHMENTS;
-          if (mode === "images-disabled")
-            process.env.BRAINTRUST_CAPTURE_ATTACHMENTS = "false";
-          if (mode === "images-redacted") {
-            configureInstrumentation({
-              spanCustomizers: [
-                {
-                  onSpanExport(data) {
-                    if (
-                      data.span_attributes?.name ===
-                        "openai.decisions.create" &&
-                      data.input?.state
-                    ) {
-                      const content = data.input.state[0].content;
-                      content[1].image_url = "[redacted]";
-                      content.splice(3, 1);
-                    }
-                    return data;
-                  },
-                },
-              ],
-            });
-          }
+          process.env.BRAINTRUST_E2E_REDACT_DECISION_IMAGES = String(
+            mode === "images-redacted",
+          );
           try {
             await runOperation(
               `openai-decisions-${mode}-operation`,
@@ -1119,13 +1099,11 @@ export async function runOpenAIInstrumentationScenario(options) {
                 if (data.answers[0].name !== "same")
                   throw new Error("Decision image answer association changed");
               },
+              { autoCaptureAttachments: mode !== "images-disabled" },
             );
             await flush();
           } finally {
-            configureInstrumentation({ spanCustomizers: [] });
-            if (capture === undefined)
-              delete process.env.BRAINTRUST_CAPTURE_ATTACHMENTS;
-            else process.env.BRAINTRUST_CAPTURE_ATTACHMENTS = capture;
+            delete process.env.BRAINTRUST_E2E_REDACT_DECISION_IMAGES;
           }
         }
       }

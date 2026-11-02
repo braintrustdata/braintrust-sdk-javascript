@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { openRouterChannels } from "../../instrumentation/plugins/openrouter-interceptors";
+import { openRouterChannels } from "../../instrumentation/providers/openrouter-interceptors";
 
 export const openRouterConfigs: InstrumentationConfig[] = [
   {

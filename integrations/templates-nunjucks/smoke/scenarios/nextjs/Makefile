@@ -9,7 +9,7 @@ setup:
 		echo "==> Using BRAINTRUST_TAR: $(BRAINTRUST_TAR)"; \
 	else \
 		echo "==> Building SDK"; \
-		cd ../../../../.. && pnpm exec turbo build --filter=braintrust && mkdir -p js/artifacts && pnpm --filter=braintrust pack --pack-destination js/artifacts; \
+		cd ../../../../.. && pnpm --filter=braintrust run build && mkdir -p js/artifacts && pnpm --filter=braintrust pack --pack-destination js/artifacts; \
 		for f in js/artifacts/braintrust-*.tgz; do \
 			if [ "$$(basename $$f)" != "braintrust-latest.tgz" ] && \
 			   [ "$$(basename $$f)" != "braintrust-otel-latest.tgz" ] && \
@@ -32,7 +32,7 @@ setup:
 	else \
 		echo "==> Building @braintrust/templates-nunjucks-js package"; \
 		cd ../../../../.. && \
-		pnpm exec turbo build --filter=@braintrust/templates-nunjucks-js && \
+		pnpm --filter=@braintrust/templates-nunjucks-js run build && \
 		cd integrations/templates-nunjucks && \
 		pnpm pack --pack-destination ../../js/artifacts && \
 		cd ../../js/artifacts && \

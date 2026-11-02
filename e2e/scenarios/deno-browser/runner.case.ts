@@ -1,6 +1,5 @@
-import * as braintrust from "braintrust/browser";
+import * as braintrust from "@braintrust/browser";
 import {
-  expectBuildType,
   expectEvalWorks,
   expectMustacheTemplate,
   expectNamedExports,
@@ -27,10 +26,8 @@ Deno.test("deno-browser exposes the expected browser runtime surface", () => {
     "initLogger",
     "currentSpan",
     "startSpan",
-    "log",
     "flush",
     "initDataset",
-    "initExperiment",
     "loadPrompt",
     "Prompt",
     "Eval",
@@ -40,24 +37,17 @@ Deno.test("deno-browser exposes the expected browser runtime surface", () => {
     "Attachment",
     "invoke",
     "initFunction",
-    "Project",
-    "PromptBuilder",
-    "IDGenerator",
+    "projects",
     "BraintrustState",
     "login",
-    "_exportsForTestingOnly",
   ]);
-  expectBuildType(braintrust, "browser");
   expectMustacheTemplate(braintrust);
   expectNunjucksTemplateUnavailable(braintrust);
 });
 
-Deno.test(
-  "deno-browser can run Eval locally without sending logs",
-  async () => {
-    await expectEvalWorks(braintrust);
-  },
-);
+Deno.test("deno-browser can run Eval locally without sending logs", async () => {
+  await expectEvalWorks(braintrust);
+});
 
 Deno.test("deno-browser emits trace payloads over HTTP", async () => {
   const logger = createLogger();

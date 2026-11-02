@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, test } from "vite-plus/test";
 import oggOpus from "@audio/encode-opus";
 import { OggOpusDecoder } from "ogg-opus-decoder";
 import type { AudioSegmentMeta } from "./types";
@@ -59,7 +59,7 @@ async function decode(file: Uint8Array) {
 function pages(file: Uint8Array) {
   const view = new DataView(file.buffer, file.byteOffset, file.byteLength);
   const result: { flags: number; granule: number; crcValid: boolean }[] = [];
-  for (let at = 0; at < file.length; ) {
+  for (let at = 0; at < file.length;) {
     expect(new TextDecoder().decode(file.subarray(at, at + 4))).toBe("OggS");
     const count = file[at + 26];
     const size = file

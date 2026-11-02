@@ -1,4 +1,4 @@
-import { currentSpan } from "../../logger";
+import { currentSpan, type Span } from "../../logger/core";
 
 export function logOutputs(outputs: Record<string, unknown>): void {
   currentSpan().log({ output: outputs });
@@ -15,6 +15,6 @@ export function logFeedback(feedback: {
   });
 }
 
-export function getCurrentSpan() {
+export function getCurrentSpan(): Span {
   return currentSpan();
 }

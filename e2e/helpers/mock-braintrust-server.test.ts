@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import { setTimeout } from "node:timers/promises";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { startMockBraintrustServer } from "./mock-braintrust-server";
 
 describe("production forwarding", () => {

@@ -969,7 +969,7 @@
                     {
                       "name": "calculator-local-handler-divide",
                       "children": [],
-                      "error": "division by zero\n\nError: division by zero\n    at traced.name (<repo>/e2e/scenarios/claude-agent-sdk-instrumentation/scenario.impl.mjs:0:0)\n    at <repo>/js/dist/index.mjs:0:0\n    at AsyncLocalStorage.run (node:<internal>:0:0)\n    at BraintrustContextManager.runInContext (<repo>/js/dist/index.mjs:0:0)\n    at withCurrent (<repo>/js/dist/index.mjs:0:0)\n    at <repo>/js/dist/index.mjs:0:0\n    at runCatchFinally (<repo>/js/dist/index.mjs:0:0)\n    at traced (<repo>/js/dist/index.mjs:0:0)\n    at <repo>/e2e/scenarios/claude-agent-sdk-instrumentation/scenario.impl.mjs:0:0\n    at runHandler (<repo>/js/dist/index.mjs:0:0)"
+                      "error": "division by zero\n\nError: division by zero\n    at traced.name (<repo>/e2e/scenarios/claude-agent-sdk-instrumentation/scenario.impl.mjs:0:0)\n    at <repo>/js/dist/node/logger/core.js:0:0\n    at AsyncLocalStorage.run (node:<internal>:0:0)\n    at BraintrustContextManager.runInContext (<repo>/js/dist/node/logger/core.js:0:0)\n    at withCurrent (<repo>/js/dist/node/logger/core.js:0:0)\n    at <repo>/js/dist/node/logger/core.js:0:0\n    at runCatchFinally (<repo>/js/dist/node/util.js:0:0)\n    at traced (<repo>/js/dist/node/logger/core.js:0:0)\n    at <repo>/e2e/scenarios/claude-agent-sdk-instrumentation/scenario.impl.mjs:0:0\n    at runHandler (<repo>/js/dist/node/instrumentation/providers/claude-agent-sdk-local-tool-spans.js:0:0)"
                     }
                   ],
                   "input": {

@@ -1,6 +1,6 @@
-import { beforeAll, describe, test, expect, vi } from "vitest";
+import { beforeAll, describe, test, expect, vi } from "vite-plus/test";
 import { configureNode } from "./node/config";
-import { Prompt } from "./logger";
+import { Prompt } from "./logger/prompts";
 import { type PromptDataType as PromptData } from "./generated_types";
 
 describe("prompt strict mode", () => {
@@ -270,7 +270,7 @@ describe("prompt template_format", () => {
 describe("prompt template_format (unconfigured/browser-like)", () => {
   test("throws unsupported error for nunjucks template_format when not configured", async () => {
     vi.resetModules();
-    const { Prompt: UnconfiguredPrompt } = await import("./logger");
+    const { Prompt: UnconfiguredPrompt } = await import("./logger/prompts");
 
     const prompt = new UnconfiguredPrompt(
       {
@@ -308,7 +308,8 @@ describe("prompt template_format (unconfigured/browser-like)", () => {
   test("throws unsupported error after configureBrowser()", async () => {
     vi.resetModules();
     const { configureBrowser } = await import("./browser/config");
-    const { Prompt: BrowserConfiguredPrompt } = await import("./logger");
+    const { Prompt: BrowserConfiguredPrompt } =
+      await import("./logger/prompts");
 
     configureBrowser();
 

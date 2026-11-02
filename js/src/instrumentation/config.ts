@@ -25,9 +25,7 @@ export interface SpanCustomizer {
 export interface InstrumentationIntegrationsConfig {
   openai?: boolean;
   anthropic?: boolean;
-  vercel?: boolean;
   aisdk?: boolean;
-  google?: boolean;
   googleGenAI?: boolean;
   googleGenerativeAI?: boolean;
   googleADK?: boolean;
@@ -35,9 +33,7 @@ export interface InstrumentationIntegrationsConfig {
   claudeAgentSDK?: boolean;
   cloudflareAIChat?: boolean;
   cloudflareThink?: boolean;
-  cursor?: boolean;
   cursorSDK?: boolean;
-  flue?: boolean;
   mastra?: boolean;
   openAIAgents?: boolean;
   openrouter?: boolean;
@@ -46,8 +42,6 @@ export interface InstrumentationIntegrationsConfig {
   ollama?: boolean;
   cohere?: boolean;
   groq?: boolean;
-  bedrock?: boolean;
-  awsBedrock?: boolean;
   awsBedrockRuntime?: boolean;
   genkit?: boolean;
   gitHubCopilot?: boolean;
@@ -119,7 +113,8 @@ export interface AudioEncodingConfig {
   container?: { name: "ogg" };
 }
 
-export const DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES = 4 * 1024 * 1024;
+export const DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES: number =
+  4 * 1024 * 1024;
 
 export interface InstrumentationConfig {
   /**
@@ -176,24 +171,22 @@ const envIntegrationAliases: Record<
   aisdk: "aisdk",
   "ai-sdk": "aisdk",
   "vercel-ai": "aisdk",
-  vercel: "vercel",
+  vercel: "aisdk",
   claudeagentsdk: "claudeAgentSDK",
   "claude-agent-sdk": "claudeAgentSDK",
   cloudflareaichat: "cloudflareAIChat",
   "cloudflare-ai-chat": "cloudflareAIChat",
   "@cloudflare/ai-chat": "cloudflareAIChat",
   cloudflarethink: "cloudflareThink",
-  cursor: "cursor",
+  cursor: "cursorSDK",
   "cursor-sdk": "cursorSDK",
   cursorsdk: "cursorSDK",
-  flue: "flue",
-  "flue-runtime": "flue",
   mastra: "mastra",
   "openai-agents": "openAIAgents",
   openaiagents: "openAIAgents",
   "openai-agents-core": "openAIAgents",
   openaiagentscore: "openAIAgents",
-  google: "google",
+  google: "googleGenAI",
   "google-generative-ai": "googleGenerativeAI",
   googlegenerativeai: "googleGenerativeAI",
   "google-genai": "googleGenAI",
@@ -211,9 +204,9 @@ const envIntegrationAliases: Record<
   cohere: "cohere",
   groq: "groq",
   "groq-sdk": "groq",
-  bedrock: "bedrock",
-  "aws-bedrock": "awsBedrock",
-  awsbedrock: "awsBedrock",
+  bedrock: "awsBedrockRuntime",
+  "aws-bedrock": "awsBedrockRuntime",
+  awsbedrock: "awsBedrockRuntime",
   "aws-bedrock-runtime": "awsBedrockRuntime",
   awsbedrockruntime: "awsBedrockRuntime",
   "@aws-sdk/client-bedrock-runtime": "awsBedrockRuntime",
@@ -250,58 +243,6 @@ const envIntegrationAliases: Record<
   mcphandler: "mcpHandler",
   "mcp-handler": "mcpHandler",
 };
-
-export function getDefaultInstrumentationIntegrations(): Record<
-  keyof InstrumentationIntegrationsConfig,
-  boolean
-> {
-  return {
-    openai: true,
-    openaiCodexSDK: true,
-    anthropic: true,
-    vercel: true,
-    aisdk: true,
-    google: true,
-    googleGenAI: true,
-    googleGenerativeAI: true,
-    googleADK: true,
-    huggingface: true,
-    claudeAgentSDK: true,
-    cloudflareAIChat: true,
-    cloudflareThink: true,
-    cursor: true,
-    cursorSDK: true,
-    flue: true,
-    mastra: true,
-    openAIAgents: true,
-    openrouter: true,
-    openrouterAgent: true,
-    mistral: true,
-    ollama: true,
-    cohere: true,
-    groq: true,
-    bedrock: true,
-    awsBedrock: true,
-    awsBedrockRuntime: true,
-    genkit: true,
-    gitHubCopilot: true,
-    langchain: true,
-    langgraph: true,
-    langgraphSDK: true,
-    langsmith: true,
-    voyageai: true,
-    typesafe: true,
-    workersAI: true,
-    elevenlabs: true,
-    livekit: true,
-    mcp: true,
-    fastmcp: true,
-    mcpHandler: true,
-    piCodingAgent: true,
-    strandsAgentSDK: true,
-    cloudflareAgents: true,
-  };
-}
 
 export function readDisabledInstrumentationEnvConfig(
   disabledList: string | undefined,

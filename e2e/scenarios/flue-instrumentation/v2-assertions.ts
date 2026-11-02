@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, test } from "vitest";
+import { beforeAll, describe, expect, test } from "vite-plus/test";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import {
@@ -34,7 +34,7 @@ export function defineFlueV2InstrumentationAssertions(options: {
     `${options.snapshotName}.span-tree.json`,
   );
 
-  describe.sequential("explicit native instrumentation", () => {
+  describe("explicit native instrumentation", { concurrent: false }, () => {
     let events: CapturedLogEvent[] = [];
     let testRunId: string;
 

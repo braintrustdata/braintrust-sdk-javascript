@@ -1,9 +1,9 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test } from "vite-plus/test";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import iso from "../isomorph";
+import iso from "#braintrust-platform";
 import { configureNode } from "./config";
 
 describe("configureNode .env.braintrust API key lookup", () => {

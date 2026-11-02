@@ -22,6 +22,7 @@ export interface OpenAIWithResponse<T> {
 export interface OpenAIChatCreateParams {
   messages: unknown;
   stream?: boolean | null;
+  audio?: { format: string; [key: string]: unknown } | null;
   [key: string]: unknown;
 }
 

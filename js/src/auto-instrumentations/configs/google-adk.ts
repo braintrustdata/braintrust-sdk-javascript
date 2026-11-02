@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { googleADKChannels } from "../../instrumentation/plugins/google-adk-interceptors";
+import { googleADKChannels } from "../../instrumentation/providers/google-adk-interceptors";
 
 const googleADKVersionRange = ">=0.1.0";
 const googleADKBundledIndexV06VersionRange = ">=0.6.1 <0.7.0";

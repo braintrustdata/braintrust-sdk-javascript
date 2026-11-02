@@ -3,29 +3,25 @@
   "version": "1.0.1",
   "description": "SDK for integrating Braintrust with Temporal",
   "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "module": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "default": "./dist/index.js"
     },
     "./workflow-interceptors": {
       "types": "./dist/workflow-interceptors.d.ts",
-      "import": "./dist/workflow-interceptors.mjs",
-      "module": "./dist/workflow-interceptors.mjs",
-      "require": "./dist/workflow-interceptors.js"
+      "default": "./dist/workflow-interceptors.js"
     }
   },
   "scripts": {
-    "build": "tsup",
+    "build": "vp run compile",
     "check:typings": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
-    "watch": "tsup --watch",
+    "watch": "vp pack --watch",
     "clean": "rm -r dist/*",
-    "test": "vitest run",
+    "test": "vp test run",
     "yalc:publish": "yalc publish"
   },
   "author": "Braintrust Data Inc.",
@@ -38,9 +34,9 @@
     "@temporalio/workflow": "^1.14.1",
     "@types/node": "^22.15.21",
     "braintrust": "workspace:*",
-    "tsup": "^8.5.0",
     "typescript": "5.5.4",
-    "vitest": "4.1.11"
+    "vitest": "catalog:",
+    "vite-plus": "catalog:"
   },
   "peerDependencies": {
     "@temporalio/activity": ">=1.11.0",
@@ -80,5 +76,10 @@
     "access": "public",
     "registry": "https://registry.npmjs.org/",
     "provenance": true
-  }
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "sideEffects": false
 }

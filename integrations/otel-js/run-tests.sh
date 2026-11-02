@@ -2,4 +2,4 @@
 set -e
 
 pnpm install --ignore-workspace
-pnpm exec vitest run
+pnpm exec vp test run

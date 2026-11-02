@@ -7,7 +7,7 @@ import {
   beforeEach,
   afterEach,
   vi,
-} from "vitest";
+} from "vite-plus/test";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import {
@@ -22,7 +22,7 @@ import {
 } from "@opentelemetry/sdk-trace-base";
 import { BraintrustSpanProcessor } from "./otel";
 import { createTracerProvider } from "../tests/utils";
-import { _exportsForTestingOnly } from "braintrust";
+import { _exportsForTestingOnly } from "../../../js/src/logger/testing";
 
 type OtlpTraceRequest = {
   resourceSpans?: Array<{

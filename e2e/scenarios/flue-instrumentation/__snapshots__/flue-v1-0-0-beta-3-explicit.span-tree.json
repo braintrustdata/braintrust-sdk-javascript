@@ -75,7 +75,7 @@
               "input": {
                 "name": "e2e-flue-skill"
               },
-              "output": "Run the skill named \"e2e-flue-skill\".\n\n<skill_instructions>\nReturn the marker from the provided args exactly once. Output no other text.\n</skill_instructions>\n\nSupporting skill resources are available relative to this workspace skill directory but are not loaded into context unless needed:\n<skill_resources>\n- Base directory: <repo>/e2e/scenarios/flue-v1/.agents/skills/e2e-flue-skill\n- Resolve relative resource paths from this directory and read only the files you need.\n</skill_resources>",
+              "output": "Run the skill named \"e2e-flue-skill\".\n\n<skill_instructions>\nReturn the marker from the provided args exactly once. Output no other text.\n</skill_instructions>\n\nSupporting skill resources are available relative to this workspace skill directory but are not loaded into context unless needed:\n<skill_resources>\n- Base directory: <repo>/e2e/scenarios/flue-instrumentation/.agents/skills/e2e-flue-skill\n- Resolve relative resource paths from this directory and read only the files you need.\n</skill_resources>",
               "metadata": {
                 "flue.session": "skill",
                 "flue.tool_name": "activate_skill",
@@ -119,7 +119,7 @@
                 {
                   "content": [
                     {
-                      "text": "Run the skill named \"e2e-flue-skill\".\n\n<skill_instructions>\nReturn the marker from the provided args exactly once. Output no other text.\n</skill_instructions>\n\nSupporting skill resources are available relative to this workspace skill directory but are not loaded into context unless needed:\n<skill_resources>\n- Base directory: <repo>/e2e/scenarios/flue-v1/.agents/skills/e2e-flue-skill\n- Resolve relative resource paths from this directory and read only the files you need.\n</skill_resources>",
+                      "text": "Run the skill named \"e2e-flue-skill\".\n\n<skill_instructions>\nReturn the marker from the provided args exactly once. Output no other text.\n</skill_instructions>\n\nSupporting skill resources are available relative to this workspace skill directory but are not loaded into context unless needed:\n<skill_resources>\n- Base directory: <repo>/e2e/scenarios/flue-instrumentation/.agents/skills/e2e-flue-skill\n- Resolve relative resource paths from this directory and read only the files you need.\n</skill_resources>",
                       "type": "text"
                     }
                   ],

@@ -1,6 +1,6 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { describe, test } from "vitest";
+import { describe, test } from "vite-plus/test";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,

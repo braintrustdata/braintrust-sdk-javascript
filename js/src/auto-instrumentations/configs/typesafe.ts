@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { typeSafeChannels } from "../../instrumentation/plugins/typesafe-interceptors";
+import { typeSafeChannels } from "../../instrumentation/providers/typesafe-interceptors";
 
 export const typeSafeConfigs: InstrumentationConfig[] = [
   "dist/index.mjs",

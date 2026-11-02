@@ -4,9 +4,9 @@
  */
 
 import { assertEqual } from "../helpers/assertions";
-import { register } from "../helpers/register";
+import { register, type TestFn } from "../helpers/register";
 
-export const testMustacheTemplate = register(
+export const testMustacheTemplate: TestFn = register(
   "testMustacheTemplate",
   async (module) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -50,7 +50,7 @@ export const testMustacheTemplate = register(
   },
 );
 
-export const testNunjucksTemplate = register(
+export const testNunjucksTemplate: TestFn = register(
   "testNunjucksTemplate",
   async (module) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

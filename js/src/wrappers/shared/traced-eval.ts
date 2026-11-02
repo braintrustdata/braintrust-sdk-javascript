@@ -1,4 +1,5 @@
-import { logError, type Experiment, type Span } from "../../logger";
+import { logError, type Span } from "../../logger/core";
+import { type Experiment } from "../../logger/experiments";
 import { SpanTypeAttribute } from "../../../util/index";
 import { runScorers } from "./scorers";
 import type { ScorerFunction } from "./types";

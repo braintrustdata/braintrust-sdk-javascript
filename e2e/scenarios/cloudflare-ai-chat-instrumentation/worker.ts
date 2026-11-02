@@ -1,3 +1,4 @@
+// Bundler transforms and runtime consumers are enabled independently.
 import * as aiNamespace from "ai";
 import * as aiChatNamespace from "@cloudflare/ai-chat";
 import { createOpenAI } from "@ai-sdk/openai";
@@ -12,6 +13,8 @@ declare const __BRAINTRUST_TEST_RUN_ID__: string;
 declare const __CLOUDFLARE_AI_CHAT_MODE__: "auto" | "manual";
 declare const __OPENAI_API_KEY__: string;
 declare const __OPENAI_BASE_URL__: string;
+
+if (__CLOUDFLARE_AI_CHAT_MODE__ === "auto") await import("braintrust/auto");
 
 const SCENARIO_NAME = "cloudflare-ai-chat-instrumentation";
 const SUCCESS_ROOT_NAME = "cloudflare-ai-chat-success-root";

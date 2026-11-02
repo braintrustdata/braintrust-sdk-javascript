@@ -1,7 +1,14 @@
 import { transform } from "esbuild";
 import { runInNewContext } from "node:vm";
 import { AsyncLocalStorage } from "node:async_hooks";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vite-plus/test";
 import { cursorSDKConfigs } from "../../src/auto-instrumentations/configs/cursor-sdk";
 import { InstrumentationMatcher } from "../../src/auto-instrumentations/orchestrion-js";
 import {
@@ -10,11 +17,11 @@ import {
 } from "../../src/global-instrumentation-hooks";
 
 const { spans } = vi.hoisted(() => ({ spans: [] as any[] }));
-vi.mock("../../src/isomorph", () => ({
+vi.mock("#braintrust-platform", () => ({
   default: { newAsyncLocalStorage: <T>() => new AsyncLocalStorage<T>() },
 }));
-vi.mock("../../src/logger", () => ({
-  startSpan: (args: any) => {
+vi.mock("../../src/logger/core", () => ({
+  _internalStartSpan: (args: any) => {
     const span = {
       ...args,
       log: vi.fn(),
@@ -26,7 +33,7 @@ vi.mock("../../src/logger", () => ({
   },
   withCurrent: (_span: unknown, call: () => unknown) => call(),
 }));
-import { CursorSDKPlugin } from "../../src/instrumentation/plugins/cursor-sdk-plugin";
+import { registerCursorSDKInstrumentation } from "../../src/instrumentation/providers/cursor-sdk-instrumentation";
 
 // Cursor ships synchronous methods returning promises and minified class names.
 const source = `
@@ -43,13 +50,13 @@ const source = `
 
 describe("Cursor SDK automatic transforms", () => {
   const remove: Array<() => void> = [];
-  const plugin = new CursorSDKPlugin();
+
   beforeEach(() => {
     spans.length = 0;
-    plugin.enable();
+    registerCursorSDKInstrumentation();
   });
   afterEach(() => {
-    plugin.disable();
+    (globalThis as any)[GLOBAL_INSTRUMENTATION_HOOKS_KEY]?.clear();
     for (const unsubscribe of remove.splice(0)) unsubscribe();
   });
   it.each(["esm", "cjs"] as const)(
@@ -129,13 +136,6 @@ describe("Cursor SDK automatic transforms", () => {
       expect(calls.every((call) => call.receiver === Agent)).toBe(true);
       expect(calls[0].args[0]).toBe(options);
       for (const unsubscribe of remove.splice(0)) unsubscribe();
-      plugin.disable();
-      expect(await Agent.prompt("disabled", options)).toEqual({
-        result: "disabled",
-        options,
-      });
-      expect(calls).toHaveLength(3);
-      expect(spans).toHaveLength(1);
     },
   );
 });

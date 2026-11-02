@@ -1,4 +1,4 @@
-import type { Logger, Span, StartSpanArgs } from "../logger";
+import type { Logger, Span, StartSpanArgs } from "../logger/core";
 import type { ExperimentLogPartialArgs } from "../util";
 
 export type LangChainSerialized = {
@@ -27,10 +27,10 @@ export type LangChainCallbackManagerConfigureArgs = [
   options?: unknown,
 ];
 
-export type LangChainCallbackHandlerOptions<IsAsyncFlush extends boolean> = {
+export type LangChainCallbackHandlerOptions = {
   debug: boolean;
   excludeMetadataProps: RegExp;
-  logger?: Logger<IsAsyncFlush> | Span;
+  logger?: Logger | Span;
   parent?: Span | (() => Span);
 };
 

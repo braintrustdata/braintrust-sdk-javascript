@@ -1,4 +1,4 @@
-import { describe } from "vitest";
+import { describe } from "vite-plus/test";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -48,15 +48,19 @@ const googleGenAIScenarios = await Promise.all(
 
 describe.concurrent("variants", () => {
   for (const scenario of googleGenAIScenarios) {
-    describe.sequential(
+    describe(
       `${scenario.snapshotName}: google genai sdk ${scenario.version}`,
+      { concurrent: false },
       () => {
         defineGoogleGenAIInstrumentationAssertions({
           name: "wrapped instrumentation",
           runScenario: async ({ runScenarioDir }) => {
             await runScenarioDir({
               entry: scenario.wrapperEntry,
-              env: { GOOGLE_GENAI_PACKAGE_NAME: scenario.dependencyName },
+              env: {
+                GOOGLE_GENAI_PACKAGE_NAME: scenario.dependencyName,
+                BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "true",
+              },
               runContext: {
                 variantKey: scenario.snapshotName,
                 originalScenarioDir,
@@ -75,7 +79,10 @@ describe.concurrent("variants", () => {
           runScenario: async ({ runNodeScenarioDir }) => {
             await runNodeScenarioDir({
               entry: scenario.autoEntry,
-              env: { GOOGLE_GENAI_PACKAGE_NAME: scenario.dependencyName },
+              env: {
+                GOOGLE_GENAI_PACKAGE_NAME: scenario.dependencyName,
+                BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "true",
+              },
               nodeArgs: ["--import", "braintrust/hook.mjs"],
               runContext: {
                 variantKey: scenario.snapshotName,

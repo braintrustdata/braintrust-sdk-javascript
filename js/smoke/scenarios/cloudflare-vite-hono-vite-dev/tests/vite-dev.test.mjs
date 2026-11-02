@@ -9,7 +9,7 @@
 
 import { spawn, execSync } from "node:child_process";
 import { rmSync } from "node:fs";
-import { displayTestResults } from "../../../shared/dist/index.mjs";
+import { displayTestResults } from "../../../shared/dist/index.js";
 
 const PORT = 5173;
 const MAX_RETRIES = 40;

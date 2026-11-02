@@ -1,7 +1,4 @@
-import {
-  type GitMetadataSettingsType as GitMetadataSettings,
-  type RepoInfoType as RepoInfo,
-} from "./generated_types";
+import type { GitMetadataSettings, RepoInfo } from "./sdk-types";
 import { debugLogger } from "./debug-logger";
 import { runGitCommand } from "./git-command";
 
@@ -108,7 +105,7 @@ async function getBaseBranchAncestor(remote: string | undefined = undefined) {
 export async function getPastNAncestors(
   n: number = 1000,
   remote: string | undefined = undefined,
-) {
+): Promise<string[]> {
   const repoPath = await currentRepoPath();
   if (!repoPath) {
     return [];
@@ -153,7 +150,9 @@ function truncateToByteLimit(s: string, byteLimit: number = 65536): string {
   return new TextDecoder().decode(truncated);
 }
 
-export async function getRepoInfo(settings?: GitMetadataSettings) {
+export async function getRepoInfo(
+  settings?: GitMetadataSettings,
+): Promise<RepoInfo | undefined> {
   if (!settings || settings.collect === "none") {
     return undefined;
   }
@@ -171,7 +170,7 @@ export async function getRepoInfo(settings?: GitMetadataSettings) {
   return sanitized;
 }
 
-export async function currentRepoPath(): Promise<string | undefined> {
+async function currentRepoPath(): Promise<string | undefined> {
   return await attempt(async () =>
     (await runGitCommand(["rev-parse", "--show-toplevel"])).trim(),
   );

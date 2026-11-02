@@ -1,4 +1,12 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { resetInstrumentationForTest } from "./instrumentation/test-utils/reset";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vite-plus/test";
 
 type EdgeEntrypoint = "./edge-light/index" | "./workerd/index";
 const braintrustStateSymbol = Symbol.for("braintrust-state");
@@ -23,6 +31,7 @@ describe.each([
       vi.restoreAllMocks();
 
       Reflect.deleteProperty(globalThis, braintrustStateSymbol);
+      resetInstrumentationForTest();
 
       if (originalAsyncLocalStorageDescriptor) {
         Object.defineProperty(
@@ -66,20 +75,22 @@ describe.each([
         get: () => getBuiltinModule,
       });
 
+      const platform = await import(entrypoint.replace("/index", "/config"));
+      (platform.configureWorkerd ?? platform.configureEdgeLight)();
       const braintrust = await import(entrypoint);
+      const { _exportsForTestingOnly } = await import("./logger/testing");
 
-      braintrust._exportsForTestingOnly.setInitialTestState();
-      await braintrust._exportsForTestingOnly.simulateLoginForTests();
+      _exportsForTestingOnly.setInitialTestState();
+      await _exportsForTestingOnly.simulateLoginForTests();
 
-      const backgroundLogger =
-        braintrust._exportsForTestingOnly.useTestBackgroundLogger();
+      const backgroundLogger = _exportsForTestingOnly.useTestBackgroundLogger();
       const logger = braintrust.initLogger({
         projectId: "test-project-id",
         projectName,
       });
 
       const root = logger.startSpan({ name: "root", type: "task" });
-      const parent = await root.export();
+      const parent = braintrust.extractTraceContextFromHeaders(root.inject())!;
 
       const result = await braintrust.traced(
         async (span: unknown) => {
@@ -112,13 +123,15 @@ describe.each([
     });
 
     test("wrapAISDK logs spans in edge runtimes", async () => {
+      const platform = await import(entrypoint.replace("/index", "/config"));
+      (platform.configureWorkerd ?? platform.configureEdgeLight)();
       const braintrust = await import(entrypoint);
+      const { _exportsForTestingOnly } = await import("./logger/testing");
 
-      braintrust._exportsForTestingOnly.setInitialTestState();
-      await braintrust._exportsForTestingOnly.simulateLoginForTests();
+      _exportsForTestingOnly.setInitialTestState();
+      await _exportsForTestingOnly.simulateLoginForTests();
 
-      const backgroundLogger =
-        braintrust._exportsForTestingOnly.useTestBackgroundLogger();
+      const backgroundLogger = _exportsForTestingOnly.useTestBackgroundLogger();
       braintrust.initLogger({
         projectId: "test-project-id",
         projectName,

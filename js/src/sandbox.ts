@@ -1,13 +1,13 @@
 import { z } from "zod/v3";
 import { slugify } from "../util/string_util";
-import { type IfExistsType } from "./generated_types";
-import { type BraintrustState, _internalGetGlobalState } from "./logger";
+import type { IfExists } from "./sdk-types";
+import { type BraintrustState, _internalGetGlobalState } from "./logger/core";
 
 /**
  * Configuration for a sandbox runtime.
  * @internal
  */
-export interface SandboxConfig {
+interface SandboxConfig {
   /** The sandbox provider. Currently only "modal" is supported. */
   provider: "modal";
   /** Reference to the sandbox snapshot. */
@@ -18,7 +18,7 @@ export interface SandboxConfig {
  * Options for registering a sandbox function.
  * @internal
  */
-export interface RegisterSandboxOptions {
+interface RegisterSandboxOptions {
   /** Group name for the sandbox functions. */
   name: string;
   /** Name of the project to register the sandbox in. */
@@ -32,7 +32,7 @@ export interface RegisterSandboxOptions {
   /** Optional metadata. */
   metadata?: Record<string, unknown>;
   /** What to do if function already exists. Defaults to "replace". */
-  ifExists?: IfExistsType;
+  ifExists?: IfExists;
   /** Braintrust API key. Uses BRAINTRUST_API_KEY env var if not provided. */
   apiKey?: string;
   /** Braintrust app URL. Uses default if not provided. */
@@ -47,7 +47,7 @@ export interface RegisterSandboxOptions {
  * Result of registering a sandbox.
  * @internal
  */
-export interface RegisterSandboxResult {
+interface RegisterSandboxResult {
   /** Project ID the sandbox is registered in. */
   projectId: string;
   /** Registered eval functions discovered from this sandbox. */

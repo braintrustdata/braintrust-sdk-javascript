@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, test } from "vitest";
+import { beforeAll, describe, expect, test } from "vite-plus/test";
 import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import type {
   CapturedLogEvent,
@@ -25,13 +25,6 @@ const scenarioDir = await prepareScenarioDir({
 });
 const eveScenarios = await Promise.all(
   [
-    {
-      dependencyName: "eve-v0",
-      label: "v0 pinned",
-      provider: false,
-      tasks: false,
-      variantKey: "eve-v0",
-    },
     {
       dependencyName: "eve-v0-provider",
       label: "v0 provider minimum",
@@ -78,7 +71,7 @@ const eveScenarios = await Promise.all(
 const TIMEOUT_MS =
   process.env.BRAINTRUST_E2E_CASSETTE_MODE === "record" ? 300_000 : 120_000;
 
-describe.sequential("eve instrumentation variants", () => {
+describe("eve instrumentation variants", { concurrent: false }, () => {
   for (const scenario of eveScenarios) {
     describe(`${scenario.label} (${scenario.version})`, () => {
       // Eve 0.76 moved built-in tools into the eve namespace.
@@ -207,15 +200,9 @@ describe.sequential("eve instrumentation variants", () => {
           },
         ]);
         expect(root?.output).toContain("Final answer from read");
-        if (scenario.provider) {
-          expect(root?.metrics).not.toHaveProperty("completion_tokens");
-          expect(root?.metrics).not.toHaveProperty("prompt_tokens");
-          expect(root?.metrics).not.toHaveProperty("tokens");
-        } else {
-          expect(root?.metrics?.completion_tokens).toEqual(expect.any(Number));
-          expect(root?.metrics?.prompt_tokens).toEqual(expect.any(Number));
-          expect(root?.metrics?.tokens).toEqual(expect.any(Number));
-        }
+        expect(root?.metrics?.completion_tokens).toEqual(expect.any(Number));
+        expect(root?.metrics?.prompt_tokens).toEqual(expect.any(Number));
+        expect(root?.metrics?.tokens).toEqual(expect.any(Number));
 
         // Eve 0.70+ runs the researcher as a task, so the parent waits for its
         // result in an extra step before answering.

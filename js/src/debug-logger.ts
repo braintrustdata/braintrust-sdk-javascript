@@ -1,4 +1,4 @@
-import iso from "./isomorph";
+import iso from "#braintrust-platform";
 import { sdkConsole } from "./logs/console";
 import { setGlobalHookErrorReporter } from "./global-instrumentation-hooks";
 
@@ -185,13 +185,17 @@ function createDebugLogger(state?: DebugLoggerStateLike): DebugLoggerMethods {
   };
 }
 
-export const debugLogger = {
+export const debugLogger: DebugLoggerMethods & {
+  forState(state: DebugLoggerStateLike | undefined): DebugLoggerMethods;
+} = {
   ...createDebugLogger(),
   forState(state: DebugLoggerStateLike | undefined): DebugLoggerMethods {
     return createDebugLogger(state);
   },
 };
 
-setGlobalHookErrorReporter((error) => {
-  debugLogger.error("Global instrumentation hook error:", error);
-});
+export function installGlobalHookErrorReporter(): void {
+  setGlobalHookErrorReporter((error) => {
+    debugLogger.error("Global instrumentation hook error:", error);
+  });
+}

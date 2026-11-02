@@ -57,10 +57,10 @@ setup:
 		echo "==> Using provided BRAINTRUST_TAR: $(BRAINTRUST_TAR)"; \
 	else \
 		echo "==> Building SDK and creating tarball"; \
-		cd ../../.. && pnpm exec turbo build --filter=braintrust && pnpm --filter=braintrust pack --pack-destination sdk/js/artifacts; \
-		for f in sdk/js/artifacts/braintrust-*.tgz; do \
+		cd ../.. && pnpm --filter=braintrust run build && pnpm --filter=braintrust pack --pack-destination js/artifacts; \
+		for f in js/artifacts/braintrust-*.tgz; do \
 			if [ "$$(basename $$f)" != "braintrust-latest.tgz" ] && [ "$$(basename $$f)" != "braintrust-otel-latest.tgz" ] && [ "$$(basename $$f)" != "braintrust-browser-latest.tgz" ]; then \
-				cp "$$f" sdk/js/artifacts/braintrust-latest.tgz; \
+				cp "$$f" js/artifacts/braintrust-latest.tgz; \
 				break; \
 			fi; \
 		done; \
@@ -71,10 +71,10 @@ setup:
 		echo "==> Using provided BRAINTRUST_BROWSER_TAR: $(BRAINTRUST_BROWSER_TAR)"; \
 	else \
 		echo "==> Building browser package and creating tarball"; \
-		cd ../../.. && pnpm exec turbo build --filter=@braintrust/browser && pnpm --filter=@braintrust/browser pack --pack-destination sdk/js/artifacts; \
-		for f in sdk/js/artifacts/braintrust-browser-*.tgz; do \
+		cd ../.. && pnpm --filter=@braintrust/browser run build && pnpm --filter=@braintrust/browser pack --pack-destination js/artifacts; \
+		for f in js/artifacts/braintrust-browser-*.tgz; do \
 			if [ "$$(basename $$f)" != "braintrust-browser-latest.tgz" ]; then \
-				cp "$$f" sdk/js/artifacts/braintrust-browser-latest.tgz; \
+				cp "$$f" js/artifacts/braintrust-browser-latest.tgz; \
 				break; \
 			fi; \
 		done; \

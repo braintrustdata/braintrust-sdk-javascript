@@ -1,5 +1,6 @@
+import { registerInstrumentation } from "../instrumentation/registrations/googleADK";
 import { debugLogger } from "../debug-logger";
-import { googleADKChannels } from "../instrumentation/plugins/google-adk-interceptors";
+import { googleADKChannels } from "../instrumentation/providers/google-adk-interceptors";
 import type {
   GoogleADKBaseAgent,
   GoogleADKBaseTool,
@@ -41,6 +42,7 @@ import type {
  * ```
  */
 export function wrapGoogleADK<T extends Record<string, any>>(adkModule: T): T {
+  registerInstrumentation();
   if (!adkModule || typeof adkModule !== "object") {
     debugLogger.notice.warn("Invalid Google ADK module. Not wrapping.");
     return adkModule;

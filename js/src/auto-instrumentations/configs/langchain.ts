@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { langChainChannels } from "../../instrumentation/plugins/langchain-interceptors";
+import { langChainChannels } from "../../instrumentation/providers/langchain-interceptors";
 
 const langChainCoreVersionRange = ">=0.3.42";
 const langChainCallbackManagerFilePath = "dist/callbacks/manager.js";

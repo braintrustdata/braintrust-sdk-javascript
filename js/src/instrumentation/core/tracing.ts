@@ -1,6 +1,6 @@
 import { debugLogger } from "../../debug-logger";
-import type { Span } from "../../logger";
-import { startSpan, withCurrent } from "../../logger";
+import type { Span } from "../../logger/core";
+import { startSpan, withCurrent } from "../../logger/core";
 import {
   withSpanInstrumentationName,
   type SpanInstrumentationName,
@@ -780,13 +780,4 @@ export function traceSyncStreamCall<TChannel extends AnyAsyncChannel>(
     runInstrumentation(() => complete({ ...event, result } as EndOf<TChannel>)),
   );
   return result;
-}
-export function unsubscribeAll(
-  unsubscribers: Array<() => void>,
-): Array<() => void> {
-  for (const unsubscribe of unsubscribers) {
-    unsubscribe();
-  }
-
-  return [];
 }

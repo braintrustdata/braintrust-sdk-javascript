@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { CassetteFile } from "../cassette";
 
 const bodyPayloadSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("empty") }),
@@ -53,7 +54,7 @@ const cassetteMetaSchema = z
   })
   .passthrough();
 
-export const cassetteSchema = z.object({
+export const cassetteSchema: z.ZodType<CassetteFile> = z.object({
   version: z.any(), // TODO(luca): Remove after cassettes no longer have this field
   meta: cassetteMetaSchema.optional(),
   entries: z.array(cassetteEntrySchema),

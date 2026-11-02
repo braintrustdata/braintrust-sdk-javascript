@@ -1,4 +1,4 @@
-import { describe, test, expect } from "vitest";
+import { describe, test, expect } from "vite-plus/test";
 import { mergeRowBatch, batchItems } from "./merge_row_batch";
 import { IS_MERGE_FIELD } from "./db_fields";
 

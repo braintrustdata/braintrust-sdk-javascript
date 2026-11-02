@@ -1,5 +1,6 @@
+import { registerInstrumentation } from "../instrumentation/registrations/voyageai";
 import { debugLogger } from "../debug-logger";
-import { voyageAIChannels } from "../instrumentation/plugins/voyageai-interceptors";
+import { voyageAIChannels } from "../instrumentation/providers/voyageai-interceptors";
 import type {
   VoyageAIClient,
   VoyageAIContextualizedEmbedRequest,
@@ -13,6 +14,7 @@ import type {
  * instrumentation hooks.
  */
 export function wrapVoyageAI<T>(client: T): T {
+  registerInstrumentation();
   if (!isSupportedVoyageAIClient(client)) {
     debugLogger.notice.warn("Unsupported Voyage AI library. Not wrapping.");
     return client;

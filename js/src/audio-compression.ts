@@ -1,7 +1,7 @@
 import type { AudioMiddlewareStack } from "./audio-middleware";
 import { debugLogger } from "./debug-logger";
 import type { AudioEncodingConfig } from "./instrumentation/config";
-import iso from "./isomorph";
+import iso from "#braintrust-platform";
 import { isObject } from "../util";
 
 const AUDIO_PACKAGE = "@braintrust/audio";

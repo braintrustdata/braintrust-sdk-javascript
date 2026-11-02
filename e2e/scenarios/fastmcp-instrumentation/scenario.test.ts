@@ -1,4 +1,4 @@
-import { describe, test } from "vitest";
+import { describe, test } from "vite-plus/test";
 import { describeVariant } from "../../helpers/describe-variant";
 import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import {

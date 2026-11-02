@@ -1,6 +1,7 @@
-import { describe, expect, test, beforeEach, afterEach } from "vitest";
+import { describe, expect, test, beforeEach, afterEach } from "vite-plus/test";
 import { initFunction } from "./invoke";
-import { _internalGetGlobalState, _exportsForTestingOnly } from "../logger";
+import { _internalGetGlobalState } from "../logger/core";
+import { _exportsForTestingOnly } from "../logger/testing";
 import { configureNode } from "../node/config";
 
 describe("initFunction", () => {
@@ -59,7 +60,7 @@ describe("registerOtelFlush", () => {
   });
 
   test("should register OTEL flush callback", async () => {
-    const { registerOtelFlush } = await import("../logger");
+    const { registerOtelFlush } = await import("../logger/core");
     const state = _internalGetGlobalState();
 
     let flushed = false;

@@ -9,17 +9,17 @@ import {
   spanObjectTypeV3ToTypedString,
 } from "../util/index";
 import type { SingleScore } from "../util/score";
-import {
-  type GitMetadataSettingsType as GitMetadataSettings,
-  ObjectReference as ObjectReferenceSchema,
-  type ObjectReferenceType as ObjectReference,
-  type RepoInfoType as RepoInfo,
-  type SSEProgressEventDataType as SSEProgressEventData,
-} from "./generated_types";
+import { ObjectReference as ObjectReferenceSchema } from "./sdk-schemas";
+import type {
+  GitMetadataSettings,
+  ObjectReference,
+  RepoInfo,
+  SSEProgressEventData,
+} from "./sdk-types";
 import { queue } from "async";
 import { v5 as uuidv5 } from "uuid";
 
-import iso from "./isomorph";
+import iso from "#braintrust-platform";
 import { debugLogger } from "./debug-logger";
 import { GenericFunction } from "./framework-types";
 import { CodeFunction, CodePrompt, CodeParameters } from "./framework2";
@@ -27,27 +27,29 @@ import { Trace, LocalTrace } from "./trace";
 import {
   BaseMetadata,
   BraintrustState,
-  Dataset,
   DefaultMetadataType,
   EvalCase,
-  Experiment,
-  ExperimentSummary,
-  FullInitOptions,
   NOOP_SPAN,
-  type ParametersRef,
-  RemoteEvalParameters,
   Span,
   StartSpanArgs,
-  init as _initExperiment,
   currentSpan,
   flush,
   logError as logSpanError,
   startSpan,
   traced,
   withCurrent,
-  withParent,
+  _internalWithParent,
   _internalGetGlobalState,
-} from "./logger";
+} from "./logger/core";
+import { Dataset } from "./logger/datasets";
+import {
+  Experiment,
+  ExperimentSummary,
+  FullInitOptions,
+  type ParametersRef,
+  init as _initExperiment,
+} from "./logger/experiments";
+import { RemoteEvalParameters } from "./logger/prompts";
 import type { ProgressReporter } from "./reporters/types";
 import { SimpleProgressReporter } from "./reporters/progress";
 import type {
@@ -100,13 +102,13 @@ export type EvalData<
   Metadata extends BaseMetadata = DefaultMetadataType,
 > =
   | EvalCase<Input, Expected, Metadata>[]
-  | (() => EvalCase<Input, Expected, Metadata>[])
   | Promise<EvalCase<Input, Expected, Metadata>[]>
-  | (() => Promise<EvalCase<Input, Expected, Metadata>[]>)
-  | AsyncGenerator<EvalCase<Input, Expected, Metadata>>
   | AsyncIterable<EvalCase<Input, Expected, Metadata>>
   | BaseExperiment<Input, Expected, Metadata>
-  | (() => BaseExperiment<Input, Expected, Metadata>);
+  | (() =>
+      | EvalCase<Input, Expected, Metadata>[]
+      | Promise<EvalCase<Input, Expected, Metadata>[]>
+      | BaseExperiment<Input, Expected, Metadata>);
 
 export type EvalTask<
   Input,
@@ -114,17 +116,12 @@ export type EvalTask<
   Expected,
   Metadata extends BaseMetadata,
   Parameters extends EvalParameters,
-> =
-  | ((
-      input: Input,
-      hooks: EvalHooks<Expected, Metadata, Parameters>,
-    ) => Promise<Output>)
-  | ((
-      input: Input,
-      hooks: EvalHooks<Expected, Metadata, Parameters>,
-    ) => Output);
+> = (
+  input: Input,
+  hooks: EvalHooks<Expected, Metadata, Parameters>,
+) => Output | Promise<Output>;
 
-export type TaskProgressEvent = Omit<
+type TaskProgressEvent = Omit<
   SSEProgressEventData,
   "id" | "origin" | "object_type" | "name"
 >;
@@ -134,10 +131,6 @@ export interface EvalHooks<
   Metadata extends BaseMetadata,
   Parameters extends EvalParameters,
 > {
-  /**
-   * @deprecated Use `metadata` instead.
-   */
-  meta: (info: Metadata) => void;
   /**
    * The metadata object for the current evaluation. You can mutate this object to add or remove metadata.
    */
@@ -391,40 +384,17 @@ export interface Evaluator<
   flushBeforeScoring?: boolean;
 }
 
-export class EvalResultWithSummary<
+export interface EvalResultWithSummary<
   Input,
   Output,
   Expected,
   Metadata extends BaseMetadata = DefaultMetadataType,
 > {
-  constructor(
-    public summary: ExperimentSummary,
-    public results: EvalResult<Input, Output, Expected, Metadata>[],
-  ) {}
-
-  /**
-   * @deprecated Use `summary` instead.
-   */
-  toString(): string {
-    return JSON.stringify(this.summary);
-  }
-
-  [Symbol.for("nodejs.util.inspect.custom")](): string {
-    return `EvalResultWithSummary(summary="...", results=[...])`;
-  }
-
-  toJSON(): {
-    summary: ExperimentSummary;
-    results: EvalResult<Input, Output, Expected, Metadata>[];
-  } {
-    return {
-      summary: this.summary,
-      results: this.results,
-    };
-  }
+  summary: ExperimentSummary;
+  results: EvalResult<Input, Output, Expected, Metadata>[];
 }
 
-export type { ReporterBody, ReporterDef } from "./reporters/types";
+export type { ReporterBody } from "./reporters/types";
 
 async function getPersistedBaseExperimentId(
   experiment: Experiment,
@@ -455,7 +425,7 @@ export type EvaluatorDef<
   evalName: string;
 } & Evaluator<Input, Output, Expected, Metadata, Parameters>;
 
-export type EvaluatorFile = {
+type EvaluatorFile = {
   functions: CodeFunction<
     unknown,
     unknown,
@@ -572,7 +542,7 @@ export function callEvaluatorData<
   };
 }
 
-export type SpanContext = {
+type SpanContext = {
   currentSpan: typeof currentSpan;
   startSpan: typeof startSpan;
   withCurrent: typeof withCurrent;
@@ -664,13 +634,15 @@ declare global {
   var _lazy_load: boolean;
 }
 
-globalThis._evals = {
-  functions: [],
-  prompts: [],
-  parameters: [],
-  evaluators: {},
-  reporters: {},
-};
+export function getEvaluatorRegistry(): EvaluatorFile {
+  return (globalThis._evals ??= {
+    functions: [],
+    prompts: [],
+    parameters: [],
+    evaluators: {},
+    reporters: {},
+  });
+}
 
 interface EvalOptions<EvalReport, Parameters extends EvalParameters> {
   /**
@@ -750,7 +722,7 @@ interface EvalOptions<EvalReport, Parameters extends EvalParameters> {
   enableCache?: boolean;
 }
 
-export function _initializeSpanContext() {
+export function _initializeSpanContext(): void {
   // This only needs to be set once, but Eval(), Task(), etc. are the only time
   // we get to run code while importing a module, so use it to
   // grab these values.
@@ -781,11 +753,11 @@ export async function Eval<
         : reporterOrOpts;
 
   let evalName = makeEvalName(name, evaluator.experimentName);
-  if (globalThis._evals.evaluators[evalName]) {
-    evalName = `${evalName}_${Object.keys(_evals).length}`;
+  if (getEvaluatorRegistry().evaluators[evalName]) {
+    evalName = `${evalName}_${Object.keys(getEvaluatorRegistry().evaluators).length}`;
   }
   if (globalThis._lazy_load) {
-    globalThis._evals.evaluators[evalName] = {
+    getEvaluatorRegistry().evaluators[evalName] = {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       evaluator: {
         evalName,
@@ -804,15 +776,15 @@ export async function Eval<
     _initializeSpanContext();
 
     // Better to return this empty object than have an annoying-to-use signature
-    return new EvalResultWithSummary(
-      {
+    return {
+      summary: {
         scores: {},
         metrics: {},
         projectName: "",
         experimentName: "",
       },
-      [],
-    );
+      results: [],
+    };
   }
 
   const progressReporter = options.progress ?? new SimpleProgressReporter();
@@ -820,7 +792,7 @@ export async function Eval<
 
   if (typeof options.reporter === "string") {
     throw new Error(
-      "Must specify a reporter object, not a name. Can only specify reporter names when running 'braintrust eval'",
+      "Must specify a reporter object, not a name. Can only specify reporter names when running 'bt eval'",
     );
   }
 
@@ -859,14 +831,13 @@ export async function Eval<
       const enableCache = options.enableCache ?? true;
       let ret;
       if (options.parent) {
-        ret = await withParent(
+        ret = await _internalWithParent(
           options.parent,
           () =>
             runEvaluator(
               null,
               evalDef,
               progressReporter,
-              [],
               options.stream,
               options.parameters,
               shouldCollectResults,
@@ -879,7 +850,6 @@ export async function Eval<
           experiment,
           evalDef,
           progressReporter,
-          [],
           options.stream,
           options.parameters,
           shouldCollectResults,
@@ -909,75 +879,18 @@ export function Reporter<EvalReport>(
   reporter: ReporterBody<EvalReport>,
 ): ReporterDef<EvalReport> {
   const ret = { name, ...reporter };
-  if (_evals.reporters[name]) {
+  if (getEvaluatorRegistry().reporters[name]) {
     throw new Error(`Reporter ${name} already exists`);
   }
 
   if (globalThis._lazy_load) {
-    _evals.reporters[name] = ret;
+    getEvaluatorRegistry().reporters[name] = ret;
   }
 
   return ret;
 }
 
-export interface Filter {
-  path: string[];
-  pattern: RegExp;
-}
-
-function serializeJSONWithPlainString(v: unknown) {
-  if (typeof v === "string") {
-    return v;
-  } else {
-    return JSON.stringify(v);
-  }
-}
-
-function deserializePlainStringAsJSON(s: string) {
-  try {
-    return { value: JSON.parse(s), error: undefined };
-  } catch (e) {
-    return { value: s, error: e };
-  }
-}
-
-export function parseFilters(filters: string[]): Filter[] {
-  const result: Filter[] = [];
-  for (const f of filters) {
-    const equalsIdx = f.indexOf("=");
-    if (equalsIdx === -1) {
-      throw new Error(`Invalid filter ${f}`);
-    }
-    const [path, value] = [f.slice(0, equalsIdx), f.slice(equalsIdx + 1)];
-    let deserializedValue = deserializePlainStringAsJSON(value).value;
-    if (typeof deserializedValue !== "string") {
-      deserializedValue = value; // Just fall back to the original input
-    }
-    result.push({
-      path: path.split("."),
-      pattern: new RegExp(deserializedValue),
-    });
-  }
-  return result;
-}
-
-function evaluateFilter(object: unknown, filter: Filter) {
-  const { path, pattern } = filter;
-  const key = path.reduce(
-    (acc, p) =>
-      typeof acc === "object" && acc !== null
-        ? // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          (acc as Record<string, unknown>)[p]
-        : undefined,
-    object,
-  );
-  if (key === undefined) {
-    return false;
-  }
-  return pattern.test(serializeJSONWithPlainString(key));
-}
-
-export function scorerName(
+function scorerName(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   scorer: EvalScorer<any, any, any, any>,
   scorer_idx: number,
@@ -988,7 +901,7 @@ export function scorerName(
 export function classifierName(
   classifier: EvalClassifier<any, any, any, any>,
   classifier_idx: number,
-) {
+): string {
   return classifier.name || `classifier_${classifier_idx}`;
 }
 
@@ -1009,9 +922,6 @@ export async function _internalRunEvaluatorTask(
     ...("metadata" in datum ? datum.metadata : {}),
   };
   const hooks: EvalHooks<unknown, Record<string, unknown>, EvalParameters> = {
-    meta(value) {
-      Object.assign(metadata, value);
-    },
     metadata,
     expected: "expected" in datum ? datum.expected : undefined,
     span,
@@ -1236,7 +1146,6 @@ export async function runEvaluator(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   evaluator: EvaluatorDef<any, any, any, any, any>,
   progressReporter: ProgressReporter,
-  filters: Filter[],
   stream: ((data: SSEProgressEventData) => void) | undefined,
   parameters?: InferParameters<EvalParameters>,
   collectResults = true,
@@ -1252,7 +1161,6 @@ export async function runEvaluator(
     experiment,
     evaluator,
     progressReporter,
-    filters,
     stream,
     parameters,
     collectResults,
@@ -1275,7 +1183,6 @@ async function runEvaluatorInternal(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   evaluator: EvaluatorDef<any, any, any, any>,
   progressReporter: ProgressReporter,
-  filters: Filter[],
   stream: ((data: SSEProgressEventData) => void) | undefined,
   parameters: InferParameters<EvalParameters> | undefined,
   collectResults: boolean,
@@ -1628,12 +1535,14 @@ async function runEvaluatorInternal(
         if (!experiment) {
           // This will almost always be a no-op span, but it means that if the Eval
           // is run in the context of a different type of span, it will be logged.
+          const { parent: _ignoredParent, ...spanEvent } = baseEvent;
           return await traced(callback, {
-            ...baseEvent,
+            ...spanEvent,
             state: evaluator.state,
           });
         } else {
-          const result = await experiment.traced(callback, baseEvent);
+          const { parent: _ignoredParent, ...spanEvent } = baseEvent;
+          const result = await experiment.traced(callback, spanEvent);
           // Flush logs to provide backpressure and prevent memory accumulation
           // when maxConcurrency is set. Only flush when pending data exceeds the
           // byte threshold, avoiding excessive sequential round-trips for small
@@ -1679,9 +1588,6 @@ async function runEvaluatorInternal(
       for await (const datum of dataIterable) {
         if (abortSignal.aborted) {
           break;
-        }
-        if (!filters.every((f) => evaluateFilter(datum, f))) {
-          continue;
         }
         const trialCount = datum.trialCount ?? evaluator.trialCount ?? 1;
         for (let trialIndex = 0; trialIndex < trialCount; trialIndex++) {
@@ -1765,10 +1671,10 @@ async function runEvaluatorInternal(
           localScoreAccumulator ?? undefined,
         );
 
-    return new EvalResultWithSummary(
+    return {
       summary,
-      collectResults ? collectedResults : [],
-    );
+      results: collectResults ? collectedResults : [],
+    };
   } finally {
     // Clean up disk-based span cache after eval completes and stop caching
     // Only if it was enabled
@@ -1781,10 +1687,9 @@ async function runEvaluatorInternal(
   }
 }
 
-export const error = (text: string) => `Error: ${text}`;
-export const warning = (text: string) => `Warning: ${text}`;
+const warning = (text: string) => `Warning: ${text}`;
 
-export function logError(e: unknown, verbose: boolean) {
+export function logError(e: unknown, verbose: boolean): void {
   if (!verbose) {
     sdkConsole.error(`${e}`);
   } else {
@@ -1852,12 +1757,7 @@ export function buildLocalSummary(
   };
 }
 
-export function reportFailures<
-  Input,
-  Output,
-  Expected,
-  Metadata extends BaseMetadata,
->(
+function reportFailures<Input, Output, Expected, Metadata extends BaseMetadata>(
   evaluator: EvaluatorDef<Input, Output, Expected, Metadata>,
   failingResults: EvalResult<Input, Output, Expected, Metadata>[],
   { verbose, jsonl }: ReporterOpts,

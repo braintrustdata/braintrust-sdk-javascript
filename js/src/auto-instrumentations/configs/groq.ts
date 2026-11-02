@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { groqChannels } from "../../instrumentation/plugins/groq-interceptors";
+import { groqChannels } from "../../instrumentation/providers/groq-interceptors";
 
 export const groqConfigs: InstrumentationConfig[] = [
   {

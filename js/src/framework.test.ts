@@ -6,7 +6,7 @@ import {
   beforeEach,
   afterEach,
   vi,
-} from "vitest";
+} from "vite-plus/test";
 import { type ExperimentEvent } from "../util";
 import {
   defaultErrorScoreHandler,
@@ -16,14 +16,14 @@ import {
   _internalPrepareEvaluatorScore,
   type OneOrMoreScores,
 } from "./framework";
+import { _exportsForTestingOnly } from "./logger/testing";
 import {
-  _exportsForTestingOnly,
   BraintrustState,
   initLogger,
   injectTraceContext,
   TestBackgroundLogger,
-  withParent,
-} from "./logger";
+  _internalWithParent,
+} from "./logger/core";
 import { parseBaggage } from "./propagation";
 import { configureNode } from "./node/config";
 import type { ProgressReporter } from "./reporters/types";
@@ -53,16 +53,13 @@ test("meta (write) is passed to task", async () => {
       projectName: "proj",
       evalName: "eval",
       data: [{ input: 1, metadata }],
-      task: async (input: number, { meta }) => {
-        meta({
-          foo: "barbar",
-        });
+      task: async (input: number, { metadata }) => {
+        metadata.foo = "barbar";
         return input * 2;
       },
       scores: [],
     },
     new NoopProgressReporter(),
-    [],
     undefined,
     undefined,
     true,
@@ -100,7 +97,6 @@ test("metadata (read/write) is passed to task", async () => {
       scores: [],
     },
     new NoopProgressReporter(),
-    [],
     undefined,
     undefined,
     true,
@@ -140,7 +136,6 @@ test("expected (read/write) is passed to task", async () => {
       scores: [],
     },
     new NoopProgressReporter(),
-    [],
     undefined,
     undefined,
     true,
@@ -183,7 +178,6 @@ test("EvalCase id and tags are passed to scorers", async () => {
       ],
     },
     new NoopProgressReporter(),
-    [],
     undefined,
     undefined,
     true,
@@ -267,7 +261,6 @@ describe("runEvaluator", () => {
         scores: [],
       },
       new NoopProgressReporter(),
-      [],
       undefined,
     );
 
@@ -300,7 +293,6 @@ describe("runEvaluator", () => {
         scores: [],
       },
       new NoopProgressReporter(),
-      [],
       undefined,
     );
 
@@ -339,7 +331,6 @@ describe("runEvaluator", () => {
         scores: [],
       },
       new NoopProgressReporter(),
-      [],
       undefined,
     );
 
@@ -377,7 +368,6 @@ describe("runEvaluator", () => {
         scores: [],
       },
       new NoopProgressReporter(),
-      [],
       (event) => streamEvents.push(event),
     );
 
@@ -416,7 +406,6 @@ describe("runEvaluator", () => {
         scores: [],
       },
       new NoopProgressReporter(),
-      [],
       undefined,
     );
 
@@ -440,7 +429,6 @@ describe("runEvaluator", () => {
           ),
         },
         new NoopProgressReporter(),
-        [],
         undefined,
       );
 
@@ -467,7 +455,6 @@ describe("runEvaluator", () => {
               errorScoreHandler: defaultErrorScoreHandler,
             },
             new NoopProgressReporter(),
-            [],
             undefined,
           );
 
@@ -496,7 +483,6 @@ describe("runEvaluator", () => {
               errorScoreHandler: defaultErrorScoreHandler,
             },
             new NoopProgressReporter(),
-            [],
             undefined,
           );
 
@@ -529,7 +515,6 @@ describe("runEvaluator", () => {
               errorScoreHandler: () => undefined,
             },
             new NoopProgressReporter(),
-            [],
             undefined,
           );
 
@@ -554,7 +539,6 @@ describe("runEvaluator", () => {
               errorScoreHandler: () => ({ error_score: 1 }),
             },
             new NoopProgressReporter(),
-            [],
             undefined,
           );
 
@@ -587,7 +571,6 @@ describe("runEvaluator", () => {
           },
         },
         new NoopProgressReporter(),
-        [],
         undefined,
         undefined,
         true,
@@ -695,7 +678,6 @@ describe("runEvaluator", () => {
               ...options,
             },
             new NoopProgressReporter(),
-            [],
             undefined,
           ),
           taskCompletions,
@@ -740,7 +722,6 @@ describe("runEvaluator", () => {
               ...options,
             },
             new NoopProgressReporter(),
-            [],
             undefined,
           ),
           taskCompletions,
@@ -776,7 +757,6 @@ describe("runEvaluator", () => {
               ...options,
             },
             new NoopProgressReporter(),
-            [],
             undefined,
           ),
           new Set(),
@@ -810,7 +790,6 @@ describe("runEvaluator", () => {
               ...options,
             },
             new NoopProgressReporter(),
-            [],
             undefined,
           ),
           new Set(),
@@ -857,7 +836,6 @@ describe("runEvaluator", () => {
               ...options,
             },
             new NoopProgressReporter(),
-            [],
             undefined,
           ),
           new Set(),
@@ -903,7 +881,6 @@ describe("runEvaluator", () => {
             timeout: 5_000,
           },
           new NoopProgressReporter(),
-          [],
           undefined,
         ),
       ).rejects.toThrow(new InternalAbortError("Evaluator aborted"));
@@ -928,7 +905,6 @@ describe("runEvaluator", () => {
             timeout: 0,
           },
           new NoopProgressReporter(),
-          [],
           undefined,
         ),
       ).rejects.toThrow(new InternalAbortError("Evaluator timed out"));
@@ -952,7 +928,6 @@ describe("runEvaluator", () => {
           scores: [],
         },
         new NoopProgressReporter(),
-        [],
         undefined,
       );
 
@@ -992,7 +967,6 @@ describe("runEvaluator", () => {
             signal: controller.signal,
           },
           new NoopProgressReporter(),
-          [],
           undefined,
         );
 
@@ -1029,7 +1003,6 @@ describe("runEvaluator", () => {
             signal: controller.signal,
           },
           new NoopProgressReporter(),
-          [],
           undefined,
         ),
       ).rejects.toThrow(new InternalAbortError("Evaluator aborted"));
@@ -1065,7 +1038,6 @@ test("trialIndex is passed to task", async () => {
       trialCount: 3,
     },
     new NoopProgressReporter(),
-    [],
     undefined,
     undefined,
     true,
@@ -1111,7 +1083,7 @@ describe.each([false, true])(
         let previousIds: string[] = [];
 
         for (const input of [1, 2]) {
-          await withParent(parent, () =>
+          await _internalWithParent(parent, () =>
             runEvaluator(
               useParent ? null : experiment,
               {
@@ -1127,7 +1099,6 @@ describe.each([false, true])(
                 summarizeScores: false,
               },
               new NoopProgressReporter(),
-              [],
               undefined,
               undefined,
               true,
@@ -1196,7 +1167,6 @@ test("trialIndex with multiple inputs", async () => {
       trialCount: 2,
     },
     new NoopProgressReporter(),
-    [],
     undefined,
     undefined,
     true,
@@ -1242,7 +1212,6 @@ test("per-input trialCount overrides global trialCount", async () => {
       trialCount: 2,
     },
     new NoopProgressReporter(),
-    [],
     undefined,
     undefined,
     true,
@@ -1289,7 +1258,6 @@ test("per-input trialCount works without global trialCount", async () => {
       scores: [],
     },
     new NoopProgressReporter(),
-    [],
     undefined,
     undefined,
     true,
@@ -1456,7 +1424,6 @@ test("runEvaluator forwards baseExperimentId to summary", async () => {
       baseExperimentId: "base-exp-id",
     },
     new NoopProgressReporter(),
-    [],
     undefined,
     undefined,
     true,
@@ -1499,7 +1466,6 @@ test("runEvaluator forwards persisted baseExperimentName id to summary", async (
       baseExperimentName: "base-exp",
     },
     new NoopProgressReporter(),
-    [],
     undefined,
     undefined,
     true,
@@ -1541,7 +1507,6 @@ test("tags can be appended and logged to root span", async () => {
       summarizeScores: false,
     },
     new NoopProgressReporter(),
-    [],
     undefined,
     undefined,
     true,
@@ -1590,7 +1555,6 @@ test.each([
       summarizeScores: false,
     },
     new NoopProgressReporter(),
-    [],
     undefined,
     undefined,
     true,
@@ -1630,7 +1594,6 @@ test("tags are persisted with a failing scorer", async () => {
       summarizeScores: false,
     },
     new NoopProgressReporter(),
-    [],
     undefined,
     undefined,
     true,
@@ -1663,7 +1626,6 @@ test("tags remain empty when not set", async () => {
       summarizeScores: false,
     },
     new NoopProgressReporter(),
-    [],
     undefined,
     undefined,
     true,
@@ -1699,7 +1661,6 @@ test("scorer spans have purpose='scorer' attribute", async () => {
       ],
     },
     new NoopProgressReporter(),
-    [],
     undefined,
     undefined,
     true,
