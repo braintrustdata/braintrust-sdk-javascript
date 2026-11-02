@@ -629,7 +629,10 @@ class LiveKitTracing {
     const state = this.sessions.get(row.session);
     if (!row.owner) {
       row.span.log(endEvent(row, attrs, events));
-      if (state) correlate(row, identities, state.relationships);
+      if (state)
+        state.relationships.batch(row.span, () =>
+          correlate(row, identities, state.relationships),
+        );
       if (state && row.name === "user_speaking")
         row.span.log({
           metadata: {
@@ -1287,6 +1290,19 @@ class Relationships {
   private targets = new Map<string, Span[]>();
   private waiting = new Map<string, Map<Span, Relationship>>();
   private links = new Map<Span, Map<string, Link>>();
+  /** A source whose new links publish together, and whether it has any. */
+  private batched?: { source: Span; changed: boolean };
+
+  /** Publishes the links `fn` adds from `source` once, as one complete list. */
+  batch(source: Span, fn: () => void): void {
+    const batched = (this.batched = { source, changed: false });
+    try {
+      fn();
+    } finally {
+      this.batched = undefined;
+      if (batched.changed) this.publish(source);
+    }
+  }
 
   register(id: string, target: Span): void {
     const targets = this.targets.get(id) ?? [];
@@ -1337,9 +1353,15 @@ class Relationships {
       attributes: { "braintrust.relationship.type": relationship },
     });
     this.links.set(source, links);
+    if (this.batched?.source === source) this.batched.changed = true;
+    else this.publish(source);
+  }
+
+  private publish(source: Span): void {
     // Native rows have no top-level links field, and OTel ingestion does not keep
     // links yet. Metadata carries them until links are first-class.
-    source.log({ metadata: { links: [...links.values()] } });
+    const links = [...(this.links.get(source)?.values() ?? [])];
+    source.log({ metadata: { links } });
   }
 }
 
