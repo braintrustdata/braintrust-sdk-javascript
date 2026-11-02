@@ -456,6 +456,45 @@ test("verify MemoryBackgroundLogger intercepts logs", async () => {
   _exportsForTestingOnly.clearTestBackgroundLogger(); // can go back to normal
 });
 
+test.each([
+  ["single chunk", false],
+  ["split bytes", true],
+])(
+  "logs a Unicode byte stream without changing its text: %s",
+  async (_, split) => {
+    _exportsForTestingOnly.simulateLoginForTests();
+    const memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();
+    const logger = initLogger({
+      projectName: "test",
+      projectId: "test-project-id",
+    });
+
+    const text = "Пам’ять 🧠 漢字";
+    const bytes = new TextEncoder().encode(text);
+    const output = new ReadableStream<Uint8Array>({
+      start(controller) {
+        if (split) {
+          for (const byte of bytes) controller.enqueue(Uint8Array.of(byte));
+        } else {
+          controller.enqueue(bytes);
+        }
+        controller.close();
+      },
+    });
+    const span = logger.startSpan({ name: "byte-stream" });
+    span.log({ output });
+    span.end();
+    await memoryLogger.flush();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const events = (await memoryLogger.drain()) as any[];
+    expect(events).toHaveLength(1);
+    expect(events[0].output).toBe(text);
+
+    _exportsForTestingOnly.clearTestBackgroundLogger();
+  },
+);
+
 test("init validation", () => {
   expect(() => init({})).toThrow(
     "Must specify at least one of project or projectId",

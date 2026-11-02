@@ -339,10 +339,12 @@ export function createFinalValuePassThroughStream<
       } else if (chunk instanceof Uint8Array) {
         const text = decoder.decode(chunk, { stream: true });
         textChunks.push(text);
-        controller.enqueue({
-          type: "text_delta",
-          data: text,
-        });
+        if (text) {
+          controller.enqueue({
+            type: "text_delta",
+            data: text,
+          });
+        }
       } else if (braintrustStreamChunkSchema.safeParse(chunk).success) {
         const chunkType = chunk.type;
         switch (chunkType) {

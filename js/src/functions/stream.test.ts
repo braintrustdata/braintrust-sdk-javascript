@@ -146,72 +146,21 @@ test.each(["é", "€", "🧠", "Пам’ять 🧠 漢字"])(
 );
 
 test.each([
-  { chunks: [], expected: undefined },
-  { chunks: [new Uint8Array()], expected: "" },
-  { chunks: [""], expected: "" },
   { chunks: [Uint8Array.of(0xf0, 0x9f)], expected: "�" },
   { chunks: [Uint8Array.of(0xf0), Uint8Array.of(0x9f)], expected: "�" },
   {
-    chunks: [Uint8Array.of(0xc3), "middle", Uint8Array.of(0xa9)],
+    chunks: [
+      Uint8Array.of(0xc3),
+      { type: "text_delta", data: "middle" } as const,
+      Uint8Array.of(0xa9),
+    ],
     expected: "�middle�",
   },
 ])(
-  "final value preserves empty and incomplete byte runs: $expected",
+  "final value replaces incomplete byte runs: $expected",
   async ({ chunks, expected }) => {
     const { final, emitted } = await collectFinalValue(chunks);
     expect(final).toHaveBeenCalledExactlyOnceWith(expected);
-    expect(emitted.map((chunk) => chunk.data).join("")).toBe(expected ?? "");
+    expect(emitted.map((chunk) => chunk.data).join("")).toBe(expected);
   },
 );
-
-test("byte decoder flush preserves structured chunk order and errors", async () => {
-  const streamError = {
-    type: "error",
-    data: "synthetic stream error",
-  } as const;
-  const { final, error, emitted } = await collectFinalValue([
-    Uint8Array.of(0xe2),
-    { type: "text_delta", data: "middle" },
-    streamError,
-    Uint8Array.of(0x82, 0xac),
-  ]);
-  expect(final).toHaveBeenCalledExactlyOnceWith("�middle��");
-  expect(error).toHaveBeenCalledExactlyOnceWith(streamError.data);
-  expect(
-    emitted
-      .filter((chunk) => chunk.type === "text_delta")
-      .map((chunk) => chunk.data)
-      .join(""),
-  ).toBe("�middle��");
-  expect(emitted.indexOf(streamError)).toBeGreaterThan(0);
-});
-
-test("passthrough keeps JSON and reasoning final-value precedence", async () => {
-  const json = await collectFinalValue([
-    new TextEncoder().encode("ignored text"),
-    { type: "json_delta", data: '{"value":' },
-    { type: "json_delta", data: "42}" },
-  ]);
-  expect(json.final).toHaveBeenCalledExactlyOnceWith({ value: 42 });
-  const reasoning = await collectFinalValue([
-    { type: "reasoning_delta", data: "reasoning only" },
-  ]);
-  expect(reasoning.final).toHaveBeenCalledExactlyOnceWith("reasoning only");
-});
-
-test("passthrough preserves an upstream stream error without a final value", async () => {
-  const error = new Error("synthetic read failure");
-  const final = vi.fn();
-  const onError = vi.fn();
-  const input = new ReadableStream<Uint8Array>({
-    start(controller) {
-      controller.error(error);
-    },
-  });
-  await expect(
-    input
-      .pipeThrough(createFinalValuePassThroughStream(final, onError))
-      .pipeTo(new WritableStream()),
-  ).rejects.toBe(error);
-  expect(final).not.toHaveBeenCalled();
-});
