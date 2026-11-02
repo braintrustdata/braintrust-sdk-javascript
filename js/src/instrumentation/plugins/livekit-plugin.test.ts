@@ -1701,8 +1701,10 @@ describe("recording", () => {
     ]);
   });
 
-  test("user speech names its source and LiveKit's room participant, without selections", async () => {
-    const { root, session: agentSession, origin, close } = session();
+  /** Two speech intervals in one user turn, as LiveKit's local VAD reports them. */
+  async function userTurn(activity: Record<string, unknown>) {
+    const ctx = session();
+    const { root, session: agentSession, origin } = ctx;
     const user = start("user_turn", root);
     // LiveKit stamps user speech with the room participant whose track it heard.
     const speech = start(
@@ -1716,21 +1718,25 @@ describe("recording", () => {
         controller.enqueue(frame(2400));
       },
     });
-    tracing.input({ agentSession }, stream);
+    tracing.input({ agentSession, ...activity }, stream);
     now = origin + 100;
     await stream.getReader().read();
-    tracing.userTurn(
-      { agentSession },
-      {
-        userTurnSpan: user,
-        startedSpeakingAt: origin - 50,
-        stoppedSpeakingAt: origin + 40,
-      },
-    );
     speech.end(origin + 500);
     start("user_speaking", user, {}, origin + 600).end(origin + 700);
+    tracing.userTurn(
+      { agentSession, ...activity },
+      {
+        userTurnSpan: user,
+        startedSpeakingAt: origin + 5,
+        stoppedSpeakingAt: origin + 700,
+      },
+    );
     user.end();
-    const { audio, named, selections } = await close();
+    return ctx.close();
+  }
+
+  test("user speech names its source and LiveKit's room participant", async () => {
+    const { audio, named } = await userTurn({ vad: {} });
     expect(named("user_speech").map((r) => r.metadata)).toEqual([
       expect.objectContaining({
         "audio.source_id": "session-input",
@@ -1749,13 +1755,44 @@ describe("recording", () => {
         },
       },
     });
-    // LiveKit's user speech timing does not match the recorded audio.
-    expect(selections("user_turn")).toEqual([]);
-    expect(named("user_speech").map(selectionsOf)).toEqual([[], []]);
     expect(audio.segments["part-0"].channels["0"]).toEqual({
       sources: ["session-input"],
     });
   });
+
+  test("with a local VAD, user speech and its turn are selected from LiveKit's speech timing", async () => {
+    const { named, one } = await userTurn({ vad: {} });
+    expect(named("user_speech").map(selectionsOf)).toEqual([
+      [[5, 500]],
+      [[600, 700]],
+    ]);
+    // First to last speech, including the pause between.
+    expect(selectionsOf(one("user_turn"))).toEqual([[5, 700]]);
+  });
+
+  test("user selections need no recorded audio", async () => {
+    vi.stubEnv("BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS", "");
+    vi.stubEnv("BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS", "");
+    const { named, one, segments } = await userTurn({ vad: {} });
+    expect(segments).toEqual([]);
+    expect(named("user_speech").map(selectionsOf)).toEqual([
+      [[5, 500]],
+      [[600, 700]],
+    ]);
+    expect(selectionsOf(one("user_turn"))).toEqual([[5, 700]]);
+  });
+
+  test.each([
+    ["no VAD", {}],
+    ["STT turn detection", { vad: {}, turnDetectionMode: "stt" }],
+  ])(
+    "with %s, user speech timing comes from the STT provider and is not selected",
+    async (_name, activity) => {
+      const { named, one } = await userTurn(activity);
+      expect(named("user_speech").map(selectionsOf)).toEqual([[], []]);
+      expect(selectionsOf(one("user_turn"))).toEqual([]);
+    },
+  );
 
   test("diarized transcripts name their speakers; participants stay the connections", async () => {
     const { root, close } = session();

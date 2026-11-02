@@ -445,11 +445,16 @@ for (const variant of variants) {
         );
         const events = assertAudioTrace(harness.events());
         const user = findLatestSpan(events, "user_speech");
-        // User speech is observed audio: its source, no text, and no selections,
-        // since LiveKit's user speech timing doesn't match the recorded audio.
+        // User speech is observed audio: its source and its place on the
+        // timeline, from LiveKit's local VAD, but no text.
         expect(user?.metadata?.["audio.source_id"]).toBe("session-input");
         expect(user?.row.input).toBeUndefined();
-        expect(selectionsOf(user)).toEqual([]);
+        expect(selectionsOf(user)).toHaveLength(1);
+        expect(
+          selectionsOf(
+            findAllSpans(events, "user_turn").find((e) => e.row.input),
+          ),
+        ).toHaveLength(1);
         // LiveKit has no native STT span; each final transcript gets one, and the
         // model's context links to the transcripts of the turn it answers.
         const stt = findAllSpans(events, "stt");

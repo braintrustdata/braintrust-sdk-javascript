@@ -157,6 +157,12 @@ span_tree:
     │     }
     │   ]
     │   metadata: {
+    │     "audio.selections": {
+    │       "selection-0": {
+    │         "end_offset_ms": 0,
+    │         "start_offset_ms": 0
+    │       }
+    │     },
     │     "contrib.livekit.end_of_turn_delay": 0,
     │     "contrib.livekit.message_id": "<native:2>",
     │     "contrib.livekit.on_user_turn_completed_delay": 0,
@@ -177,6 +183,12 @@ span_tree:
     │   }
     │   ├── user_speech [task]
     │   │   metadata: {
+    │   │     "audio.selections": {
+    │   │       "selection-0": {
+    │   │         "end_offset_ms": 0,
+    │   │         "start_offset_ms": 0
+    │   │       }
+    │   │     },
     │   │     "audio.source_id": "session-input",
     │   │     "scenario": "livekit-instrumentation",
     │   │     "testRunId": "<run:1>",

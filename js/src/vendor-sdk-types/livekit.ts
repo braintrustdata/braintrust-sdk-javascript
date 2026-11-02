@@ -16,6 +16,10 @@ export interface AgentSession {
 export interface AgentActivity {
   agent?: Agent;
   agentSession: AgentSession;
+  /** The VAD in use: the agent's own, else the session's (LiveKit provides a default). */
+  vad?: unknown;
+  /** How LiveKit detects turns; "stt" lets the STT provider's speech events drive them. */
+  turnDetectionMode?: string;
   audioRecognition?: AudioRecognition;
   currentSpeech?: SpeechHandle;
 }

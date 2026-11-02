@@ -53,6 +53,7 @@ export function selectionsOf(span: CapturedLogEvent | undefined) {
   ).sort((a, b) => a.start_offset_ms - b.start_offset_ms);
 }
 
+const SELECTED = ["user_speech", "agent_speech", "user_turn"];
 const SESSION_KEYS = [
   "audio.schema.version",
   "audio.sources",
@@ -93,11 +94,19 @@ export function assertAudioTrace(raw: CapturedLogEvent[]) {
     if (event.span.name !== "session")
       for (const key of SESSION_KEYS)
         expect(event.metadata, event.span.name).not.toHaveProperty(key);
-    // Only agent playout shares the recording's clock.
-    if (event.span.name !== "agent_speech")
+    // Only speech and the user turn it rolls up into are on the timeline.
+    if (!SELECTED.includes(event.span.name!))
       expect(event.metadata, event.span.name).not.toHaveProperty(
         "audio.selections",
       );
+    for (const selection of selectionsOf(event)) {
+      expect(Number.isInteger(selection.start_offset_ms)).toBe(true);
+      expect(Number.isInteger(selection.end_offset_ms)).toBe(true);
+      expect(selection.start_offset_ms).toBeGreaterThanOrEqual(0);
+      expect(selection.end_offset_ms).toBeGreaterThan(
+        selection.start_offset_ms,
+      );
+    }
   }
   for (const event of events.filter((e) => e.span.name === "session")) {
     const { session, segments } = audioSession(event);
@@ -163,14 +172,6 @@ export function assertAudioTrace(raw: CapturedLogEvent[]) {
     for (const speaker of (span.metadata?.["audio.speaker_ids"] ??
       []) as string[])
       expect(session?.speakers).toHaveProperty(speaker);
-    for (const selection of selectionsOf(span)) {
-      expect(Number.isInteger(selection.start_offset_ms)).toBe(true);
-      expect(Number.isInteger(selection.end_offset_ms)).toBe(true);
-      expect(selection.start_offset_ms).toBeGreaterThanOrEqual(0);
-      expect(selection.end_offset_ms).toBeGreaterThan(
-        selection.start_offset_ms,
-      );
-    }
   }
   for (const turn of events.filter((e) =>
     ["user_turn", "agent_turn"].includes(e.span.name!),
@@ -190,6 +191,17 @@ export function assertAudioTrace(raw: CapturedLogEvent[]) {
       speech.span.name === "user_speech" ? "user_turn" : "agent_turn",
     );
     expect(speech.row.span_parents).toEqual([turnId]);
+    // A user turn's interval covers every speech interval within it.
+    const [covering] = selectionsOf(turn);
+    if (speech.span.name === "user_speech" && covering)
+      for (const selection of selectionsOf(speech)) {
+        expect(selection.start_offset_ms).toBeGreaterThanOrEqual(
+          covering.start_offset_ms,
+        );
+        expect(selection.end_offset_ms).toBeLessThanOrEqual(
+          covering.end_offset_ms,
+        );
+      }
   }
   for (const source of events)
     for (const link of (source.metadata?.links ?? []) as {

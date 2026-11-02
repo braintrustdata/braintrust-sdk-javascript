@@ -243,6 +243,11 @@ type SessionState = {
   transcripts: Map<string, { span: Span; end: number }[]>;
   /** The session clock's epoch, shared with the audio session's timeline. */
   origin: number;
+  /**
+   * Whether LiveKit times user speech with a local VAD on the input audio. The
+   * STT provider's speech events otherwise time it, as received over the network.
+   */
+  localVad?: boolean;
   /** Describes the session's audio, and records it when capture is enabled. */
   audio: AudioSessionRecorder;
   /** Captures audio into `audio`; only when attachment capture is enabled. */
@@ -604,6 +609,9 @@ class LiveKitTracing {
           metadata: {
             "audio.source_id": "session-input",
             ...participantIds(state, native),
+            ...(state.localVad && row.end !== undefined
+              ? userSelections(state, row.start * 1000, row.end * 1000)
+              : {}),
           },
         });
       if (state && row.name === "agent_speaking")
@@ -808,8 +816,11 @@ class LiveKitTracing {
   }
 
   input(activity: AgentActivity, stream: ReadableStream<AudioFrame>): void {
-    const recording = this.sessionOf(activity.agentSession)?.recording;
-    if (recording?.captures.input) recording.attachInput(stream);
+    const state = this.sessionOf(activity.agentSession);
+    if (!state) return;
+    state.localVad =
+      activity.vad !== undefined && activity.turnDetectionMode !== "stt";
+    if (state.recording?.captures.input) state.recording.attachInput(stream);
   }
 
   output(session: AgentSession): void {
@@ -836,9 +847,14 @@ class LiveKitTracing {
   userTurn(activity: AgentActivity, info: EndOfTurnInfo): void {
     const state = this.sessionOf(activity.agentSession);
     const turn = this.rowOf(info.userTurnSpan)?.id;
-    const { startedSpeakingAt } = info;
+    const { startedSpeakingAt, stoppedSpeakingAt } = info;
     if (!state || !turn || startedSpeakingAt === undefined) return;
     state.speech.recognize(turn, startedSpeakingAt);
+    // First to last speech, including pauses; not the processing that follows.
+    if (state.localVad && stoppedSpeakingAt !== undefined)
+      state.rows.get(turn)?.span.log({
+        metadata: userSelections(state, startedSpeakingAt, stoppedSpeakingAt),
+      });
   }
 
   /**
@@ -1682,6 +1698,14 @@ function speakerIds(
   });
   if (added) state.root.span.log({ metadata: added });
   return { "audio.speaker_ids": [id], "contrib.livekit.speaker_id": label };
+}
+
+/** A user interval, in unix milliseconds, as `audio.selections` on the session timeline. */
+function userSelections(state: SessionState, from: number, to: number) {
+  const selections = audioSelections([
+    { start: from - state.origin, end: to - state.origin },
+  ]);
+  return selections ? { "audio.selections": selections } : {};
 }
 
 /** Extends a speech's confirmed playout; contiguous frames grow one interval. */
