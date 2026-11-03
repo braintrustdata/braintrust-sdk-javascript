@@ -9,7 +9,7 @@
           "children": [
             {
               "name": "openai.decisions.create",
-              "type": "question",
+              "type": "decision",
               "children": [],
               "input": {
                 "questions": [
@@ -91,7 +91,7 @@
           "children": [
             {
               "name": "openai.decisions.create",
-              "type": "question",
+              "type": "decision",
               "children": [],
               "input": {
                 "questions": [
@@ -159,7 +159,7 @@
           "children": [
             {
               "name": "openai.decisions.create",
-              "type": "question",
+              "type": "decision",
               "children": [],
               "input": {
                 "questions": [
@@ -231,7 +231,7 @@
           "children": [
             {
               "name": "openai.decisions.create",
-              "type": "question",
+              "type": "decision",
               "children": [],
               "input": {
                 "questions": [
@@ -251,8 +251,14 @@
                   },
                   {
                     "criteria": [
-                      "routine: Can wait",
-                      "urgent: Needs attention today"
+                      {
+                        "description": "Can wait",
+                        "label": "routine"
+                      },
+                      {
+                        "description": "Needs attention today",
+                        "label": "urgent"
+                      }
                     ],
                     "id": "<span:3>",
                     "instructions": "How urgent is this request?",
@@ -323,7 +329,7 @@
           "children": [
             {
               "name": "openai.decisions.create",
-              "type": "question",
+              "type": "decision",
               "children": [],
               "input": {
                 "questions": [
