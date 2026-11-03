@@ -44,15 +44,16 @@ import {
   type AudioEncodingConfig,
 } from "../config";
 import { pcmBytesToMs, msToSamples, samplesToMs } from "../../pcm-buffer";
-import { AudioRecorder } from "../../audio-recorder";
+import {
+  AudioSessionRecorder,
+  type AudioMember,
+} from "../../audio-session-recorder";
+import { audioSelections, type AudioInterval } from "../../audio-selections";
 import {
   audioEncodingStack,
   type AudioEncodingDefaults,
 } from "../../audio-compression";
-import type {
-  AudioMiddlewareStack,
-  AudioSegmentMeta,
-} from "../../audio-middleware";
+import type { AudioMiddlewareStack } from "../../audio-middleware";
 
 // Bounds on per-session observation state, independent of the attachment threshold.
 const MAX_ROWS = 8192;
@@ -62,7 +63,9 @@ const MAX_RECORDING_MS = 30 * 60 * 1000;
 const SAMPLE_RATE = 24000;
 // The OTel API shares its context key through Symbol.for, including across copies.
 const OTEL_SPAN_KEY = Symbol.for("OpenTelemetry Context Key SPAN");
-const FINAL_TRANSCRIPT = 2; // SpeechEventType.FINAL_TRANSCRIPT
+// SpeechEventType values.
+const START_OF_SPEECH = 0;
+const FINAL_TRANSCRIPT = 2;
 // Voice audio is personal data, so each direction has its own explicit flag rather
 // than the shared BRAINTRUST_CAPTURE_ATTACHMENTS, which also enables other media.
 const CAPTURE_USER_AUDIO = "BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS";
@@ -144,9 +147,10 @@ export class LiveKitPlugin extends BasePlugin {
       }),
       // Each reply re-checks the session's sink, so replaced outputs are observed.
       livekitChannels.pipeline.intercept((target, self, args) => {
-        runInstrumentation(() =>
-          tracing.output((self as AgentActivity).agentSession),
-        );
+        runInstrumentation(() => {
+          tracing.output((self as AgentActivity).agentSession);
+          tracing.reply(args[0]);
+        });
         return tracing.scope(
           args[0].span,
           () => Reflect.apply(target, self, args),
@@ -175,11 +179,15 @@ export class LiveKitPlugin extends BasePlugin {
           () => Reflect.apply(target, self, args),
         ),
       ),
+      // LiveKit can start a reply from a final transcript (preemptive
+      // generation); scope it to the user turn it answers.
       livekitChannels.stt.intercept((target, self, args) => {
         runInstrumentation(() =>
           tracing.stt(self as AudioRecognition, args[0]),
         );
-        return Reflect.apply(target, self, args);
+        return tracing.scope((self as AudioRecognition).userTurnSpan, () =>
+          Reflect.apply(target, self, args),
+        );
       }),
       livekitChannels.userCompleted.intercept((target, self, args) =>
         tracing.scope(args[0].userTurnSpan, () =>
@@ -226,7 +234,13 @@ type Row = {
     attributes?: Record<string, unknown>;
   }[];
   status: { code: number; message?: string };
-  playedText?: string;
+  /**
+   * An interrupted playout of this speech came without the sink's transcript
+   * of what was heard, so LiveKit's text for it may include unplayed words.
+   */
+  unheard?: boolean;
+  /** Confirmed playout on the session timeline, for this speech's selections. */
+  played?: AudioInterval[];
   messages?: Map<string, string | undefined>;
 };
 type SessionState = {
@@ -236,8 +250,18 @@ type SessionState = {
   rowLimitWarned: boolean;
   relationships: Relationships;
   speech: SpeechTracker;
-  /** STT spans per user turn, for transcribed_by links. */
+  /** STT spans per user turn, for context links to the turn's message. */
   transcripts: Map<string, { span: Span; end: number }[]>;
+  /** The session clock's epoch, shared with the audio session's timeline. */
+  origin: number;
+  /**
+   * Whether LiveKit times user speech with a local VAD on the input audio. The
+   * STT provider's speech events otherwise time it, as received over the network.
+   */
+  localVad?: boolean;
+  /** Describes the session's audio, and records it when capture is enabled. */
+  audio: AudioSessionRecorder;
+  /** Captures audio into `audio`; only when attachment capture is enabled. */
   recording?: Recording;
   playback?: Playback;
   /**
@@ -263,7 +287,7 @@ class LiveKitTracing {
   private context = iso.newAsyncLocalStorage<{
     native: LiveKitSpan;
     row?: Row;
-    inference: { model?: Row };
+    inference: { model?: Row; tts?: Row[]; speaking?: Row };
     /** Tool configuration of the enclosing pipeline reply, for its llm spans. */
     request?: Record<string, unknown>;
   }>();
@@ -285,6 +309,60 @@ class LiveKitTracing {
       ? row
       : undefined;
   }
+  /**
+   * The session's audio recorder. Audio is recorded only when capture is
+   * enabled; each segment uploads as an attachment on the session span.
+   */
+  private audioSession(
+    span: Span,
+    origin: number,
+    capturing: boolean,
+  ): AudioSessionRecorder {
+    // Each recording builds its own stack, so plugin state is never shared.
+    let middleware: AudioMiddlewareStack = [];
+    let failed = false;
+    if (capturing)
+      try {
+        middleware = this.audioMiddleware?.() ?? [];
+      } catch (error) {
+        failed = true;
+        debugLogger.notice.warn(
+          "LiveKit audio middleware failed to start.",
+          error,
+        );
+      }
+    const audio = new AudioSessionRecorder({
+      origin,
+      sources: SOURCES,
+      ...(capturing && {
+        audio: {
+          sampleRate: SAMPLE_RATE,
+          segmentBytes: this.streamingAttachmentBufferBytes,
+          maxDurationMs: MAX_RECORDING_MS,
+          middleware,
+        },
+      }),
+      onFile: async ({ id, data, mimeType, metadata }) => {
+        if (!data || !mimeType) return span.log({ metadata });
+        const attachment = new Attachment({
+          data,
+          filename: `${id}.${fileExtension(mimeType)}`,
+          contentType: mimeType,
+        });
+        const status = await attachment.upload();
+        if (status.upload_status !== "done")
+          throw new Error(status.error_message ?? "attachment_upload_failed");
+        // The file and the entry that describes it land in one write.
+        span.log({
+          input: { audio: { [id]: attachment.reference } },
+          metadata,
+        });
+      },
+    });
+    if (failed) audio.stop("recording_transform_failed");
+    return audio;
+  }
+
   private sessionOf(session: AgentSession): SessionState | undefined {
     return this.sessions.get(this.rowOf(session.sessionSpan)?.id ?? "");
   }
@@ -455,35 +533,36 @@ class LiveKitTracing {
         input: isEnvFlagEnabled(CAPTURE_USER_AUDIO),
         output: isEnvFlagEnabled(CAPTURE_AGENT_AUDIO),
       };
+      const capturing = captures.input || captures.output;
+      const origin = Date.now();
+      const audio = this.audioSession(row.span, origin, capturing);
+      row.span.log({ metadata: audio.session() });
+      const transcripts: SessionState["transcripts"] = new Map();
       this.sessions.set(id, {
         root: row,
         rows,
         rowLimitWarned: false,
         relationships,
-        speech: new SpeechTracker(relationships),
-        transcripts: new Map(),
-        recording:
-          captures.input || captures.output
-            ? new Recording(
-                row.span,
-                this.streamingAttachmentBufferBytes,
-                (id) => rows.get(id),
-                captures,
-                this.audioMiddleware,
-              )
-            : undefined,
+        speech: new SpeechTracker(relationships, (turn) =>
+          (transcripts.get(turn) ?? []).map((t) => t.span),
+        ),
+        transcripts,
+        origin,
+        audio,
+        recording: capturing
+          ? new Recording(audio, origin, captures)
+          : undefined,
         closed: false,
       });
     }
     if (owner) return row;
     const state = this.sessions.get(row.session)!;
     state.rows.set(id, row);
+    if (name === "agent_speaking") {
+      row.span.log({ metadata: { "audio.source_id": "agent-output" } });
+      state.playback?.speechStarted(id);
+    }
     const scope = this.context.getStore();
-    if (name === "user_speaking" || name === "agent_speaking")
-      state.speech.add(row);
-    if (name === "user_speaking")
-      for (const stt of state.transcripts.get(row.turn ?? "") ?? [])
-        state.relationships.link(row.span, stt.span, "transcribed_by");
     if (name === "llm_node" && scope) {
       scope.inference.model = row;
       if (scope.request)
@@ -494,15 +573,32 @@ class LiveKitTracing {
               { tool_choice: scope.request.tool_choice },
         });
     }
-    if (
-      (name === "tts_node" || name === "agent_speaking") &&
-      scope?.inference.model
-    )
-      state.relationships.link(
-        row.span,
-        scope.inference.model.span,
-        "generated_by",
-      );
+    // Played audio comes from every synthesis in the reply (one per segment
+    // when the app splits its text), otherwise directly from its model
+    // response; synthesis comes from the model response.
+    const inference = scope?.inference;
+    if (inference && name === "tts_node") {
+      (inference.tts ??= []).push(row);
+      if (inference.model)
+        state.relationships.link(
+          row.span,
+          inference.model.span,
+          "generated_by",
+        );
+      // A later segment of speech that is already playing.
+      if (inference.speaking)
+        state.relationships.link(
+          inference.speaking.span,
+          row.span,
+          "generated_by",
+        );
+    }
+    if (inference && name === "agent_speaking") {
+      inference.speaking = row;
+      for (const generator of inference.tts ??
+        (inference.model ? [inference.model] : []))
+        state.relationships.link(row.span, generator.span, "generated_by");
+    }
     const current = scope?.row?.session === row.session ? scope.row : undefined;
     if (name === "function_tool" && current?.name === "llm_node")
       state.relationships.link(row.span, current.span, "requested_by");
@@ -533,13 +629,22 @@ class LiveKitTracing {
     const state = this.sessions.get(row.session);
     if (!row.owner) {
       row.span.log(endEvent(row, attrs, events));
-      if (state) correlate(row, identities, state.relationships);
-      if (row.name === "user_speaking")
-        state?.recording?.selectInput(
-          row.id,
-          row.start * 1000,
-          row.end! * 1000,
+      if (state)
+        state.relationships.batch(row.span, () =>
+          correlate(row, identities, state.relationships),
         );
+      if (state && row.name === "user_speaking")
+        row.span.log({
+          metadata: {
+            "audio.source_id": "session-input",
+            ...participantIds(state, native),
+            ...(state.localVad && row.end !== undefined
+              ? userSelections(state, row.start * 1000, row.end * 1000)
+              : {}),
+          },
+        });
+      if (state && row.name === "agent_speaking")
+        row.span.log({ metadata: participantIds(state, native) });
       row.span.end({ endTime: row.end });
     } else {
       // Native request spans duplicate the public inference lifecycle.
@@ -599,9 +704,11 @@ class LiveKitTracing {
     // Unobserved spans keep parenting local but inherit the enclosing session row.
     const outer = this.context.getStore();
     const row = found ? (found.owner ?? found) : outer?.row;
-    const inference = found
-      ? { model: found.name === "llm_node" ? found : undefined }
-      : (outer?.inference ?? {});
+    // A model response starts its own inference; its synthesis belongs to the reply's.
+    const inference =
+      found && found.name !== "tts_node"
+        ? { model: found.name === "llm_node" ? found : undefined }
+        : (outer?.inference ?? (found ? { tts: [found] } : {}));
     return this.context.run(
       { native, row, inference, request: request ?? outer?.request },
       () => (found ? withCurrent(row!.span, fn) : fn()),
@@ -616,33 +723,38 @@ class LiveKitTracing {
       : fn();
   }
 
-  /** LiveKit records STT only as user turn attributes; give each final transcript a span. */
+  /**
+   * LiveKit has no native STT span. Each utterance's recognition gets one, from
+   * the first result STT emits for it to its final transcript, under the turn
+   * open when recognition began: LiveKit can close a turn on silence before
+   * its final transcript arrives.
+   */
   stt(recognition: AudioRecognition, event: SpeechEvent): void {
+    const at = event.createdAt ?? Date.now();
     const alternative = event.alternatives?.[0];
-    if (event.type !== FINAL_TRANSCRIPT || !alternative?.text) return;
-    const turn = this.rowOf(recognition.userTurnSpan);
+    if (event.type !== FINAL_TRANSCRIPT) {
+      // Recognition begins at speech or at text. Empty interims are keepalives
+      // between utterances, and END_OF_SPEECH can trail the final it belongs to.
+      const recognizes = event.type === START_OF_SPEECH || !!alternative?.text;
+      if (recognizes && !recognizing.has(recognition))
+        recognizing.set(recognition, { at, turn: this.openTurn(recognition) });
+      return;
+    }
+    if (!alternative?.text) return;
+    const begun = recognizing.get(recognition);
+    recognizing.delete(recognition);
+    const turn = begun?.turn ?? this.openTurn(recognition);
     const parent =
-      turn && !turn.ended
-        ? turn
-        : this.rowOf(
-            recognition.rootSpanContext?.getValue(OTEL_SPAN_KEY) as
-              | LiveKitSpan
-              | undefined,
-          );
+      turn ??
+      this.rowOf(
+        recognition.rootSpanContext?.getValue(OTEL_SPAN_KEY) as
+          | LiveKitSpan
+          | undefined,
+      );
     const state = parent && this.sessions.get(parent.session);
     if (!parent || !state) return;
-    const transcripts =
-      parent === turn ? (state.transcripts.get(turn.id) ?? []) : [];
-    const end = event.createdAt ?? Date.now();
-    // Providers without word timing (such as OpenAI STT) report startTime 0.
-    const aligned =
-      alternative.startTime && recognition.inputStartedAt !== undefined
-        ? recognition.inputStartedAt + alternative.startTime * 1000
-        : undefined;
-    const start = Math.min(
-      end,
-      aligned ?? transcripts.at(-1)?.end ?? parent.start * 1000,
-    );
+    const end = at;
+    const start = Math.min(end, begun?.at ?? end);
     const { model = recognition.sttModel, provider = recognition.sttProvider } =
       recognition.sttIdentity?.() ?? {};
     const span = parent.span.startSpan(
@@ -656,6 +768,10 @@ class LiveKitTracing {
         ? { output: [{ role: "user", content: alternative.text }] }
         : {}),
       metadata: {
+        "audio.source_id": "session-input",
+        // The room participant LiveKit linked to this turn's input, if any.
+        ...(turn ? participantIds(state, turn.attributes) : {}),
+        ...speakerIds(state, recognition, alternative.speakerId || undefined),
         ...(model ? { model } : {}),
         ...(provider ? { provider } : {}),
         ...(alternative.confidence !== undefined
@@ -673,46 +789,76 @@ class LiveKitTracing {
       },
     });
     span.end({ endTime: end / 1000 });
-    if (parent !== turn || transcripts.length >= MAX_EVENTS) return;
+    if (!turn) return;
+    const transcripts = state.transcripts.get(turn.id) ?? [];
+    if (transcripts.length >= MAX_EVENTS) return;
     transcripts.push({ span, end });
     state.transcripts.set(turn.id, transcripts);
-    for (const row of state.rows.values())
-      if (row.name === "user_speaking" && row.turn === turn.id)
-        state.relationships.link(row.span, span, "transcribed_by");
+  }
+
+  /** The user turn LiveKit has open for this recognizer, if any. */
+  private openTurn(recognition: AudioRecognition): Row | undefined {
+    const turn = this.rowOf(recognition.userTurnSpan);
+    return turn && !turn.ended ? turn : undefined;
   }
 
   conversation(session: AgentSession, item: ChatMessage): void {
     const state = this.sessionOf(session);
     if (item?.type !== "message" || !state) return;
     const current = this.context.getStore()?.row;
+    const scoped =
+      current?.session === state.root.id
+        ? state.rows.get(current.turn ?? "")
+        : undefined;
+    if (item.role === "user") {
+      // LiveKit commits a user turn with that turn's native start, or in its scope.
+      const turn =
+        state.speech.turnOf(item) ??
+        (scoped?.name === "user_turn" ? scoped.id : undefined);
+      state.speech.user(item, turn);
+      if (turn)
+        state.rows.get(turn)?.span.log({ metadata: messageMetadata(item) });
+      return;
+    }
+    if (item.role !== "assistant") return;
     const turn =
-      (current?.session === state.root.id ? current.turn : undefined) ??
-      (item.role === "assistant"
-        ? this.rowOf(session.activity?.currentSpeech?._agentTurnSpan)?.id
-        : undefined);
-    // LiveKit falls back to the entire generated text on partial playback when
-    // its output has no synchronized transcript. That fallback is not heard text.
-    // A pipeline commit can include earlier fully played segments followed by the
-    // synchronized partial suffix, so keep a verified prefix too.
-    const heard = this.rowOf(session.agentSpeakingSpan)?.playedText;
+      scoped?.name === "agent_turn"
+        ? scoped.id
+        : this.rowOf(session.activity?.currentSpeech?._agentTurnSpan)?.id;
+    // LiveKit commits a reply before it leaves the speaking state, so the speech
+    // that played it is still current. Otherwise, use the turn's only speech.
+    const playing = this.rowOf(session.agentSpeakingSpan);
+    const speeches = [...state.rows.values()].filter(
+      (row) => row.name === "agent_speaking" && turn && row.turn === turn,
+    );
+    const speaking =
+      playing && (!turn || playing.turn === turn)
+        ? playing
+        : speeches.length === 1
+          ? speeches[0]
+          : undefined;
+    // LiveKit builds an interrupted reply's text from the sink's transcript of
+    // what was heard, or, when the sink has none, from all the text it sent to
+    // be spoken. Only the former describes the speech.
     const textContent =
-      item.role === "assistant" && item.interrupted
-        ? heard && item.textContent?.endsWith(heard)
-          ? item.textContent
-          : heard
+      item.interrupted && (!speaking || speaking.unheard)
+        ? undefined
         : item.textContent;
-    state.speech.message(
+    state.speech.assistant(
       {
         ...item,
         textContent: this.piiAllowed(state.root) ? textContent : undefined,
       },
-      turn,
+      speaking,
     );
   }
 
   input(activity: AgentActivity, stream: ReadableStream<AudioFrame>): void {
-    const recording = this.sessionOf(activity.agentSession)?.recording;
-    if (recording?.captures.input) recording.attachInput(stream);
+    const state = this.sessionOf(activity.agentSession);
+    if (!state) return;
+    state.localVad =
+      activity.vad !== undefined && activity.turnDetectionMode !== "stt";
+    if (state.recording?.captures.input) state.recording.attachInput(stream);
   }
 
   output(session: AgentSession): void {
@@ -724,14 +870,22 @@ class LiveKitTracing {
       ? new Playback(
           sink,
           session,
-          (text) => {
-            const row = this.rowOf(session.agentSpeakingSpan);
-            if (row) row.playedText = text;
-          },
+          state.origin,
+          (id) => state.rows.get(id),
           () => this.piiAllowed(state.root),
           state.recording?.captures.output ? state.recording : undefined,
         )
       : undefined;
+  }
+
+  /**
+   * LiveKit starts a reply within the user turn it answers, preemptively while
+   * the user speaks or when the turn completes, handing it the turn's message.
+   */
+  reply({ newMessage }: PipelineOptions): void {
+    const row = this.context.getStore()?.row;
+    if (!newMessage || row?.name !== "user_turn") return;
+    this.sessions.get(row.session)?.speech.answers(newMessage, row.id);
   }
 
   userTurn(activity: AgentActivity, info: EndOfTurnInfo): void {
@@ -740,10 +894,11 @@ class LiveKitTracing {
     const { startedSpeakingAt, stoppedSpeakingAt } = info;
     if (!state || !turn || startedSpeakingAt === undefined) return;
     state.speech.recognize(turn, startedSpeakingAt);
-    // Native recognition speech boundaries share the local wall clock. Clip actual captured
-    // samples; never derive selection from the broader user_turn span's start/end timestamps.
-    if (stoppedSpeakingAt !== undefined)
-      state.recording?.selectInput(turn, startedSpeakingAt, stoppedSpeakingAt);
+    // First to last speech, including pauses; not the processing that follows.
+    if (state.localVad && stoppedSpeakingAt !== undefined)
+      state.rows.get(turn)?.span.log({
+        metadata: userSelections(state, startedSpeakingAt, stoppedSpeakingAt),
+      });
   }
 
   /**
@@ -776,9 +931,15 @@ class LiveKitTracing {
         state.closed = true;
         this.clearSession(state.root.id);
       };
-      state.closing = state.recording
-        ? state.recording.finish().then(done)
-        : Promise.resolve(done());
+      state.closing = (async () => {
+        try {
+          await state.audio.finish();
+          if (state.recording)
+            state.root.span.log({ metadata: state.recording.metadata() });
+        } finally {
+          done();
+        }
+      })();
     }
     return state.closing;
   }
@@ -903,6 +1064,19 @@ function content(name: string, attrs: Record<string, unknown>) {
       ...(output?.length ? { output } : {}),
     };
   }
+  if (name === "user_turn" || name === "agent_turn") {
+    // A user turn's final transcripts as LiveKit joins them, or the user
+    // message (spoken or typed) that prompted an agent turn.
+    const text =
+      attrs[
+        name === "user_turn"
+          ? "contrib.livekit.pii.user_transcript"
+          : "contrib.livekit.pii.user_input"
+      ];
+    return typeof text === "string" && text
+      ? { input: [{ role: "user", content: text }] }
+      : {};
+  }
   if (name === "tts_node") {
     const text = attrs["contrib.livekit.pii.input_text"];
     return typeof text === "string"
@@ -915,6 +1089,26 @@ function content(name: string, attrs: Record<string, unknown>) {
       output: parse(attrs["contrib.livekit.pii.function_tool.output"]),
     };
   return {};
+}
+
+/** LiveKit's record of a committed user turn: its message ID and speaking times. */
+function messageMetadata(item: ChatMessage) {
+  const metrics = item.metrics ?? {};
+  return {
+    "contrib.livekit.message_id": item.id,
+    ...(metrics.startedSpeakingAt !== undefined
+      ? { "contrib.livekit.started_speaking_at": metrics.startedSpeakingAt }
+      : {}),
+    ...(metrics.stoppedSpeakingAt !== undefined
+      ? { "contrib.livekit.stopped_speaking_at": metrics.stoppedSpeakingAt }
+      : {}),
+    ...(metrics.onUserTurnCompletedDelay !== undefined
+      ? {
+          "contrib.livekit.on_user_turn_completed_delay":
+            metrics.onUserTurnCompletedDelay,
+        }
+      : {}),
+  };
 }
 
 // Tools are long-lived, so convert each parameter schema once.
@@ -1072,39 +1266,58 @@ function correlate(
         "consumes_tool_result",
       );
     else if (item?.type === "message" && typeof item.id === "string")
-      relationships.reference(row.span, `speech:${item.id}`, "input_context");
+      relationships.reference(row.span, `speech:${item.id}`, "uses_context");
   }
 }
 
 type Relationship =
-  | "input_context"
+  | "uses_context"
   | "requested_by"
   | "consumes_tool_result"
-  | "generated_by"
-  | "transcribed_by";
+  | "generated_by";
 type Link = {
   context: { traceId: string; spanId: string; traceFlags: number };
   attributes: { "braintrust.relationship.type": Relationship };
 };
 
-/** Session-local identity resolution. A late transcript or tool can resolve an earlier link. */
+/**
+ * Session-local identity resolution. A native identity can name several spans,
+ * such as a user message's transcripts, and a late target still resolves an
+ * earlier reference.
+ */
 class Relationships {
   private warned = false;
-  private targets = new Map<string, Span>();
+  private targets = new Map<string, Span[]>();
   private waiting = new Map<string, Map<Span, Relationship>>();
   private links = new Map<Span, Map<string, Link>>();
+  /** A source whose new links publish together, and whether it has any. */
+  private batched?: { source: Span; changed: boolean };
+
+  /** Publishes the links `fn` adds from `source` once, as one complete list. */
+  batch(source: Span, fn: () => void): void {
+    const batched = (this.batched = { source, changed: false });
+    try {
+      fn();
+    } finally {
+      this.batched = undefined;
+      if (batched.changed) this.publish(source);
+    }
+  }
 
   register(id: string, target: Span): void {
-    this.targets.set(id, target);
+    const targets = this.targets.get(id) ?? [];
+    if (targets.includes(target) || targets.length >= MAX_EVENTS) return;
+    targets.push(target);
+    this.targets.set(id, targets);
     for (const [source, relationship] of this.waiting.get(id) ?? [])
       this.link(source, target, relationship);
-    this.waiting.delete(id);
   }
 
   reference(source: Span, id: string, relationship: Relationship): void {
-    const target = this.targets.get(id);
-    if (target) this.link(source, target, relationship);
-    else if (this.waiting.size < MAX_ROWS) {
+    for (const target of this.targets.get(id) ?? [])
+      this.link(source, target, relationship);
+    // Later targets for this identity still link to this source.
+    if (this.waiting.size < MAX_ROWS || this.waiting.has(id)) {
       const waiting = this.waiting.get(id) ?? new Map();
       waiting.set(source, relationship);
       this.waiting.set(id, waiting);
@@ -1140,60 +1353,78 @@ class Relationships {
       attributes: { "braintrust.relationship.type": relationship },
     });
     this.links.set(source, links);
+    if (this.batched?.source === source) this.batched.changed = true;
+    else this.publish(source);
+  }
+
+  private publish(source: Span): void {
     // Native rows have no top-level links field, and OTel ingestion does not keep
     // links yet. Metadata carries them until links are first-class.
-    source.log({ metadata: { links: [...links.values()] } });
+    const links = [...(this.links.get(source)?.values() ?? [])];
+    source.log({ metadata: { links } });
   }
 }
 
-/** Native speech owns transcripts; transcript arrival never changes its timing. */
+/**
+ * Associates committed messages with the spans they describe, using only native
+ * identities and structure, never timing. A user message is the transcript of
+ * its user turn, so it resolves to that turn's STT spans. An assistant message
+ * is committed while LiveKit still holds the speech that played it.
+ */
 class SpeechTracker {
-  private rows: Row[] = [];
-  private recognition = new Map<number, Row | undefined>();
+  /** User turns by the messages LiveKit replied to within them. */
+  private answered = new Map<string, string>();
+  /** User turns by LiveKit's native turn start, which its messages carry. */
+  private turns = new Map<number, string | undefined>();
   private owners = new Map<string, Row>();
-  private pending = new Map<string, { item: ChatMessage; turn?: string }>();
+  private pending = new Map<string, ChatMessage>();
 
-  constructor(private relationships: Relationships) {}
+  constructor(
+    private relationships: Relationships,
+    /** A user turn's STT spans, in arrival order. */
+    private transcripts: (turn: string) => Span[],
+  ) {}
 
-  add(row: Row): void {
-    this.rows.push(row);
-    for (const { item, turn } of this.pending.values())
-      if (item.metrics?.startedSpeakingAt !== undefined)
-        this.message(item, turn);
-  }
-
+  /** Keys a user turn by the native start time LiveKit also stamps on its message. */
   recognize(turn: string, startedAt: number): void {
-    const speech = this.rows.filter(
-      (row) => row.name === "user_speaking" && row.turn === turn,
-    );
-    if (speech.length !== 1 || !Number.isFinite(startedAt)) return;
+    if (!Number.isFinite(startedAt)) return;
     const start = startedAt / 1000;
-    this.recognition.set(
+    // Two turns with one native key are ambiguous; neither resolves.
+    this.turns.set(
       start,
-      !this.recognition.has(start) || this.recognition.get(start) === speech[0]
-        ? speech[0]
+      !this.turns.has(start) || this.turns.get(start) === turn
+        ? turn
         : undefined,
     );
   }
 
-  finish(root: Span): void {
-    if (this.pending.size)
-      root.log({
-        metadata: {
-          "contrib.livekit.unassociated_messages": [
-            ...this.pending.values(),
-          ].map(({ item }) => ({
-            id: item.id,
-            role: item.role,
-            text: item.textContent,
-            started_speaking_at: item.metrics?.startedSpeakingAt,
-          })),
-        },
-      });
+  /** Records that LiveKit replied to this message within this user turn. */
+  answers(item: ChatMessage, turn: string): void {
+    if (this.answered.size >= MAX_ROWS) return;
+    this.answered.set(item.id, turn);
+    this.user(item, turn);
   }
 
-  message(item: ChatMessage, turn?: string): void {
-    if (item.role !== "user" && item.role !== "assistant") return;
+  /**
+   * The user turn a committed user message belongs to: the turn LiveKit replied
+   * to it within, or else the turn whose native start the message carries.
+   */
+  turnOf(item: ChatMessage): string | undefined {
+    const answered = this.answered.get(item.id);
+    if (answered) return answered;
+    const start = item.metrics?.startedSpeakingAt;
+    return start === undefined ? undefined : this.turns.get(start);
+  }
+
+  /** Makes a user message's transcripts the target of model context links. */
+  user(item: ChatMessage, turn: string | undefined): void {
+    if (!turn) return;
+    for (const span of this.transcripts(turn))
+      this.relationships.register(`speech:${item.id}`, span);
+  }
+
+  /** Records an assistant message as the played text of the speech that produced it. */
+  assistant(item: ChatMessage, row: Row | undefined): void {
     // Keep only transcript observations, never ChatMessage audio/context payloads.
     item = {
       type: item.type,
@@ -1201,32 +1432,10 @@ class SpeechTracker {
       role: item.role,
       textContent: item.textContent,
       interrupted: item.interrupted,
-      metrics: item.metrics && {
-        startedSpeakingAt: item.metrics.startedSpeakingAt,
-      },
     };
-    const name = item.role === "user" ? "user_speaking" : "agent_speaking";
-    const start = item.metrics?.startedSpeakingAt;
-    const candidates = this.rows.filter((row) => {
-      if (row.name !== name) return false;
-      if (start !== undefined && Number.isFinite(start))
-        return (
-          start >= row.start - 0.001 &&
-          (row.end === undefined || start <= row.end + 0.001)
-        );
-      if (turn) return row.turn === turn;
-      // A user message can be typed input. Do not assign it to old audio.
-      return item.role === "assistant" && !row.ended;
-    });
-    const row =
-      this.owners.get(item.id) ??
-      (item.role === "user" && start !== undefined
-        ? this.recognition.get(start)
-        : undefined) ??
-      (candidates.length === 1 ? candidates[0] : undefined);
+    row = this.owners.get(item.id) ?? row;
     if (!row) {
-      if (this.pending.size < MAX_ROWS)
-        this.pending.set(item.id, { item, turn });
+      if (this.pending.size < MAX_ROWS) this.pending.set(item.id, item);
       return;
     }
     this.pending.delete(item.id);
@@ -1237,9 +1446,9 @@ class SpeechTracker {
     row.span.log({
       ...(item.textContent !== undefined
         ? {
-            [item.role === "user" ? "input" : "output"]: [...messages.values()]
+            output: [...messages.values()]
               .filter((content) => content !== undefined)
-              .map((content) => ({ role: item.role, content })),
+              .map((content) => ({ role: "assistant", content })),
           }
         : {}),
       metadata: {
@@ -1248,10 +1457,30 @@ class SpeechTracker {
       },
     });
   }
+
+  /** Keeps assistant text that LiveKit committed without played speech. */
+  finish(root: Span): void {
+    if (this.pending.size)
+      root.log({
+        metadata: {
+          "contrib.livekit.unassociated_messages": [
+            ...this.pending.values(),
+          ].map((item) => ({
+            id: item.id,
+            role: item.role,
+            text: item.textContent,
+          })),
+        },
+      });
+  }
 }
 
-/** Recorder source keys, published as each recording channel's boundary. */
-type Source = "session_input" | "local_audio_output";
+/** LiveKit's native audio boundaries, published as the session's source IDs. */
+type Source = "session-input" | "agent-output";
+const SOURCES: Record<Source, { label: string }> = {
+  "session-input": { label: "Agent input audio" },
+  "agent-output": { label: "Agent audio" },
+};
 type Packet = {
   pcm: Int16Array;
   rate: number;
@@ -1260,82 +1489,57 @@ type Packet = {
   /** Session-clock offset in milliseconds; relative to its run while staged. */
   at: number;
 };
-type Interval = { start: number; end: number; source: Source };
-type AudioFile = {
-  id: string;
-  start: number;
-  end: number;
-  /** Each source heard in the file and its channel. */
-  sources: { channel: number; name: string }[];
-  metadata?: Record<string, unknown>;
-  state: "pending" | "ready" | "omitted";
-  reason?: string;
-};
 
 const inputs = new WeakMap<object, Recording>();
+/** Recognition in progress per recognizer: when it began, and in which turn. */
+const recognizing = new WeakMap<object, { at: number; turn?: Row }>();
 const sinks = new WeakMap<object, Playback>();
+/**
+ * Each recognizer labels its speakers independently: the same label from two
+ * recognizers need not be the same voice. Opaque per-recognizer scope keys.
+ */
+const labelingScopes = new WeakMap<object, number>();
+const labelingScope = (recognition: object) => {
+  let scope = labelingScopes.get(recognition);
+  if (scope === undefined)
+    labelingScopes.set(recognition, (scope = nextLabelingScope++));
+  return scope;
+};
+let nextLabelingScope = 1;
 
-/** LiveKit's call clock, uploads, and speech-to-file references. AudioRecorder owns the audio. */
+/**
+ * Captures a session's LiveKit audio into its AudioSessionRecorder: validates
+ * frames, keeps the input and playout clocks, and decides when it is safe to cut.
+ */
 class Recording {
-  readonly origin = Date.now();
   /** Session-clock playout that each pending output run may still add audio before. */
   readonly holds = new Map<object, number>();
-  private recorder: AudioRecorder;
-  private files: AudioFile[] = [];
   private formats: Record<
     Source,
     Map<string, { sample_rate_hz: number; channel_count: number }>
-  > = { session_input: new Map(), local_audio_output: new Map() };
-  private selections = new Map<string, Interval[]>();
-  private playbackEvents = new Map<string, unknown[]>();
+  > = { "session-input": new Map(), "agent-output": new Map() };
   private inputStream?: object;
-  private inputStart?: number;
   private inputEnd?: number;
-  private finishing?: Promise<void>;
 
   constructor(
-    private span: Span,
-    chunkBytes: number,
-    private resolve: (owner: string) => Row | undefined,
+    private audio: AudioSessionRecorder,
+    /** The session clock's epoch, shared with the audio session's timeline. */
+    readonly origin: number,
     /** Which directions this recording captures: caller input, agent output. */
     readonly captures = { input: true, output: true },
-    middleware?: () => AudioMiddlewareStack,
-  ) {
-    // Each recording builds its own stack, so plugin state is never shared.
-    let stack: AudioMiddlewareStack = [];
-    let failed = false;
-    try {
-      stack = middleware?.() ?? [];
-    } catch (error) {
-      failed = true;
-      debugLogger.notice.warn(
-        "LiveKit audio middleware failed to start.",
-        error,
-      );
-    }
-    this.recorder = new AudioRecorder({
-      sampleRate: SAMPLE_RATE,
-      sources: ["session_input", "local_audio_output"],
-      segmentBytes: chunkBytes,
-      maxDurationMs: MAX_RECORDING_MS,
-      middleware: stack,
-      onFlush: (segment, meta) => this.upload(segment, meta),
-      onError: (meta, reason) => this.omit(meta, reason),
-    });
-    if (failed) this.stop("recording_transform_failed");
-  }
+  ) {}
 
   get active(): boolean {
-    return this.recorder.active;
+    return this.audio.active;
   }
   get closed(): boolean {
-    return this.recorder.closed;
+    return this.audio.closed;
   }
   get reason(): string | undefined {
-    return this.recorder.reason;
+    return this.audio.reason;
   }
   stop(reason: string): void {
-    this.recorder.stop(reason);
+    this.audio.stop(reason);
   }
 
   /** Validates a LiveKit frame, returning its samples while capture continues. */
@@ -1357,7 +1561,7 @@ class Recording {
 
   record(packet: Packet): boolean {
     if (
-      !this.recorder.record(packet.source, packet.pcm, {
+      !this.audio.record(packet.source, packet.pcm, {
         sampleRate: packet.rate,
         channelCount: packet.channels,
         offsetMs: packet.at,
@@ -1374,12 +1578,12 @@ class Recording {
   /** Copies an output frame until playout confirms or discards it. */
   stage(frame: AudioFrame): Int16Array | undefined {
     const data = this.samples(frame);
-    if (!data || !this.recorder.reserve(data.byteLength)) return;
+    if (!data || !this.audio.reserve(data.byteLength)) return;
     // LiveKit may reuse the frame while captureFrame is awaiting the sink.
     return data.slice();
   }
   unstage(pcm: Int16Array): void {
-    this.recorder.release(pcm.byteLength);
+    this.audio.release(pcm.byteLength);
   }
 
   attachInput(stream: ReadableStream<AudioFrame>): void {
@@ -1417,64 +1621,89 @@ class Recording {
         pcm,
         rate: frame.sampleRate,
         channels: frame.channels,
-        source: "session_input",
+        source: "session-input",
         at,
       })
     )
       return;
-    this.inputStart ??= at;
     this.inputEnd = at + duration;
     this.advance();
   }
 
-  /** Select captured input between two wall-clock times for a span. */
-  selectInput(owner: string, fromUnixMs: number, toUnixMs: number): void {
-    if (
-      this.inputStart === undefined ||
-      !Number.isFinite(fromUnixMs) ||
-      !Number.isFinite(toUnixMs)
-    )
-      return;
-    this.select(
-      owner,
-      Math.max(this.inputStart, fromUnixMs - this.origin),
-      Math.min(this.inputEnd!, toUnixMs - this.origin),
-      "session_input",
-    );
-    this.publish([owner]);
+  /**
+   * Records the staged frames that confirmed playout covers, then releases
+   * frames that can no longer play. Only confirmed output advances a run's
+   * hold; generated or queued audio never does.
+   */
+  confirm(
+    run: Run,
+    ranges: PlaybackProgressedEvent[],
+    unmapped: boolean,
+  ): void {
+    if (!this.active) return this.drop(run);
+    if (unmapped && run.duration) {
+      this.stop("output_playout_mapping_unavailable");
+      return this.drop(run);
+    }
+    for (const range of ranges) {
+      if (
+        ![range.startedAt, range.offset, range.duration].every(
+          Number.isFinite,
+        ) ||
+        range.offset < run.processed - samplesToMs(1) ||
+        range.duration < 0
+      ) {
+        this.stop("invalid_playout_range");
+        break;
+      }
+      const end = range.offset + range.duration;
+      for (const frame of run.frames) {
+        const frameEnd =
+          frame.at +
+          pcmBytesToMs(frame.pcm.byteLength, frame.rate, frame.channels);
+        const from = Math.max(frame.at, range.offset);
+        const to = Math.min(frameEnd, end);
+        if (to <= from) continue;
+        const pcm = frame.pcm.subarray(
+          Math.round(msToSamples(from - frame.at, frame.rate)) * frame.channels,
+          Math.round(msToSamples(to - frame.at, frame.rate)) * frame.channels,
+        );
+        const at = Math.max(
+          0,
+          range.startedAt - this.origin + from - range.offset,
+        );
+        this.record({ ...frame, pcm, at });
+      }
+      run.processed = end;
+      this.holds.set(
+        run,
+        Math.max(0, range.startedAt - this.origin + range.duration),
+      );
+    }
+    run.frames = run.frames.filter((frame) => {
+      const consumed =
+        run.finished ||
+        !this.active ||
+        frame.at +
+          pcmBytesToMs(frame.pcm.byteLength, frame.rate, frame.channels) <=
+          run.processed + samplesToMs(1);
+      if (consumed) this.unstage(frame.pcm);
+      return !consumed;
+    });
+    if (run.finished) this.holds.delete(run);
+    this.advance();
   }
 
-  select(owner: string, start: number, end: number, source: Source): void {
-    if (!(end > start)) return;
-    const list = this.selections.get(owner) ?? [];
-    const previous = list.at(-1);
-    if (
-      previous &&
-      previous.source === source &&
-      start >= previous.start &&
-      start <= previous.end + samplesToMs(1)
-    ) {
-      previous.end = Math.max(previous.end, end);
-      return;
-    }
-    if (list.length >= MAX_RANGES) {
-      this.stop("selection_limit");
-      return;
-    }
-    list.push({ start, end, source });
-    this.selections.set(owner, list);
-  }
-
-  playbackEvent(owner: string, event: unknown): void {
-    const events = this.playbackEvents.get(owner) ?? [];
-    if (events.length < MAX_EVENTS) events.push(event);
-    this.playbackEvents.set(owner, events);
+  /** Releases a run's staged frames and its hold. */
+  drop(run: Run): void {
+    for (const frame of run.frames.splice(0)) this.unstage(frame.pcm);
+    this.holds.delete(run);
   }
 
   /** Only cut where neither input nor a queued playback run can still add audio. */
   advance(): void {
     const wall = Date.now() - this.origin - 1000;
-    this.recorder.advance(
+    this.audio.advance(
       Math.min(
         wall,
         this.inputStream ? (this.inputEnd ?? 0) : wall,
@@ -1483,185 +1712,98 @@ class Recording {
     );
   }
 
-  finish(): Promise<void> {
-    return (this.finishing ??= this.recorder
-      .finish()
-      .then(() => this.publishFiles()));
-  }
-
-  /** One ordinary SDK attachment upload per segment; capture continues meanwhile. */
-  private async upload(
-    segment: Uint8Array,
-    meta: AudioSegmentMeta,
-  ): Promise<void> {
-    const file = this.file(meta);
-    file.metadata = {
-      mime_type: meta.mimeType,
-      sample_rate_hz: meta.sampleRate,
-      channel_count: meta.channels.length,
-      // Headerless PCM needs its sample format published; files such as Ogg carry their own.
-      ...(meta.mimeType === "audio/pcm" && {
-        sample_format: meta.attributes?.["pcm.sample_format"],
-      }),
-      duration_ms: meta.durationMs,
+  /** LiveKit's native capture details for the session span. */
+  metadata(): Record<string, unknown> {
+    return {
+      "contrib.livekit.audio.input_formats": [
+        ...this.formats["session-input"].values(),
+      ],
+      "contrib.livekit.audio.output_formats": [
+        ...this.formats["agent-output"].values(),
+      ],
+      // The schema has no recording-level outcome; keep LiveKit's reason natively.
+      ...(this.reason
+        ? { "contrib.livekit.audio.stop_reason": this.reason }
+        : {}),
     };
-    this.publishFiles();
-    const attachment = new Attachment({
-      data: segment,
-      filename: `${file.id}.${fileExtension(meta.mimeType)}`,
-      contentType: meta.mimeType,
-    });
-    try {
-      const status = await attachment.upload();
-      file.state = status.upload_status === "done" ? "ready" : "omitted";
-    } catch {
-      file.state = "omitted";
-    }
-    if (file.state === "ready") {
-      this.span.log({ input: { audio: { [file.id]: attachment.reference } } });
-    } else {
-      file.reason = "recording_export_failed";
-      this.stop(file.reason);
-    }
-    this.publishFiles();
-    if (file.state === "ready")
-      this.publish(
-        [...this.selections]
-          .filter(([, list]) =>
-            list.some((s) => s.start < file.end && s.end > file.start),
-          )
-          .map(([owner]) => owner),
-      );
   }
+}
 
-  private omit(meta: AudioSegmentMeta, reason: string): void {
-    const file = this.file(meta);
-    file.state = "omitted";
-    file.reason = reason;
-    this.publishFiles();
-  }
+/** The schema's role for LiveKit's native participant kinds. */
+const PARTICIPANT_TYPES: Record<string, AudioMember["type"]> = {
+  STANDARD: "user",
+  SIP: "user",
+  // Bridges an outside user, e.g. from a messaging platform, into the room.
+  CONNECTOR: "user",
+  AGENT: "agent",
+  INGRESS: "other",
+  EGRESS: "other",
+};
 
-  /** The file for a segment, keyed by its position in the recording. */
-  private file(meta: AudioSegmentMeta): AudioFile {
-    const id = `call-${String(meta.index).padStart(4, "0")}`;
-    let file = this.files.find((f) => f.id === id);
-    if (!file) {
-      file = {
-        id,
-        start: meta.startOffsetMs,
-        end: meta.startOffsetMs + meta.durationMs,
-        sources: meta.channels.flatMap((c, channel) =>
-          c.sources.map((name) => ({ channel, name })),
-        ),
-        state: "pending",
-      };
-      this.files.push(file);
-    }
-    return file;
-  }
-
-  private publishFiles(): void {
-    const recordings: Record<string, unknown>[] = this.files.map((f) => ({
-      id: f.id,
-      recording_group_id: "call",
-      state: f.state,
-      ...(f.reason ? { reason: f.reason } : {}),
-      ...(f.state === "ready"
-        ? {
-            attachment: {
-              span_id: this.span.spanId,
-              ref: `/input/audio/${f.id}`,
-            },
-            ...f.metadata,
-          }
+/**
+ * The room connection LiveKit stamped on a span: the caller whose audio it
+ * heard, or the agent's own connection. Published on first sight; a session
+ * without a room has no participants.
+ */
+function participantIds(
+  state: SessionState,
+  native: Map<string, unknown>,
+): { "audio.participant_ids"?: string[] } {
+  const sid = native.get("lk.participant_id");
+  if (typeof sid !== "string" || !sid) return {};
+  const kind = native.get("lk.participant_kind");
+  const { id, added } = state.audio.participant(sid, {
+    type: (typeof kind === "string" && PARTICIPANT_TYPES[kind]) || "unknown",
+    attributes: {
+      "contrib.livekit.participant_id": sid,
+      ...(typeof kind === "string"
+        ? { "contrib.livekit.participant_kind": kind }
         : {}),
-      sources: f.sources.map((s) => ({
-        channel_index: s.channel,
-        boundary: s.name,
-      })),
-      timeline: {
-        origin_unix_ms: this.origin,
-        basis: "local_input_arrival_and_output_playout",
-        recording_start_offset_ms: f.start,
-      },
-      ...(f.state === "omitted"
-        ? {
-            gaps: [
-              {
-                start_offset_ms: f.start,
-                end_offset_ms: f.end,
-                reason: f.reason,
-              },
-            ],
-          }
-        : {}),
-    }));
-    if (this.reason)
-      recordings.push({
-        id: "call",
-        recording_group_id: "call",
-        state: "omitted",
-        reason: this.reason,
-        truncated: true,
-      });
-    else if (!recordings.length && this.closed)
-      recordings.push({
-        id: "call",
-        recording_group_id: "call",
-        state: "omitted",
-        reason: "no_audio_observed",
-      });
-    this.span.log({
-      metadata: {
-        "audio.recordings": recordings,
-        "contrib.livekit.audio.input_formats": [
-          ...this.formats.session_input.values(),
-        ],
-        "contrib.livekit.audio.output_formats": [
-          ...this.formats.local_audio_output.values(),
-        ],
-      },
-    });
-  }
+    },
+  });
+  if (added) state.root.span.log({ metadata: added });
+  return { "audio.participant_ids": [id] };
+}
 
-  /** Publish each owner's selections within the files uploaded so far. */
-  publish(owners: Iterable<string>): void {
-    const ready = this.files.filter((f) => f.state === "ready");
-    const toSample = (ms: number) => samplesToMs(Math.round(msToSamples(ms)));
-    for (const owner of owners) {
-      const row = this.resolve(owner);
-      const intervals = this.selections.get(owner);
-      if (!row || row.owner || !intervals) continue;
-      const events = this.playbackEvents.get(owner);
-      row.span.log({
-        metadata: {
-          "audio.selections": ready.flatMap((f) =>
-            intervals.flatMap((s) => {
-              // The file describes which channel holds each source, if any.
-              const channel = f.sources.find(
-                (x) => x.name === s.source,
-              )?.channel;
-              const selection = {
-                recording_span_id: this.span.spanId,
-                recording_id: f.id,
-                channel_index: channel,
-                start_offset_ms: Math.max(0, toSample(s.start - f.start)),
-                end_offset_ms: Math.min(
-                  f.end - f.start,
-                  toSample(s.end - f.start),
-                ),
-              };
-              return channel !== undefined &&
-                selection.end_offset_ms > selection.start_offset_ms
-                ? [selection]
-                : [];
-            }),
-          ),
-          ...(events ? { "contrib.livekit.playback_events": events } : {}),
-        },
-      });
-    }
-  }
+/**
+ * The voice a diarizing STT identified in the session's input, by its native
+ * label within the recognizer that assigned it. Published on first sight; the
+ * label is an index, not a name.
+ */
+function speakerIds(
+  state: SessionState,
+  recognition: object,
+  label: string | undefined,
+): Record<string, unknown> {
+  if (!label) return {};
+  const key = JSON.stringify([labelingScope(recognition), label]);
+  const { id, added } = state.audio.speaker("session-input", key, {
+    type: "user",
+    attributes: { "contrib.livekit.speaker_id": label },
+  });
+  if (added) state.root.span.log({ metadata: added });
+  return { "audio.speaker_ids": [id], "contrib.livekit.speaker_id": label };
+}
+
+/** A user interval, in unix milliseconds, as `audio.selections` on the session timeline. */
+function userSelections(state: SessionState, from: number, to: number) {
+  const selections = audioSelections([
+    { start: from - state.origin, end: to - state.origin },
+  ]);
+  return selections ? { "audio.selections": selections } : {};
+}
+
+/** Extends a speech's confirmed playout; contiguous frames grow one interval. */
+function played(row: Row, interval: AudioInterval): void {
+  const list = (row.played ??= []);
+  const last = list.at(-1);
+  if (
+    last &&
+    interval.start >= last.start &&
+    interval.start <= last.end + samplesToMs(1)
+  )
+    last.end = Math.max(last.end, interval.end);
+  else if (list.length < MAX_RANGES) list.push(interval);
 }
 
 function fileExtension(mimeType: string): string {
@@ -1724,8 +1866,8 @@ type Run = {
   /** The agent_turn and agent_speaking rows this playout belongs to. */
   owner?: string;
   speaking?: string;
-  /** Played ranges recorded before the speaking row is known. */
-  unclaimed: { start: number; end: number }[];
+  /** Played intervals seen before the speaking row is known. */
+  unclaimed: AudioInterval[];
   started?: number;
   ranges: PlaybackProgressedEvent[];
   finished?: PlaybackFinishedEvent;
@@ -1734,22 +1876,37 @@ type Run = {
   hadProgress: boolean;
 };
 
-/** One session's audio sink: heard transcripts and, when recording, confirmed playout. */
+/**
+ * One session's audio sink. Its playback events always place played speech on
+ * the timeline and report heard text; when recording, confirmed frames are
+ * also recorded.
+ */
 class Playback {
   private runs: Run[] = [];
   private current?: Run;
   private listeners: [string, (event: any) => void][];
   private recording?: Recording;
+  private playbackEvents = new Map<string, unknown[]>();
 
   constructor(
     readonly sink: AudioOutput,
     private session: AgentSession,
-    private heard: (text: string | undefined) => void,
+    /** The session clock's epoch, shared with the audio session's timeline. */
+    private origin: number,
+    private resolve: (id: string) => Row | undefined,
     /** Whether heard text may be kept in native playback events. */
     private piiAllowed: () => boolean,
     recording?: Recording,
   ) {
     this.listeners = [
+      [
+        "playbackStarted",
+        (event) => runInstrumentation(() => this.started(event)),
+      ],
+      [
+        "playbackProgressed",
+        (event) => runInstrumentation(() => this.progressed(event)),
+      ],
       [
         "playbackFinished",
         (event) => runInstrumentation(() => this.finished(event)),
@@ -1763,19 +1920,6 @@ class Playback {
       this.recording = recording;
       sinks.set(sink, this);
       patchSink(sink);
-      this.listeners.push(
-        [
-          "playbackStarted",
-          (event) =>
-            runInstrumentation(() => {
-              if (this.runs[0]) this.runs[0].started = event.createdAt;
-            }),
-        ],
-        [
-          "playbackProgressed",
-          (event) => runInstrumentation(() => this.progressed(event)),
-        ],
-      );
     }
     for (const [event, listener] of this.listeners)
       sink.on(event as "playbackFinished", listener);
@@ -1794,6 +1938,18 @@ class Playback {
 
   endRun(): void {
     this.current = undefined;
+  }
+
+  /**
+   * LiveKit starts agent speech in response to its first playback, after the
+   * sink reports it. Claim that playout for the new speech now, so it keeps its
+   * selections even if playback finishes after the speech span ends.
+   */
+  speechStarted(id: string): void {
+    const run = this.runs.find((r) => !r.speaking);
+    if (!run) return;
+    run.speaking = id;
+    this.claim(run);
   }
 
   async capture(frame: AudioFrame, call: () => Promise<void>): Promise<void> {
@@ -1816,7 +1972,7 @@ class Playback {
           pcm,
           rate: frame.sampleRate,
           channels: frame.channels,
-          source: "local_audio_output",
+          source: "agent-output",
           at: run.duration,
         });
         run.duration += pcmBytesToMs(
@@ -1845,6 +2001,8 @@ class Playback {
       frames: [],
       duration: 0,
       owner: observedId(this.session.activity?.currentSpeech?._agentTurnSpan),
+      // A later segment of speech already in progress.
+      speaking: observedId(this.session.agentSpeakingSpan),
       unclaimed: [],
       ranges: [],
       inFlight: 0,
@@ -1852,18 +2010,27 @@ class Playback {
       hadProgress: false,
     };
     this.runs.push(run);
-    this.recording!.holds.set(
+    this.recording?.holds.set(
       run,
-      Math.max(0, Date.now() - this.recording!.origin - 1000),
+      Math.max(0, Date.now() - this.origin - 1000),
     );
     return run;
+  }
+
+  private started(event: { createdAt: number }): void {
+    // Captured frames start a run; otherwise playback is the first sign of one.
+    // A repeated start while a run is still playing is not a new run.
+    const run =
+      this.runs.find((r) => r.started === undefined) ??
+      (this.runs.length ? undefined : this.startRun());
+    if (run) run.started = event.createdAt;
   }
 
   private progressed(event: PlaybackProgressedEvent): void {
     const run = this.runs[0];
     if (!run) return;
     if (run.ranges.length >= MAX_RANGES) {
-      this.recording!.stop("playout_range_limit");
+      this.recording?.stop("playout_range_limit");
       return;
     }
     run.hadProgress = true;
@@ -1876,26 +2043,29 @@ class Playback {
   }
 
   private finished(event: PlaybackFinishedEvent): void {
-    this.heard(
-      typeof event.synchronizedTranscript === "string"
-        ? event.synchronizedTranscript
-        : undefined,
-    );
-    const run = this.recording && this.runs.find((r) => !r.finished);
+    const run = this.runs.find((r) => !r.finished);
+    // The playout's own speech; sinks that never report a start have no run.
+    const speaking = run
+      ? (run.speaking ??= observedId(this.session.agentSpeakingSpan))
+      : observedId(this.session.agentSpeakingSpan);
+    const row = speaking ? this.resolve(speaking) : undefined;
+    if (
+      row &&
+      event.interrupted &&
+      typeof event.synchronizedTranscript !== "string"
+    )
+      row.unheard = true;
     if (!run) return;
     run.finished = event;
     this.settle(run);
   }
 
   private discard(run: Run): void {
-    for (const frame of run.frames.splice(0))
-      this.recording!.unstage(frame.pcm);
-    this.recording!.holds.delete(run);
+    this.recording?.drop(run);
   }
 
-  /** Map confirmed playout ranges onto staged frames, recording only heard audio. */
+  /** Confirmed playout: speech selections always; heard frames when recording. */
   private settle(run: Run): void {
-    const recording = this.recording!;
     const { finished } = run;
     if (
       run.inFlight ||
@@ -1907,100 +2077,60 @@ class Playback {
       this.runs.splice(this.runs.indexOf(run), 1);
       if (this.current === run) this.current = undefined;
     }
-    if (!recording.active) return this.discard(run);
     run.speaking ??= observedId(this.session.agentSpeakingSpan);
-    if (run.speaking)
-      for (const played of run.unclaimed.splice(0))
-        recording.select(
-          run.speaking,
-          played.start,
-          played.end,
-          "local_audio_output",
-        );
     const ranges = run.ranges.splice(0);
-    if (finished && !run.hadProgress) {
-      // Sinks without progress events confirm one contiguous run from its start.
-      if (run.started !== undefined && !finished.interrupted)
-        ranges.push({
-          startedAt: run.started,
-          offset: 0,
-          duration: Math.min(run.duration, finished.playbackPosition * 1000),
-        });
-      else if (run.duration) {
-        recording.stop("output_playout_mapping_unavailable");
-        return this.discard(run);
-      }
-    }
-    for (const range of ranges) {
-      if (
-        ![range.startedAt, range.offset, range.duration].every(
+    // Sinks without progress events confirm one contiguous run from its start.
+    const contiguous =
+      finished &&
+      !run.hadProgress &&
+      run.started !== undefined &&
+      !finished.interrupted &&
+      // LiveKit can pause a sink that supports it mid-playout.
+      !this.sink.canPause;
+    if (contiguous)
+      ranges.push({
+        startedAt: run.started!,
+        offset: 0,
+        duration: this.recording
+          ? Math.min(run.duration, finished.playbackPosition * 1000)
+          : finished.playbackPosition * 1000,
+      });
+    const valid = ranges.filter(
+      (range) =>
+        [range.startedAt, range.offset, range.duration].every(
           Number.isFinite,
-        ) ||
-        range.offset < run.processed - samplesToMs(1) ||
-        range.duration < 0
-      ) {
-        recording.stop("invalid_playout_range");
-        break;
-      }
-      const end = range.offset + range.duration;
-      for (const frame of run.frames) {
-        const frameEnd =
-          frame.at +
-          pcmBytesToMs(frame.pcm.byteLength, frame.rate, frame.channels);
-        const from = Math.max(frame.at, range.offset);
-        const to = Math.min(frameEnd, end);
-        if (to <= from) continue;
-        const pcm = frame.pcm.subarray(
-          Math.round(msToSamples(from - frame.at, frame.rate)) * frame.channels,
-          Math.round(msToSamples(to - frame.at, frame.rate)) * frame.channels,
-        );
-        const at = Math.max(
-          0,
-          range.startedAt - recording.origin + from - range.offset,
-        );
-        if (!recording.record({ ...frame, pcm, at })) continue;
-        const played = {
-          start: at,
-          end: at + pcmBytesToMs(pcm.byteLength, frame.rate, frame.channels),
-        };
-        if (run.owner)
-          recording.select(
-            run.owner,
-            played.start,
-            played.end,
-            "local_audio_output",
-          );
-        if (run.speaking)
-          recording.select(
-            run.speaking,
-            played.start,
-            played.end,
-            "local_audio_output",
-          );
-        else if (run.unclaimed.length < MAX_RANGES) run.unclaimed.push(played);
-        else recording.stop("selection_limit");
-      }
-      run.processed = end;
-      // Only confirmed output advances this hold. Generated/queued audio never does.
-      recording.holds.set(
-        run,
-        Math.max(0, range.startedAt - recording.origin + range.duration),
-      );
+        ) && range.duration >= 0,
+    );
+    for (const range of valid) {
+      const start = range.startedAt - this.origin;
+      this.play(run, { start, end: start + range.duration });
     }
-    run.frames = run.frames.filter((frame) => {
-      const consumed =
-        finished ||
-        !recording.active ||
-        frame.at +
-          pcmBytesToMs(frame.pcm.byteLength, frame.rate, frame.channels) <=
-          run.processed + samplesToMs(1);
-      if (consumed) recording.unstage(frame.pcm);
-      return !consumed;
-    });
-    if (finished) {
-      recording.holds.delete(run);
-      if (run.owner)
-        recording.playbackEvent(run.owner, {
+    this.recording?.confirm(
+      run,
+      ranges,
+      !!finished && !run.hadProgress && !contiguous,
+    );
+    if (finished) this.publish(run, finished);
+  }
+
+  /** Places played speech on its speech row once that row is known. */
+  private play(run: Run, interval: AudioInterval): void {
+    if (run.unclaimed.length < MAX_RANGES) run.unclaimed.push(interval);
+    this.claim(run);
+  }
+
+  private claim(run: Run): void {
+    const row = run.speaking && this.resolve(run.speaking);
+    if (!row || row.owner || row.name !== "agent_speaking") return;
+    for (const interval of run.unclaimed.splice(0)) played(row, interval);
+  }
+
+  /** Publishes a finished run's selections and native playback event. */
+  private publish(run: Run, finished: PlaybackFinishedEvent): void {
+    if (run.owner) {
+      const events = this.playbackEvents.get(run.owner) ?? [];
+      if (events.length < MAX_EVENTS)
+        events.push({
           name: "playbackFinished",
           time_unix_ms: Date.now(),
           attributes: {
@@ -2012,11 +2142,21 @@ class Playback {
               : {}),
           },
         });
-      recording.publish(
-        [run.owner, run.speaking].filter((id): id is string => !!id),
-      );
+      this.playbackEvents.set(run.owner, events);
     }
-    recording.advance();
+    for (const id of [run.owner, run.speaking]) {
+      const row = id ? this.resolve(id) : undefined;
+      if (!row || row.owner) continue;
+      const events = this.playbackEvents.get(id!);
+      const selections = row.played && audioSelections(row.played);
+      if (events || selections)
+        row.span.log({
+          metadata: {
+            ...(selections ? { "audio.selections": selections } : {}),
+            ...(events ? { "contrib.livekit.playback_events": events } : {}),
+          },
+        });
+    }
   }
 }
 

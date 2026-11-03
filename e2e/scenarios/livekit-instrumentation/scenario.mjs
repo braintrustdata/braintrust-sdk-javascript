@@ -144,7 +144,8 @@ class Output extends voice.AudioOutput {
   }
 }
 const options = {};
-const streamingStt = process.env.LIVEKIT_STREAMING_STT === "1";
+const diarized = process.env.LIVEKIT_DIARIZATION === "1";
+const streamingStt = process.env.LIVEKIT_STREAMING_STT === "1" || diarized;
 let ws;
 if (providerMode) {
   const { LLM, TTS } = await import("@livekit/agents-plugin-openai");
@@ -159,7 +160,28 @@ if (providerMode) {
     baseURL: process.env.OPENAI_BASE_URL,
   });
 }
-if (streamingStt) {
+if (diarized) {
+  // Two callers share one microphone; LiveKit Inference labels each speaker.
+  const { websocketCassette } = await import("./websocket-cassette.mjs");
+  ws = await websocketCassette(
+    process.env.LIVEKIT_WS_PATH,
+    process.env.BRAINTRUST_E2E_CASSETTE_MODE === "record",
+    {
+      upstream: "wss://agent-gateway.livekit.cloud",
+      // The STT signs its own access token from the LiveKit API key.
+      authorization: (request) => request.headers.authorization,
+    },
+  );
+  options.stt = new livekit.inference.STT({
+    model: "deepgram/nova-3",
+    language: "en",
+    // The input's own rate: no resampling, so replayed audio matches exactly.
+    sampleRate: 16000,
+    modelOptions: { diarize: true },
+    baseURL: ws.baseURL,
+  });
+  options.turnDetection = "manual";
+} else if (streamingStt) {
   const { websocketCassette } = await import("./websocket-cassette.mjs");
   ws = await websocketCassette(
     process.env.LIVEKIT_WS_PATH,
@@ -200,6 +222,13 @@ session.on("user_input_transcribed", (ev) => {
   if (ev.isFinal) callerTranscript += ev.transcript;
 });
 session.on("conversation_item_added", (ev) => committed.push(ev.item));
+// LiveKit commits a reply even when TTS fails, is empty, or stalls, so the
+// call would silently have no agent audio. Keep the reason to report it.
+const ttsErrors = [];
+session.on("error", (ev) => {
+  if (ev.error?.type === "tts_error")
+    ttsErrors.push(ev.error.error?.message ?? "tts_error");
+});
 session.output.audio = output;
 const original = output.captureFrame;
 try {
@@ -242,22 +271,39 @@ try {
   });
   if (providerMode) {
     if (streamingStt) {
-      // Mono 24 kHz s16le speech synthesized by OpenAI for a fictional caller
-      // ("Where is my order DEMO 1042?"), followed by two seconds of silence.
+      // Mono s16le speech synthesized by OpenAI for fictional callers,
+      // followed by two seconds of silence. Order (24 kHz): "Where is my
+      // order DEMO 1042?" Two callers (16 kHz, resampled once with LiveKit's
+      // resampler): "Hi, I'm calling with my partner, who has a question about
+      // our order." (voice coral), 0.8 s of silence, then "Where is order DEMO
+      // 1042? It was supposed to arrive this week, and we haven't heard
+      // anything." (voice onyx).
+      const rate = diarized ? 16000 : 24000;
+      const samples = rate / 50; // 20 ms frames
       const bytes = Buffer.concat([
-        await readFile(new URL("./fixtures/order-24khz.pcm", import.meta.url)),
-        Buffer.alloc(96000),
+        await readFile(
+          new URL(
+            diarized
+              ? "./fixtures/two-callers-16khz.pcm"
+              : "./fixtures/order-24khz.pcm",
+            import.meta.url,
+          ),
+        ),
+        Buffer.alloc(rate * 4),
       ]);
-      for (let at = 0; at < bytes.length; at += 960) {
-        const pcm = new Int16Array(480);
-        for (let i = 0; i < 480 && at + i * 2 + 1 < bytes.length; i++)
+      for (let at = 0; at < bytes.length; at += samples * 2) {
+        const pcm = new Int16Array(samples);
+        for (let i = 0; i < samples && at + i * 2 + 1 < bytes.length; i++)
           pcm[i] = bytes.readInt16LE(at + i * 2);
-        inputController.enqueue(new AudioFrame(pcm, 24000, 1, 480));
+        inputController.enqueue(new AudioFrame(pcm, rate, 1, samples));
         // Pace microphone frames to preserve capture timing.
         await sleep(20);
       }
       const transcriptDeadline = Date.now() + 15000;
-      while (!/order/i.test(callerTranscript)) {
+      // Wait for the second caller's last words; numbers may be spelled out.
+      while (
+        !(diarized ? /heard anything/i : /order/i).test(callerTranscript)
+      ) {
         if (Date.now() > transcriptDeadline)
           throw new Error("No final STT transcript");
         await sleep(20);
@@ -281,6 +327,10 @@ try {
       await sleep(20);
     }
     await session.activity?.currentSpeech?.waitForPlayout();
+    if (!output.playedSamples)
+      throw new Error(
+        `TTS produced no agent audio (${ttsErrors.join("; ") || "empty or stalled response"}): the reply was committed without agent audio. When recording, the provider failed during this run; record again.`,
+      );
     if (process.env.LIVEKIT_RECOVER === "1") {
       await session
         .generateReply({ userInput: "Sorry, please repeat the delivery day." })
