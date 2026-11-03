@@ -903,8 +903,8 @@ class LiveKitTracing {
 
   /**
    * Runs LiveKit's close, then waits for the session's recording to upload and
-   * publish. LiveKit's job process exits right after shutdown, so work left
-   * running past close is lost. LiveKit's result and errors are unchanged.
+   * its rows to flush. LiveKit's job process exits right after shutdown, so
+   * work left running past close is lost. LiveKit's result and errors are unchanged.
    */
   async close(
     session: AgentSession,
@@ -936,6 +936,9 @@ class LiveKitTracing {
           await state.audio.finish();
           if (state.recording)
             state.root.span.log({ metadata: state.recording.metadata() });
+          // LiveKit's job process exits with process.exit(), which skips the
+          // logger's beforeExit flush.
+          await state.root.span.flush();
         } finally {
           done();
         }

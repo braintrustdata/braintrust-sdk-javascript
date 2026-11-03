@@ -350,8 +350,8 @@ try {
     );
   }
   if (streamingStt) await session.input.audio?.close();
+  // Like LiveKit's job process, rely on close alone to deliver the session.
   await session.close();
-  await logger.flush();
   if (provider) assert.equal(telemetry.tracer.getProvider(), provider);
   // Save or verify the websocket cassette before exiting, which skips `finally`.
   const cassette = ws;

@@ -1503,6 +1503,27 @@ describe("recording", () => {
     expect(segmentsOf(audio)).toMatchObject([{ id: "part-0", state: "ready" }]);
   });
 
+  test("close resolves after the session's rows are flushed", async () => {
+    // LiveKit's job process exits with process.exit() once close resolves, so
+    // the logger's exit flush never runs.
+    const log = vi.spyOn(logger, "log");
+    const flush = vi.spyOn(logger, "flush");
+    const { root, sink, origin, session: agentSession } = session();
+    await sink.captureFrame(frame());
+    sink.emit("playbackStarted", { createdAt: origin + 10 });
+    sink.emit("playbackFinished", {
+      playbackPosition: 0.02,
+      interrupted: false,
+    });
+    // LiveKit ends the session span inside closeImpl.
+    await tracing.close(agentSession, async () => root.end());
+    expect(Math.max(...flush.mock.invocationCallOrder)).toBeGreaterThan(
+      Math.max(...log.mock.invocationCallOrder),
+    );
+    const audio = audioOf((await rows()).named("session")[0].metadata);
+    expect(segmentsOf(audio)).toMatchObject([{ id: "part-0", state: "ready" }]);
+  });
+
   test("close keeps LiveKit's error and still finishes the recording", async () => {
     const error = new Error("close failed");
     const { root, sink, session: agentSession } = session();
