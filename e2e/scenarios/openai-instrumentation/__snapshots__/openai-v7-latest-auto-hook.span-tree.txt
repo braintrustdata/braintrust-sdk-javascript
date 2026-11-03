@@ -20,7 +20,7 @@ span_tree:
 │   │     "caller_functionname": "runOperation",
 │   │     "caller_lineno": 0
 │   │   }
-│   │   └── openai.decisions.create [question]
+│   │   └── openai.decisions.create [decision]
 │   │       input: {
 │   │         "questions": [
 │   │           {
@@ -94,7 +94,7 @@ span_tree:
 │   │     "caller_functionname": "runOperation",
 │   │     "caller_lineno": 0
 │   │   }
-│   │   └── openai.decisions.create [question]
+│   │   └── openai.decisions.create [decision]
 │   │       input: {
 │   │         "questions": [
 │   │           {
@@ -154,7 +154,7 @@ span_tree:
 │   │     "caller_functionname": "runOperation",
 │   │     "caller_lineno": 0
 │   │   }
-│   │   └── openai.decisions.create [question]
+│   │   └── openai.decisions.create [decision]
 │   │       input: {
 │   │         "questions": [
 │   │           {
@@ -218,7 +218,7 @@ span_tree:
 │   │     "caller_functionname": "runOperation",
 │   │     "caller_lineno": 0
 │   │   }
-│   │   └── openai.decisions.create [question]
+│   │   └── openai.decisions.create [decision]
 │   │       input: {
 │   │         "questions": [
 │   │           {
@@ -237,8 +237,14 @@ span_tree:
 │   │           },
 │   │           {
 │   │             "criteria": [
-│   │               "routine: Can wait",
-│   │               "urgent: Needs attention today"
+│   │               {
+│   │                 "description": "Can wait",
+│   │                 "label": "routine"
+│   │               },
+│   │               {
+│   │                 "description": "Needs attention today",
+│   │                 "label": "urgent"
+│   │               }
 │   │             ],
 │   │             "id": "<span:3>",
 │   │             "instructions": "How urgent is this request?",
@@ -302,7 +308,7 @@ span_tree:
 │   │     "caller_functionname": "runOperation",
 │   │     "caller_lineno": 0
 │   │   }
-│   │   └── openai.decisions.create [question]
+│   │   └── openai.decisions.create [decision]
 │   │       input: {
 │   │         "questions": [
 │   │           {
