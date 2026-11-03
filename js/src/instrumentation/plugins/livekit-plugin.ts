@@ -8,6 +8,7 @@ import type {
   ChatMessage,
   EndOfTurnInfo,
   FunctionTool,
+  JobContext,
   LiveKitSpan,
   PlaybackFinishedEvent,
   PipelineOptions,
@@ -20,6 +21,13 @@ import iso from "../../isomorph";
 import { BasePlugin } from "../core";
 import { runInstrumentation } from "../core/observe-result";
 import { livekitChannels } from "./livekit-interceptors";
+import {
+  REDACTED_EXCEPTION_MESSAGE,
+  REDACTION_ENABLED,
+  isPiiEvent,
+  livekitPiiAllowed,
+  withoutPii,
+} from "./livekit-pii";
 import { v4 as uuidv4 } from "uuid";
 import { runWithAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
 import { Attachment, startSpan, withCurrent, type Span } from "../../logger";
@@ -178,6 +186,12 @@ export class LiveKitPlugin extends BasePlugin {
           Reflect.apply(target, self, args),
         ),
       ),
+      livekitChannels.jobContext.intercept((target, self, args) => {
+        // Read the job context as LiveKit's own redaction does, without requiring one.
+        tracing.jobContext ??= () =>
+          Reflect.apply(target, self, [false]) as JobContext | undefined;
+        return Reflect.apply(target, self, args);
+      }),
       livekitChannels.close.intercept((target, self, args) =>
         tracing.close(self as AgentSession, () =>
           Reflect.apply(target, self, args),
@@ -226,6 +240,12 @@ type SessionState = {
   transcripts: Map<string, { span: Span; end: number }[]>;
   recording?: Recording;
   playback?: Playback;
+  /**
+   * Whether LiveKit marked one of the session's spans for redaction. It marks
+   * every span of a redacted job, so this also covers observations that have no
+   * native span of their own, such as transcripts and playback.
+   */
+  redacted?: boolean;
   closing?: Promise<void>;
   closed: boolean;
 };
@@ -248,6 +268,8 @@ class LiveKitTracing {
     request?: Record<string, unknown>;
   }>();
   readonly sessions = new Map<string, SessionState>();
+  /** LiveKit's current job context, which carries its project redaction setting. */
+  jobContext?: () => JobContext | undefined;
   // Callbacks already handed to LiveKit can outlive interceptor unsubscription.
   private disabled = false;
 
@@ -274,9 +296,21 @@ class LiveKitTracing {
     const parent =
       (options.context?.getValue(OTEL_SPAN_KEY) as LiveKitSpan | undefined) ??
       this.context.getStore()?.native;
-    const row = this.start(options, this.rowOf(parent));
+    // LiveKit's span processors stamp its session metadata when a span starts.
+    // Honor its redaction flag before starting publishes any of the span's content.
+    const stamped = span.attributes?.[REDACTION_ENABLED] === true;
+    const row = this.start(
+      stamped
+        ? {
+            ...options,
+            attributes: { ...options.attributes, [REDACTION_ENABLED]: true },
+          }
+        : options,
+      this.rowOf(parent),
+    );
     if (!row) return;
     observedRows.set(span, row);
+    this.observeRedaction(row);
     // Only model requests inside an llm_node contribute to their exported owner.
     // Leave other folded spans untouched, including their native recording state.
     if (
@@ -285,6 +319,8 @@ class LiveKitTracing {
     )
       return;
     const finish = () => this.end(row);
+    const piiAllowed = () => this.piiAllowed(row);
+    const observeRedaction = () => this.observeRedaction(row);
     const {
       isRecording,
       recordException,
@@ -302,18 +338,26 @@ class LiveKitTracing {
       },
       recordException(this: LiveKitSpan, error: unknown, time?: SpanTime) {
         recordException.call(this, error, time);
-        if (!row.ended) row.span.log({ error });
+        if (!row.ended)
+          row.span.log({
+            error: piiAllowed() ? error : REDACTED_EXCEPTION_MESSAGE,
+          });
       },
       setAttribute(this: LiveKitSpan, key: string, value: unknown) {
         const result = setAttribute.call(this, key, value);
-        if (!row.ended) row.attributes.set(key, value);
+        if (!row.ended) {
+          row.attributes.set(key, value);
+          observeRedaction();
+        }
         return result;
       },
       setAttributes(this: LiveKitSpan, attributes: Record<string, unknown>) {
         const result = setAttributes.call(this, attributes);
-        if (!row.ended)
+        if (!row.ended) {
           for (const [key, value] of Object.entries(attributes))
             row.attributes.set(key, value);
+          observeRedaction();
+        }
         return result;
       },
       setStatus(this: LiveKitSpan, status: { code: number; message?: string }) {
@@ -442,7 +486,13 @@ class LiveKitTracing {
         state.relationships.link(row.span, stt.span, "transcribed_by");
     if (name === "llm_node" && scope) {
       scope.inference.model = row;
-      if (scope.request) row.span.log({ metadata: scope.request });
+      if (scope.request)
+        row.span.log({
+          metadata: this.piiAllowed(row)
+            ? scope.request
+            : // LiveKit treats tool definitions as PII; the choice is configuration.
+              { tool_choice: scope.request.tool_choice },
+        });
     }
     if (
       (name === "tts_node" || name === "agent_speaking") &&
@@ -471,14 +521,19 @@ class LiveKitTracing {
   }
 
   private end(row: Row): void {
-    const attrs = nativeFields(row.attributes);
-    const events = row.events;
+    // Native identities resolve links in memory; only redacted values are logged.
+    const identities = nativeFields(row.attributes);
+    const native = this.redact(row);
+    const attrs = nativeFields(native);
+    const events = this.redactEvents(row);
+    if (row.status.message && !this.piiAllowed(row))
+      row.status = { ...row.status, message: REDACTED_EXCEPTION_MESSAGE };
     row.attributes = new Map();
     row.events = [];
     const state = this.sessions.get(row.session);
     if (!row.owner) {
       row.span.log(endEvent(row, attrs, events));
-      if (state) correlate(row, attrs, state.relationships);
+      if (state) correlate(row, identities, state.relationships);
       if (row.name === "user_speaking")
         state?.recording?.selectInput(
           row.id,
@@ -492,6 +547,46 @@ class LiveKitTracing {
     }
     if (row.name === "agent_session") void this.closeSession(row.id);
     if (state?.closed) this.clearSession(row.session);
+  }
+
+  /**
+   * Whether LiveKit's configuration allows PII in a row's telemetry: neither
+   * the environment, the job, nor LiveKit's redaction flag on the row's span or
+   * session disallows it.
+   */
+  private piiAllowed(row: Row): boolean {
+    return (
+      row.attributes.get(REDACTION_ENABLED) !== true &&
+      !this.sessions.get(row.session)?.redacted &&
+      livekitPiiAllowed(this.jobContext?.())
+    );
+  }
+
+  /** Remembers LiveKit's redaction flag for the session, once a span carries it. */
+  private observeRedaction(row: Row): void {
+    const state = this.sessions.get(row.session);
+    if (state && row.attributes.get(REDACTION_ENABLED) === true)
+      state.redacted = true;
+  }
+
+  /** Native attributes as LiveKit would export them: without PII when it's not allowed. */
+  private redact(row: Row): Map<string, unknown> {
+    return this.piiAllowed(row) ? row.attributes : withoutPii(row.attributes);
+  }
+
+  private redactEvents(row: Row): Row["events"] {
+    const { events } = row;
+    if (this.piiAllowed(row)) return events;
+    return events
+      .filter((event) => !isPiiEvent(event.name))
+      .map((event) => ({
+        ...event,
+        ...(event.attributes && {
+          attributes: Object.fromEntries(
+            withoutPii(Object.entries(event.attributes)),
+          ),
+        }),
+      }));
   }
 
   scope<T>(
@@ -557,7 +652,9 @@ class LiveKitTracing {
       ),
     );
     span.log({
-      output: [{ role: "user", content: alternative.text }],
+      ...(this.piiAllowed(parent)
+        ? { output: [{ role: "user", content: alternative.text }] }
+        : {}),
       metadata: {
         ...(model ? { model } : {}),
         ...(provider ? { provider } : {}),
@@ -604,7 +701,13 @@ class LiveKitTracing {
           ? item.textContent
           : heard
         : item.textContent;
-    state.speech.message({ ...item, textContent }, turn);
+    state.speech.message(
+      {
+        ...item,
+        textContent: this.piiAllowed(state.root) ? textContent : undefined,
+      },
+      turn,
+    );
   }
 
   input(activity: AgentActivity, stream: ReadableStream<AudioFrame>): void {
@@ -625,6 +728,7 @@ class LiveKitTracing {
             const row = this.rowOf(session.agentSpeakingSpan);
             if (row) row.playedText = text;
           },
+          () => this.piiAllowed(state.root),
           state.recording?.captures.output ? state.recording : undefined,
         )
       : undefined;
@@ -1641,6 +1745,8 @@ class Playback {
     readonly sink: AudioOutput,
     private session: AgentSession,
     private heard: (text: string | undefined) => void,
+    /** Whether heard text may be kept in native playback events. */
+    private piiAllowed: () => boolean,
     recording?: Recording,
   ) {
     this.listeners = [
@@ -1900,7 +2006,8 @@ class Playback {
           attributes: {
             playbackPosition: finished.playbackPosition,
             interrupted: finished.interrupted,
-            ...(finished.synchronizedTranscript !== undefined
+            ...(finished.synchronizedTranscript !== undefined &&
+            this.piiAllowed()
               ? { synchronizedTranscript: finished.synchronizedTranscript }
               : {}),
           },

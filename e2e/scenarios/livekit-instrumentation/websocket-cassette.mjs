@@ -4,12 +4,24 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { setImmediate } from "node:timers/promises";
 import { dirname } from "node:path";
 import assert from "node:assert/strict";
-export async function websocketCassette(path, record) {
+/**
+ * Records or replays one realtime websocket session. `upstream` is the
+ * provider's origin; `authorization` builds its Authorization header from the
+ * client's upgrade request.
+ */
+export async function websocketCassette(
+  path,
+  record,
+  {
+    upstream = "wss://api.openai.com",
+    authorization = () => `Bearer ${process.env.OPENAI_API_KEY}`,
+  } = {},
+) {
   const events = record ? [] : JSON.parse(await readFile(path, "utf8"));
   let index = 0,
     failure,
     socket,
-    upstream;
+    upstreamSocket;
   const ids = new Map();
   const server = new WebSocketServer({ port: 0, host: "127.0.0.1" });
   await new Promise((resolve) => server.once("listening", resolve));
@@ -73,13 +85,13 @@ export async function websocketCassette(path, record) {
     }
     socket = client;
     if (record) {
-      const url = new URL(request.url, "wss://api.openai.com");
+      const url = new URL(request.url, upstream);
       // LiveKit adds model routing for gateways, but OpenAI transcription
       // selects its model in session.update rather than the upgrade URL.
       if (url.searchParams.get("intent") === "transcription")
         url.searchParams.delete("model");
-      const remote = (upstream = new WebSocket(url, {
-        headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
+      const remote = (upstreamSocket = new WebSocket(url, {
+        headers: { Authorization: authorization(request) },
       }));
       const pending = [];
       client.on("message", (data) => {
@@ -126,7 +138,7 @@ export async function websocketCassette(path, record) {
     baseURL: `http://127.0.0.1:${server.address().port}/v1`,
     async close() {
       socket?.terminate();
-      upstream?.terminate();
+      upstreamSocket?.terminate();
       await new Promise((resolve) => server.close(resolve));
       if (failure) throw failure;
       if (record) {
@@ -134,11 +146,13 @@ export async function websocketCassette(path, record) {
         // Provider session IDs can resemble access tokens. Preserve references
         // with synthetic IDs in the cassette, without changing live traffic.
         const sessionIds = new Map();
-        for (const event of events) {
-          const id = event.message?.session?.id;
-          if (typeof id === "string" && !sessionIds.has(id))
-            sessionIds.set(id, `session_fixture_${sessionIds.size + 1}`);
-        }
+        for (const event of events)
+          for (const id of [
+            event.message?.session?.id,
+            event.message?.session_id,
+          ])
+            if (typeof id === "string" && !sessionIds.has(id))
+              sessionIds.set(id, `session_fixture_${sessionIds.size + 1}`);
         const serialized = JSON.stringify(
           events,
           (_key, value) => sessionIds.get(value) ?? value,

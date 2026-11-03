@@ -1659,3 +1659,228 @@ describe("recording files", () => {
     ]);
   });
 });
+
+describe("PII", () => {
+  /** One exchange touching every PII-bearing native field, each marked SECRET. */
+  async function exchange(sessionAttributes: Record<string, unknown> = {}) {
+    const root = start("agent_session", undefined, sessionAttributes);
+    const session: any = { sessionSpan: root };
+    const user = start("user_turn", root);
+    user.setAttributes({
+      "lk.pii.user_transcript": "SECRET order 1042",
+      "lk.pii.participant_identity": "SECRET-caller",
+      "lk.participant_id": "PA_1",
+      "lk.participant_kind": "SIP",
+    });
+    tracing.stt(
+      { userTurnSpan: user, sttModel: "nova-3" },
+      { type: 2, alternatives: [{ text: "SECRET order 1042" }] },
+    );
+    user.addEvent("gen_ai.user.message", { content: "SECRET" });
+    user.addEvent("eou", { "lk.pii.text": "SECRET", "lk.eou.probability": 1 });
+    user.end();
+    const turn = start("agent_turn", root, {
+      "lk.pii.user_input": "SECRET typed",
+    });
+    const lookup = {
+      description: "SECRET tool description",
+      parameters: { type: "object" },
+    };
+    tracing.scope(
+      turn,
+      () => {
+        const model = start("llm_node", turn, {
+          "lk.pii.chat_ctx": JSON.stringify({
+            items: [
+              { type: "message", id: "m1", role: "user", content: ["SECRET"] },
+            ],
+          }),
+          "lk.pii.response.text": "SECRET reply",
+          "gen_ai.request.model": "gpt-5.4-nano",
+          "gen_ai.usage.input_tokens": 10,
+        });
+        model.end();
+        const tool = start("function_tool", turn, {
+          "lk.function_tool.name": "lookup_order",
+          "lk.pii.function_tool.arguments": '{"id":"SECRET"}',
+          "lk.pii.function_tool.output": '{"owner":"SECRET"}',
+        });
+        tool.recordException(new Error("SECRET: no such order"));
+        tool.setStatus({ code: 2, message: "SECRET failure" });
+        tool.end();
+        start("tts_node", turn, { "lk.pii.input_text": "SECRET reply" }).end();
+        const speaking = start("agent_speaking", turn);
+        session.agentSpeakingSpan = speaking;
+        tracing.conversation(session, {
+          type: "message",
+          id: "a1",
+          role: "assistant",
+          textContent: "SECRET reply",
+        });
+        speaking.end();
+      },
+      requestMetadata({
+        span: turn,
+        toolCtx: { functionTools: { lookup_order: lookup } },
+        modelSettings: { toolChoice: "auto" },
+      }),
+    );
+    turn.end();
+    await tracing.closeSession(root);
+    root.end();
+    return rows();
+  }
+
+  test("by default LiveKit allows PII, so content is traced", async () => {
+    const { one } = await exchange();
+    expect(one("stt").output).toEqual([
+      { role: "user", content: "SECRET order 1042" },
+    ]);
+    expect(one("llm_response").output).toEqual([
+      { role: "assistant", content: "SECRET reply" },
+    ]);
+    expect(one("lookup_order").error).toContain("SECRET");
+  });
+
+  test.each([["false"], ["0"], ["no"], ["OFF"]])(
+    "LIVEKIT_TELEMETRY_ALLOW_PII=%s omits everything from PII fields, keeping the trace's shape",
+    async (value) => {
+      vi.stubEnv("LIVEKIT_TELEMETRY_ALLOW_PII", value);
+      const { all, one } = await exchange();
+      expect(JSON.stringify(all)).not.toContain("SECRET");
+      // The structure, models, usage, timing and identities remain.
+      expect(all.map((r) => r.span_attributes.name).sort()).toEqual([
+        "agent_speech",
+        "agent_turn",
+        "llm_response",
+        "lookup_order",
+        "session",
+        "stt",
+        "tts",
+        "user_turn",
+      ]);
+      expect(one("llm_response")).toMatchObject({
+        metadata: { model: "gpt-5.4-nano", tool_choice: "auto" },
+        metrics: { prompt_tokens: 10 },
+      });
+      for (const name of ["user_turn", "agent_turn", "llm_response", "tts"])
+        expect(one(name).input, name).toBeUndefined();
+      for (const name of ["llm_response", "stt", "agent_speech", "tts"])
+        expect(one(name).output, name).toBeUndefined();
+      expect(one("stt").metadata).toMatchObject({ model: "nova-3" });
+      expect(one("agent_speech").metadata).toMatchObject({
+        "contrib.livekit.message_ids": ["a1"],
+      });
+      expect(one("user_turn").metadata["contrib.livekit.events"]).toEqual([
+        {
+          name: "eou",
+          time_unix_ms: expect.any(Number),
+          attributes: { "contrib.livekit.eou.probability": 1 },
+        },
+      ]);
+      // A failure stays visible, without its details.
+      expect(one("lookup_order").error).toBe("exception details redacted");
+      expect(one("user_turn").metadata).toMatchObject({
+        "contrib.livekit.participant_id": "PA_1",
+        "contrib.livekit.participant_kind": "SIP",
+      });
+    },
+  );
+
+  test("links resolved from PII payloads remain, holding only span IDs", async () => {
+    vi.stubEnv("LIVEKIT_TELEMETRY_ALLOW_PII", "false");
+    const root = start("agent_session");
+    const turn = start("agent_turn", root);
+    const first = start("llm_node", turn, {
+      "lk.pii.response.function_calls": JSON.stringify([
+        { call_id: "call-1", name: "lookup_order", arguments: "SECRET" },
+      ]),
+    });
+    first.end();
+    start("function_tool", turn, {
+      "lk.function_tool.name": "lookup_order",
+      "gen_ai.tool.call.id": "call-1",
+      "lk.pii.function_tool.output": "SECRET",
+    }).end();
+    start("llm_node", turn, {
+      "lk.pii.chat_ctx": JSON.stringify({
+        items: [
+          { type: "function_call_output", call_id: "call-1", output: "SECRET" },
+        ],
+      }),
+    }).end();
+    turn.end();
+    const { all, named, one } = await rows();
+    expect(JSON.stringify(all)).not.toContain("SECRET");
+    const types = (row: any) =>
+      (row.metadata.links ?? []).map(
+        (l: any) => l.attributes["braintrust.relationship.type"],
+      );
+    expect(types(one("lookup_order"))).toEqual(["requested_by"]);
+    expect(types(named("llm_response")[1])).toEqual(["consumes_tool_result"]);
+  });
+
+  test("LiveKit project redaction omits PII even when the env allows it", async () => {
+    vi.stubEnv("LIVEKIT_TELEMETRY_ALLOW_PII", "true");
+    tracing.jobContext = () => ({ _redactionEnabled: true });
+    const { all } = await exchange();
+    expect(JSON.stringify(all)).not.toContain("SECRET");
+  });
+
+  test("LiveKit's redaction flag on a span omits that span's PII", async () => {
+    vi.stubEnv("LIVEKIT_TELEMETRY_ALLOW_PII", "true");
+    const root = start("agent_session");
+    start("llm_node", root, {
+      "lk.redaction.enabled": true,
+      "lk.pii.response.text": "SECRET reply",
+    }).end();
+    const { all, one } = await rows();
+    expect(JSON.stringify(all)).not.toContain("SECRET");
+    expect(one("llm_response").output).toBeUndefined();
+  });
+
+  test("LiveKit's redaction flag on the session omits PII from everything in it", async () => {
+    vi.stubEnv("LIVEKIT_TELEMETRY_ALLOW_PII", "true");
+    // Transcripts and replies have no native span of their own to carry it.
+    const { all } = await exchange({ "lk.redaction.enabled": true });
+    expect(JSON.stringify(all)).not.toContain("SECRET");
+  });
+
+  test("LiveKit's redaction flag counts when a span processor sets it at start", async () => {
+    vi.stubEnv("LIVEKIT_TELEMETRY_ALLOW_PII", "true");
+    const root = start("agent_session");
+    const turn = start("agent_turn", root);
+    const model = {
+      ...nativeSpan(),
+      attributes: { "lk.redaction.enabled": true },
+    };
+    // The reply's tools are published when the model span starts.
+    tracing.scope(
+      turn,
+      () =>
+        tracing.observeSpan(model, {
+          name: "llm_node",
+          attributes: { "lk.pii.response.text": "SECRET reply" },
+          startTime: [1, 0],
+          context: { getValue: () => turn },
+        }),
+      requestMetadata({
+        span: turn,
+        toolCtx: {
+          functionTools: {
+            lookup_order: {
+              description: "SECRET tool description",
+              parameters: z.object({ id: z.number() }),
+            },
+          },
+        },
+        modelSettings: { toolChoice: "auto" },
+      }),
+    );
+    model.end();
+    turn.end();
+    const { all, one } = await rows();
+    expect(JSON.stringify(all)).not.toContain("SECRET");
+    expect(one("llm_response").metadata).toMatchObject({ tool_choice: "auto" });
+  });
+});
