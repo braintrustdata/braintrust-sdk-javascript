@@ -19,8 +19,15 @@ type AudioRecorderOptions = {
   middleware?: AudioMiddlewareStack;
   /** Receives each transformed segment; the recorder waits for it to settle. */
   onFlush(segment: Uint8Array, meta: AudioSegmentMeta): void | Promise<void>;
-  /** Receives the original metadata of a segment that failed, and the stop reason. */
-  onError(meta: AudioSegmentMeta, reason: string, error: unknown): void;
+  /**
+   * Receives the original metadata of a segment that failed, and the stop
+   * reason; the recorder waits for it to settle.
+   */
+  onError(
+    meta: AudioSegmentMeta,
+    reason: string,
+    error: unknown,
+  ): void | Promise<void>;
 };
 
 const PCM_ATTRIBUTES = {
@@ -216,14 +223,14 @@ export class AudioRecorder {
     try {
       await this.options.onFlush(result.segment, result.meta);
     } catch (error) {
-      this.fail("recording_export_failed", error, meta);
+      await this.fail("recording_export_failed", error, meta);
     }
   }
 
-  private fail(reason: string, error: unknown, meta: AudioSegmentMeta) {
+  private async fail(reason: string, error: unknown, meta: AudioSegmentMeta) {
     this.stop(reason);
     try {
-      this.options.onError(meta, reason, error);
+      await this.options.onError(meta, reason, error);
     } catch {
       // Reporting must not break draining.
     }
