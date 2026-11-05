@@ -38,9 +38,12 @@ async function runAnthropicInstrumentationScenario(
     supportsBetaToolRunner = true,
     supportsSessions = true,
     supportsThinking = false,
+    supportsTemperature = true,
     supportsServerToolUse = true,
   } = {},
 ) {
+  // The SDK v1 API version no longer accepts temperature.
+  const samplingParams = supportsTemperature ? { temperature: 0 } : {};
   const imageBase64 = (
     await readFile(new URL("./test-image.png", import.meta.url))
   ).toString("base64");
@@ -56,7 +59,7 @@ async function runAnthropicInstrumentationScenario(
         await client.messages.create({
           model: ANTHROPIC_MODEL,
           max_tokens: 24,
-          temperature: 0,
+          ...samplingParams,
           messages: [{ role: "user", content: "Reply with exactly OK." }],
         });
       });
@@ -68,7 +71,7 @@ async function runAnthropicInstrumentationScenario(
           await client.messages.create({
             model: ANTHROPIC_MODEL,
             max_tokens: 24,
-            temperature: 0,
+            ...samplingParams,
             system: [
               { type: "text", text: "translate to english" },
               { type: "text", text: "remove all punctuation" },
@@ -87,7 +90,7 @@ async function runAnthropicInstrumentationScenario(
             .create({
               model: ANTHROPIC_MODEL,
               max_tokens: 24,
-              temperature: 0,
+              ...samplingParams,
               messages: [
                 {
                   role: "user",
@@ -107,7 +110,7 @@ async function runAnthropicInstrumentationScenario(
           await client.messages.create({
             model: ANTHROPIC_MODEL,
             max_tokens: 32,
-            temperature: 0,
+            ...samplingParams,
             messages: [
               {
                 role: "user",
@@ -135,7 +138,7 @@ async function runAnthropicInstrumentationScenario(
         const stream = await client.messages.create({
           model: ANTHROPIC_MODEL,
           max_tokens: 32,
-          temperature: 0,
+          ...samplingParams,
           stream: true,
           messages: [
             {
@@ -154,7 +157,7 @@ async function runAnthropicInstrumentationScenario(
           const stream = client.messages.stream({
             model: ANTHROPIC_MODEL,
             max_tokens: 32,
-            temperature: 0,
+            ...samplingParams,
             messages: [
               {
                 role: "user",
@@ -174,7 +177,7 @@ async function runAnthropicInstrumentationScenario(
           const stream = await client.messages.create({
             model: ANTHROPIC_MODEL,
             max_tokens: 128,
-            temperature: 0,
+            ...samplingParams,
             stream: true,
             tool_choice: {
               type: "tool",
@@ -198,7 +201,7 @@ async function runAnthropicInstrumentationScenario(
         await client.messages.create({
           model: ANTHROPIC_MODEL,
           max_tokens: 128,
-          temperature: 0,
+          ...samplingParams,
           tools: [WEATHER_TOOL],
           messages: [
             {
@@ -218,7 +221,7 @@ async function runAnthropicInstrumentationScenario(
             await client.messages.create({
               model: "claude-sonnet-4-5-20250929",
               max_tokens: 256,
-              temperature: 0,
+              ...samplingParams,
               tools: [WEB_SEARCH_SERVER_TOOL],
               tool_choice: { type: "tool", name: WEB_SEARCH_SERVER_TOOL.name },
               messages: [
@@ -241,7 +244,7 @@ async function runAnthropicInstrumentationScenario(
             const stream = await client.messages.create({
               model: "claude-sonnet-4-5-20250929",
               max_tokens: 2048,
-              temperature: 1,
+              ...(supportsTemperature ? { temperature: 1 } : {}),
               thinking: {
                 type: "enabled",
                 budget_tokens: 1024,
@@ -267,7 +270,7 @@ async function runAnthropicInstrumentationScenario(
             await client.beta.messages.create({
               model: ANTHROPIC_MODEL,
               max_tokens: 24,
-              temperature: 0,
+              ...samplingParams,
               messages: [{ role: "user", content: "Reply with exactly BETA." }],
             });
           },
@@ -280,7 +283,7 @@ async function runAnthropicInstrumentationScenario(
             const stream = await client.beta.messages.create({
               model: ANTHROPIC_MODEL,
               max_tokens: 32,
-              temperature: 0,
+              ...samplingParams,
               stream: true,
               messages: [
                 {
@@ -301,7 +304,7 @@ async function runAnthropicInstrumentationScenario(
             const stream = client.beta.messages.stream({
               model: ANTHROPIC_MODEL,
               max_tokens: 32,
-              temperature: 0,
+              ...samplingParams,
               messages: [
                 {
                   role: "user",
@@ -321,7 +324,7 @@ async function runAnthropicInstrumentationScenario(
             const stream = await client.beta.messages.create({
               model: ANTHROPIC_MODEL,
               max_tokens: 128,
-              temperature: 0,
+              ...samplingParams,
               stream: true,
               tool_choice: {
                 type: "tool",
@@ -350,7 +353,7 @@ async function runAnthropicInstrumentationScenario(
                 model: ANTHROPIC_MODEL,
                 max_tokens: 128,
                 max_iterations: 3,
-                temperature: 0,
+                ...samplingParams,
                 tools: [
                   {
                     ...WEATHER_TOOL,

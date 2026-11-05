@@ -292,6 +292,14 @@
       {
         "variantKey": "anthropic-v0-latest",
         "label": "v0 latest"
+      },
+      {
+        "variantKey": "anthropic-v1",
+        "label": "v1 pinned"
+      },
+      {
+        "variantKey": "anthropic-v1-latest",
+        "label": "v1 latest"
       }
     ]
   },

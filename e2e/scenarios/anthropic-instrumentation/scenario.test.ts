@@ -36,6 +36,30 @@ const anthropicScenarios = await Promise.all(
       supportsThinking: true,
       wrapperEntry: "scenario.ts",
     },
+    {
+      autoEntry: "scenario.mjs",
+      dependencyName: "anthropic-sdk-v1",
+      snapshotName: "anthropic-v1",
+      supportsTemperature: false,
+      supportsBetaMessages: true,
+      supportsBetaToolRunner: true,
+      supportsSessions: true,
+      supportsServerToolUse: true,
+      supportsThinking: true,
+      wrapperEntry: "scenario.ts",
+    },
+    {
+      autoEntry: "scenario.mjs",
+      dependencyName: "anthropic-sdk-v1-latest",
+      snapshotName: "anthropic-v1-latest",
+      supportsTemperature: false,
+      supportsBetaMessages: true,
+      supportsBetaToolRunner: true,
+      supportsSessions: true,
+      supportsServerToolUse: true,
+      supportsThinking: true,
+      wrapperEntry: "scenario.ts",
+    },
   ].map(async (scenario) => ({
     ...scenario,
     version: await readInstalledPackageVersion(
@@ -47,13 +71,19 @@ const anthropicScenarios = await Promise.all(
 
 describe.concurrent("variants", () => {
   for (const scenario of anthropicScenarios) {
-    describeVariant(`anthropic sdk ${scenario.version}`, () => {
+    const name = `${scenario.snapshotName} (sdk ${scenario.version})`;
+    describeVariant(name, () => {
       defineAnthropicInstrumentationAssertions({
         name: "wrapped instrumentation",
         runScenario: async ({ runScenarioDir }) => {
           await runScenarioDir({
             entry: scenario.wrapperEntry,
-            env: { ANTHROPIC_PACKAGE_NAME: scenario.dependencyName },
+            env: {
+              ANTHROPIC_PACKAGE_NAME: scenario.dependencyName,
+              ANTHROPIC_SUPPORTS_TEMPERATURE: String(
+                scenario.supportsTemperature ?? true,
+              ),
+            },
             runContext: {
               variantKey: scenario.snapshotName,
               originalScenarioDir,
@@ -77,7 +107,12 @@ describe.concurrent("variants", () => {
         runScenario: async ({ runNodeScenarioDir }) => {
           await runNodeScenarioDir({
             entry: scenario.autoEntry,
-            env: { ANTHROPIC_PACKAGE_NAME: scenario.dependencyName },
+            env: {
+              ANTHROPIC_PACKAGE_NAME: scenario.dependencyName,
+              ANTHROPIC_SUPPORTS_TEMPERATURE: String(
+                scenario.supportsTemperature ?? true,
+              ),
+            },
             nodeArgs: ["--import", "braintrust/hook.mjs"],
             runContext: {
               variantKey: scenario.snapshotName,
