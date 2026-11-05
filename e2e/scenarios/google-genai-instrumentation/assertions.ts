@@ -38,6 +38,7 @@ import {
 type RunGoogleGenAIScenario = (harness: {
   runNodeScenarioDir: (options: {
     entry: string;
+    env?: Record<string, string>;
     nodeArgs: string[];
     runContext?: ScenarioRunContext;
     scenarioDir: string;
@@ -45,6 +46,7 @@ type RunGoogleGenAIScenario = (harness: {
   }) => Promise<unknown>;
   runScenarioDir: (options: {
     entry: string;
+    env?: Record<string, string>;
     runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
@@ -106,7 +108,7 @@ function extractGroundingMetadataFromOutput(
   }
 
   for (const candidate of candidates) {
-    if (!isRecord(candidate as Json)) {
+    if (!isRecord(candidate)) {
       continue;
     }
 
@@ -310,10 +312,8 @@ function normalizeGoogleOutput(event: CapturedLogEvent): Json {
     const promptTokensDetails = usageMetadata.promptTokensDetails;
     if (Array.isArray(promptTokensDetails)) {
       promptTokensDetails.sort((left, right) =>
-        String(
-          isRecord(left as Json) ? (left.modality ?? "") : "",
-        ).localeCompare(
-          String(isRecord(right as Json) ? (right.modality ?? "") : ""),
+        String(isRecord(left) ? (left.modality ?? "") : "").localeCompare(
+          String(isRecord(right) ? (right.modality ?? "") : ""),
         ),
       );
     }
@@ -324,11 +324,11 @@ function normalizeGoogleOutput(event: CapturedLogEvent): Json {
     Array.isArray(input) &&
     input.some(
       (message) =>
-        isRecord(message as Json) &&
+        isRecord(message) &&
         Array.isArray(message.content) &&
         message.content.some(
           (block) =>
-            isRecord(block as Json) &&
+            isRecord(block) &&
             isRecord(block.inlineData) &&
             block.inlineData.mimeType === "image/png",
         ),
@@ -343,7 +343,7 @@ function normalizeGoogleOutput(event: CapturedLogEvent): Json {
   const candidates = normalized.candidates;
   if (Array.isArray(candidates)) {
     for (const candidate of candidates) {
-      if (!isRecord(candidate as Json) || !isRecord(candidate.content)) {
+      if (!isRecord(candidate) || !isRecord(candidate.content)) {
         continue;
       }
 
@@ -353,7 +353,7 @@ function normalizeGoogleOutput(event: CapturedLogEvent): Json {
       }
 
       for (const part of parts) {
-        if (isRecord(part as Json) && typeof part.text === "string") {
+        if (isRecord(part) && typeof part.text === "string") {
           part.text = "<google-attachment-description>";
         }
       }
@@ -919,7 +919,26 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
             output_format: "image/png",
           },
         });
-        expect(span?.row.error).toBeDefined();
+        expect(
+          findChildSpans(events, "generate_images", operation?.span.id),
+        ).toHaveLength(1);
+        expect(span?.output).toBeUndefined();
+        const error = span?.row.error;
+        expect(error).toEqual(expect.any(String));
+        if (typeof error === "string" && error.startsWith("{")) {
+          expect(JSON.parse(error)).toMatchObject({
+            error: {
+              code: 404,
+              status: "NOT_FOUND",
+              message: expect.stringContaining(GOOGLE_LEGACY_IMAGE_MODEL),
+            },
+          });
+        } else {
+          // New SDKs reject Imagen on the Gemini API before sending a request.
+          expect(error).toBe(
+            "This method is only supported by the Gemini Enterprise Agent Platform (previously known as Vertex AI).",
+          );
+        }
       },
     );
 
@@ -1051,6 +1070,33 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
         });
         expect(span?.metrics).not.toHaveProperty("completion_tokens");
         expect(span?.metrics).not.toHaveProperty("time_to_first_token");
+      },
+    );
+
+    test(
+      "captures each foreground interaction exactly once",
+      testConfig,
+      () => {
+        const operations = events.filter(
+          (event) =>
+            (event.span.name?.startsWith("google-interaction-") &&
+              event.span.name !== "google-interaction-background-operation") ||
+            event.span.name === "google-video-generate-operation",
+        );
+        for (const operation of operations) {
+          const name =
+            operation.span.name === "google-video-generate-operation"
+              ? "generate_video"
+              : "create_interaction";
+          const spans = findChildSpans(events, name, operation.span.id);
+          expect(spans).toHaveLength(1);
+          expect(spans[0]?.span.type).toBe("llm");
+          expect(spans[0]?.row.context).toMatchObject({
+            span_origin: {
+              instrumentation: { name: "google-genai" },
+            },
+          });
+        }
       },
     );
 
@@ -1550,8 +1596,15 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
       expect(JSON.stringify(span?.row.metadata)).toContain("get_time");
     });
 
-    test("matches the shared span tree snapshot", testConfig, async () => {
-      await matchSpanTreeSnapshot(events, spanSnapshotPath);
+    test("matches the span tree snapshot", testConfig, async ({ expect }) => {
+      await matchSpanTreeSnapshot(
+        events.map((event) => ({
+          event,
+          fields: { ...spanTreeFields(event), context: event.row.context },
+        })),
+        spanSnapshotPath,
+        { snapshotExpect: expect },
+      );
     });
   });
 }

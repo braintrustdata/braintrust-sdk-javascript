@@ -80,12 +80,22 @@
                 "duration": 0,
                 "prompt_tokens": 6,
                 "tokens": 26
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "operation": "generate",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -184,12 +194,22 @@
                 "duration": 0,
                 "prompt_tokens": 13,
                 "tokens": 1303
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "operation": "image-generate",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -269,12 +289,22 @@
                 "prompt_tokens": 13,
                 "time_to_first_token": 0,
                 "tokens": 1303
+              },
+              "context": {
+                "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+                "caller_functionname": "collectAsync",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "operation": "image-generate-stream",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -394,12 +424,22 @@
                 "duration": 0,
                 "prompt_tokens": 279,
                 "tokens": 1569
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "operation": "native-image-edit",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -436,12 +476,22 @@
                 "model": "imagen-3.0-capability-001",
                 "provider": "google"
               },
-              "error": "This method is only supported by the Gemini Enterprise Agent Platform (previously known as Vertex AI)."
+              "error": "This method is only supported by the Gemini Enterprise Agent Platform (previously known as Vertex AI).",
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
+              }
             }
           ],
           "metadata": {
             "operation": "edit-image",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -466,12 +516,22 @@
               "metadata": {
                 "model": "veo-3.1-lite-generate-preview",
                 "provider": "google"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "operation": "generate-videos",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -494,12 +554,22 @@
                 "model": "imagen-4.0-fast-generate-001",
                 "provider": "google"
               },
-              "error": "{\"error\":{\"code\":404,\"message\":\"models/imagen-4.0-fast-generate-001 is not found for API version v1beta, or is not supported for predict. Call ModelService.ListModels to see the list of available models and their supported methods.\",\"status\":\"NOT_FOUND\"}}"
+              "error": "{\"error\":{\"code\":404,\"message\":\"models/imagen-4.0-fast-generate-001 is not found for API version v1beta, or is not supported for predict. Call ModelService.ListModels to see the list of available models and their supported methods.\",\"status\":\"NOT_FOUND\"}}",
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
+              }
             }
           ],
           "metadata": {
             "operation": "legacy-image-generate",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -580,12 +650,22 @@
                 "duration": 0,
                 "prompt_tokens": 19,
                 "tokens": 79
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "operation": "system-instruction",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -687,12 +767,22 @@
                 "duration": 0,
                 "prompt_tokens": 28,
                 "tokens": 66
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "operation": "multi-turn",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -715,12 +805,22 @@
               "metadata": {
                 "model": "gemini-embedding-001",
                 "provider": "google"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "operation": "embed",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -810,12 +910,22 @@
                 "prompt_audio_tokens": 45,
                 "prompt_tokens": 699,
                 "tokens": 699
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "operation": "multimodal-embed",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -868,6 +978,11 @@
           "metadata": {
             "operation": "video-generate",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -952,6 +1067,11 @@
           "metadata": {
             "operation": "interaction",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -1040,6 +1160,11 @@
           "metadata": {
             "operation": "interaction-stream",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -1124,6 +1249,11 @@
           "metadata": {
             "operation": "interaction-stateful-first",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -1209,6 +1339,11 @@
           "metadata": {
             "operation": "interaction-stateful-second",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -1217,6 +1352,11 @@
           "metadata": {
             "operation": "interaction-background",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -1310,12 +1450,22 @@
                 "duration": 0,
                 "prompt_tokens": 268,
                 "tokens": 312
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "operation": "attachment",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -1376,12 +1526,22 @@
                 "prompt_tokens": 16,
                 "time_to_first_token": 0,
                 "tokens": 76
+              },
+              "context": {
+                "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+                "caller_functionname": "collectAsync",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "operation": "stream",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -1442,12 +1602,22 @@
                 "prompt_tokens": 7,
                 "time_to_first_token": 0,
                 "tokens": 27
+              },
+              "context": {
+                "caller_filename": "<repo>/e2e/scenarios/google-genai-instrumentation/scenario.impl.mjs",
+                "caller_functionname": "<anonymous>",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "operation": "stream-return",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -1622,12 +1792,22 @@
                 "duration": 0,
                 "prompt_tokens": 121,
                 "tokens": 407
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "operation": "grounded-generate",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -1781,12 +1961,22 @@
                 "prompt_tokens": 92,
                 "time_to_first_token": 0,
                 "tokens": 294
+              },
+              "context": {
+                "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+                "caller_functionname": "collectAsync",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "operation": "grounded-stream",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -1909,12 +2099,22 @@
                 "duration": 0,
                 "prompt_tokens": 65,
                 "tokens": 169
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "operation": "tool",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -2063,18 +2263,33 @@
                 "duration": 0,
                 "prompt_tokens": 110,
                 "tokens": 207
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "operation": "multi-tool",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         }
       ],
       "metadata": {
         "scenario": "google-genai-instrumentation",
         "testRunId": "<run:1>"
+      },
+      "context": {
+        "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+        "caller_functionname": "runTracedScenario",
+        "caller_lineno": 0
       }
     }
   ]

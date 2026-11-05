@@ -12,18 +12,18 @@ importers:
 
   .:
     dependencies:
-      google-genai-sdk-v1-latest:
-        specifier: npm:@google/genai@1.52.0
-        version: '@google/genai@1.52.0'
       google-genai-sdk-v1:
         specifier: npm:@google/genai@1.30.0
         version: '@google/genai@1.30.0'
-      google-genai-sdk-v2-latest:
-        specifier: npm:@google/genai@2.8.0
-        version: '@google/genai@2.8.0'
+      google-genai-sdk-v1-latest:
+        specifier: npm:@google/genai@1.52.0
+        version: '@google/genai@1.52.0'
       google-genai-sdk-v2:
         specifier: npm:@google/genai@2.8.0
         version: '@google/genai@2.8.0'
+      google-genai-sdk-v2-latest:
+        specifier: npm:@google/genai@2.32.0
+        version: '@google/genai@2.32.0'
 
 packages:
 
@@ -38,6 +38,15 @@ packages:
 
   '@google/genai@1.52.0':
     resolution: {integrity: sha512-gwSvbpiN/17O9TbsqSsE/OzZcpv5Fo4RQjdngGgogtuB9RsyJ8ZHhX5KjHj1bp5N9snN2eK8LDGXSaWW2hof8Q==}
+    engines: {node: '>=20.0.0'}
+    peerDependencies:
+      '@modelcontextprotocol/sdk': ^1.25.2
+    peerDependenciesMeta:
+      '@modelcontextprotocol/sdk':
+        optional: true
+
+  '@google/genai@2.32.0':
+    resolution: {integrity: sha512-60c79uXpR0a47bmGqDxbXEBuQUalNmwo5mx5kqb91jIW4FoqpsLSt86DeVhRhtH5+s/16Wqxt3sXzFQn2U1OHQ==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
       '@modelcontextprotocol/sdk': ^1.25.2
@@ -220,6 +229,17 @@ snapshots:
       - utf-8-validate
 
   '@google/genai@1.52.0':
+    dependencies:
+      google-auth-library: 10.6.2
+      p-retry: 4.6.2
+      protobufjs: 7.6.1
+      ws: 8.21.0
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+
+  '@google/genai@2.32.0':
     dependencies:
       google-auth-library: 10.6.2
       p-retry: 4.6.2
