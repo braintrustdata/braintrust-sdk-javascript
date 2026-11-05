@@ -51,9 +51,6 @@ importers:
       cloudflare-think-v0-20-1:
         specifier: npm:@cloudflare/think@0.20.1
         version: '@cloudflare/think@0.20.1(@ai-sdk/provider@4.0.31)(@modelcontextprotocol/sdk@1.31.0(@cfworker/json-schema@4.1.1)(zod@4.3.6))(agents@0.28.0(@ai-sdk/provider@4.0.31)(@babel/core@8.0.7)(@babel/runtime@7.29.10)(@cloudflare/codemode@0.5.4(@modelcontextprotocol/sdk@1.31.0(@cfworker/json-schema@4.1.1)(zod@4.3.6))(ai@7.0.138(zod@4.3.6))(zod@4.3.6))(@modelcontextprotocol/client@2.0.0)(@modelcontextprotocol/sdk@1.31.0(@cfworker/json-schema@4.1.1)(zod@4.3.6))(@modelcontextprotocol/server@2.0.0)(ai@7.0.138(zod@4.3.6))(chat@4.43.0(ai@7.0.138(zod@4.3.6))(zod@4.3.6))(just-bash@3.6.0)(react@19.3.1)(rolldown@1.2.14)(vite@7.3.5(yaml@2.9.1))(zod@4.3.6))(ai@7.0.138(zod@4.3.6))(react@19.3.1)(zod@4.3.6)'
-      cloudflare-think-v0-20-latest:
-        specifier: npm:@cloudflare/think@0.20.2
-        version: '@cloudflare/think@0.20.2(@ai-sdk/provider@4.0.31)(@modelcontextprotocol/sdk@1.31.0(@cfworker/json-schema@4.1.1)(zod@4.3.6))(agents@0.28.0(@ai-sdk/provider@4.0.31)(@babel/core@8.0.7)(@babel/runtime@7.29.10)(@cloudflare/codemode@0.5.4(@modelcontextprotocol/sdk@1.31.0(@cfworker/json-schema@4.1.1)(zod@4.3.6))(ai@7.0.138(zod@4.3.6))(zod@4.3.6))(@modelcontextprotocol/client@2.0.0)(@modelcontextprotocol/sdk@1.31.0(@cfworker/json-schema@4.1.1)(zod@4.3.6))(@modelcontextprotocol/server@2.0.0)(ai@7.0.138(zod@4.3.6))(chat@4.43.0(ai@7.0.138(zod@4.3.6))(zod@4.3.6))(just-bash@3.6.0)(react@19.3.1)(rolldown@1.2.14)(vite@7.3.5(yaml@2.9.1))(zod@4.3.6))(ai@7.0.138(zod@4.3.6))(react@19.3.1)(zod@4.3.6)'
       dc-browser:
         specifier: 1.0.4
         version: 1.0.4
@@ -275,23 +272,6 @@ packages:
       '@ai-sdk/react': ^4.0.0
       '@chat-adapter/telegram': ^4.29.0
       agents: '>=0.25.0 <1.0.0'
-      ai: ^7.0.0
-      react: ^19.0.0
-      zod: ^4.0.0
-    peerDependenciesMeta:
-      '@ai-sdk/react':
-        optional: true
-      '@chat-adapter/telegram':
-        optional: true
-      react:
-        optional: true
-
-  '@cloudflare/think@0.20.2':
-    resolution: {integrity: sha512-6hkdWYlS3n00tbPwQ6eT6pcHJ9W1POlNgVrZWbwL7biO77/tX80tBwORoujMtTMdc3OaLjb7L5MokAy6bjFO/Q==}
-    peerDependencies:
-      '@ai-sdk/react': ^4.0.0
-      '@chat-adapter/telegram': ^4.29.0
-      agents: '>=0.28.0 <1.0.0'
       ai: ^7.0.0
       react: ^19.0.0
       zod: ^4.0.0
@@ -2745,28 +2725,6 @@ snapshots:
       - workflow
 
   '@cloudflare/think@0.20.1(@ai-sdk/provider@4.0.31)(@modelcontextprotocol/sdk@1.31.0(@cfworker/json-schema@4.1.1)(zod@4.3.6))(agents@0.28.0(@ai-sdk/provider@4.0.31)(@babel/core@8.0.7)(@babel/runtime@7.29.10)(@cloudflare/codemode@0.5.4(@modelcontextprotocol/sdk@1.31.0(@cfworker/json-schema@4.1.1)(zod@4.3.6))(ai@7.0.138(zod@4.3.6))(zod@4.3.6))(@modelcontextprotocol/client@2.0.0)(@modelcontextprotocol/sdk@1.31.0(@cfworker/json-schema@4.1.1)(zod@4.3.6))(@modelcontextprotocol/server@2.0.0)(ai@7.0.138(zod@4.3.6))(chat@4.43.0(ai@7.0.138(zod@4.3.6))(zod@4.3.6))(just-bash@3.6.0)(react@19.3.1)(rolldown@1.2.14)(vite@7.3.5(yaml@2.9.1))(zod@4.3.6))(ai@7.0.138(zod@4.3.6))(react@19.3.1)(zod@4.3.6)':
-    dependencies:
-      '@ai-sdk/anthropic': 4.0.84(zod@4.3.6)
-      '@ai-sdk/openai': 4.0.93(zod@4.3.6)
-      '@cloudflare/codemode': 0.5.4(@modelcontextprotocol/sdk@1.31.0(@cfworker/json-schema@4.1.1)(zod@4.3.6))(ai@7.0.138(zod@4.3.6))(zod@4.3.6)
-      '@cloudflare/shell': 0.4.3(@modelcontextprotocol/sdk@1.31.0(@cfworker/json-schema@4.1.1)(zod@4.3.6))(ai@7.0.138(zod@4.3.6))(zod@4.3.6)
-      agents: 0.28.0(@ai-sdk/provider@4.0.31)(@babel/core@8.0.7)(@babel/runtime@7.29.10)(@cloudflare/codemode@0.5.4(@modelcontextprotocol/sdk@1.31.0(@cfworker/json-schema@4.1.1)(zod@4.3.6))(ai@7.0.138(zod@4.3.6))(zod@4.3.6))(@modelcontextprotocol/client@2.0.0)(@modelcontextprotocol/sdk@1.31.0(@cfworker/json-schema@4.1.1)(zod@4.3.6))(@modelcontextprotocol/server@2.0.0)(ai@7.0.138(zod@4.3.6))(chat@4.43.0(ai@7.0.138(zod@4.3.6))(zod@4.3.6))(just-bash@3.6.0)(react@19.3.1)(rolldown@1.2.14)(vite@7.3.5(yaml@2.9.1))(zod@4.3.6)
-      ai: 7.0.138(zod@4.3.6)
-      chat: 4.43.0(ai@7.0.138(zod@4.3.6))(zod@4.3.6)
-      just-bash: 3.6.0
-      workers-ai-provider: 4.0.0(@ai-sdk/anthropic@4.0.84(zod@4.3.6))(@ai-sdk/openai@4.0.93(zod@4.3.6))(@ai-sdk/provider@4.0.31)(ai@7.0.138(zod@4.3.6))
-      zod: 4.3.6
-    optionalDependencies:
-      react: 19.3.1
-    transitivePeerDependencies:
-      - '@ai-sdk/google'
-      - '@ai-sdk/provider'
-      - '@modelcontextprotocol/sdk'
-      - '@tanstack/ai'
-      - supports-color
-      - workflow
-
-  '@cloudflare/think@0.20.2(@ai-sdk/provider@4.0.31)(@modelcontextprotocol/sdk@1.31.0(@cfworker/json-schema@4.1.1)(zod@4.3.6))(agents@0.28.0(@ai-sdk/provider@4.0.31)(@babel/core@8.0.7)(@babel/runtime@7.29.10)(@cloudflare/codemode@0.5.4(@modelcontextprotocol/sdk@1.31.0(@cfworker/json-schema@4.1.1)(zod@4.3.6))(ai@7.0.138(zod@4.3.6))(zod@4.3.6))(@modelcontextprotocol/client@2.0.0)(@modelcontextprotocol/sdk@1.31.0(@cfworker/json-schema@4.1.1)(zod@4.3.6))(@modelcontextprotocol/server@2.0.0)(ai@7.0.138(zod@4.3.6))(chat@4.43.0(ai@7.0.138(zod@4.3.6))(zod@4.3.6))(just-bash@3.6.0)(react@19.3.1)(rolldown@1.2.14)(vite@7.3.5(yaml@2.9.1))(zod@4.3.6))(ai@7.0.138(zod@4.3.6))(react@19.3.1)(zod@4.3.6)':
     dependencies:
       '@ai-sdk/anthropic': 4.0.84(zod@4.3.6)
       '@ai-sdk/openai': 4.0.93(zod@4.3.6)

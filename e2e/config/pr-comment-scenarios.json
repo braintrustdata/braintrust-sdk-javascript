@@ -233,11 +233,11 @@
         ]
       },
       {
-        "variantKey": "cloudflare-think-v0-20-latest-ai7",
-        "label": "v0.20 latest / AI SDK 7",
+        "variantKey": "cloudflare-think-v0-latest-ai7",
+        "label": "v0 latest / AI SDK 7",
         "variantKeys": [
-          "cloudflare-think-v0-20-latest-ai7-manual",
-          "cloudflare-think-v0-20-latest-ai7-auto"
+          "cloudflare-think-v0-latest-ai7-manual",
+          "cloudflare-think-v0-latest-ai7-auto"
         ]
       },
       {

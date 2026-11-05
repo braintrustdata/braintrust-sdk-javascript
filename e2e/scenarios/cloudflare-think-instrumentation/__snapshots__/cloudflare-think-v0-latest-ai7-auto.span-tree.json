@@ -27,25 +27,31 @@
             },
             "tools": [
               {
-                "description": "Read a workspace file. Text files return line-numbered content. Images and PDFs are passed to capable models as file content. Use offset and limit for large text files. Returns null if the file does not exist.",
+                "description": "Read a workspace file. Images and PDFs are passed to capable models. Text output is capped at 2000 lines or 256KB and includes line and byte continuations when truncated.",
                 "inputSchema": {
                   "$schema": "http://json-schema.org/draft-07/schema#",
                   "additionalProperties": false,
                   "properties": {
+                    "byteOffset": {
+                      "description": "Byte continuation returned by a previous read. Pass it with offset to avoid rescanning.",
+                      "maximum": 9007199254740991,
+                      "minimum": 0,
+                      "type": "integer"
+                    },
                     "limit": {
-                      "description": "Number of lines to read",
+                      "description": "Maximum number of lines to read",
                       "maximum": 9007199254740991,
                       "minimum": 1,
                       "type": "integer"
                     },
                     "offset": {
-                      "description": "1-indexed line number to start reading from",
+                      "description": "Line number to start reading from (1-indexed)",
                       "maximum": 9007199254740991,
                       "minimum": 1,
                       "type": "integer"
                     },
                     "path": {
-                      "description": "Absolute path to the file",
+                      "description": "Path to the file to read",
                       "type": "string"
                     }
                   },
@@ -58,17 +64,165 @@
                 "type": "function"
               },
               {
-                "description": "Write content to a file. Creates the file if it does not exist, overwrites if it does. Parent directories are created automatically.",
+                "description": "List entries in a workspace directory with file sizes and modification times. The result defaults to 200 entries; use limit and offset to page through large directories.",
+                "inputSchema": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "limit": {
+                      "description": "Maximum entries to return. Defaults to 200.",
+                      "maximum": 1000,
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "offset": {
+                      "description": "Number of entries to skip in name order.",
+                      "maximum": 9007199254740991,
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "path": {
+                      "description": "Absolute directory path to list, e.g. /workspace/src.",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "path"
+                  ],
+                  "type": "object"
+                },
+                "name": "ls",
+                "type": "function"
+              },
+              {
+                "description": "Find files and directories matching a glob. * stays within one path segment, ** crosses directories, and ? matches one character.",
+                "inputSchema": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "exclude": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "items": "[Object]",
+                          "type": "array"
+                        }
+                      ],
+                      "description": "Glob patterns to leave out, for example [\"node_modules/**\", \"**/.git/**\"]. An excluded directory is skipped along with everything below it."
+                    },
+                    "limit": {
+                      "maximum": 1000,
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "offset": {
+                      "maximum": 9007199254740991,
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "path": {
+                      "default": "/workspace",
+                      "description": "Absolute directory to search.",
+                      "type": "string"
+                    },
+                    "pattern": {
+                      "description": "Glob pattern relative to path, for example \"**/*.ts\" or \"src/?.js\".",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "pattern"
+                  ],
+                  "type": "object"
+                },
+                "name": "find",
+                "type": "function"
+              },
+              {
+                "description": "Search workspace text with a literal string or regular expression. Results include paths and line numbers and can include surrounding lines.",
+                "inputSchema": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "context": {
+                      "maximum": 10,
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "exclude": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "items": "[Object]",
+                          "type": "array"
+                        }
+                      ],
+                      "description": "Glob patterns to leave out, for example [\"node_modules/**\", \"**/.git/**\"]. An excluded directory is skipped along with everything below it."
+                    },
+                    "ignoreCase": {
+                      "description": "Ignore letter case.",
+                      "type": "boolean"
+                    },
+                    "include": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "items": "[Object]",
+                          "type": "array"
+                        }
+                      ],
+                      "description": "Glob relative to path that limits searched files, for example \"**/*.ts\" or [\"**/*.ts\", \"**/*.md\"]."
+                    },
+                    "limit": {
+                      "maximum": 1000,
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "offset": {
+                      "maximum": 9007199254740991,
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "path": {
+                      "default": "/workspace",
+                      "description": "Absolute file or directory to search.",
+                      "type": "string"
+                    },
+                    "query": {
+                      "description": "Literal string or regular expression to search for.",
+                      "type": "string"
+                    },
+                    "regex": {
+                      "description": "Interpret query as a regular expression.",
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "grep",
+                "type": "function"
+              },
+              {
+                "description": "Write content to a file. Overwrites any existing file at the path.",
                 "inputSchema": {
                   "$schema": "http://json-schema.org/draft-07/schema#",
                   "additionalProperties": false,
                   "properties": {
                     "content": {
-                      "description": "Content to write to the file",
+                      "description": "File content",
                       "type": "string"
                     },
                     "path": {
-                      "description": "Absolute path to the file",
+                      "description": "Absolute path, e.g. /workspace/main.zig",
                       "type": "string"
                     }
                   },
@@ -82,28 +236,35 @@
                 "type": "function"
               },
               {
-                "description": "Make a targeted edit to a file by replacing an exact string match. Provide the old_string to find and new_string to replace it with. The old_string must match exactly (including whitespace and indentation). Use an empty old_string with new_string to create a new file.",
+                "description": "Edit a single file using exact text replacement. Every edits[].oldText must match a unique, non-overlapping region of the original file. If two changes touch the same block, merge them into one edit.",
                 "inputSchema": {
                   "$schema": "http://json-schema.org/draft-07/schema#",
                   "additionalProperties": false,
                   "properties": {
-                    "new_string": {
-                      "description": "Replacement text",
-                      "type": "string"
-                    },
-                    "old_string": {
-                      "description": "Exact text to find and replace. Empty string to create a new file.",
-                      "type": "string"
+                    "edits": {
+                      "description": "One or more targeted replacements. Each edit is matched against the original file, not incrementally. Do not include overlapping or nested edits.",
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "newText": "[Object]",
+                          "oldText": "[Object]"
+                        },
+                        "required": [
+                          "oldText",
+                          "newText"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
                     },
                     "path": {
-                      "description": "Absolute path to the file",
+                      "description": "Path to the file to edit",
                       "type": "string"
                     }
                   },
                   "required": [
                     "path",
-                    "old_string",
-                    "new_string"
+                    "edits"
                   ],
                   "type": "object"
                 },
@@ -111,102 +272,17 @@
                 "type": "function"
               },
               {
-                "description": "List files and directories in a given path. Returns names, types, and sizes for each entry.",
-                "inputSchema": {
-                  "$schema": "http://json-schema.org/draft-07/schema#",
-                  "additionalProperties": false,
-                  "properties": {
-                    "limit": {
-                      "description": "Maximum number of entries to return (default: 200)",
-                      "maximum": 1000,
-                      "minimum": 1,
-                      "type": "integer"
-                    },
-                    "offset": {
-                      "description": "Number of entries to skip (for pagination)",
-                      "maximum": 9007199254740991,
-                      "minimum": 0,
-                      "type": "integer"
-                    },
-                    "path": {
-                      "default": "/",
-                      "description": "Absolute path to the directory to list",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "name": "list",
-                "type": "function"
-              },
-              {
-                "description": "Find files matching a glob pattern. Supports standard glob syntax: * matches any file, ** matches directories recursively, ? matches a single character. Returns matching file paths with types and sizes.",
-                "inputSchema": {
-                  "$schema": "http://json-schema.org/draft-07/schema#",
-                  "additionalProperties": false,
-                  "properties": {
-                    "pattern": {
-                      "description": "Glob pattern to match (e.g. \"**/*.ts\", \"src/**/*.test.ts\", \"*.md\")",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "pattern"
-                  ],
-                  "type": "object"
-                },
-                "name": "find",
-                "type": "function"
-              },
-              {
-                "description": "Search file contents using a regular expression or fixed string. Returns matching lines with file paths and line numbers. Searches all files matching the include glob, or all files if not specified.",
-                "inputSchema": {
-                  "$schema": "http://json-schema.org/draft-07/schema#",
-                  "additionalProperties": false,
-                  "properties": {
-                    "caseSensitive": {
-                      "description": "If true, search is case-sensitive (default: false)",
-                      "type": "boolean"
-                    },
-                    "contextLines": {
-                      "description": "Number of context lines around each match (default: 0)",
-                      "maximum": 10,
-                      "minimum": 0,
-                      "type": "integer"
-                    },
-                    "fixedString": {
-                      "description": "If true, treat query as a literal string instead of regex",
-                      "type": "boolean"
-                    },
-                    "include": {
-                      "description": "Glob pattern to filter files (e.g. \"**/*.ts\"). Defaults to \"**/*\"",
-                      "type": "string"
-                    },
-                    "query": {
-                      "description": "Search pattern (regex or fixed string)",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "query"
-                  ],
-                  "type": "object"
-                },
-                "name": "grep",
-                "type": "function"
-              },
-              {
-                "description": "Delete a file or directory. Set recursive to true to remove non-empty directories.",
+                "description": "Delete a file or directory. Set recursive to true to remove a non-empty directory.",
                 "inputSchema": {
                   "$schema": "http://json-schema.org/draft-07/schema#",
                   "additionalProperties": false,
                   "properties": {
                     "path": {
-                      "description": "Absolute path to the file or directory",
+                      "description": "Absolute path to the file or directory to delete.",
                       "type": "string"
                     },
                     "recursive": {
-                      "description": "If true, remove directories and their contents recursively",
+                      "description": "Remove a directory and all of its contents. Defaults to false.",
                       "type": "boolean"
                     }
                   },
@@ -216,29 +292,6 @@
                   "type": "object"
                 },
                 "name": "delete",
-                "type": "function"
-              },
-              {
-                "description": "Run a Bash script against the workspace. Use for shell-style workflows that combine multiple file operations. The script runs in a sandboxed virtual filesystem with the workspace mounted at `/` (also the default working directory) — there is no `/workspace` or `/home`; use absolute paths like `/notes.txt`. Changed files are written back to the workspace.",
-                "inputSchema": {
-                  "$schema": "http://json-schema.org/draft-07/schema#",
-                  "additionalProperties": false,
-                  "properties": {
-                    "cwd": {
-                      "description": "Working directory for the script. Defaults to / (the workspace root)",
-                      "type": "string"
-                    },
-                    "script": {
-                      "description": "Bash script to run",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "script"
-                  ],
-                  "type": "object"
-                },
-                "name": "bash",
                 "type": "function"
               },
               {
@@ -285,28 +338,28 @@
             "usage": {
               "inputTokenDetails": {
                 "cacheReadTokens": 0,
-                "noCacheTokens": 1042
+                "noCacheTokens": 1148
               },
-              "inputTokens": 1042,
+              "inputTokens": 1148,
               "outputTokenDetails": {
-                "reasoningTokens": 192,
+                "reasoningTokens": 256,
                 "textTokens": 24
               },
-              "outputTokens": 216,
+              "outputTokens": 280,
               "raw": {
-                "completion_tokens": 216,
+                "completion_tokens": 280,
                 "completion_tokens_details": {
                   "accepted_prediction_tokens": 0,
-                  "reasoning_tokens": 192,
+                  "reasoning_tokens": 256,
                   "rejected_prediction_tokens": 0
                 },
-                "prompt_tokens": 1042,
+                "prompt_tokens": 1148,
                 "prompt_tokens_details": {
                   "cached_tokens": 0
                 },
-                "total_tokens": 1258
+                "total_tokens": 1428
               },
-              "totalTokens": 1258
+              "totalTokens": 1428
             }
           },
           "metadata": {
@@ -319,10 +372,10 @@
             "provider": "openai.chat"
           },
           "metrics": {
-            "completion_tokens": 216,
+            "completion_tokens": 280,
             "prompt_cached_tokens": 0,
-            "prompt_tokens": 1042,
-            "tokens": 1258
+            "prompt_tokens": 1148,
+            "tokens": 1428
           }
         },
         {
@@ -400,25 +453,31 @@
             },
             "tools": [
               {
-                "description": "Read a workspace file. Text files return line-numbered content. Images and PDFs are passed to capable models as file content. Use offset and limit for large text files. Returns null if the file does not exist.",
+                "description": "Read a workspace file. Images and PDFs are passed to capable models. Text output is capped at 2000 lines or 256KB and includes line and byte continuations when truncated.",
                 "inputSchema": {
                   "$schema": "http://json-schema.org/draft-07/schema#",
                   "additionalProperties": false,
                   "properties": {
+                    "byteOffset": {
+                      "description": "Byte continuation returned by a previous read. Pass it with offset to avoid rescanning.",
+                      "maximum": 9007199254740991,
+                      "minimum": 0,
+                      "type": "integer"
+                    },
                     "limit": {
-                      "description": "Number of lines to read",
+                      "description": "Maximum number of lines to read",
                       "maximum": 9007199254740991,
                       "minimum": 1,
                       "type": "integer"
                     },
                     "offset": {
-                      "description": "1-indexed line number to start reading from",
+                      "description": "Line number to start reading from (1-indexed)",
                       "maximum": 9007199254740991,
                       "minimum": 1,
                       "type": "integer"
                     },
                     "path": {
-                      "description": "Absolute path to the file",
+                      "description": "Path to the file to read",
                       "type": "string"
                     }
                   },
@@ -431,17 +490,165 @@
                 "type": "function"
               },
               {
-                "description": "Write content to a file. Creates the file if it does not exist, overwrites if it does. Parent directories are created automatically.",
+                "description": "List entries in a workspace directory with file sizes and modification times. The result defaults to 200 entries; use limit and offset to page through large directories.",
+                "inputSchema": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "limit": {
+                      "description": "Maximum entries to return. Defaults to 200.",
+                      "maximum": 1000,
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "offset": {
+                      "description": "Number of entries to skip in name order.",
+                      "maximum": 9007199254740991,
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "path": {
+                      "description": "Absolute directory path to list, e.g. /workspace/src.",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "path"
+                  ],
+                  "type": "object"
+                },
+                "name": "ls",
+                "type": "function"
+              },
+              {
+                "description": "Find files and directories matching a glob. * stays within one path segment, ** crosses directories, and ? matches one character.",
+                "inputSchema": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "exclude": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "items": "[Object]",
+                          "type": "array"
+                        }
+                      ],
+                      "description": "Glob patterns to leave out, for example [\"node_modules/**\", \"**/.git/**\"]. An excluded directory is skipped along with everything below it."
+                    },
+                    "limit": {
+                      "maximum": 1000,
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "offset": {
+                      "maximum": 9007199254740991,
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "path": {
+                      "default": "/workspace",
+                      "description": "Absolute directory to search.",
+                      "type": "string"
+                    },
+                    "pattern": {
+                      "description": "Glob pattern relative to path, for example \"**/*.ts\" or \"src/?.js\".",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "pattern"
+                  ],
+                  "type": "object"
+                },
+                "name": "find",
+                "type": "function"
+              },
+              {
+                "description": "Search workspace text with a literal string or regular expression. Results include paths and line numbers and can include surrounding lines.",
+                "inputSchema": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "context": {
+                      "maximum": 10,
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "exclude": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "items": "[Object]",
+                          "type": "array"
+                        }
+                      ],
+                      "description": "Glob patterns to leave out, for example [\"node_modules/**\", \"**/.git/**\"]. An excluded directory is skipped along with everything below it."
+                    },
+                    "ignoreCase": {
+                      "description": "Ignore letter case.",
+                      "type": "boolean"
+                    },
+                    "include": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "items": "[Object]",
+                          "type": "array"
+                        }
+                      ],
+                      "description": "Glob relative to path that limits searched files, for example \"**/*.ts\" or [\"**/*.ts\", \"**/*.md\"]."
+                    },
+                    "limit": {
+                      "maximum": 1000,
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "offset": {
+                      "maximum": 9007199254740991,
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "path": {
+                      "default": "/workspace",
+                      "description": "Absolute file or directory to search.",
+                      "type": "string"
+                    },
+                    "query": {
+                      "description": "Literal string or regular expression to search for.",
+                      "type": "string"
+                    },
+                    "regex": {
+                      "description": "Interpret query as a regular expression.",
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "name": "grep",
+                "type": "function"
+              },
+              {
+                "description": "Write content to a file. Overwrites any existing file at the path.",
                 "inputSchema": {
                   "$schema": "http://json-schema.org/draft-07/schema#",
                   "additionalProperties": false,
                   "properties": {
                     "content": {
-                      "description": "Content to write to the file",
+                      "description": "File content",
                       "type": "string"
                     },
                     "path": {
-                      "description": "Absolute path to the file",
+                      "description": "Absolute path, e.g. /workspace/main.zig",
                       "type": "string"
                     }
                   },
@@ -455,28 +662,35 @@
                 "type": "function"
               },
               {
-                "description": "Make a targeted edit to a file by replacing an exact string match. Provide the old_string to find and new_string to replace it with. The old_string must match exactly (including whitespace and indentation). Use an empty old_string with new_string to create a new file.",
+                "description": "Edit a single file using exact text replacement. Every edits[].oldText must match a unique, non-overlapping region of the original file. If two changes touch the same block, merge them into one edit.",
                 "inputSchema": {
                   "$schema": "http://json-schema.org/draft-07/schema#",
                   "additionalProperties": false,
                   "properties": {
-                    "new_string": {
-                      "description": "Replacement text",
-                      "type": "string"
-                    },
-                    "old_string": {
-                      "description": "Exact text to find and replace. Empty string to create a new file.",
-                      "type": "string"
+                    "edits": {
+                      "description": "One or more targeted replacements. Each edit is matched against the original file, not incrementally. Do not include overlapping or nested edits.",
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "newText": "[Object]",
+                          "oldText": "[Object]"
+                        },
+                        "required": [
+                          "oldText",
+                          "newText"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
                     },
                     "path": {
-                      "description": "Absolute path to the file",
+                      "description": "Path to the file to edit",
                       "type": "string"
                     }
                   },
                   "required": [
                     "path",
-                    "old_string",
-                    "new_string"
+                    "edits"
                   ],
                   "type": "object"
                 },
@@ -484,102 +698,17 @@
                 "type": "function"
               },
               {
-                "description": "List files and directories in a given path. Returns names, types, and sizes for each entry.",
-                "inputSchema": {
-                  "$schema": "http://json-schema.org/draft-07/schema#",
-                  "additionalProperties": false,
-                  "properties": {
-                    "limit": {
-                      "description": "Maximum number of entries to return (default: 200)",
-                      "maximum": 1000,
-                      "minimum": 1,
-                      "type": "integer"
-                    },
-                    "offset": {
-                      "description": "Number of entries to skip (for pagination)",
-                      "maximum": 9007199254740991,
-                      "minimum": 0,
-                      "type": "integer"
-                    },
-                    "path": {
-                      "default": "/",
-                      "description": "Absolute path to the directory to list",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "name": "list",
-                "type": "function"
-              },
-              {
-                "description": "Find files matching a glob pattern. Supports standard glob syntax: * matches any file, ** matches directories recursively, ? matches a single character. Returns matching file paths with types and sizes.",
-                "inputSchema": {
-                  "$schema": "http://json-schema.org/draft-07/schema#",
-                  "additionalProperties": false,
-                  "properties": {
-                    "pattern": {
-                      "description": "Glob pattern to match (e.g. \"**/*.ts\", \"src/**/*.test.ts\", \"*.md\")",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "pattern"
-                  ],
-                  "type": "object"
-                },
-                "name": "find",
-                "type": "function"
-              },
-              {
-                "description": "Search file contents using a regular expression or fixed string. Returns matching lines with file paths and line numbers. Searches all files matching the include glob, or all files if not specified.",
-                "inputSchema": {
-                  "$schema": "http://json-schema.org/draft-07/schema#",
-                  "additionalProperties": false,
-                  "properties": {
-                    "caseSensitive": {
-                      "description": "If true, search is case-sensitive (default: false)",
-                      "type": "boolean"
-                    },
-                    "contextLines": {
-                      "description": "Number of context lines around each match (default: 0)",
-                      "maximum": 10,
-                      "minimum": 0,
-                      "type": "integer"
-                    },
-                    "fixedString": {
-                      "description": "If true, treat query as a literal string instead of regex",
-                      "type": "boolean"
-                    },
-                    "include": {
-                      "description": "Glob pattern to filter files (e.g. \"**/*.ts\"). Defaults to \"**/*\"",
-                      "type": "string"
-                    },
-                    "query": {
-                      "description": "Search pattern (regex or fixed string)",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "query"
-                  ],
-                  "type": "object"
-                },
-                "name": "grep",
-                "type": "function"
-              },
-              {
-                "description": "Delete a file or directory. Set recursive to true to remove non-empty directories.",
+                "description": "Delete a file or directory. Set recursive to true to remove a non-empty directory.",
                 "inputSchema": {
                   "$schema": "http://json-schema.org/draft-07/schema#",
                   "additionalProperties": false,
                   "properties": {
                     "path": {
-                      "description": "Absolute path to the file or directory",
+                      "description": "Absolute path to the file or directory to delete.",
                       "type": "string"
                     },
                     "recursive": {
-                      "description": "If true, remove directories and their contents recursively",
+                      "description": "Remove a directory and all of its contents. Defaults to false.",
                       "type": "boolean"
                     }
                   },
@@ -589,29 +718,6 @@
                   "type": "object"
                 },
                 "name": "delete",
-                "type": "function"
-              },
-              {
-                "description": "Run a Bash script against the workspace. Use for shell-style workflows that combine multiple file operations. The script runs in a sandboxed virtual filesystem with the workspace mounted at `/` (also the default working directory) — there is no `/workspace` or `/home`; use absolute paths like `/notes.txt`. Changed files are written back to the workspace.",
-                "inputSchema": {
-                  "$schema": "http://json-schema.org/draft-07/schema#",
-                  "additionalProperties": false,
-                  "properties": {
-                    "cwd": {
-                      "description": "Working directory for the script. Defaults to / (the workspace root)",
-                      "type": "string"
-                    },
-                    "script": {
-                      "description": "Bash script to run",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "script"
-                  ],
-                  "type": "object"
-                },
-                "name": "bash",
                 "type": "function"
               },
               {
@@ -653,10 +759,10 @@
             },
             "usage": {
               "inputTokenDetails": {
-                "cacheReadTokens": 0,
-                "noCacheTokens": 1087
+                "cacheReadTokens": 1024,
+                "noCacheTokens": 169
               },
-              "inputTokens": 1087,
+              "inputTokens": 1193,
               "outputTokenDetails": {
                 "reasoningTokens": 128,
                 "textTokens": 18
@@ -669,13 +775,13 @@
                   "reasoning_tokens": 128,
                   "rejected_prediction_tokens": 0
                 },
-                "prompt_tokens": 1087,
+                "prompt_tokens": 1193,
                 "prompt_tokens_details": {
-                  "cached_tokens": 0
+                  "cached_tokens": 1024
                 },
-                "total_tokens": 1233
+                "total_tokens": 1339
               },
-              "totalTokens": 1233
+              "totalTokens": 1339
             }
           },
           "metadata": {
@@ -689,9 +795,9 @@
           },
           "metrics": {
             "completion_tokens": 146,
-            "prompt_cached_tokens": 0,
-            "prompt_tokens": 1087,
-            "tokens": 1233
+            "prompt_cached_tokens": 1024,
+            "prompt_tokens": 1193,
+            "tokens": 1339
           }
         }
       ],
@@ -719,17 +825,17 @@
           "integration_name": "cloudflare-think",
           "sdk_language": "typescript"
         },
-        "cloudflare_think.version": "0.20.2",
+        "cloudflare_think.version": "0.23.0",
         "functionId": "TestThink",
         "model": "gpt-5-nano",
         "provider": "openai.chat"
       },
       "metrics": {
-        "completion_tokens": 362,
-        "prompt_cached_tokens": 0,
-        "prompt_tokens": 2129,
+        "completion_tokens": 426,
+        "prompt_cached_tokens": 1024,
+        "prompt_tokens": 2341,
         "time_to_first_token": 0,
-        "tokens": 2491
+        "tokens": 2767
       }
     }
   ]

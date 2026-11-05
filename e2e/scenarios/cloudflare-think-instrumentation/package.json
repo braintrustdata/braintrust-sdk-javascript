@@ -11,11 +11,11 @@
           "targetManifest": "versions/ai6/package.json",
           "targetDependency": "cloudflare-think-v0-13-latest"
         },
-        "cloudflare-think-v0-20-latest-ai7": {
+        "cloudflare-think-v0-latest-ai7": {
           "package": "@cloudflare/think",
-          "range": ">=0.20.0 <0.21.0",
-          "targetManifest": "versions/ai7/package.json",
-          "targetDependency": "cloudflare-think-v0-20-latest"
+          "range": ">=0.20.0 <0.24.0",
+          "targetManifest": "versions/ai7-latest/package.json",
+          "targetDependency": "cloudflare-think-v0-latest"
         }
       }
     }
