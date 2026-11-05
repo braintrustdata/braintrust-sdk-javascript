@@ -78,8 +78,10 @@ export interface InvokeFunctionArgs<
 
   /**
    * Additional metadata to add to the span. This will be logged as the `metadata` field in the span.
-   * It will also be available as the {{metadata}} field in the prompt and as the `metadata` argument
-   * to the function.
+   * It will also be available as the {{metadata}} field in the prompt. For code functions, it is passed
+   * through the hooks (the handler's second argument in TypeScript, `hooks.metadata` in Python), not
+   * as the handler's `metadata` argument, which is read from `input`. To fill the handler's `metadata`
+   * argument, nest it in `input`, e.g. `invoke({ ..., input: { input: ..., metadata: { ... } } })`.
    */
   metadata?: Record<string, unknown>;
   /**
