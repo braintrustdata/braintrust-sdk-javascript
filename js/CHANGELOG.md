@@ -25,7 +25,7 @@
 - fix(dev): honor max_concurrency from remote eval requests, capped by the evaluator's maxConcurrency Thanks @paultancre-bt! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2730)
 - fix(cursor): improve automatic and manual sdk tracing (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2698)
 - fix: preserve UTF-8 in logged ReadableStream byte chunks Thanks @diadkoshmek! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2701)
-- fix(openai): align Decisions spans with Python SDK OpenAI Decisions spans now use the `decision` span type, `question_{index}` IDs for unnamed or repeated questions, `boolean:`-prefixed keys for boolean choices that collide with string choices, and `{label, description}` score criteria, matching the Python SDK and the Braintrust gateway. Thanks @ankrgyl! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2723)
+- fix(openai): align Decisions spans with Python SDK Thanks @ankrgyl! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2723)
 - fix(livekit): Respect LiveKit's PII and project redaction settings Thanks @delner! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2724)
 
 ## 3.42.0
