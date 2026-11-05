@@ -1,7 +1,7 @@
 {
   "span_tree": [
     {
-      "name": "LangGraph SDK 1.10.2 (esm, wrapped)",
+      "name": "LangGraph SDK 1.12.9 (esm, wrapped)",
       "type": "task",
       "children": [
         {
@@ -513,7 +513,7 @@
         "instrumentation_mode": "wrapped",
         "module": "esm",
         "scenario": "langgraph-sdk-instrumentation",
-        "sdk_version": "1.10.2",
+        "sdk_version": "1.12.9",
         "testRunId": "<run:1>"
       },
       "context": {

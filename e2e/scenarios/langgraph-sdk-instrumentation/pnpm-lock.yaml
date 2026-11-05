@@ -19,7 +19,7 @@ importers:
         version: 1.4.12(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(ws@8.21.3))(zod@4.5.4)
       '@langchain/langgraph-api':
         specifier: 1.4.5
-        version: 1.4.5(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(ws@8.21.3))(@langchain/langgraph-checkpoint@1.1.5(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(ws@8.21.3)))(@langchain/langgraph-sdk@1.10.2(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(ws@8.21.3)))(@langchain/langgraph@1.4.12(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(ws@8.21.3))(zod@4.5.4))(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(typescript@5.9.3)(ws@8.21.3)
+        version: 1.4.5(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(ws@8.21.3))(@langchain/langgraph-checkpoint@1.1.5(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(ws@8.21.3)))(@langchain/langgraph-sdk@1.12.9(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(ws@8.21.3)))(@langchain/langgraph@1.4.12(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(ws@8.21.3))(zod@4.5.4))(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(typescript@5.9.3)(ws@8.21.3)
       '@langchain/langgraph-checkpoint':
         specifier: 1.1.5
         version: 1.1.5(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(ws@8.21.3))
@@ -30,8 +30,14 @@ importers:
         specifier: npm:@langchain/langgraph-sdk@1.9.25
         version: '@langchain/langgraph-sdk@1.9.25(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(ws@8.21.3))'
       langgraph-sdk-v1-latest:
-        specifier: npm:@langchain/langgraph-sdk@1.10.2
-        version: '@langchain/langgraph-sdk@1.10.2(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(ws@8.21.3))'
+        specifier: npm:@langchain/langgraph-sdk@1.12.9
+        version: '@langchain/langgraph-sdk@1.12.9(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(ws@8.21.3))'
+      langgraph-sdk-v2:
+        specifier: npm:@langchain/langgraph-sdk@2.0.0
+        version: '@langchain/langgraph-sdk@2.0.0(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(ws@8.21.3))'
+      langgraph-sdk-v2-latest:
+        specifier: npm:@langchain/langgraph-sdk@2.0.0
+        version: '@langchain/langgraph-sdk@2.0.0(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(ws@8.21.3))'
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -286,10 +292,10 @@ packages:
     peerDependencies:
       '@langchain/core': ^1.1.48
 
-  '@langchain/langgraph-sdk@1.10.2':
-    resolution: {integrity: sha512-86qsfdBZWu1ZgywLN8AThU/jXi9rjPDZPWcTJp4SA1A/L62ypTNoSXbvtiwZt1odokXccYTxK1XWS8tmVdvEmw==}
+  '@langchain/langgraph-sdk@1.12.9':
+    resolution: {integrity: sha512-A1LkLPVu00dj+9aErXPBLhmFURHtnnRO9KRFST+xAwurqQTa+LxC9ixxF7p+ZMo5P70qMFoaP8Ud2wuZmYD4xw==}
     peerDependencies:
-      '@langchain/core': ^1.1.48
+      '@langchain/core': ^1.2.18
       react: ^18 || ^19
       react-dom: ^18 || ^19
     peerDependenciesMeta:
@@ -334,6 +340,21 @@ packages:
       vue:
         optional: true
 
+  '@langchain/langgraph-sdk@2.0.0':
+    resolution: {integrity: sha512-Xdkl1hve84ZGQ7fgpiBIBvjODhtjbPPccY4snOtYgSdzRXZkESsi2Y7RDKgFe1nC9+DbX+QaYom0raD/XFBKAw==}
+    deprecated: This version is not intended for use. Please use 1.x versions of @langchain/langgraph-sdk instead
+    peerDependencies:
+      '@langchain/core': ^1.1.16
+      react: ^18 || ^19
+      react-dom: ^18 || ^19
+    peerDependenciesMeta:
+      '@langchain/core':
+        optional: true
+      react:
+        optional: true
+      react-dom:
+        optional: true
+
   '@langchain/langgraph-ui@1.4.5':
     resolution: {integrity: sha512-Jy2muKnulO5A2KZJIwr4aji5t23xcmaUYa0xjBgQpLsL4VUTovSy5jfEwtaHZw+V4lxN7mI9MYXd4sHuEZrR9Q==}
     engines: {node: ^18.19.0 || >=20.16.0}
@@ -355,8 +376,8 @@ packages:
   '@langchain/protocol@0.0.18':
     resolution: {integrity: sha512-XW1egQtPfsGI41w2AMZNFZrUIwFSQHTjVMZs0OaTpCAvht/QLoaPN8FQcsysMVypOhupG28J29yOorrc70otBQ==}
 
-  '@langchain/protocol@0.0.19':
-    resolution: {integrity: sha512-9hKcRrH7cBX6gfutdfXPoft1OCchHe4FEpALoDJMl5Qu+n/YG5ynZmyu8+8cxORlPwHBoKTxggvXz+76M1yX1Q==}
+  '@langchain/protocol@0.0.20':
+    resolution: {integrity: sha512-sxlkDG2/HGyjDFLTJ8B/o3oglRjOv8iLCFgrV0550/Vym3V6RZ0SUjAQFe8jrLQw8ZXjERy3swJp5OODBSrUYA==}
 
   '@so-ric/colorspace@1.1.6':
     resolution: {integrity: sha512-/KiKkpHNOBgkFJwu9sh48LkHSMYGyuTcSFK/qMBdnOAlrRJzRSXAOFB5qwzaVQuDl8wAvHVMkaASQDReTahxuw==}
@@ -963,6 +984,10 @@ packages:
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
+  uuid@13.0.2:
+    resolution: {integrity: sha512-vzi9uRZ926x4XV73S/4qQaTwPXM2JBj6/6lI/byHH1jOpCzb0zDbfytgA9LcN/hzb2l7WQSQnxITOVx5un/wGw==}
+    hasBin: true
+
   winston-console-format@1.0.8:
     resolution: {integrity: sha512-dq7t/E0D0QRi4XIOwu6HM1+5e//WPqylH88GVjKEhQVrzGFg34MCz+G7pMJcXFBen9C0kBsu5GYgbYsE2LDwKw==}
 
@@ -1152,7 +1177,7 @@ snapshots:
       - openai
       - ws
 
-  '@langchain/langgraph-api@1.4.5(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(ws@8.21.3))(@langchain/langgraph-checkpoint@1.1.5(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(ws@8.21.3)))(@langchain/langgraph-sdk@1.10.2(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(ws@8.21.3)))(@langchain/langgraph@1.4.12(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(ws@8.21.3))(zod@4.5.4))(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(typescript@5.9.3)(ws@8.21.3)':
+  '@langchain/langgraph-api@1.4.5(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(ws@8.21.3))(@langchain/langgraph-checkpoint@1.1.5(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(ws@8.21.3)))(@langchain/langgraph-sdk@1.12.9(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(ws@8.21.3)))(@langchain/langgraph@1.4.12(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(ws@8.21.3))(zod@4.5.4))(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(typescript@5.9.3)(ws@8.21.3)':
     dependencies:
       '@babel/code-frame': 7.29.7
       '@hono/node-server': 2.1.1(hono@4.13.7)
@@ -1180,7 +1205,7 @@ snapshots:
       winston-console-format: 1.0.8
       zod: 4.5.4
     optionalDependencies:
-      '@langchain/langgraph-sdk': 1.10.2(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(ws@8.21.3))
+      '@langchain/langgraph-sdk': 1.12.9(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(ws@8.21.3))
     transitivePeerDependencies:
       - '@opentelemetry/api'
       - '@opentelemetry/exporter-trace-otlp-proto'
@@ -1196,10 +1221,10 @@ snapshots:
     dependencies:
       '@langchain/core': 1.2.5(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(ws@8.21.3)
 
-  '@langchain/langgraph-sdk@1.10.2(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(ws@8.21.3))':
+  '@langchain/langgraph-sdk@1.12.9(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(ws@8.21.3))':
     dependencies:
       '@langchain/core': 1.2.5(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(ws@8.21.3)
-      '@langchain/protocol': 0.0.19
+      '@langchain/protocol': 0.0.20
       '@types/json-schema': 7.0.15
       p-queue: 9.3.3
       p-retry: 7.1.1
@@ -1219,6 +1244,15 @@ snapshots:
       '@types/json-schema': 7.0.15
       p-queue: 9.3.3
       p-retry: 7.1.1
+
+  '@langchain/langgraph-sdk@2.0.0(@langchain/core@1.2.5(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(ws@8.21.3))':
+    dependencies:
+      '@types/json-schema': 7.0.15
+      p-queue: 9.3.3
+      p-retry: 7.1.1
+      uuid: 13.0.2
+    optionalDependencies:
+      '@langchain/core': 1.2.5(openai@6.49.0(ws@8.21.3)(zod@4.5.4))(ws@8.21.3)
 
   '@langchain/langgraph-ui@1.4.5':
     dependencies:
@@ -1256,7 +1290,7 @@ snapshots:
 
   '@langchain/protocol@0.0.18': {}
 
-  '@langchain/protocol@0.0.19': {}
+  '@langchain/protocol@0.0.20': {}
 
   '@so-ric/colorspace@1.1.6':
     dependencies:
@@ -1740,6 +1774,8 @@ snapshots:
       picocolors: 1.1.1
 
   util-deprecate@1.0.2: {}
+
+  uuid@13.0.2: {}
 
   winston-console-format@1.0.8:
     dependencies:
