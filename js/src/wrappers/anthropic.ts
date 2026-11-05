@@ -45,14 +45,16 @@ export function wrapAnthropic<T extends object>(anthropic: T): T {
 
 function anthropicProxy(anthropic: AnthropicClient): AnthropicClient {
   const proxy: AnthropicClient = new Proxy(anthropic, {
-    get(target, prop, receiver) {
+    get(target, prop) {
       switch (prop) {
         case "beta":
           return target.beta ? betaProxy(target.beta, proxy) : target.beta;
         case "messages":
           return messagesProxy(target.messages);
         default:
-          return Reflect.get(target, prop, receiver);
+          // Client getters such as openTelemetry access private fields and
+          // must run on the original client, including inside toolRunner.
+          return Reflect.get(target, prop, target);
       }
     },
   });
@@ -199,6 +201,23 @@ function betaMessagesProxy(
         );
       }
 
+      // SDK v1 constructs its runner's thread through this helper. Give the
+      // thread the wrapped client so its message calls still invoke hooks.
+      if (
+        prop === "_toolRunnerThread" &&
+        typeof target._toolRunnerThread === "function"
+      ) {
+        return new TypedApplyProxy(target._toolRunnerThread, {
+          apply(helper, thisArg, argArray) {
+            return Reflect.apply(
+              helper,
+              withWrappedClient(thisArg, anthropic),
+              argArray,
+            );
+          },
+        });
+      }
+
       return Reflect.get(target, prop, receiver);
     },
   });
@@ -224,20 +243,24 @@ function toolRunnerProxy(
 ) {
   return new TypedApplyProxy(toolRunner, {
     apply(target, thisArg, argArray) {
-      const invocationTarget =
-        thisArg && typeof thisArg === "object"
-          ? new Proxy(thisArg, {
-              get(currentTarget, prop, receiver) {
-                if (prop === "_client") {
-                  return anthropic;
-                }
-
-                return Reflect.get(currentTarget, prop, receiver);
-              },
-            })
-          : { _client: anthropic };
-
-      return channel.invoke(target, invocationTarget, argArray, {});
+      return channel.invoke(
+        target,
+        withWrappedClient(thisArg, anthropic),
+        argArray,
+        {},
+      );
     },
   });
+}
+
+function withWrappedClient(resource: unknown, anthropic: AnthropicClient) {
+  return resource && typeof resource === "object"
+    ? new Proxy(resource, {
+        get(target, prop, receiver) {
+          return prop === "_client"
+            ? anthropic
+            : Reflect.get(target, prop, receiver);
+        },
+      })
+    : { _client: anthropic };
 }

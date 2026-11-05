@@ -60,6 +60,33 @@ test("wrapAnthropic passively wraps beta.sessions streams", async () => {
   });
 });
 
+test("wrapAnthropic preserves client getters that access private fields", () => {
+  class Anthropic {
+    #openTelemetry = { enabled: false };
+
+    get openTelemetry() {
+      return this.#openTelemetry;
+    }
+
+    messages = { create: vi.fn() };
+    beta = {
+      messages: {
+        _client: this,
+        create: vi.fn(),
+        toolRunner() {
+          return this._client.openTelemetry;
+        },
+      },
+    };
+  }
+
+  const client = new Anthropic();
+  const wrapped = wrapAnthropic(client);
+
+  expect(wrapped.openTelemetry).toBe(client.openTelemetry);
+  expect(wrapped.beta.messages.toolRunner()).toBe(client.openTelemetry);
+});
+
 test("collectAnthropicSession returns an unregistered stream unchanged", () => {
   const stream = {
     async *[Symbol.asyncIterator]() {

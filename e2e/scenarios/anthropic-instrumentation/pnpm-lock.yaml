@@ -12,13 +12,19 @@ importers:
         specifier: npm:@anthropic-ai/sdk@0.27.3
         version: '@anthropic-ai/sdk@0.27.3'
       anthropic-sdk-v0-latest:
-        specifier: npm:@anthropic-ai/sdk@0.112.3
-        version: '@anthropic-ai/sdk@0.112.3'
+        specifier: npm:@anthropic-ai/sdk@0.137.0
+        version: '@anthropic-ai/sdk@0.137.0'
+      anthropic-sdk-v1:
+        specifier: npm:@anthropic-ai/sdk@1.3.0
+        version: '@anthropic-ai/sdk@1.3.0'
+      anthropic-sdk-v1-latest:
+        specifier: npm:@anthropic-ai/sdk@1.3.0
+        version: '@anthropic-ai/sdk@1.3.0'
 
 packages:
 
-  '@anthropic-ai/sdk@0.112.3':
-    resolution: {integrity: sha512-wjcozJlitVIuBEw9cj/xBuRznwkhcLmXmNzlFoeHbh4AvrDG3HGZrdvEOTTmobcbhjGkfOpKbmDTCQ4s9LQvCg==}
+  '@anthropic-ai/sdk@0.137.0':
+    resolution: {integrity: sha512-YpEnbPz8kWF1BWthwUCnRhci7OvDLSUO8NFKoevoPkjNkK9CJeibZITgxr9vhqOP8Le61e5tNDHFTxw1dc6Png==}
     hasBin: true
     peerDependencies:
       zod: ^3.25.0 || ^4.0.0
@@ -29,9 +35,22 @@ packages:
   '@anthropic-ai/sdk@0.27.3':
     resolution: {integrity: sha512-IjLt0gd3L4jlOfilxVXTifn42FnVffMgDC04RJK1KDZpmkBWLv0XC92MVVmkxrFZNS/7l3xWgP/I3nqtX1sQHw==}
 
+  '@anthropic-ai/sdk@1.3.0':
+    resolution: {integrity: sha512-k7z9BlLLPxfZH+ov7dS6EnaN/wiZeV8YNT1LZfrpAHIy7oY7pHr4UzirF9f2OlHtFEnRBOX+AZQ91Y5fK+TPTw==}
+    hasBin: true
+    peerDependencies:
+      zod: ^3.25.0 || ^4.0.0
+    peerDependenciesMeta:
+      zod:
+        optional: true
+
   '@babel/runtime@7.29.2':
     resolution: {integrity: sha512-JiDShH45zKHWyGe4ZNVRrCjBz8Nh9TMmZG1kh4QTK8hCBTWBi8Da+i7s1fJw7/lYpM4ccepSNfqzZ/QvABBi5g==}
     engines: {node: '>=6.9.0'}
+
+  '@opentelemetry/api@1.10.0':
+    resolution: {integrity: sha512-lMkyes8iHrG+mk6WH7X70MdCLI2RS0FwNBY1PyQ8UemaijE2m5mv5A0Niy3HtbYTFrgkUEQjFMXmSAk2hQDuPQ==}
+    engines: {node: '>=8.0.0'}
 
   '@stablelib/base64@1.0.1':
     resolution: {integrity: sha512-1bnPQqSxSuc3Ii6MhBysoWCg58j97aUjuCSZrGSmDxNqtytIi0k8utUenAwTZN4V5mXXYGsVUI9zeBqy+jBOSQ==}
@@ -190,8 +209,9 @@ packages:
 
 snapshots:
 
-  '@anthropic-ai/sdk@0.112.3':
+  '@anthropic-ai/sdk@0.137.0':
     dependencies:
+      '@opentelemetry/api': 1.10.0
       json-schema-to-ts: 3.1.1
       standardwebhooks: 1.0.0
 
@@ -207,7 +227,15 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
+  '@anthropic-ai/sdk@1.3.0':
+    dependencies:
+      '@opentelemetry/api': 1.10.0
+      json-schema-to-ts: 3.1.1
+      standardwebhooks: 1.0.0
+
   '@babel/runtime@7.29.2': {}
+
+  '@opentelemetry/api@1.10.0': {}
 
   '@stablelib/base64@1.0.1': {}
 

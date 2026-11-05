@@ -7,5 +7,6 @@ runMain(async () => {
   const { default: Anthropic } = await import(anthropicPackageName);
   await runWrappedAnthropicInstrumentation(Anthropic, {
     supportsThinking: true,
+    supportsTemperature: process.env.ANTHROPIC_SUPPORTS_TEMPERATURE !== "false",
   });
 });

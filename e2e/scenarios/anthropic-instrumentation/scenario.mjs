@@ -7,5 +7,6 @@ import { runAutoAnthropicInstrumentation } from "./scenario.impl.mjs";
 runMain(async () =>
   runAutoAnthropicInstrumentation(Anthropic, {
     supportsThinking: true,
+    supportsTemperature: process.env.ANTHROPIC_SUPPORTS_TEMPERATURE !== "false",
   }),
 );

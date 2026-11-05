@@ -249,6 +249,10 @@ export class AnthropicPlugin extends BasePlugin {
           } satisfies AnthropicToolRunnerState;
 
           states.set(event as object, state);
+          // SDK v1 returns a copy from runner.params. Wrap the tools before
+          // construction instead of mutating that view after construction.
+          event.arguments = [...event.arguments];
+          event.arguments[0] = wrapAnthropicToolRunnerTools(params, state);
         };
         const returned = (
           event: ChannelMessage<
@@ -281,7 +285,7 @@ export class AnthropicPlugin extends BasePlugin {
         runInstrumentation(() => prepare(event));
         let result;
         try {
-          result = Reflect.apply(target, receiver, args);
+          result = Reflect.apply(target, receiver, event.arguments);
         } catch (error) {
           Object.assign(event, { error });
           runInstrumentation(() => failed(event));
@@ -973,14 +977,17 @@ function getAnthropicToolRunnerInput(args: unknown[]): unknown {
 function wrapAnthropicToolRunnerTools(
   params: AnthropicToolRunnerParams,
   state: AnthropicToolRunnerState,
-): void {
+): AnthropicToolRunnerParams {
   if (!Array.isArray(params.tools)) {
-    return;
+    return params;
   }
 
-  params.tools = params.tools.map((tool, index) =>
-    wrapAnthropicToolRunnerTool(tool, index, state),
-  );
+  return {
+    ...params,
+    tools: params.tools.map((tool, index) =>
+      wrapAnthropicToolRunnerTool(tool, index, state),
+    ),
+  };
 }
 
 function wrapAnthropicToolRunnerTool(
@@ -1068,46 +1075,24 @@ function wrapAnthropicToolRunnerTool(
   return wrappedTool;
 }
 
-function getAnthropicToolRunnerParams(
-  runnerRecord: Record<string, unknown>,
-): AnthropicToolRunnerParams | undefined {
-  const params = Reflect.get(runnerRecord, "params");
-  return params && typeof params === "object"
-    ? (params as AnthropicToolRunnerParams)
-    : undefined;
-}
-
-function ensureAnthropicToolRunnerToolsWrapped(
-  runnerRecord: Record<string, unknown>,
-  state: AnthropicToolRunnerState,
-): void {
-  const params = getAnthropicToolRunnerParams(runnerRecord);
-  if (params) {
-    wrapAnthropicToolRunnerTools(params, state);
-  }
-}
-
 function wrapAnthropicToolRunnerSetMessagesParams(
-  runnerRecord: Record<string, unknown>,
+  runner: AnthropicToolRunner<unknown>,
   state: AnthropicToolRunnerState,
 ): void {
-  const setMessagesParams = Reflect.get(runnerRecord, "setMessagesParams");
+  const setMessagesParams = runner.setMessagesParams;
   if (typeof setMessagesParams !== "function") {
     return;
   }
 
-  Reflect.set(
-    runnerRecord,
-    "setMessagesParams",
-    function patchedSetMessagesParams(this: unknown, ...args: unknown[]) {
-      const result = Reflect.apply(setMessagesParams, this, args);
-      const nextParams = getAnthropicToolRunnerParams(runnerRecord);
-      if (nextParams) {
-        wrapAnthropicToolRunnerTools(nextParams, state);
-      }
-      return result;
-    },
-  );
+  runner.setMessagesParams = function (paramsOrMutator) {
+    return setMessagesParams.call(
+      this,
+      typeof paramsOrMutator === "function"
+        ? (params) =>
+            wrapAnthropicToolRunnerTools(paramsOrMutator(params), state)
+        : wrapAnthropicToolRunnerTools(paramsOrMutator, state),
+    );
+  };
 }
 
 function isAnthropicMessage(value: unknown): value is AnthropicMessage {
@@ -1273,7 +1258,6 @@ function wrapAnthropicToolRunnerPromiseMethod(
   }
 
   runnerRecord[methodName] = async (...args: unknown[]) => {
-    ensureAnthropicToolRunnerToolsWrapped(runnerRecord, state);
     return await withCurrent(state.span, async () => {
       try {
         const message = (await (
@@ -1306,7 +1290,6 @@ function patchAnthropicToolRunner(args: {
     return;
   }
 
-  ensureAnthropicToolRunnerToolsWrapped(runnerRecord, state);
   wrapAnthropicToolRunnerSetMessagesParams(runnerRecord, state);
   wrapAnthropicToolRunnerPromiseMethod(runnerRecord, "done", state);
   wrapAnthropicToolRunnerPromiseMethod(runnerRecord, "runUntilDone", state);
@@ -1326,7 +1309,6 @@ function patchAnthropicToolRunner(args: {
     return {
       async next(value?: unknown) {
         try {
-          ensureAnthropicToolRunnerToolsWrapped(runnerRecord, state);
           const result = await withCurrent(state.span, () =>
             value === undefined
               ? iterator.next()
@@ -1363,7 +1345,6 @@ function patchAnthropicToolRunner(args: {
 
       async return(value?: unknown) {
         try {
-          ensureAnthropicToolRunnerToolsWrapped(runnerRecord, state);
           const result =
             typeof iterator.return === "function"
               ? await withCurrent(state.span, () => iterator.return!(value))
