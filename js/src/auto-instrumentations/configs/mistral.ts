@@ -19,7 +19,7 @@ export const mistralConfigs: InstrumentationConfig[] = [
     channelName: mistralChannels.chatComplete.channelName,
     module: {
       name: "@mistralai/mistralai",
-      versionRange: ">=2.0.0 <3.0.0",
+      versionRange: ">=2.0.0 <4.0.0",
       filePath: "esm/sdk/chat.js",
     },
     functionQuery: {
@@ -45,7 +45,7 @@ export const mistralConfigs: InstrumentationConfig[] = [
     channelName: mistralChannels.chatStream.channelName,
     module: {
       name: "@mistralai/mistralai",
-      versionRange: ">=2.0.0 <3.0.0",
+      versionRange: ">=2.0.0 <4.0.0",
       filePath: "esm/sdk/chat.js",
     },
     functionQuery: {
@@ -71,7 +71,7 @@ export const mistralConfigs: InstrumentationConfig[] = [
     channelName: mistralChannels.embeddingsCreate.channelName,
     module: {
       name: "@mistralai/mistralai",
-      versionRange: ">=2.0.0 <3.0.0",
+      versionRange: ">=2.0.0 <4.0.0",
       filePath: "esm/sdk/embeddings.js",
     },
     functionQuery: {
@@ -97,7 +97,7 @@ export const mistralConfigs: InstrumentationConfig[] = [
     channelName: mistralChannels.classifiersModerate.channelName,
     module: {
       name: "@mistralai/mistralai",
-      versionRange: ">=2.0.0 <3.0.0",
+      versionRange: ">=2.0.0 <4.0.0",
       filePath: "esm/sdk/classifiers.js",
     },
     functionQuery: {
@@ -123,7 +123,7 @@ export const mistralConfigs: InstrumentationConfig[] = [
     channelName: mistralChannels.classifiersModerateChat.channelName,
     module: {
       name: "@mistralai/mistralai",
-      versionRange: ">=2.0.0 <3.0.0",
+      versionRange: ">=2.0.0 <4.0.0",
       filePath: "esm/sdk/classifiers.js",
     },
     functionQuery: {
@@ -149,7 +149,7 @@ export const mistralConfigs: InstrumentationConfig[] = [
     channelName: mistralChannels.classifiersClassify.channelName,
     module: {
       name: "@mistralai/mistralai",
-      versionRange: ">=2.0.0 <3.0.0",
+      versionRange: ">=2.0.0 <4.0.0",
       filePath: "esm/sdk/classifiers.js",
     },
     functionQuery: {
@@ -175,7 +175,7 @@ export const mistralConfigs: InstrumentationConfig[] = [
     channelName: mistralChannels.classifiersClassifyChat.channelName,
     module: {
       name: "@mistralai/mistralai",
-      versionRange: ">=2.0.0 <3.0.0",
+      versionRange: ">=2.0.0 <4.0.0",
       filePath: "esm/sdk/classifiers.js",
     },
     functionQuery: {
@@ -201,7 +201,7 @@ export const mistralConfigs: InstrumentationConfig[] = [
     channelName: mistralChannels.fimComplete.channelName,
     module: {
       name: "@mistralai/mistralai",
-      versionRange: ">=2.0.0 <3.0.0",
+      versionRange: ">=2.0.0 <4.0.0",
       filePath: "esm/sdk/fim.js",
     },
     functionQuery: {
@@ -227,7 +227,7 @@ export const mistralConfigs: InstrumentationConfig[] = [
     channelName: mistralChannels.fimStream.channelName,
     module: {
       name: "@mistralai/mistralai",
-      versionRange: ">=2.0.0 <3.0.0",
+      versionRange: ">=2.0.0 <4.0.0",
       filePath: "esm/sdk/fim.js",
     },
     functionQuery: {
@@ -253,7 +253,7 @@ export const mistralConfigs: InstrumentationConfig[] = [
     channelName: mistralChannels.agentsComplete.channelName,
     module: {
       name: "@mistralai/mistralai",
-      versionRange: ">=2.0.0 <3.0.0",
+      versionRange: ">=2.0.0 <4.0.0",
       filePath: "esm/sdk/agents.js",
     },
     functionQuery: {
@@ -279,7 +279,7 @@ export const mistralConfigs: InstrumentationConfig[] = [
     channelName: mistralChannels.agentsStream.channelName,
     module: {
       name: "@mistralai/mistralai",
-      versionRange: ">=2.0.0 <3.0.0",
+      versionRange: ">=2.0.0 <4.0.0",
       filePath: "esm/sdk/agents.js",
     },
     functionQuery: {
