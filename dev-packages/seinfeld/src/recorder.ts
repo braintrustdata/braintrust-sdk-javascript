@@ -17,7 +17,9 @@ import type {
   CassetteEntry,
   CassetteMode,
   RecordedRequest,
+  RecordedResponse,
 } from "./cassette";
+import { trackConnectRequest } from "./internal/connect-request";
 import { AggregateCassetteMissError, CassetteMissError } from "./errors";
 import { applyFilters } from "./normalizer";
 import type { FilterSpec } from "./normalizer";
@@ -46,7 +48,11 @@ export type RequestUrlMatcher = string | RegExp;
 export type IgnoredRequestMatcher = RequestUrlMatcher;
 export type StreamingRequestMatcher =
   | RequestUrlMatcher
-  | { url: RequestUrlMatcher; httpVersion: "2" };
+  | {
+      url: RequestUrlMatcher;
+      httpVersion?: "1.1" | "2";
+      requestFraming?: "connect";
+    };
 
 // ---- Internal draft types ------------------------------------------------
 
@@ -126,18 +132,32 @@ async function handleReplayWithoutRequestBody(
   req: IncomingMessage,
   res: ServerResponse,
   upstreamUrl: string,
+  requestFraming?: "connect",
 ): Promise<void> {
   // Some duplex APIs keep the request body open while waiting for response
   // messages. For opted-in URLs, replay can respond immediately because the
   // cassette match is configured to ignore the request body.
+  const tracker =
+    requestFraming === "connect" ? trackConnectRequest(req) : undefined;
+  const onClose = () => tracker?.dispose();
+  res.on("close", onClose);
   req.resume();
-  const response = await handleReplay(ctx, {
-    method: req.method ?? "GET",
-    url: upstreamUrl,
-    headers: headersToRecord(req.headers),
-    body: { kind: "empty" },
-  });
-  await writeFetchResponse(res, response);
+  try {
+    const response = await handleReplay(
+      ctx,
+      {
+        method: req.method ?? "GET",
+        url: upstreamUrl,
+        headers: headersToRecord(req.headers),
+        body: { kind: "empty" },
+      },
+      tracker?.waitFor,
+    );
+    await writeFetchResponse(res, response);
+  } finally {
+    res.off("close", onClose);
+    tracker?.dispose();
+  }
 }
 
 async function handleStreamingRecord(
@@ -146,10 +166,13 @@ async function handleStreamingRecord(
   res: ServerResponse,
   upstreamUrl: string,
   httpVersion: "1.1" | "2",
+  requestFraming?: "connect",
 ): Promise<void> {
   const upstream = new URL(upstreamUrl);
   const responseChunks: Buffer[] = [];
-  const streamChunks: Array<{ size: number; delayMs: number }> = [];
+  const streamChunks: NonNullable<RecordedResponse["streamChunks"]> = [];
+  const tracker =
+    requestFraming === "connect" ? trackConnectRequest(req) : undefined;
   let lastChunkAt = performance.now();
   let responseHeaders: IncomingHttpHeaders = {};
   let responseStatus = 502;
@@ -202,6 +225,7 @@ async function handleStreamingRecord(
           streamChunks.push({
             size: bytes.length,
             delayMs: Math.round(now - lastChunkAt),
+            ...(tracker ? { requestFrames: tracker.frames } : {}),
           });
           lastChunkAt = now;
           responseChunks.push(bytes);
@@ -239,6 +263,7 @@ async function handleStreamingRecord(
       upstreamUrl,
     });
   } finally {
+    tracker?.dispose();
     session?.destroy();
   }
 }
@@ -249,7 +274,7 @@ function pushStreamingEntry(
     requestHeaders: Record<string, number | string | string[] | undefined>;
     requestMethod: string;
     responseBody: Uint8Array;
-    streamChunks: Array<{ size: number; delayMs: number }>;
+    streamChunks: NonNullable<RecordedResponse["streamChunks"]>;
     responseHeaders: Record<string, number | string | string[] | undefined>;
     responseStatus: number;
     responseStatusText?: string;
@@ -284,6 +309,7 @@ function pushStreamingEntry(
 function handleReplay(
   ctx: CassetteContext,
   recorded: RecordedRequest,
+  waitForRequestFrames?: (count: number) => Promise<void>,
 ): Promise<Response> {
   const filtered = asNormalized(applyFilters(recorded, ctx.filters));
   const matchKey = filtered.matchKey;
@@ -310,7 +336,11 @@ function handleReplay(
     );
   }
 
-  return buildResponse(match.response, { store: ctx.store, name: ctx.name });
+  return buildResponse(match.response, {
+    store: ctx.store,
+    name: ctx.name,
+    waitForRequestFrames,
+  });
 }
 
 async function handleRecord(
@@ -575,8 +605,18 @@ export function createCassetteServer(
       ),
     );
     if (streamingRequest) {
+      const options =
+        typeof streamingRequest === "object" && "url" in streamingRequest
+          ? streamingRequest
+          : undefined;
       if (ctx.mode === "replay") {
-        await handleReplayWithoutRequestBody(ctx, req, res, upstreamUrl);
+        await handleReplayWithoutRequestBody(
+          ctx,
+          req,
+          res,
+          upstreamUrl,
+          options?.requestFraming,
+        );
         return;
       }
       if (ctx.mode === "record") {
@@ -585,10 +625,8 @@ export function createCassetteServer(
           req,
           res,
           upstreamUrl,
-          typeof streamingRequest === "object" &&
-            "httpVersion" in streamingRequest
-            ? streamingRequest.httpVersion
-            : "1.1",
+          options?.httpVersion ?? "1.1",
+          options?.requestFraming,
         );
         return;
       }

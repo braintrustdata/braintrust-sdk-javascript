@@ -1,7 +1,11 @@
 import { createHash } from "node:crypto";
 
 export const streamingRequests = [
-  { url: /\/agent\.v1\.AgentService\/Run(?:\?|$)/, httpVersion: "2" },
+  {
+    url: /\/agent\.v1\.AgentService\/Run(?:\?|$)/,
+    httpVersion: "2",
+    requestFraming: "connect",
+  },
   /\/agent\.v1\.AgentService\/RunSSE(?:\?|$)/,
   /\/aiserver\.v1\.BidiService\/BidiAppend(?:\?|$)/,
 ];

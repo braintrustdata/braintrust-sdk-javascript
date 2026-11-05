@@ -31,12 +31,12 @@
                 "provider": "cursor"
               },
               "metrics": {
-                "completion_tokens": 38,
+                "completion_tokens": 46,
                 "prompt_cache_creation_tokens": 0,
-                "prompt_cached_tokens": 3552,
-                "prompt_tokens": 12880,
+                "prompt_cached_tokens": 3872,
+                "prompt_tokens": 13270,
                 "time_to_first_token": 0,
-                "tokens": 12918
+                "tokens": 13316
               }
             }
           ],
@@ -53,6 +53,30 @@
               "type": "task",
               "children": [
                 {
+                  "name": "shell",
+                  "type": "tool",
+                  "children": [],
+                  "input": {
+                    "command": "printf cursor_tool_ok",
+                    "timeout": 30000
+                  },
+                  "output": {
+                    "status": "success",
+                    "value": {
+                      "executionTime": 455,
+                      "exitCode": 0,
+                      "signal": "",
+                      "stderr": "",
+                      "stdout": "cursor_tool_ok"
+                    }
+                  },
+                  "metadata": {
+                    "cursor_sdk.tool.status": "completed",
+                    "gen_ai.tool.call.id": "tool_88fb28cd-ff1c-4446-87bc-463a6f1bcac",
+                    "gen_ai.tool.name": "shell"
+                  }
+                },
+                {
                   "name": "task",
                   "type": "tool",
                   "children": [
@@ -62,7 +86,7 @@
                       "children": [],
                       "input": {
                         "agentId": "<agentId:1>",
-                        "description": "reviewer confirm CURSOR_SUBAGENT_OK",
+                        "description": "Confirm CURSOR_SUBAGENT_OK",
                         "mode": "unspecified",
                         "model": "composer-2.5-fast",
                         "prompt": "Reply with exactly this string and nothing else: CURSOR_SUBAGENT_OK",
@@ -79,16 +103,16 @@
                           "conversationSteps": [
                             {
                               "thinkingMessage": {
-                                "completedAtMs": "1793898599689",
+                                "completedAtMs": "1793902003795",
                                 "durationMs": 0,
-                                "startedAtMs": "1793898599505",
-                                "text": "The user requested a reply containing only the string \"CURSOR_SUBAGENT_OK\"."
+                                "startedAtMs": "1793902003666",
+                                "text": "The user requested the exact string \"CURSOR_SUBAGENT_OK\" as a reply."
                               }
                             },
                             {
                               "assistantMessage": {
-                                "completedAtMs": "1793898599703",
-                                "startedAtMs": "1793898599691",
+                                "completedAtMs": "1793902003799",
+                                "startedAtMs": "1793902003796",
                                 "text": "CURSOR_SUBAGENT_OK"
                               }
                             }
@@ -98,7 +122,7 @@
                         }
                       },
                       "metadata": {
-                        "cursor_sdk.subagent.tool_call_id": "tool_6213f9ac-4db3-4687-b8a0-332f81dc9b7",
+                        "cursor_sdk.subagent.tool_call_id": "tool_c128aa11-93a0-4565-ac42-53902e691bf",
                         "cursor_sdk.tool.status": "completed",
                         "gen_ai.tool.name": "task"
                       }
@@ -106,7 +130,7 @@
                   ],
                   "input": {
                     "agentId": "<agentId:1>",
-                    "description": "reviewer confirm CURSOR_SUBAGENT_OK",
+                    "description": "Confirm CURSOR_SUBAGENT_OK",
                     "mode": "unspecified",
                     "model": "composer-2.5-fast",
                     "prompt": "Reply with exactly this string and nothing else: CURSOR_SUBAGENT_OK",
@@ -123,16 +147,16 @@
                       "conversationSteps": [
                         {
                           "thinkingMessage": {
-                            "completedAtMs": "1793898599689",
+                            "completedAtMs": "1793902003795",
                             "durationMs": 0,
-                            "startedAtMs": "1793898599505",
-                            "text": "The user requested a reply containing only the string \"CURSOR_SUBAGENT_OK\"."
+                            "startedAtMs": "1793902003666",
+                            "text": "The user requested the exact string \"CURSOR_SUBAGENT_OK\" as a reply."
                           }
                         },
                         {
                           "assistantMessage": {
-                            "completedAtMs": "1793898599703",
-                            "startedAtMs": "1793898599691",
+                            "completedAtMs": "1793902003799",
+                            "startedAtMs": "1793902003796",
                             "text": "CURSOR_SUBAGENT_OK"
                           }
                         }
@@ -143,37 +167,13 @@
                   },
                   "metadata": {
                     "cursor_sdk.tool.status": "completed",
-                    "gen_ai.tool.call.id": "tool_6213f9ac-4db3-4687-b8a0-332f81dc9b7",
+                    "gen_ai.tool.call.id": "tool_c128aa11-93a0-4565-ac42-53902e691bf",
                     "gen_ai.tool.name": "task"
-                  }
-                },
-                {
-                  "name": "shell",
-                  "type": "tool",
-                  "children": [],
-                  "input": {
-                    "command": "printf cursor_tool_ok",
-                    "timeout": 30000
-                  },
-                  "output": {
-                    "status": "success",
-                    "value": {
-                      "executionTime": 279,
-                      "exitCode": 0,
-                      "signal": "",
-                      "stderr": "",
-                      "stdout": "cursor_tool_ok"
-                    }
-                  },
-                  "metadata": {
-                    "cursor_sdk.tool.status": "completed",
-                    "gen_ai.tool.call.id": "tool_98a83065-54c2-4c0d-9816-b12eac20b63",
-                    "gen_ai.tool.name": "shell"
                   }
                 }
               ],
               "input": "First use the reviewer subagent to confirm exactly CURSOR_SUBAGENT_OK. Then run the shell command `printf cursor_tool_ok` and report the output. Do not edit files.",
-              "output": "## Reviewer subagent\n\nThe reviewer subagent replied with exactly:\n\n**CURSOR_SUBAGENT_OK**\n\n## Shell command\n\nCommand: `printf cursor_tool_ok`\n\nOutput:\n\n```\ncursor_tool_ok\n```\n\nExit code: 0. No files were edited.",
+              "output": "## Reviewer subagent\n\nThe reviewer subagent replied with exactly:\n\n**CURSOR_SUBAGENT_OK**\n\n## Shell command\n\n`printf cursor_tool_ok` exited with code 0 and printed:\n\n**cursor_tool_ok**",
               "metadata": {
                 "cursor_sdk.agent_id": "agent-<uuid:1>",
                 "cursor_sdk.duration_ms": 0,
@@ -190,12 +190,12 @@
                 "provider": "cursor"
               },
               "metrics": {
-                "completion_tokens": 389,
+                "completion_tokens": 492,
                 "prompt_cache_creation_tokens": 0,
-                "prompt_cached_tokens": 16896,
-                "prompt_tokens": 45752,
+                "prompt_cached_tokens": 18272,
+                "prompt_tokens": 49892,
                 "time_to_first_token": 0,
-                "tokens": 46141
+                "tokens": 50384
               }
             }
           ],
@@ -244,11 +244,11 @@
                   "children": []
                 },
                 {
-                  "name": "cursor-sdk-user-on-delta",
+                  "name": "cursor-sdk-user-on-step",
                   "children": []
                 },
                 {
-                  "name": "cursor-sdk-user-on-step",
+                  "name": "cursor-sdk-user-on-delta",
                   "children": []
                 },
                 {
@@ -297,12 +297,12 @@
                 "provider": "cursor"
               },
               "metrics": {
-                "completion_tokens": 40,
+                "completion_tokens": 45,
                 "prompt_cache_creation_tokens": 0,
-                "prompt_cached_tokens": 3552,
-                "prompt_tokens": 12879,
+                "prompt_cached_tokens": 3584,
+                "prompt_tokens": 12981,
                 "time_to_first_token": 0,
-                "tokens": 12919
+                "tokens": 13026
               }
             }
           ],
@@ -327,19 +327,18 @@
                 "cursor_sdk.run_id": "run-<uuid:2>",
                 "cursor_sdk.status": "finished",
                 "cursor_sdk.step_types": [
-                  "thinkingMessage",
                   "assistantMessage"
                 ],
                 "model": "composer-2",
                 "provider": "cursor"
               },
               "metrics": {
-                "completion_tokens": 42,
+                "completion_tokens": 32,
                 "prompt_cache_creation_tokens": 0,
-                "prompt_cached_tokens": 9792,
-                "prompt_tokens": 19710,
+                "prompt_cached_tokens": 11232,
+                "prompt_tokens": 22570,
                 "time_to_first_token": 0,
-                "tokens": 19752
+                "tokens": 22602
               }
             }
           ],

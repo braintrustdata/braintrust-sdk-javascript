@@ -4,7 +4,7 @@
       "callIndex": 0,
       "id": "3056d63956e85565",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-11-05T17:09:16.422Z",
+      "recordedAt": "2026-11-05T18:05:58.222Z",
       "request": {
         "body": {
           "kind": "json",
@@ -28,22 +28,21 @@
           "cache-control": "no-store",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Thu, 05 Nov 2026 17:09:16 GMT",
+          "date": "Thu, 05 Nov 2026 18:05:58 GMT",
           "pragma": "no-cache",
           "server": "envoy",
           "vary": "Origin",
-          "x-envoy-upstream-service-time": "46",
-          "x-request-id": "f8d8d901-6b8b-433e-a12a-68b13dd506c1"
+          "x-envoy-upstream-service-time": "51",
+          "x-request-id": "db9c9b5b-4547-4977-938d-b9e9aae573a4"
         },
-        "status": 200,
-        "statusText": "OK"
+        "status": 200
       }
     },
     {
       "callIndex": 0,
       "id": "30973cd9bcce6459",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode",
-      "recordedAt": "2026-11-05T17:09:16.569Z",
+      "recordedAt": "2026-11-05T18:05:58.376Z",
       "request": {
         "body": {
           "contentType": "application/proto",
@@ -65,20 +64,19 @@
           "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
           "content-length": "6",
           "content-type": "application/proto",
-          "date": "Thu, 05 Nov 2026 17:09:16 GMT",
+          "date": "Thu, 05 Nov 2026 18:05:58 GMT",
           "server": "envoy",
           "vary": "Origin",
-          "x-envoy-upstream-service-time": "45"
+          "x-envoy-upstream-service-time": "42"
         },
-        "status": 200,
-        "statusText": "OK"
+        "status": 200
       }
     },
     {
       "callIndex": 0,
       "id": "61bed072048628da",
       "matchKey": "GET api.cursor.com/v1/models",
-      "recordedAt": "2026-11-05T17:09:17.137Z",
+      "recordedAt": "2026-11-05T18:05:58.870Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -1308,21 +1306,20 @@
           "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
           "content-length": "11058",
           "content-type": "application/json; charset=utf-8",
-          "date": "Thu, 05 Nov 2026 17:09:17 GMT",
+          "date": "Thu, 05 Nov 2026 18:05:58 GMT",
           "server": "envoy",
           "vary": "Origin",
-          "x-envoy-upstream-service-time": "206",
-          "x-request-id": "133ad5e9-cbe9-4c1f-a092-ba052ddd4f5d"
+          "x-envoy-upstream-service-time": "195",
+          "x-request-id": "d77c5389-5540-463b-bc64-33040376f7ad"
         },
-        "status": 200,
-        "statusText": "OK"
+        "status": 200
       }
     },
     {
       "callIndex": 1,
       "id": "0a485ba15b4341f4",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-11-05T17:09:17.295Z",
+      "recordedAt": "2026-11-05T18:05:59.032Z",
       "request": {
         "body": {
           "kind": "json",
@@ -1346,22 +1343,21 @@
           "cache-control": "no-store",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Thu, 05 Nov 2026 17:09:17 GMT",
+          "date": "Thu, 05 Nov 2026 18:05:58 GMT",
           "pragma": "no-cache",
           "server": "envoy",
           "vary": "Origin",
-          "x-envoy-upstream-service-time": "52",
-          "x-request-id": "304fe24e-3410-4713-be7d-374c89f4520c"
+          "x-envoy-upstream-service-time": "44",
+          "x-request-id": "4fdcb2ff-3c15-4273-bfb4-f02d6ed733f0"
         },
-        "status": 200,
-        "statusText": "OK"
+        "status": 200
       }
     },
     {
       "callIndex": 0,
       "id": "d1f7ceb3bf90cdd7",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.AnalyticsService/BootstrapStatsig",
-      "recordedAt": "2026-11-05T17:09:17.870Z",
+      "recordedAt": "2026-11-05T18:05:59.655Z",
       "request": {
         "body": {
           "kind": "json",
@@ -1375,29 +1371,28 @@
         "body": {
           "contentType": "application/json",
           "kind": "binary",
-          "path": "cursor-sdk-v1.cassette.blobs/cf2fe1ba08446b5ef56293a933c9272da19f57dd5828d11be0a0bd4cb6890695.bin",
-          "sha256": "cf2fe1ba08446b5ef56293a933c9272da19f57dd5828d11be0a0bd4cb6890695"
+          "path": "cursor-sdk-v1.cassette.blobs/ac272250831cb123468ceeddd582a1fdcdc0951a90d91683b83e3364f3211c2f.bin",
+          "sha256": "ac272250831cb123468ceeddd582a1fdcdc0951a90d91683b83e3364f3211c2f"
         },
         "headers": {
           "access-control-allow-credentials": "true",
           "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
           "content-encoding": "gzip",
-          "content-length": "177739",
+          "content-length": "177939",
           "content-type": "application/json",
-          "date": "Thu, 05 Nov 2026 17:09:17 GMT",
+          "date": "Thu, 05 Nov 2026 18:05:59 GMT",
           "server": "envoy",
           "vary": "Origin",
-          "x-envoy-upstream-service-time": "110"
+          "x-envoy-upstream-service-time": "99"
         },
-        "status": 200,
-        "statusText": "OK"
+        "status": 200
       }
     },
     {
       "callIndex": 2,
       "id": "597e06e6bda9541c",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-11-05T17:09:18.019Z",
+      "recordedAt": "2026-11-05T18:05:59.817Z",
       "request": {
         "body": {
           "kind": "json",
@@ -1421,22 +1416,21 @@
           "cache-control": "no-store",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Thu, 05 Nov 2026 17:09:17 GMT",
+          "date": "Thu, 05 Nov 2026 18:05:59 GMT",
           "pragma": "no-cache",
           "server": "envoy",
           "vary": "Origin",
           "x-envoy-upstream-service-time": "39",
-          "x-request-id": "75197257-3cfd-45e9-96bc-f8f663824eac"
+          "x-request-id": "3843336b-5d3b-42e4-a7e2-f4518ce3a204"
         },
-        "status": 200,
-        "statusText": "OK"
+        "status": 200
       }
     },
     {
       "callIndex": 1,
       "id": "4d511cf3b47c2629",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode",
-      "recordedAt": "2026-11-05T17:09:18.346Z",
+      "recordedAt": "2026-11-05T18:05:59.964Z",
       "request": {
         "body": {
           "contentType": "application/proto",
@@ -1458,20 +1452,19 @@
           "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
           "content-length": "6",
           "content-type": "application/proto",
-          "date": "Thu, 05 Nov 2026 17:09:18 GMT",
+          "date": "Thu, 05 Nov 2026 18:05:59 GMT",
           "server": "envoy",
           "vary": "Origin",
-          "x-envoy-upstream-service-time": "53"
+          "x-envoy-upstream-service-time": "44"
         },
-        "status": 200,
-        "statusText": "OK"
+        "status": 200
       }
     },
     {
       "callIndex": 0,
       "id": "d53dfb862e5ae5f7",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam",
-      "recordedAt": "2026-11-05T17:09:18.361Z",
+      "recordedAt": "2026-11-05T18:06:00.098Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -1492,20 +1485,19 @@
           "content-encoding": "gzip",
           "content-length": "837",
           "content-type": "application/proto",
-          "date": "Thu, 05 Nov 2026 17:09:18 GMT",
+          "date": "Thu, 05 Nov 2026 18:06:00 GMT",
           "server": "envoy",
           "vary": "Origin",
-          "x-envoy-upstream-service-time": "247"
+          "x-envoy-upstream-service-time": "177"
         },
-        "status": 200,
-        "statusText": "OK"
+        "status": 200
       }
     },
     {
       "callIndex": 3,
       "id": "6533d1db768ada38",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-11-05T17:09:18.519Z",
+      "recordedAt": "2026-11-05T18:06:00.149Z",
       "request": {
         "body": {
           "kind": "json",
@@ -1529,22 +1521,21 @@
           "cache-control": "no-store",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Thu, 05 Nov 2026 17:09:18 GMT",
+          "date": "Thu, 05 Nov 2026 18:06:00 GMT",
           "pragma": "no-cache",
           "server": "envoy",
           "vary": "Origin",
-          "x-envoy-upstream-service-time": "45",
-          "x-request-id": "7d3e96da-f61c-406a-a85a-5d0bbac9764e"
+          "x-envoy-upstream-service-time": "48",
+          "x-request-id": "13087afb-10ef-4313-84cb-f4256ae3798e"
         },
-        "status": 200,
-        "statusText": "OK"
+        "status": 200
       }
     },
     {
       "callIndex": 0,
       "id": "f6841d25c577100e",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam",
-      "recordedAt": "2026-11-05T17:09:18.638Z",
+      "recordedAt": "2026-11-05T18:06:00.191Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -1562,20 +1553,19 @@
           "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
           "content-length": "0",
           "content-type": "application/proto",
-          "date": "Thu, 05 Nov 2026 17:09:18 GMT",
+          "date": "Thu, 05 Nov 2026 18:06:00 GMT",
           "server": "envoy",
           "vary": "Origin",
-          "x-envoy-upstream-service-time": "158"
+          "x-envoy-upstream-service-time": "80"
         },
-        "status": 200,
-        "statusText": "OK"
+        "status": 200
       }
     },
     {
       "callIndex": 0,
       "id": "a340d783dfbb6997",
       "matchKey": "POST api2.cursor.sh/agent.v1.AgentService/Run",
-      "recordedAt": "2026-11-05T17:09:19.910Z",
+      "recordedAt": "2026-11-05T18:06:01.586Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -1588,15 +1578,15 @@
         "body": {
           "contentType": "application/connect+proto",
           "kind": "binary",
-          "path": "cursor-sdk-v1.cassette.blobs/52ff9128db96bb483db4c93c15c484045b62cec8836da52a0ab2c6d53615078f.bin",
-          "sha256": "52ff9128db96bb483db4c93c15c484045b62cec8836da52a0ab2c6d53615078f"
+          "path": "cursor-sdk-v1.cassette.blobs/43e0de3953837a567da10864d2a36c51be5450ef79fc06b7004eca93d0991a18.bin",
+          "sha256": "43e0de3953837a567da10864d2a36c51be5450ef79fc06b7004eca93d0991a18"
         },
         "headers": {
           "access-control-allow-credentials": "true",
           "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
           "connect-content-encoding": "gzip",
           "content-type": "application/connect+proto",
-          "date": "Thu, 05 Nov 2026 17:09:18 GMT",
+          "date": "Thu, 05 Nov 2026 18:06:00 GMT",
           "server": "envoy",
           "vary": "Origin",
           "x-cursor-lazy-rule-bodies": "1",
@@ -1605,71 +1595,113 @@
         "status": 200,
         "streamChunks": [
           {
-            "delayMs": 307,
+            "delayMs": 335,
+            "requestFrames": 1,
             "size": 9
           },
           {
-            "delayMs": 84,
+            "delayMs": 83,
+            "requestFrames": 1,
             "size": 113
           },
           {
-            "delayMs": 120,
-            "size": 1447
+            "delayMs": 148,
+            "requestFrames": 3,
+            "size": 1445
           },
           {
             "delayMs": 2,
+            "requestFrames": 3,
             "size": 8192
           },
           {
             "delayMs": 0,
-            "size": 1051
+            "requestFrames": 3,
+            "size": 1140
           },
           {
-            "delayMs": 677,
-            "size": 84
+            "delayMs": 596,
+            "requestFrames": 7,
+            "size": 69
           },
           {
-            "delayMs": 20,
-            "size": 52
+            "delayMs": 17,
+            "requestFrames": 7,
+            "size": 56
           },
           {
-            "delayMs": 34,
-            "size": 52
-          },
-          {
-            "delayMs": 19,
-            "size": 155
-          },
-          {
-            "delayMs": 2,
-            "size": 389
+            "delayMs": 30,
+            "requestFrames": 7,
+            "size": 41
           },
           {
             "delayMs": 0,
-            "size": 312
+            "requestFrames": 7,
+            "size": 11
           },
           {
-            "delayMs": 3,
-            "size": 540
+            "delayMs": 0,
+            "requestFrames": 7,
+            "size": 24
           },
           {
-            "delayMs": 1,
-            "size": 583
+            "delayMs": 0,
+            "requestFrames": 7,
+            "size": 11
           },
           {
-            "delayMs": 1,
+            "delayMs": 64,
+            "requestFrames": 7,
+            "size": 41
+          },
+          {
+            "delayMs": 0,
+            "requestFrames": 7,
+            "size": 11
+          },
+          {
+            "delayMs": 22,
+            "requestFrames": 7,
             "size": 28
           },
           {
-            "delayMs": 89,
-            "size": 1230
+            "delayMs": 0,
+            "requestFrames": 7,
+            "size": 121
           },
           {
-            "delayMs": 23,
-            "size": 802
+            "delayMs": 20,
+            "requestFrames": 7,
+            "size": 719
+          },
+          {
+            "delayMs": 4,
+            "requestFrames": 10,
+            "size": 540
           },
           {
             "delayMs": 2,
+            "requestFrames": 11,
+            "size": 578
+          },
+          {
+            "delayMs": 1,
+            "requestFrames": 11,
+            "size": 28
+          },
+          {
+            "delayMs": 98,
+            "requestFrames": 12,
+            "size": 1229
+          },
+          {
+            "delayMs": 11,
+            "requestFrames": 12,
+            "size": 804
+          },
+          {
+            "delayMs": 0,
+            "requestFrames": 12,
             "size": 7
           }
         ]
@@ -1679,7 +1711,7 @@
       "callIndex": 4,
       "id": "713ac62a8481085f",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-11-05T17:09:20.072Z",
+      "recordedAt": "2026-11-05T18:06:01.759Z",
       "request": {
         "body": {
           "kind": "json",
@@ -1703,22 +1735,21 @@
           "cache-control": "no-store",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Thu, 05 Nov 2026 17:09:20 GMT",
+          "date": "Thu, 05 Nov 2026 18:06:01 GMT",
           "pragma": "no-cache",
           "server": "envoy",
           "vary": "Origin",
-          "x-envoy-upstream-service-time": "66",
-          "x-request-id": "32b3e023-aee6-4db7-add0-0c7aa36f4c22"
+          "x-envoy-upstream-service-time": "69",
+          "x-request-id": "026a29b7-3090-4625-866d-b9e61fb42d8d"
         },
-        "status": 200,
-        "statusText": "OK"
+        "status": 200
       }
     },
     {
       "callIndex": 5,
       "id": "159b9254fd967a4f",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-11-05T17:09:20.221Z",
+      "recordedAt": "2026-11-05T18:06:01.913Z",
       "request": {
         "body": {
           "kind": "json",
@@ -1742,22 +1773,21 @@
           "cache-control": "no-store",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Thu, 05 Nov 2026 17:09:20 GMT",
+          "date": "Thu, 05 Nov 2026 18:06:01 GMT",
           "pragma": "no-cache",
           "server": "envoy",
           "vary": "Origin",
-          "x-envoy-upstream-service-time": "56",
-          "x-request-id": "05afdcb6-0842-44a4-b45d-ff26fb7c13ca"
+          "x-envoy-upstream-service-time": "52",
+          "x-request-id": "95da4e2c-c2d3-47b8-b85e-857e51aaf61c"
         },
-        "status": 200,
-        "statusText": "OK"
+        "status": 200
       }
     },
     {
       "callIndex": 6,
       "id": "83ee8051122ed115",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-11-05T17:09:20.381Z",
+      "recordedAt": "2026-11-05T18:06:02.070Z",
       "request": {
         "body": {
           "kind": "json",
@@ -1781,22 +1811,21 @@
           "cache-control": "no-store",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Thu, 05 Nov 2026 17:09:20 GMT",
+          "date": "Thu, 05 Nov 2026 18:06:02 GMT",
           "pragma": "no-cache",
           "server": "envoy",
           "vary": "Origin",
-          "x-envoy-upstream-service-time": "50",
-          "x-request-id": "3c3d4587-82c1-462b-9c16-748c7f279dd3"
+          "x-envoy-upstream-service-time": "43",
+          "x-request-id": "bd47a4b0-eef9-4132-96e2-b463ab486e74"
         },
-        "status": 200,
-        "statusText": "OK"
+        "status": 200
       }
     },
     {
       "callIndex": 2,
       "id": "00f0c09b48c1898a",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode",
-      "recordedAt": "2026-11-05T17:09:20.626Z",
+      "recordedAt": "2026-11-05T18:06:02.347Z",
       "request": {
         "body": {
           "contentType": "application/proto",
@@ -1818,20 +1847,19 @@
           "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
           "content-length": "6",
           "content-type": "application/proto",
-          "date": "Thu, 05 Nov 2026 17:09:20 GMT",
+          "date": "Thu, 05 Nov 2026 18:06:02 GMT",
           "server": "envoy",
           "vary": "Origin",
-          "x-envoy-upstream-service-time": "150"
+          "x-envoy-upstream-service-time": "177"
         },
-        "status": 200,
-        "statusText": "OK"
+        "status": 200
       }
     },
     {
       "callIndex": 1,
       "id": "d2ea7953262b608d",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam",
-      "recordedAt": "2026-11-05T17:09:20.656Z",
+      "recordedAt": "2026-11-05T18:06:02.357Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -1852,20 +1880,19 @@
           "content-encoding": "gzip",
           "content-length": "837",
           "content-type": "application/proto",
-          "date": "Thu, 05 Nov 2026 17:09:20 GMT",
+          "date": "Thu, 05 Nov 2026 18:06:02 GMT",
           "server": "envoy",
           "vary": "Origin",
-          "x-envoy-upstream-service-time": "180"
+          "x-envoy-upstream-service-time": "186"
         },
-        "status": 200,
-        "statusText": "OK"
+        "status": 200
       }
     },
     {
       "callIndex": 7,
       "id": "215c1c7456d5ac18",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-11-05T17:09:20.782Z",
+      "recordedAt": "2026-11-05T18:06:02.518Z",
       "request": {
         "body": {
           "kind": "json",
@@ -1889,22 +1916,21 @@
           "cache-control": "no-store",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Thu, 05 Nov 2026 17:09:20 GMT",
+          "date": "Thu, 05 Nov 2026 18:06:02 GMT",
           "pragma": "no-cache",
           "server": "envoy",
           "vary": "Origin",
-          "x-envoy-upstream-service-time": "40",
-          "x-request-id": "4f67c001-b2cc-4102-b9bd-178c185061d0"
+          "x-envoy-upstream-service-time": "47",
+          "x-request-id": "5f147f66-8b4e-46db-8da0-58342a0e90e6"
         },
-        "status": 200,
-        "statusText": "OK"
+        "status": 200
       }
     },
     {
       "callIndex": 1,
       "id": "0fe2bdc8216b7c85",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam",
-      "recordedAt": "2026-11-05T17:09:20.877Z",
+      "recordedAt": "2026-11-05T18:06:02.582Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -1922,20 +1948,19 @@
           "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
           "content-length": "0",
           "content-type": "application/proto",
-          "date": "Thu, 05 Nov 2026 17:09:20 GMT",
+          "date": "Thu, 05 Nov 2026 18:06:02 GMT",
           "server": "envoy",
           "vary": "Origin",
-          "x-envoy-upstream-service-time": "115"
+          "x-envoy-upstream-service-time": "102"
         },
-        "status": 200,
-        "statusText": "OK"
+        "status": 200
       }
     },
     {
       "callIndex": 1,
       "id": "f76197c334b438d4",
       "matchKey": "POST api2.cursor.sh/agent.v1.AgentService/Run",
-      "recordedAt": "2026-11-05T17:09:25.784Z",
+      "recordedAt": "2026-11-05T18:06:07.523Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -1948,15 +1973,15 @@
         "body": {
           "contentType": "application/connect+proto",
           "kind": "binary",
-          "path": "cursor-sdk-v1.cassette.blobs/659c4e2af3822e2307c155fac32f2287c4c6b10509ad854c9b5074efbae7faf5.bin",
-          "sha256": "659c4e2af3822e2307c155fac32f2287c4c6b10509ad854c9b5074efbae7faf5"
+          "path": "cursor-sdk-v1.cassette.blobs/8a088fbae0c34eab7978addba5a2e9cc768889c6d4c513e5abe61a0e9162a113.bin",
+          "sha256": "8a088fbae0c34eab7978addba5a2e9cc768889c6d4c513e5abe61a0e9162a113"
         },
         "headers": {
           "access-control-allow-credentials": "true",
           "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
           "connect-content-encoding": "gzip",
           "content-type": "application/connect+proto",
-          "date": "Thu, 05 Nov 2026 17:09:21 GMT",
+          "date": "Thu, 05 Nov 2026 18:06:02 GMT",
           "server": "envoy",
           "vary": "Origin",
           "x-cursor-lazy-rule-bodies": "1",
@@ -1965,291 +1990,488 @@
         "status": 200,
         "streamChunks": [
           {
-            "delayMs": 306,
+            "delayMs": 340,
+            "requestFrames": 1,
             "size": 9
           },
           {
-            "delayMs": 89,
+            "delayMs": 90,
+            "requestFrames": 1,
             "size": 113
           },
           {
-            "delayMs": 115,
-            "size": 1449
+            "delayMs": 130,
+            "requestFrames": 3,
+            "size": 1450
           },
           {
-            "delayMs": 1,
+            "delayMs": 2,
+            "requestFrames": 3,
             "size": 8192
           },
           {
             "delayMs": 0,
-            "size": 658
+            "requestFrames": 3,
+            "size": 1262
           },
           {
-            "delayMs": 0,
-            "size": 522
-          },
-          {
-            "delayMs": 1528,
+            "delayMs": 569,
+            "requestFrames": 7,
             "size": 69
           },
           {
-            "delayMs": 0,
-            "size": 622
+            "delayMs": 22,
+            "requestFrames": 7,
+            "size": 57
           },
           {
-            "delayMs": 195,
+            "delayMs": 15,
+            "requestFrames": 7,
+            "size": 41
+          },
+          {
+            "delayMs": 0,
+            "requestFrames": 7,
             "size": 11
           },
           {
+            "delayMs": 23,
+            "requestFrames": 7,
+            "size": 41
+          },
+          {
             "delayMs": 0,
+            "requestFrames": 7,
             "size": 11
+          },
+          {
+            "delayMs": 77,
+            "requestFrames": 7,
+            "size": 56
           },
           {
             "delayMs": 16,
+            "requestFrames": 7,
+            "size": 41
+          },
+          {
+            "delayMs": 0,
+            "requestFrames": 7,
             "size": 11
+          },
+          {
+            "delayMs": 18,
+            "requestFrames": 7,
+            "size": 44
+          },
+          {
+            "delayMs": 172,
+            "requestFrames": 7,
+            "size": 20
+          },
+          {
+            "delayMs": 0,
+            "requestFrames": 7,
+            "size": 43
           },
           {
             "delayMs": 6,
-            "size": 11
-          },
-          {
-            "delayMs": 240,
-            "size": 795
-          },
-          {
-            "delayMs": 2,
-            "size": 961
-          },
-          {
-            "delayMs": 35,
-            "size": 838
-          },
-          {
-            "delayMs": 4,
-            "size": 11
-          },
-          {
-            "delayMs": 30,
-            "size": 11
+            "requestFrames": 7,
+            "size": 38
           },
           {
             "delayMs": 0,
-            "size": 841
-          },
-          {
-            "delayMs": 14,
-            "size": 12
-          },
-          {
-            "delayMs": 65,
-            "size": 1991
-          },
-          {
-            "delayMs": 26,
-            "size": 1611
+            "requestFrames": 7,
+            "size": 11
           },
           {
             "delayMs": 9,
-            "size": 4335
+            "requestFrames": 7,
+            "size": 53
+          },
+          {
+            "delayMs": 8,
+            "requestFrames": 7,
+            "size": 42
+          },
+          {
+            "delayMs": 32,
+            "requestFrames": 7,
+            "size": 11
           },
           {
             "delayMs": 0,
-            "size": 4509
+            "requestFrames": 7,
+            "size": 11
+          },
+          {
+            "delayMs": 7,
+            "requestFrames": 7,
+            "size": 11
+          },
+          {
+            "delayMs": 8,
+            "requestFrames": 7,
+            "size": 11
+          },
+          {
+            "delayMs": 7,
+            "requestFrames": 7,
+            "size": 11
+          },
+          {
+            "delayMs": 175,
+            "requestFrames": 7,
+            "size": 11
           },
           {
             "delayMs": 0,
-            "size": 520
+            "requestFrames": 7,
+            "size": 854
           },
           {
-            "delayMs": 49,
+            "delayMs": 4,
+            "requestFrames": 7,
+            "size": 933
+          },
+          {
+            "delayMs": 29,
+            "requestFrames": 10,
+            "size": 161
+          },
+          {
+            "delayMs": 0,
+            "requestFrames": 10,
+            "size": 666
+          },
+          {
+            "delayMs": 7,
+            "requestFrames": 10,
+            "size": 11
+          },
+          {
+            "delayMs": 0,
+            "requestFrames": 10,
+            "size": 11
+          },
+          {
+            "delayMs": 17,
+            "requestFrames": 13,
+            "size": 11
+          },
+          {
+            "delayMs": 0,
+            "requestFrames": 13,
+            "size": 841
+          },
+          {
+            "delayMs": 23,
+            "requestFrames": 14,
+            "size": 12
+          },
+          {
+            "delayMs": 64,
+            "requestFrames": 17,
+            "size": 2414
+          },
+          {
+            "delayMs": 14,
+            "requestFrames": 17,
+            "size": 1611
+          },
+          {
+            "delayMs": 8,
+            "requestFrames": 18,
+            "size": 8192
+          },
+          {
+            "delayMs": 0,
+            "requestFrames": 18,
+            "size": 1294
+          },
+          {
+            "delayMs": 28,
+            "requestFrames": 21,
+            "size": 126
+          },
+          {
+            "delayMs": 16,
+            "requestFrames": 21,
+            "size": 539
+          },
+          {
+            "delayMs": 2,
+            "requestFrames": 21,
+            "size": 11
+          },
+          {
+            "delayMs": 1203,
+            "requestFrames": 21,
+            "size": 125
+          },
+          {
+            "delayMs": 24,
+            "requestFrames": 21,
+            "size": 264
+          },
+          {
+            "delayMs": 59,
+            "requestFrames": 21,
+            "size": 145
+          },
+          {
+            "delayMs": 0,
+            "requestFrames": 21,
+            "size": 114
+          },
+          {
+            "delayMs": 41,
+            "requestFrames": 21,
+            "size": 145
+          },
+          {
+            "delayMs": 0,
+            "requestFrames": 21,
+            "size": 114
+          },
+          {
+            "delayMs": 9,
+            "requestFrames": 21,
             "size": 126
           },
           {
             "delayMs": 0,
-            "size": 539
+            "requestFrames": 21,
+            "size": 849
+          },
+          {
+            "delayMs": 4,
+            "requestFrames": 21,
+            "size": 424
           },
           {
             "delayMs": 0,
-            "size": 11
+            "requestFrames": 21,
+            "size": 332
           },
           {
-            "delayMs": 765,
-            "size": 133
-          },
-          {
-            "delayMs": 0,
-            "size": 114
-          },
-          {
-            "delayMs": 22,
-            "size": 147
-          },
-          {
-            "delayMs": 0,
-            "size": 114
-          },
-          {
-            "delayMs": 28,
-            "size": 138
-          },
-          {
-            "delayMs": 0,
-            "size": 962
-          },
-          {
-            "delayMs": 5,
-            "size": 695
-          },
-          {
-            "delayMs": 0,
+            "delayMs": 3,
+            "requestFrames": 24,
             "size": 412
           },
           {
-            "delayMs": 91,
-            "size": 713
+            "delayMs": 100,
+            "requestFrames": 25,
+            "size": 521
           },
           {
-            "delayMs": 90,
+            "delayMs": 102,
+            "requestFrames": 26,
             "size": 118
           },
           {
-            "delayMs": 5,
+            "delayMs": 8,
+            "requestFrames": 26,
             "size": 130
           },
           {
             "delayMs": 0,
-            "size": 469
+            "requestFrames": 26,
+            "size": 529
+          },
+          {
+            "delayMs": 13,
+            "requestFrames": 26,
+            "size": 11
+          },
+          {
+            "delayMs": 7,
+            "requestFrames": 26,
+            "size": 651
+          },
+          {
+            "delayMs": 11,
+            "requestFrames": 27,
+            "size": 1565
+          },
+          {
+            "delayMs": 1,
+            "requestFrames": 28,
+            "size": 2368
+          },
+          {
+            "delayMs": 102,
+            "requestFrames": 32,
+            "size": 1291
+          },
+          {
+            "delayMs": 359,
+            "requestFrames": 32,
+            "size": 36
+          },
+          {
+            "delayMs": 24,
+            "requestFrames": 32,
+            "size": 61
+          },
+          {
+            "delayMs": 3,
+            "requestFrames": 32,
+            "size": 22
+          },
+          {
+            "delayMs": 685,
+            "requestFrames": 32,
+            "size": 20
+          },
+          {
+            "delayMs": 0,
+            "requestFrames": 32,
+            "size": 32
+          },
+          {
+            "delayMs": 11,
+            "requestFrames": 32,
+            "size": 27
+          },
+          {
+            "delayMs": 0,
+            "requestFrames": 32,
+            "size": 11
+          },
+          {
+            "delayMs": 11,
+            "requestFrames": 32,
+            "size": 42
           },
           {
             "delayMs": 15,
+            "requestFrames": 32,
+            "size": 24
+          },
+          {
+            "delayMs": 0,
+            "requestFrames": 32,
             "size": 11
           },
           {
             "delayMs": 8,
-            "size": 1163
-          },
-          {
-            "delayMs": 11,
-            "size": 632
-          },
-          {
-            "delayMs": 2,
-            "size": 2305
-          },
-          {
-            "delayMs": 90,
-            "size": 1288
-          },
-          {
-            "delayMs": 510,
-            "size": 24
-          },
-          {
-            "delayMs": 21,
-            "size": 60
-          },
-          {
-            "delayMs": 26,
-            "size": 52
-          },
-          {
-            "delayMs": 59,
-            "size": 47
-          },
-          {
-            "delayMs": 0,
-            "size": 11
-          },
-          {
-            "delayMs": 21,
-            "size": 57
-          },
-          {
-            "delayMs": 19,
-            "size": 46
-          },
-          {
-            "delayMs": 224,
-            "size": 91
-          },
-          {
-            "delayMs": 14,
-            "size": 35
-          },
-          {
-            "delayMs": 3,
+            "requestFrames": 32,
             "size": 43
           },
           {
-            "delayMs": 10,
+            "delayMs": 12,
+            "requestFrames": 32,
             "size": 21
           },
           {
-            "delayMs": 27,
-            "size": 82
+            "delayMs": 0,
+            "requestFrames": 32,
+            "size": 11
           },
           {
-            "delayMs": 6,
+            "delayMs": 12,
+            "requestFrames": 32,
+            "size": 42
+          },
+          {
+            "delayMs": 12,
+            "requestFrames": 32,
+            "size": 40
+          },
+          {
+            "delayMs": 13,
+            "requestFrames": 32,
             "size": 40
           },
           {
             "delayMs": 11,
-            "size": 51
+            "requestFrames": 32,
+            "size": 40
           },
           {
-            "delayMs": 10,
-            "size": 42
+            "delayMs": 0,
+            "requestFrames": 32,
+            "size": 11
           },
           {
-            "delayMs": 11,
-            "size": 34
+            "delayMs": 15,
+            "requestFrames": 32,
+            "size": 24
           },
           {
-            "delayMs": 13,
-            "size": 46
+            "delayMs": 0,
+            "requestFrames": 32,
+            "size": 11
           },
           {
-            "delayMs": 11,
+            "delayMs": 8,
+            "requestFrames": 32,
+            "size": 41
+          },
+          {
+            "delayMs": 12,
+            "requestFrames": 32,
+            "size": 35
+          },
+          {
+            "delayMs": 0,
+            "requestFrames": 32,
+            "size": 11
+          },
+          {
+            "delayMs": 12,
+            "requestFrames": 32,
             "size": 26
           },
           {
             "delayMs": 0,
+            "requestFrames": 32,
             "size": 11
           },
           {
-            "delayMs": 8,
-            "size": 28
-          },
-          {
-            "delayMs": 0,
-            "size": 11
+            "delayMs": 12,
+            "requestFrames": 33,
+            "size": 39
           },
           {
             "delayMs": 22,
+            "requestFrames": 33,
             "size": 15
           },
           {
-            "delayMs": 8,
-            "size": 506
+            "delayMs": 2,
+            "requestFrames": 33,
+            "size": 159
           },
           {
             "delayMs": 0,
+            "requestFrames": 33,
+            "size": 262
+          },
+          {
+            "delayMs": 4,
+            "requestFrames": 35,
             "size": 724
           },
           {
-            "delayMs": 3,
-            "size": 563
+            "delayMs": 1,
+            "requestFrames": 36,
+            "size": 723
           },
           {
             "delayMs": 2,
-            "size": 31
+            "requestFrames": 37,
+            "size": 30
           },
           {
-            "delayMs": 85,
-            "size": 1704
+            "delayMs": 98,
+            "requestFrames": 37,
+            "size": 1852
           },
           {
-            "delayMs": 10,
+            "delayMs": 11,
+            "requestFrames": 37,
             "size": 1331
           }
         ]
@@ -2259,7 +2481,7 @@
       "callIndex": 8,
       "id": "b5a62fe3d5fdca42",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-11-05T17:09:26.129Z",
+      "recordedAt": "2026-11-05T18:06:07.870Z",
       "request": {
         "body": {
           "kind": "json",
@@ -2283,56 +2505,21 @@
           "cache-control": "no-store",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Thu, 05 Nov 2026 17:09:26 GMT",
+          "date": "Thu, 05 Nov 2026 18:06:07 GMT",
           "pragma": "no-cache",
           "server": "envoy",
           "vary": "Origin",
-          "x-envoy-upstream-service-time": "41",
-          "x-request-id": "f07d79bf-db64-4498-8366-ac5da11fb329"
+          "x-envoy-upstream-service-time": "45",
+          "x-request-id": "e6f16307-ebfa-4d3a-bf37-2ae7878971a6"
         },
-        "status": 200,
-        "statusText": "OK"
-      }
-    },
-    {
-      "callIndex": 2,
-      "id": "70d3bcff6501f80d",
-      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam",
-      "recordedAt": "2026-11-05T17:09:26.438Z",
-      "request": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {},
-        "method": "POST",
-        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam"
-      },
-      "response": {
-        "body": {
-          "contentType": "application/proto",
-          "kind": "base64",
-          "value": "GhJCCggBEAEYASABMAFQAFgBYgAiADIGCAAYACAAOiYgAjAAOAJAAkgAWAFwAYABAIgBAKgBALABALgBAMABAOgBAPIBAEIASgByAiABggEAkAEAmAEAoAEAqgEHCAESAQIYAMABAMoBAOIBAOgBAfIBAggB+gEAgAIAigICEACaApsJCAEQARoUCgN6YWkSDRILCgdnbG0tNS4yEgAaQAoGY3Vyc29yEjYIARIOCghncm9rLTQuNRICCAESDgoIZ3Jvay00LjYSAggBEhIKDGNvbXBvc2VyLTIuNRICCAEaugEKBmdvb2dsZRKvARISCg5nZW1pbmktMi41LXBybxIAEhIKDmdlbWluaS0zLWZsYXNoEgASEgoOZ2VtaW5pLTMuMS1wcm8SABIUChBnZW1pbmktMi41LWZsYXNoEgASFAoQZ2VtaW5pLTMuNS1mbGFzaBIAEhQKEGdlbWluaS0zLjYtZmxhc2gSABIUChBnZW1pbmktMy43LWZsYXNoEgASGQoVZ2VtaW5pLTIuNS1mbGFzaC1saXRlEgAaxAMKBm9wZW5haRK5AxIGCgJvMRIAEgYKAm8zEgASCQoFZ3B0LTQSABIJCgVncHQtNRIAEgoKBmdwdC00bxIAEgoKBm8zLXBybxIAEgsKB2dwdC00LjESABILCgdncHQtNC41EgASCwoHZ3B0LTUuMRIAEgsKB2dwdC01LjISABILCgdncHQtNS40EgASCwoHZ3B0LTUuNRIAEgsKB28xLW1pbmkSABILCgdvMy1taW5pEgASCwoHbzQtbWluaRIAEg0KCWdwdC01LXBybxIAEg4KCmdwdC01LW1pbmkSABIOCgpncHQtNS1uYW5vEgASDwoLZ3B0LTQtdHVyYm8SABIPCgtncHQtNG8tbWluaRIAEg8KC2dwdC01LWNvZGV4EgASDwoLZ3B0LTUuNi1zb2wSABIQCgxncHQtNC4xLW1pbmkSABIQCgxncHQtNC4xLW5hbm8SABIQCgxncHQtNS40LW1pbmkSABIQCgxncHQtNS40LW5hbm8SABIQCgxncHQtNS42LWx1bmESABIRCg1ncHQtNS4xLWNvZGV4EgASEQoNZ3B0LTUuMy1jb2RleBIAEhEKDWdwdC01LjYtdGVycmESABotCghtb29uc2hvdBIhEgsKB2tpbWktazMSABISCg5raW1pLWsyLjctY29kZRIAGvsCCglhbnRocm9waWMS7QISEQoNY2xhdWRlLTMtb3B1cxIAEhEKDWNsYXVkZS00LW9wdXMSABIRCg1jbGF1ZGUtb3B1cy01EgASEgoOY2xhdWRlLWZhYmxlLTUSABITCg9jbGF1ZGUtNC4xLW9wdXMSABITCg9jbGF1ZGUtb3B1cy00LTUSABITCg9jbGF1ZGUtb3B1cy00LTYSABITCg9jbGF1ZGUtb3B1cy00LTcSABITCg9jbGF1ZGUtb3B1cy00LTgSABITCg9jbGF1ZGUtc29ubmV0LTQSABITCg9jbGF1ZGUtc29ubmV0LTUSABIUChBjbGF1ZGUtZmFibGUtNS0xEgASFAoQY2xhdWRlLWhhaWt1LTQtNRIAEhUKEWNsYXVkZS1zb25uZXQtNC01EgASFQoRY2xhdWRlLXNvbm5ldC00LTYSABIXChNjbGF1ZGUtMy1oYWlrdS0yMDBrEgASGAoUY2xhdWRlLTMtc29ubmV0LTIwMGsSACIKCgASABoAIgAqADgAqgIAsgICCgDAAgHSAgIIAdgCgJy1B+ACAIIDAIoDAJIDBhIEVEVBTaADAKgDALADALoDBGNvc3TAAwDIAwHQAwDiAwYYASABKAHqAwIIAPIDKggBEAEaDWNvbmZpZ3VyZV9pYW0aE2ludml0ZV90ZWFtX21lbWJlcnMoAfgDAIIEAIoEAggBoAQBqgQGCAAqAggBugQgCAAQABgBIAAqCkJyYWludHJ1c3QyCkJyYWludHJ1c3TCBAIIAdIEAggB2AQA4gQCCADqBAIIAPIEAIAFAZAFAJoFAggAogUCCAGoBQGyBQQIARAB0gUECAEQANgFAeAFAfIFAggB+AUBggYCCACIBgCQBgCiBgIIAaoGAA=="
-        },
-        "headers": {
-          "access-control-allow-credentials": "true",
-          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
-          "content-encoding": "gzip",
-          "content-length": "837",
-          "content-type": "application/proto",
-          "date": "Thu, 05 Nov 2026 17:09:26 GMT",
-          "server": "envoy",
-          "vary": "Origin",
-          "x-envoy-upstream-service-time": "216"
-        },
-        "status": 200,
-        "statusText": "OK"
+        "status": 200
       }
     },
     {
       "callIndex": 3,
       "id": "ca48e39a4afe13dd",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode",
-      "recordedAt": "2026-11-05T17:09:26.446Z",
+      "recordedAt": "2026-11-05T18:06:08.022Z",
       "request": {
         "body": {
           "contentType": "application/proto",
@@ -2354,20 +2541,19 @@
           "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
           "content-length": "6",
           "content-type": "application/proto",
-          "date": "Thu, 05 Nov 2026 17:09:26 GMT",
+          "date": "Thu, 05 Nov 2026 18:06:07 GMT",
           "server": "envoy",
           "vary": "Origin",
-          "x-envoy-upstream-service-time": "42"
+          "x-envoy-upstream-service-time": "53"
         },
-        "status": 200,
-        "statusText": "OK"
+        "status": 200
       }
     },
     {
       "callIndex": 9,
       "id": "89cbc244285e665c",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-11-05T17:09:26.600Z",
+      "recordedAt": "2026-11-05T18:06:08.194Z",
       "request": {
         "body": {
           "kind": "json",
@@ -2391,53 +2577,54 @@
           "cache-control": "no-store",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Thu, 05 Nov 2026 17:09:26 GMT",
+          "date": "Thu, 05 Nov 2026 18:06:08 GMT",
           "pragma": "no-cache",
           "server": "envoy",
           "vary": "Origin",
-          "x-envoy-upstream-service-time": "43",
-          "x-request-id": "09edb1a7-e5ee-475e-8303-29ecc5cd4e12"
+          "x-envoy-upstream-service-time": "50",
+          "x-request-id": "537ca4c9-f600-4343-ba3d-74f3372c029a"
         },
-        "status": 200,
-        "statusText": "OK"
+        "status": 200
       }
     },
     {
       "callIndex": 2,
-      "id": "d73f41eeedbf5def",
-      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam",
-      "recordedAt": "2026-11-05T17:09:26.698Z",
+      "id": "70d3bcff6501f80d",
+      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam",
+      "recordedAt": "2026-11-05T18:06:08.290Z",
       "request": {
         "body": {
           "kind": "empty"
         },
         "headers": {},
         "method": "POST",
-        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam"
+        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam"
       },
       "response": {
         "body": {
-          "kind": "empty"
+          "contentType": "application/proto",
+          "kind": "base64",
+          "value": "GhJCCggBEAEYASABMAFQAFgBYgAiADIGCAAYACAAOiYgAjAAOAJAAkgAWAFwAYABAIgBAKgBALABALgBAMABAOgBAPIBAEIASgByAiABggEAkAEAmAEAoAEAqgEHCAESAQIYAMABAMoBAOIBAOgBAfIBAggB+gEAgAIAigICEACaApsJCAEQARoUCgN6YWkSDRILCgdnbG0tNS4yEgAaQAoGY3Vyc29yEjYIARIOCghncm9rLTQuNRICCAESDgoIZ3Jvay00LjYSAggBEhIKDGNvbXBvc2VyLTIuNRICCAEaugEKBmdvb2dsZRKvARISCg5nZW1pbmktMi41LXBybxIAEhIKDmdlbWluaS0zLWZsYXNoEgASEgoOZ2VtaW5pLTMuMS1wcm8SABIUChBnZW1pbmktMi41LWZsYXNoEgASFAoQZ2VtaW5pLTMuNS1mbGFzaBIAEhQKEGdlbWluaS0zLjYtZmxhc2gSABIUChBnZW1pbmktMy43LWZsYXNoEgASGQoVZ2VtaW5pLTIuNS1mbGFzaC1saXRlEgAaxAMKBm9wZW5haRK5AxIGCgJvMRIAEgYKAm8zEgASCQoFZ3B0LTQSABIJCgVncHQtNRIAEgoKBmdwdC00bxIAEgoKBm8zLXBybxIAEgsKB2dwdC00LjESABILCgdncHQtNC41EgASCwoHZ3B0LTUuMRIAEgsKB2dwdC01LjISABILCgdncHQtNS40EgASCwoHZ3B0LTUuNRIAEgsKB28xLW1pbmkSABILCgdvMy1taW5pEgASCwoHbzQtbWluaRIAEg0KCWdwdC01LXBybxIAEg4KCmdwdC01LW1pbmkSABIOCgpncHQtNS1uYW5vEgASDwoLZ3B0LTQtdHVyYm8SABIPCgtncHQtNG8tbWluaRIAEg8KC2dwdC01LWNvZGV4EgASDwoLZ3B0LTUuNi1zb2wSABIQCgxncHQtNC4xLW1pbmkSABIQCgxncHQtNC4xLW5hbm8SABIQCgxncHQtNS40LW1pbmkSABIQCgxncHQtNS40LW5hbm8SABIQCgxncHQtNS42LWx1bmESABIRCg1ncHQtNS4xLWNvZGV4EgASEQoNZ3B0LTUuMy1jb2RleBIAEhEKDWdwdC01LjYtdGVycmESABotCghtb29uc2hvdBIhEgsKB2tpbWktazMSABISCg5raW1pLWsyLjctY29kZRIAGvsCCglhbnRocm9waWMS7QISEQoNY2xhdWRlLTMtb3B1cxIAEhEKDWNsYXVkZS00LW9wdXMSABIRCg1jbGF1ZGUtb3B1cy01EgASEgoOY2xhdWRlLWZhYmxlLTUSABITCg9jbGF1ZGUtNC4xLW9wdXMSABITCg9jbGF1ZGUtb3B1cy00LTUSABITCg9jbGF1ZGUtb3B1cy00LTYSABITCg9jbGF1ZGUtb3B1cy00LTcSABITCg9jbGF1ZGUtb3B1cy00LTgSABITCg9jbGF1ZGUtc29ubmV0LTQSABITCg9jbGF1ZGUtc29ubmV0LTUSABIUChBjbGF1ZGUtZmFibGUtNS0xEgASFAoQY2xhdWRlLWhhaWt1LTQtNRIAEhUKEWNsYXVkZS1zb25uZXQtNC01EgASFQoRY2xhdWRlLXNvbm5ldC00LTYSABIXChNjbGF1ZGUtMy1oYWlrdS0yMDBrEgASGAoUY2xhdWRlLTMtc29ubmV0LTIwMGsSACIKCgASABoAIgAqADgAqgIAsgICCgDAAgHSAgIIAdgCgJy1B+ACAIIDAIoDAJIDBhIEVEVBTaADAKgDALADALoDBGNvc3TAAwDIAwHQAwDiAwYYASABKAHqAwIIAPIDKggBEAEaDWNvbmZpZ3VyZV9pYW0aE2ludml0ZV90ZWFtX21lbWJlcnMoAfgDAIIEAIoEAggBoAQBqgQGCAAqAggBugQgCAAQABgBIAAqCkJyYWludHJ1c3QyCkJyYWludHJ1c3TCBAIIAdIEAggB2AQA4gQCCADqBAIIAPIEAIAFAZAFAJoFAggAogUCCAGoBQGyBQQIARAB0gUECAEQANgFAeAFAfIFAggB+AUBggYCCACIBgCQBgCiBgIIAaoGAA=="
         },
         "headers": {
           "access-control-allow-credentials": "true",
           "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
-          "content-length": "0",
+          "content-encoding": "gzip",
+          "content-length": "837",
           "content-type": "application/proto",
-          "date": "Thu, 05 Nov 2026 17:09:26 GMT",
+          "date": "Thu, 05 Nov 2026 18:06:08 GMT",
           "server": "envoy",
           "vary": "Origin",
-          "x-envoy-upstream-service-time": "128"
+          "x-envoy-upstream-service-time": "317"
         },
-        "status": 200,
-        "statusText": "OK"
+        "status": 200
       }
     },
     {
       "callIndex": 2,
       "id": "3298fd0cf5accbd1",
       "matchKey": "POST api2.cursor.sh/agent.v1.AgentService/Run",
-      "recordedAt": "2026-11-05T17:09:28.026Z",
+      "recordedAt": "2026-11-05T18:06:09.816Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -2450,15 +2637,15 @@
         "body": {
           "contentType": "application/connect+proto",
           "kind": "binary",
-          "path": "cursor-sdk-v1.cassette.blobs/72f6c573e876510d5d4c49138b86333d098e34b2d61ffbde4fdbfb23fae2d784.bin",
-          "sha256": "72f6c573e876510d5d4c49138b86333d098e34b2d61ffbde4fdbfb23fae2d784"
+          "path": "cursor-sdk-v1.cassette.blobs/ca1ae713a66a79b1cc16df789feb49fe9989290927747de09ed912f29ff377f1.bin",
+          "sha256": "ca1ae713a66a79b1cc16df789feb49fe9989290927747de09ed912f29ff377f1"
         },
         "headers": {
           "access-control-allow-credentials": "true",
           "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
           "connect-content-encoding": "gzip",
           "content-type": "application/connect+proto",
-          "date": "Thu, 05 Nov 2026 17:09:26 GMT",
+          "date": "Thu, 05 Nov 2026 18:06:08 GMT",
           "server": "envoy",
           "vary": "Origin",
           "x-cursor-lazy-rule-bodies": "1",
@@ -2467,79 +2654,103 @@
         "status": 200,
         "streamChunks": [
           {
-            "delayMs": 301,
+            "delayMs": 368,
+            "requestFrames": 1,
             "size": 9
           },
           {
-            "delayMs": 69,
-            "size": 55
+            "delayMs": 136,
+            "requestFrames": 1,
+            "size": 113
           },
           {
-            "delayMs": 111,
-            "size": 1443
+            "delayMs": 121,
+            "requestFrames": 3,
+            "size": 1444
           },
           {
             "delayMs": 2,
+            "requestFrames": 4,
             "size": 8192
           },
           {
             "delayMs": 0,
-            "size": 636
+            "requestFrames": 4,
+            "size": 724
           },
           {
             "delayMs": 0,
+            "requestFrames": 4,
             "size": 413
           },
           {
-            "delayMs": 762,
-            "size": 84
+            "delayMs": 702,
+            "requestFrames": 7,
+            "size": 69
           },
           {
-            "delayMs": 19,
-            "size": 42
-          },
-          {
-            "delayMs": 0,
-            "size": 11
-          },
-          {
-            "delayMs": 23,
+            "delayMs": 30,
+            "requestFrames": 7,
             "size": 45
           },
           {
             "delayMs": 0,
+            "requestFrames": 7,
             "size": 11
           },
           {
-            "delayMs": 31,
-            "size": 157
+            "delayMs": 92,
+            "requestFrames": 7,
+            "size": 53
           },
           {
-            "delayMs": 4,
-            "size": 706
+            "delayMs": 14,
+            "requestFrames": 7,
+            "size": 52
           },
           {
-            "delayMs": 3,
-            "size": 540
-          },
-          {
-            "delayMs": 0,
-            "size": 528
-          },
-          {
-            "delayMs": 2,
+            "delayMs": 28,
+            "requestFrames": 7,
             "size": 28
           },
           {
-            "delayMs": 90,
-            "size": 1188
+            "delayMs": 0,
+            "requestFrames": 7,
+            "size": 109
           },
           {
-            "delayMs": 9,
-            "size": 801
+            "delayMs": 4,
+            "requestFrames": 7,
+            "size": 714
+          },
+          {
+            "delayMs": 2,
+            "requestFrames": 10,
+            "size": 540
+          },
+          {
+            "delayMs": 1,
+            "requestFrames": 11,
+            "size": 528
+          },
+          {
+            "delayMs": 1,
+            "requestFrames": 12,
+            "size": 28
+          },
+          {
+            "delayMs": 96,
+            "requestFrames": 12,
+            "size": 1182
+          },
+          {
+            "delayMs": 15,
+            "requestFrames": 12,
+            "size": 799
           },
           {
             "delayMs": 0,
+            "requestFrames": 12,
             "size": 7
           }
         ]
@@ -2549,7 +2760,7 @@
       "callIndex": 10,
       "id": "3fa8e8ca5dbfda3f",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-11-05T17:09:28.207Z",
+      "recordedAt": "2026-11-05T18:06:09.963Z",
       "request": {
         "body": {
           "kind": "json",
@@ -2573,22 +2784,21 @@
           "cache-control": "no-store",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Thu, 05 Nov 2026 17:09:28 GMT",
+          "date": "Thu, 05 Nov 2026 18:06:09 GMT",
           "pragma": "no-cache",
           "server": "envoy",
           "vary": "Origin",
-          "x-envoy-upstream-service-time": "83",
-          "x-request-id": "57826c16-0c3c-4d47-b2f4-985bfddc0222"
+          "x-envoy-upstream-service-time": "42",
+          "x-request-id": "8d060ce1-f480-46d1-b999-a8754e48c89a"
         },
-        "status": 200,
-        "statusText": "OK"
+        "status": 200
       }
     },
     {
       "callIndex": 4,
       "id": "233bbcc27fbdca7f",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode",
-      "recordedAt": "2026-11-05T17:09:28.355Z",
+      "recordedAt": "2026-11-05T18:06:10.109Z",
       "request": {
         "body": {
           "contentType": "application/proto",
@@ -2610,20 +2820,19 @@
           "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
           "content-length": "6",
           "content-type": "application/proto",
-          "date": "Thu, 05 Nov 2026 17:09:28 GMT",
+          "date": "Thu, 05 Nov 2026 18:06:10 GMT",
           "server": "envoy",
           "vary": "Origin",
-          "x-envoy-upstream-service-time": "56"
+          "x-envoy-upstream-service-time": "45"
         },
-        "status": 200,
-        "statusText": "OK"
+        "status": 200
       }
     },
     {
       "callIndex": 3,
       "id": "88f9130fc6561ba9",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam",
-      "recordedAt": "2026-11-05T17:09:28.458Z",
+      "recordedAt": "2026-11-05T18:06:10.285Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -2644,20 +2853,19 @@
           "content-encoding": "gzip",
           "content-length": "837",
           "content-type": "application/proto",
-          "date": "Thu, 05 Nov 2026 17:09:28 GMT",
+          "date": "Thu, 05 Nov 2026 18:06:10 GMT",
           "server": "envoy",
           "vary": "Origin",
-          "x-envoy-upstream-service-time": "159"
+          "x-envoy-upstream-service-time": "221"
         },
-        "status": 200,
-        "statusText": "OK"
+        "status": 200
       }
     },
     {
       "callIndex": 11,
       "id": "f2a00b03d6c1de3c",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-11-05T17:09:28.537Z",
+      "recordedAt": "2026-11-05T18:06:10.327Z",
       "request": {
         "body": {
           "kind": "json",
@@ -2681,22 +2889,21 @@
           "cache-control": "no-store",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Thu, 05 Nov 2026 17:09:28 GMT",
+          "date": "Thu, 05 Nov 2026 18:06:10 GMT",
           "pragma": "no-cache",
           "server": "envoy",
           "vary": "Origin",
-          "x-envoy-upstream-service-time": "70",
-          "x-request-id": "f8dff12e-433a-4e7d-b90f-973cd848fa4e"
+          "x-envoy-upstream-service-time": "94",
+          "x-request-id": "1a821daa-e0b6-4c2c-8322-a55e583def72"
         },
-        "status": 200,
-        "statusText": "OK"
+        "status": 200
       }
     },
     {
-      "callIndex": 3,
-      "id": "4b1a9ef52c437a05",
+      "callIndex": 2,
+      "id": "d73f41eeedbf5def",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam",
-      "recordedAt": "2026-11-05T17:09:28.876Z",
+      "recordedAt": "2026-11-05T18:06:10.347Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -2714,20 +2921,49 @@
           "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
           "content-length": "0",
           "content-type": "application/proto",
-          "date": "Thu, 05 Nov 2026 17:09:28 GMT",
+          "date": "Thu, 05 Nov 2026 18:06:10 GMT",
           "server": "envoy",
           "vary": "Origin",
-          "x-envoy-upstream-service-time": "216"
+          "x-envoy-upstream-service-time": "100"
         },
-        "status": 200,
-        "statusText": "OK"
+        "status": 200
+      }
+    },
+    {
+      "callIndex": 3,
+      "id": "4b1a9ef52c437a05",
+      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam",
+      "recordedAt": "2026-11-05T18:06:11.360Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam"
+      },
+      "response": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "content-length": "0",
+          "content-type": "application/proto",
+          "date": "Thu, 05 Nov 2026 18:06:11 GMT",
+          "server": "envoy",
+          "vary": "Origin",
+          "x-envoy-upstream-service-time": "3204"
+        },
+        "status": 200
       }
     },
     {
       "callIndex": 3,
       "id": "a471eaadb3f011d8",
       "matchKey": "POST api2.cursor.sh/agent.v1.AgentService/Run",
-      "recordedAt": "2026-11-05T17:09:30.135Z",
+      "recordedAt": "2026-11-05T18:06:12.487Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -2740,15 +2976,15 @@
         "body": {
           "contentType": "application/connect+proto",
           "kind": "binary",
-          "path": "cursor-sdk-v1.cassette.blobs/f47fe7676813878079b4e5765ef9f3de6126f3363bb5435e9c67a038c020fa86.bin",
-          "sha256": "f47fe7676813878079b4e5765ef9f3de6126f3363bb5435e9c67a038c020fa86"
+          "path": "cursor-sdk-v1.cassette.blobs/c6d253080d8e06f404d162a273eb68c4ccc384c4714f95d5582b8d3600cb4a7e.bin",
+          "sha256": "c6d253080d8e06f404d162a273eb68c4ccc384c4714f95d5582b8d3600cb4a7e"
         },
         "headers": {
           "access-control-allow-credentials": "true",
           "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
           "connect-content-encoding": "gzip",
           "content-type": "application/connect+proto",
-          "date": "Thu, 05 Nov 2026 17:09:28 GMT",
+          "date": "Thu, 05 Nov 2026 18:06:11 GMT",
           "server": "envoy",
           "vary": "Origin",
           "x-cursor-lazy-rule-bodies": "1",
@@ -2757,95 +2993,88 @@
         "status": 200,
         "streamChunks": [
           {
-            "delayMs": 319,
-            "size": 9
+            "delayMs": 857,
+            "requestFrames": 1,
+            "size": 714
           },
           {
-            "delayMs": 0,
-            "size": 705
-          },
-          {
-            "delayMs": 67,
+            "delayMs": 295,
+            "requestFrames": 8,
             "size": 101
           },
           {
-            "delayMs": 112,
+            "delayMs": 45,
+            "requestFrames": 9,
             "size": 113
           },
           {
-            "delayMs": 116,
-            "size": 1637
+            "delayMs": 180,
+            "requestFrames": 11,
+            "size": 1638
           },
           {
-            "delayMs": 777,
-            "size": 71
-          },
-          {
-            "delayMs": 21,
-            "size": 55
-          },
-          {
-            "delayMs": 15,
-            "size": 41
+            "delayMs": 583,
+            "requestFrames": 13,
+            "size": 77
           },
           {
             "delayMs": 0,
+            "requestFrames": 13,
             "size": 11
           },
           {
-            "delayMs": 0,
-            "size": 24
+            "delayMs": 18,
+            "requestFrames": 13,
+            "size": 42
           },
           {
             "delayMs": 0,
+            "requestFrames": 13,
             "size": 11
           },
           {
-            "delayMs": 25,
-            "size": 41
+            "delayMs": 42,
+            "requestFrames": 13,
+            "size": 195
           },
           {
-            "delayMs": 0,
-            "size": 11
-          },
-          {
-            "delayMs": 21,
-            "size": 19
-          },
-          {
-            "delayMs": 0,
-            "size": 116
-          },
-          {
-            "delayMs": 4,
+            "delayMs": 17,
+            "requestFrames": 13,
             "size": 395
           },
           {
-            "delayMs": 19,
-            "size": 330
+            "delayMs": 0,
+            "requestFrames": 13,
+            "size": 308
           },
           {
-            "delayMs": 0,
+            "delayMs": 7,
+            "requestFrames": 16,
             "size": 540
           },
           {
-            "delayMs": 0,
+            "delayMs": 4,
+            "requestFrames": 17,
             "size": 472
           },
           {
-            "delayMs": 0,
+            "delayMs": 3,
+            "requestFrames": 18,
             "size": 28
           },
           {
-            "delayMs": 92,
+            "delayMs": 94,
+            "requestFrames": 18,
             "size": 1765
           },
           {
-            "delayMs": 9,
-            "size": 1433
+            "delayMs": 11,
+            "requestFrames": 18,
+            "size": 1431
           },
           {
             "delayMs": 0,
+            "requestFrames": 18,
             "size": 7
           }
         ]

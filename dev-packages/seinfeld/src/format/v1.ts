@@ -34,6 +34,7 @@ const recordedResponseSchema = z.object({
       z.object({
         size: z.number().int().positive(),
         delayMs: z.number().nonnegative(),
+        requestFrames: z.number().int().nonnegative().optional(),
       }),
     )
     .optional(),

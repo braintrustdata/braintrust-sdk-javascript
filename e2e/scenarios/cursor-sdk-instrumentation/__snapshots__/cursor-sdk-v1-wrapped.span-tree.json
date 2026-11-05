@@ -48,10 +48,10 @@
                       "children": [],
                       "input": {
                         "agentId": "<agentId:1>",
-                        "description": "reviewer CURSOR_SUBAGENT_OK",
+                        "description": "Confirm CURSOR_SUBAGENT_OK",
                         "mode": "unspecified",
                         "model": "composer-2.5-fast",
-                        "prompt": "Reply with exactly: CURSOR_SUBAGENT_OK",
+                        "prompt": "Reply with exactly and only this string, no other text: CURSOR_SUBAGENT_OK",
                         "subagentType": {
                           "kind": "custom",
                           "name": "reviewer"
@@ -66,7 +66,7 @@
                             {
                               "thinkingMessage": {
                                 "durationMs": 0,
-                                "text": "Preparing to reply with CURSOR_SUBAGENT_OK."
+                                "text": "I will reply with exactly and only the string \"CURSOR_SUBAGENT_OK\"."
                               }
                             },
                             {
@@ -80,7 +80,7 @@
                         }
                       },
                       "metadata": {
-                        "cursor_sdk.subagent.tool_call_id": "tool_18907503-1303-4b60-b141-7013b7345cd",
+                        "cursor_sdk.subagent.tool_call_id": "tool_4203a7e9-983e-4dd9-9a47-e314ce66206",
                         "cursor_sdk.tool.status": "completed",
                         "gen_ai.tool.name": "task"
                       }
@@ -88,10 +88,10 @@
                   ],
                   "input": {
                     "agentId": "<agentId:1>",
-                    "description": "reviewer CURSOR_SUBAGENT_OK",
+                    "description": "Confirm CURSOR_SUBAGENT_OK",
                     "mode": "unspecified",
                     "model": "composer-2.5-fast",
-                    "prompt": "Reply with exactly: CURSOR_SUBAGENT_OK",
+                    "prompt": "Reply with exactly and only this string, no other text: CURSOR_SUBAGENT_OK",
                     "subagentType": {
                       "kind": "custom",
                       "name": "reviewer"
@@ -106,7 +106,7 @@
                         {
                           "thinkingMessage": {
                             "durationMs": 0,
-                            "text": "Preparing to reply with CURSOR_SUBAGENT_OK."
+                            "text": "I will reply with exactly and only the string \"CURSOR_SUBAGENT_OK\"."
                           }
                         },
                         {
@@ -121,7 +121,7 @@
                   },
                   "metadata": {
                     "cursor_sdk.tool.status": "completed",
-                    "gen_ai.tool.call.id": "tool_18907503-1303-4b60-b141-7013b7345cd",
+                    "gen_ai.tool.call.id": "tool_4203a7e9-983e-4dd9-9a47-e314ce66206",
                     "gen_ai.tool.name": "task"
                   }
                 },
@@ -136,7 +136,7 @@
                   "output": {
                     "status": "success",
                     "value": {
-                      "executionTime": 142,
+                      "executionTime": 156,
                       "exitCode": 0,
                       "signal": "",
                       "stderr": "",
@@ -145,7 +145,7 @@
                   },
                   "metadata": {
                     "cursor_sdk.tool.status": "completed",
-                    "gen_ai.tool.call.id": "tool_ff2be022-fb2c-4e4f-892e-15a1058a760",
+                    "gen_ai.tool.call.id": "tool_d5d7b850-c6db-4958-a8b0-10ca799f6cd",
                     "gen_ai.tool.name": "shell"
                   }
                 }
@@ -168,12 +168,12 @@
                 "provider": "cursor"
               },
               "metrics": {
-                "completion_tokens": 282,
+                "completion_tokens": 405,
                 "prompt_cache_creation_tokens": 0,
-                "prompt_cached_tokens": 16544,
-                "prompt_tokens": 34241,
+                "prompt_cached_tokens": 7136,
+                "prompt_tokens": 25051,
                 "time_to_first_token": 0,
-                "tokens": 34523
+                "tokens": 25456
               }
             }
           ],
@@ -222,11 +222,11 @@
                   "children": []
                 },
                 {
-                  "name": "cursor-sdk-user-on-step",
+                  "name": "cursor-sdk-user-on-delta",
                   "children": []
                 },
                 {
-                  "name": "cursor-sdk-user-on-delta",
+                  "name": "cursor-sdk-user-on-step",
                   "children": []
                 },
                 {
@@ -275,12 +275,12 @@
                 "provider": "cursor"
               },
               "metrics": {
-                "completion_tokens": 41,
+                "completion_tokens": 40,
                 "prompt_cache_creation_tokens": 0,
                 "prompt_cached_tokens": 3584,
-                "prompt_tokens": 12229,
+                "prompt_tokens": 12290,
                 "time_to_first_token": 0,
-                "tokens": 12270
+                "tokens": 12330
               }
             }
           ],
@@ -315,9 +315,9 @@
                 "completion_tokens": 32,
                 "prompt_cache_creation_tokens": 0,
                 "prompt_cached_tokens": 3584,
-                "prompt_tokens": 12708,
+                "prompt_tokens": 12897,
                 "time_to_first_token": 0,
-                "tokens": 12740
+                "tokens": 12929
               }
             }
           ],

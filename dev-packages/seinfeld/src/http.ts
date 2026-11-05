@@ -107,7 +107,11 @@ export async function recordResponseDraft(
 /** Build a Fetch API `Response` from a recorded response body. */
 export async function buildResponse(
   recorded: RecordedResponse | RecordedResponseOrDraft,
-  ctx?: { store: CassetteStore; name: string },
+  ctx?: {
+    store: CassetteStore;
+    name: string;
+    waitForRequestFrames?: (count: number) => Promise<void>;
+  },
 ): Promise<Response> {
   // Expand \n-joined set-cookie back into multiple header entries.
   // Strip encoding headers: stored bytes are already decoded by the fetch
@@ -150,9 +154,9 @@ export async function buildResponse(
       : await decodeBody(recorded.body, ctx);
   if (bytes.length === 0) return new Response(null, init);
   if (recorded.streamChunks) {
-    // Interactive providers wait for client tool results between chunks.
-    // Preserve the recorded pacing instead of closing the response while
-    // the SDK still has pending writes to its request stream.
+    // Interactive providers wait for client messages between chunks. Frame
+    // counts preserve that ordering even if replay's client is slower than
+    // recording's client; recorded delays alone cannot enforce it.
     const chunks = recorded.streamChunks;
     let index = 0;
     let offset = 0;
@@ -162,7 +166,13 @@ export async function buildResponse(
           controller.close();
           return;
         }
-        const { size, delayMs } = chunks[index++]!;
+        const { size, delayMs, requestFrames } = chunks[index++]!;
+        if (requestFrames !== undefined) {
+          if (!ctx?.waitForRequestFrames) {
+            throw new Error("Connect replay requires request frame tracking");
+          }
+          await ctx.waitForRequestFrames(requestFrames);
+        }
         await new Promise((resolve) => setTimeout(resolve, delayMs));
         controller.enqueue(bytes.slice(offset, offset + size));
         offset += size;
