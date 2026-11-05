@@ -184,6 +184,14 @@
       {
         "variantKey": "cloudflare-ai-chat-v0-latest",
         "label": "v0.9 latest"
+      },
+      {
+        "variantKey": "cloudflare-ai-chat-v0-12",
+        "label": "v0.12 pinned"
+      },
+      {
+        "variantKey": "cloudflare-ai-chat-v0-12-latest",
+        "label": "v0.12 latest"
       }
     ]
   },
