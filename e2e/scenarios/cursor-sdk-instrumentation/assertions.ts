@@ -13,6 +13,7 @@ import { ROOT_NAME, SCENARIO_NAME } from "./scenario.impl.mjs";
 type RunCursorSDKScenario = (harness: {
   runNodeScenarioDir: (options: {
     entry: string;
+    env?: Record<string, string>;
     nodeArgs: string[];
     runContext?: ScenarioRunContext;
     scenarioDir: string;
@@ -20,6 +21,7 @@ type RunCursorSDKScenario = (harness: {
   }) => Promise<unknown>;
   runScenarioDir: (options: {
     entry: string;
+    env?: Record<string, string>;
     runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
@@ -39,6 +41,7 @@ export function defineCursorSDKInstrumentationAssertions(options: {
   name: string;
   runScenario: RunCursorSDKScenario;
   snapshotName: string;
+  promptUsage: boolean;
   testFileUrl: string;
   timeoutMs: number;
 }): void {
@@ -80,10 +83,76 @@ export function defineCursorSDKInstrumentationAssertions(options: {
           expect(task?.span.parentIds).toEqual([operation?.span.id ?? ""]);
           expect(task?.row.metadata).toMatchObject({
             provider: "cursor",
+            "cursor_sdk.status": "finished",
           });
+          expect(task?.row.error).toBeUndefined();
+          expect(task?.row.output).toEqual(expect.any(String));
+          const metrics = task?.row.metrics as
+            | Record<string, number>
+            | undefined;
+          if (
+            operationName !== "cursor-sdk-prompt-operation" ||
+            options.promptUsage
+          ) {
+            expect(metrics?.prompt_tokens).toBeGreaterThan(0);
+            expect(metrics?.completion_tokens).toBeGreaterThan(0);
+            expect(metrics?.tokens).toBe(
+              Number(metrics?.prompt_tokens) +
+                Number(metrics?.completion_tokens),
+            );
+          } else {
+            // 1.0.12 has neither prompt callbacks nor usage on RunResult.
+            expect(metrics?.tokens).toBeUndefined();
+          }
         }
       },
     );
+
+    test("captures model output, tools, subagents, and user callbacks", () => {
+      for (const [operation, output] of [
+        ["prompt", "CURSOR_PROMPT_OK"],
+        ["wait", "CURSOR_WAIT_OK"],
+        ["resume-conversation", "CURSOR_CONVERSATION_OK"],
+      ]) {
+        expect(
+          findCursorTask(events, `cursor-sdk-${operation}-operation`)?.row
+            .output,
+        ).toContain(output);
+      }
+      const task = findCursorTask(events, "cursor-sdk-stream-operation");
+      expect(task?.row.output).toContain("CURSOR_SUBAGENT_OK");
+      expect(task?.row.output).toContain("cursor_tool_ok");
+      const shell = findChildSpans(events, "shell", task?.span.id);
+      expect(shell).toHaveLength(1);
+      expect(shell[0].row.output).toMatchObject({
+        status: "success",
+        value: { exitCode: 0, stdout: "cursor_tool_ok" },
+      });
+      const tool = findChildSpans(events, "task", task?.span.id);
+      expect(tool).toHaveLength(1);
+      const subagent = findChildSpans(
+        events,
+        "Cursor Subagent",
+        tool[0].span.id,
+      );
+      expect(subagent).toHaveLength(1);
+      expect(JSON.stringify(subagent[0].row.output)).toContain(
+        "CURSOR_SUBAGENT_OK",
+      );
+      for (const event of [shell[0], tool[0], subagent[0]]) {
+        expect(event.row.error).toBeUndefined();
+      }
+      const waitTask = findCursorTask(events, "cursor-sdk-wait-operation");
+      for (const callback of ["on-delta", "on-step"]) {
+        expect(
+          findChildSpans(
+            events,
+            `cursor-sdk-user-${callback}`,
+            waitTask?.span.id,
+          ).length,
+        ).toBeGreaterThan(0);
+      }
+    });
 
     test(
       "matches the shared span tree snapshot",

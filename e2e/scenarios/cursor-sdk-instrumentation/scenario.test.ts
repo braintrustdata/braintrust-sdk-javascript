@@ -43,6 +43,7 @@ describe.concurrent("variants", () => {
     describe.sequential(`cursor sdk ${cursorSDKScenario.version}`, () => {
       defineCursorSDKInstrumentationAssertions({
         name: "wrapped instrumentation",
+        promptUsage: cursorSDKScenario.version !== "1.0.12",
         runScenario: async ({ runScenarioDir }) => {
           await runScenarioDir({
             entry: cursorSDKScenario.wrapperEntry,
@@ -62,6 +63,7 @@ describe.concurrent("variants", () => {
 
       defineCursorSDKInstrumentationAssertions({
         name: "auto-hook instrumentation",
+        promptUsage: true,
         runScenario: async ({ runNodeScenarioDir }) => {
           await runNodeScenarioDir({
             entry: cursorSDKScenario.autoEntry,
