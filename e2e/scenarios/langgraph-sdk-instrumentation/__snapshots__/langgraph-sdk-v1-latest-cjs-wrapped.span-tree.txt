@@ -1,5 +1,5 @@
 span_tree:
-└── LangGraph SDK 1.10.2 (cjs, wrapped) [task]
+└── LangGraph SDK 1.12.9 (cjs, wrapped) [task]
     input: {
       "description": "Verify synchronous LangGraph run APIs",
       "prompt": {
@@ -20,7 +20,7 @@ span_tree:
       "instrumentation_mode": "wrapped",
       "module": "cjs",
       "scenario": "langgraph-sdk-instrumentation",
-      "sdk_version": "1.10.2",
+      "sdk_version": "1.12.9",
       "testRunId": "<run:1>"
     }
     context: {

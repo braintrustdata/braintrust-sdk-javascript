@@ -8,13 +8,19 @@
         "langgraph-sdk-v1-latest": {
           "package": "@langchain/langgraph-sdk",
           "range": "1"
+        },
+        "langgraph-sdk-v2-latest": {
+          "package": "@langchain/langgraph-sdk",
+          "range": "2"
         }
       }
     }
   },
   "dependencies": {
     "langgraph-sdk-v1": "npm:@langchain/langgraph-sdk@1.9.25",
-    "langgraph-sdk-v1-latest": "npm:@langchain/langgraph-sdk@1.10.2",
+    "langgraph-sdk-v1-latest": "npm:@langchain/langgraph-sdk@1.12.9",
+    "langgraph-sdk-v2": "npm:@langchain/langgraph-sdk@2.0.0",
+    "langgraph-sdk-v2-latest": "npm:@langchain/langgraph-sdk@2.0.0",
     "@langchain/core": "1.2.5",
     "@langchain/langgraph": "1.4.12",
     "@langchain/langgraph-api": "1.4.5",

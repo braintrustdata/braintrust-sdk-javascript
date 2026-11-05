@@ -1056,6 +1056,14 @@
       {
         "variantKey": "langgraph-sdk-v1-latest",
         "label": "v1 latest"
+      },
+      {
+        "variantKey": "langgraph-sdk-v2",
+        "label": "v2 pinned"
+      },
+      {
+        "variantKey": "langgraph-sdk-v2-latest",
+        "label": "v2 latest"
       }
     ]
   },
