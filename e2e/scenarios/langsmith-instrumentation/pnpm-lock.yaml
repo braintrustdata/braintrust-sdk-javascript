@@ -15,8 +15,8 @@ importers:
         specifier: npm:langsmith@0.3.30
         version: langsmith@0.3.30(openai@4.104.0)
       langsmith-v0-latest:
-        specifier: npm:langsmith@0.9.0
-        version: langsmith@0.9.0(openai@4.104.0)
+        specifier: npm:langsmith@0.11.7
+        version: langsmith@0.11.7(openai@4.104.0)
       openai:
         specifier: 4.104.0
         version: 4.104.0
@@ -176,16 +176,8 @@ packages:
   js-tiktoken@1.0.21:
     resolution: {integrity: sha512-biOj/6M5qdgx5TKjDnFT1ymSpM5tbd3ylwDtrQvFQSu0Z7bBYko2dF+W/aUkXUPuk6IVpRxk/3Q2sHOzGlS36g==}
 
-  langsmith@0.3.30:
-    resolution: {integrity: sha512-ZaiaOx9MysuSQlAkRw8mjm7iqhrlF7HI0LCTLxiNBEWBPywdkgI7UnN+s7KtlRiM0tP1cOLm+dQY++Fi33jkPQ==}
-    peerDependencies:
-      openai: '*'
-    peerDependenciesMeta:
-      openai:
-        optional: true
-
-  langsmith@0.8.1:
-    resolution: {integrity: sha512-Y48oSj51aLvehAVwy+VU2i9COlCFmLi9T5REFyL4pWT2npcIKiBSiSlnyjxdkNXOdZ0YYz7Lud8aiZPjkjkXvA==}
+  langsmith@0.11.7:
+    resolution: {integrity: sha512-ItiCV3YhUuWHWT92odob5PhEUMY+ixHa03Fixsgwk/EIPEiRgUIZRBQSB8LCm87ypuUhgIwgw01z1gxPX5qTWg==}
     peerDependencies:
       '@opentelemetry/api': '*'
       '@opentelemetry/exporter-trace-otlp-proto': '*'
@@ -204,8 +196,16 @@ packages:
       ws:
         optional: true
 
-  langsmith@0.9.0:
-    resolution: {integrity: sha512-tlg/aG7qezAKY6G3fgADSX7PkRj+JKoF3z7QNkCMsAOvwvuzhiwP9Amn1Z+zAIxuKoWuXQdIjtFN0LVmUC1oUQ==}
+  langsmith@0.3.30:
+    resolution: {integrity: sha512-ZaiaOx9MysuSQlAkRw8mjm7iqhrlF7HI0LCTLxiNBEWBPywdkgI7UnN+s7KtlRiM0tP1cOLm+dQY++Fi33jkPQ==}
+    peerDependencies:
+      openai: '*'
+    peerDependenciesMeta:
+      openai:
+        optional: true
+
+  langsmith@0.8.1:
+    resolution: {integrity: sha512-Y48oSj51aLvehAVwy+VU2i9COlCFmLi9T5REFyL4pWT2npcIKiBSiSlnyjxdkNXOdZ0YYz7Lud8aiZPjkjkXvA==}
     peerDependencies:
       '@opentelemetry/api': '*'
       '@opentelemetry/exporter-trace-otlp-proto': '*'
@@ -498,6 +498,12 @@ snapshots:
     dependencies:
       base64-js: 1.5.1
 
+  langsmith@0.11.7(openai@4.104.0):
+    dependencies:
+      p-queue: 6.6.2
+    optionalDependencies:
+      openai: 4.104.0
+
   langsmith@0.3.30(openai@4.104.0):
     dependencies:
       '@types/uuid': 10.0.0
@@ -511,12 +517,6 @@ snapshots:
       openai: 4.104.0
 
   langsmith@0.8.1(openai@4.104.0):
-    dependencies:
-      p-queue: 6.6.2
-    optionalDependencies:
-      openai: 4.104.0
-
-  langsmith@0.9.0(openai@4.104.0):
     dependencies:
       p-queue: 6.6.2
     optionalDependencies:
