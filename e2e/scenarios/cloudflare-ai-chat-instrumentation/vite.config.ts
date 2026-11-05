@@ -4,6 +4,8 @@ import { braintrustVitePlugin } from "braintrust/vite";
 import { defineConfig } from "vite";
 
 const require = createRequire(import.meta.url);
+const agentsPackageName =
+  process.env.CLOUDFLARE_AGENTS_PACKAGE_NAME ?? "agents-v0-20";
 const mode = process.env.CLOUDFLARE_AI_CHAT_INSTRUMENTATION_MODE ?? "manual";
 const packageName =
   process.env.CLOUDFLARE_AI_CHAT_PACKAGE_NAME ?? "cloudflare-ai-chat-v0-latest";
@@ -32,6 +34,11 @@ export default defineConfig({
   ],
   resolve: {
     alias: [
+      // AI Chat 0.9 uses agents/chat exports removed in agents 0.25.
+      // Keep each lane on its compatible Agents runtime, including subpaths.
+      ...(agentsPackageName !== "agents"
+        ? [{ find: "agents", replacement: agentsPackageName }]
+        : []),
       {
         find: /^@cloudflare\/ai-chat$/,
         replacement: require.resolve(packageName),
