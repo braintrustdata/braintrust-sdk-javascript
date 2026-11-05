@@ -13,6 +13,33 @@ import { googleGenAIChannels } from "../../instrumentation/plugins/google-genai-
  * "orchestrion:google-genai:models.generateContent"
  */
 export const googleGenAIConfigs: InstrumentationConfig[] = [
+  // ADK's CommonJS modules load the GenAI CommonJS entrypoint. Capture the
+  // underlying model calls as well as the enclosing ADK runner and agents.
+  {
+    channelName: googleGenAIChannels.generateContent.channelName,
+    module: {
+      name: "@google/genai",
+      versionRange: ">=1.0.0",
+      filePath: "dist/node/index.cjs",
+    },
+    functionQuery: {
+      className: "Models",
+      methodName: "generateContentInternal",
+    },
+  },
+  {
+    channelName: googleGenAIChannels.generateContentStream.channelName,
+    module: {
+      name: "@google/genai",
+      versionRange: ">=1.0.0",
+      filePath: "dist/node/index.cjs",
+    },
+    functionQuery: {
+      className: "Models",
+      methodName: "generateContentStreamInternal",
+    },
+  },
+
   // Models.generateContentInternal - The actual class method (Node.js entry point)
   // Note: generateContent is an arrow function property that calls this internal method
   {
