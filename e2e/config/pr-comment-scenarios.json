@@ -560,6 +560,14 @@
       {
         "variantKey": "mistral-v2-latest",
         "label": "v2 latest"
+      },
+      {
+        "variantKey": "mistral-v3",
+        "label": "v3 pinned"
+      },
+      {
+        "variantKey": "mistral-v3-latest",
+        "label": "v3 latest"
       }
     ]
   },
