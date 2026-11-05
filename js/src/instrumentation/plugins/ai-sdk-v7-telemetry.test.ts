@@ -274,6 +274,99 @@ describe("braintrustAISDKTelemetry", () => {
     },
   );
 
+  it.each(["before", "after"])(
+    "does not duplicate provider tools when model telemetry arrives %s execution end",
+    async (order) => {
+      const telemetry = braintrustAISDKTelemetry();
+      const toolCall = {
+        type: "tool-call",
+        providerExecuted: true,
+        toolCallId: "shared-tool",
+        toolName: "bash",
+        input: { command: "printf OK" },
+      };
+      const toolOutput = {
+        ...toolCall,
+        type: "tool-result",
+        output: { exitCode: 0, output: "OK" },
+      };
+      for (const callId of ["first", "second"]) {
+        telemetry.onStart({ callId, operationId: "ai.harness" });
+        telemetry.onLanguageModelCallStart({ callId });
+        telemetry.onToolExecutionStart({ callId, toolCall });
+        if (order === "after") {
+          telemetry.onToolExecutionEnd({ callId, toolCall, toolOutput });
+        }
+        telemetry.onLanguageModelCallEnd({
+          callId,
+          content: [toolCall, toolOutput],
+        });
+        if (order === "before") {
+          telemetry.onToolExecutionEnd({ callId, toolCall, toolOutput });
+        }
+        telemetry.onEnd({ callId, operationId: "ai.harness" });
+      }
+      const spans = (await backgroundLogger.drain()) as Array<
+        Record<string, any>
+      >;
+      const tools = spans.filter(
+        (span) => span.span_attributes?.type === "tool",
+      );
+      expect(tools).toHaveLength(2);
+      expect(tools[0].span_parents).not.toEqual(tools[1].span_parents);
+      for (const tool of tools) {
+        expect(tool).toMatchObject({
+          input: toolCall.input,
+          output: toolOutput.output,
+          metadata: { toolCallId: "shared-tool", toolName: "bash" },
+          metrics: { start: expect.any(Number), end: expect.any(Number) },
+        });
+      }
+    },
+  );
+
+  it("keeps a provider tool's execution span when it finishes in a continuation", async () => {
+    const telemetry = braintrustAISDKTelemetry();
+    const toolCall = {
+      type: "tool-call",
+      providerExecuted: true,
+      toolCallId: "continued-tool",
+      toolName: "bash",
+      input: { command: "printf OK" },
+    };
+    const toolOutput = {
+      ...toolCall,
+      type: "tool-result",
+      output: { exitCode: 0, output: "OK" },
+    };
+    telemetry.onStart({ callId: "suspended", operationId: "ai.harness" });
+    telemetry.onLanguageModelCallStart({ callId: "suspended" });
+    telemetry.onToolExecutionStart({ callId: "suspended", toolCall });
+    telemetry.onLanguageModelCallEnd({
+      callId: "suspended",
+      content: [toolCall],
+    });
+    telemetry.onEnd({ callId: "suspended", operationId: "ai.harness" });
+    telemetry.onStart({ callId: "continued", operationId: "ai.harness" });
+    telemetry.onLanguageModelCallStart({ callId: "continued" });
+    telemetry.onToolExecutionEnd({ callId: "continued", toolCall, toolOutput });
+    telemetry.onLanguageModelCallEnd({
+      callId: "continued",
+      content: [toolOutput],
+    });
+    telemetry.onEnd({ callId: "continued", operationId: "ai.harness" });
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    const tools = spans.filter((span) => span.span_attributes?.type === "tool");
+    expect(tools).toHaveLength(1);
+    expect(tools[0]).toMatchObject({
+      input: toolCall.input,
+      output: toolOutput.output,
+      metrics: { start: expect.any(Number), end: expect.any(Number) },
+    });
+  });
+
   it("correlates deferred provider results across overlapping operations", async () => {
     const telemetry = braintrustAISDKTelemetry();
     for (const key of ["first", "second"]) {
