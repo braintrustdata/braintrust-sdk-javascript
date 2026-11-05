@@ -12,6 +12,7 @@
               "type": "task",
               "children": [],
               "input": "Reply with exactly: CURSOR_PROMPT_OK. Do not modify files.",
+              "output": "CURSOR_PROMPT_OK",
               "metadata": {
                 "cursor_sdk.agent_id": "agent-<uuid:2>",
                 "cursor_sdk.duration_ms": 0,
@@ -20,12 +21,23 @@
                 "cursor_sdk.operation": "Agent.prompt",
                 "cursor_sdk.run_id": "run-<uuid:1>",
                 "cursor_sdk.runtime": "local",
-                "cursor_sdk.status": "error",
+                "cursor_sdk.status": "finished",
+                "cursor_sdk.step_types": [
+                  "thinkingMessage",
+                  "assistantMessage"
+                ],
                 "cursor_sdk.version": "1.0.12",
                 "model": "composer-2",
                 "provider": "cursor"
               },
-              "error": "Cursor run failed"
+              "metrics": {
+                "completion_tokens": 48,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 3552,
+                "prompt_tokens": 12198,
+                "time_to_first_token": 0,
+                "tokens": 12246
+              }
             }
           ],
           "metadata": {
@@ -39,19 +51,144 @@
             {
               "name": "Cursor Agent",
               "type": "task",
-              "children": [],
+              "children": [
+                {
+                  "name": "task",
+                  "type": "tool",
+                  "children": [
+                    {
+                      "name": "Cursor Subagent",
+                      "type": "task",
+                      "children": [],
+                      "input": {
+                        "agentId": "<agentId:1>",
+                        "description": "reviewer CURSOR_SUBAGENT_OK",
+                        "mode": "unspecified",
+                        "model": "composer-2.5-fast",
+                        "prompt": "Reply with exactly: CURSOR_SUBAGENT_OK",
+                        "subagentType": {
+                          "kind": "custom",
+                          "name": "reviewer"
+                        }
+                      },
+                      "output": {
+                        "status": "success",
+                        "value": {
+                          "agentId": "<agentId:1>",
+                          "backgroundReason": "unspecified",
+                          "conversationSteps": [
+                            {
+                              "thinkingMessage": {
+                                "durationMs": 0,
+                                "text": "Preparing to reply with CURSOR_SUBAGENT_OK."
+                              }
+                            },
+                            {
+                              "assistantMessage": {
+                                "text": "CURSOR_SUBAGENT_OK"
+                              }
+                            }
+                          ],
+                          "durationMs": 0,
+                          "isBackground": false
+                        }
+                      },
+                      "metadata": {
+                        "cursor_sdk.subagent.tool_call_id": "tool_18907503-1303-4b60-b141-7013b7345cd",
+                        "cursor_sdk.tool.status": "completed",
+                        "gen_ai.tool.name": "task"
+                      }
+                    }
+                  ],
+                  "input": {
+                    "agentId": "<agentId:1>",
+                    "description": "reviewer CURSOR_SUBAGENT_OK",
+                    "mode": "unspecified",
+                    "model": "composer-2.5-fast",
+                    "prompt": "Reply with exactly: CURSOR_SUBAGENT_OK",
+                    "subagentType": {
+                      "kind": "custom",
+                      "name": "reviewer"
+                    }
+                  },
+                  "output": {
+                    "status": "success",
+                    "value": {
+                      "agentId": "<agentId:1>",
+                      "backgroundReason": "unspecified",
+                      "conversationSteps": [
+                        {
+                          "thinkingMessage": {
+                            "durationMs": 0,
+                            "text": "Preparing to reply with CURSOR_SUBAGENT_OK."
+                          }
+                        },
+                        {
+                          "assistantMessage": {
+                            "text": "CURSOR_SUBAGENT_OK"
+                          }
+                        }
+                      ],
+                      "durationMs": 0,
+                      "isBackground": false
+                    }
+                  },
+                  "metadata": {
+                    "cursor_sdk.tool.status": "completed",
+                    "gen_ai.tool.call.id": "tool_18907503-1303-4b60-b141-7013b7345cd",
+                    "gen_ai.tool.name": "task"
+                  }
+                },
+                {
+                  "name": "shell",
+                  "type": "tool",
+                  "children": [],
+                  "input": {
+                    "command": "printf cursor_tool_ok",
+                    "timeout": 30000
+                  },
+                  "output": {
+                    "status": "success",
+                    "value": {
+                      "executionTime": 142,
+                      "exitCode": 0,
+                      "signal": "",
+                      "stderr": "",
+                      "stdout": "cursor_tool_ok"
+                    }
+                  },
+                  "metadata": {
+                    "cursor_sdk.tool.status": "completed",
+                    "gen_ai.tool.call.id": "tool_ff2be022-fb2c-4e4f-892e-15a1058a760",
+                    "gen_ai.tool.name": "shell"
+                  }
+                }
+              ],
               "input": "First use the reviewer subagent to confirm exactly CURSOR_SUBAGENT_OK. Then run the shell command `printf cursor_tool_ok` and report the output. Do not edit files.",
+              "output": "**Reviewer subagent:** Confirmed exactly `CURSOR_SUBAGENT_OK`.\n\n**Shell (`printf cursor_tool_ok`):** Output was `cursor_tool_ok` (exit code 0).",
               "metadata": {
                 "cursor_sdk.agent_id": "agent-<uuid:1>",
                 "cursor_sdk.duration_ms": 0,
                 "cursor_sdk.model": "composer-2",
                 "cursor_sdk.operation": "agent.send",
                 "cursor_sdk.run_id": "run-<uuid:2>",
-                "cursor_sdk.status": "error",
+                "cursor_sdk.status": "finished",
+                "cursor_sdk.step_types": [
+                  "thinkingMessage",
+                  "assistantMessage",
+                  "toolCall"
+                ],
                 "model": "composer-2",
                 "provider": "cursor"
               },
-              "error": "Cursor run failed"
+              "metrics": {
+                "completion_tokens": 282,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 16544,
+                "prompt_tokens": 34241,
+                "time_to_first_token": 0,
+                "tokens": 34523
+              }
             }
           ],
           "metadata": {
@@ -65,19 +202,100 @@
             {
               "name": "Cursor Agent",
               "type": "task",
-              "children": [],
+              "children": [
+                {
+                  "name": "cursor-sdk-user-on-delta",
+                  "children": []
+                },
+                {
+                  "name": "cursor-sdk-user-on-delta",
+                  "children": []
+                },
+                {
+                  "name": "cursor-sdk-user-on-delta",
+                  "children": []
+                },
+                {
+                  "name": "cursor-sdk-user-on-delta",
+                  "children": []
+                },
+                {
+                  "name": "cursor-sdk-user-on-delta",
+                  "children": []
+                },
+                {
+                  "name": "cursor-sdk-user-on-delta",
+                  "children": []
+                },
+                {
+                  "name": "cursor-sdk-user-on-delta",
+                  "children": []
+                },
+                {
+                  "name": "cursor-sdk-user-on-delta",
+                  "children": []
+                },
+                {
+                  "name": "cursor-sdk-user-on-step",
+                  "children": []
+                },
+                {
+                  "name": "cursor-sdk-user-on-delta",
+                  "children": []
+                },
+                {
+                  "name": "cursor-sdk-user-on-delta",
+                  "children": []
+                },
+                {
+                  "name": "cursor-sdk-user-on-delta",
+                  "children": []
+                },
+                {
+                  "name": "cursor-sdk-user-on-delta",
+                  "children": []
+                },
+                {
+                  "name": "cursor-sdk-user-on-delta",
+                  "children": []
+                },
+                {
+                  "name": "cursor-sdk-user-on-step",
+                  "children": []
+                },
+                {
+                  "name": "cursor-sdk-user-on-delta",
+                  "children": []
+                },
+                {
+                  "name": "cursor-sdk-user-on-delta",
+                  "children": []
+                }
+              ],
               "input": "Reply with exactly: CURSOR_WAIT_OK. Do not modify files.",
+              "output": "CURSOR_WAIT_OK",
               "metadata": {
                 "cursor_sdk.agent_id": "agent-<uuid:1>",
                 "cursor_sdk.duration_ms": 0,
                 "cursor_sdk.model": "composer-2",
                 "cursor_sdk.operation": "agent.send",
                 "cursor_sdk.run_id": "run-<uuid:2>",
-                "cursor_sdk.status": "error",
+                "cursor_sdk.status": "finished",
+                "cursor_sdk.step_types": [
+                  "thinkingMessage",
+                  "assistantMessage"
+                ],
                 "model": "composer-2",
                 "provider": "cursor"
               },
-              "error": "Cursor run failed"
+              "metrics": {
+                "completion_tokens": 41,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 3584,
+                "prompt_tokens": 12229,
+                "time_to_first_token": 0,
+                "tokens": 12270
+              }
             }
           ],
           "metadata": {
@@ -93,16 +311,28 @@
               "type": "task",
               "children": [],
               "input": "Reply with exactly: CURSOR_CONVERSATION_OK. Do not modify files.",
+              "output": "CURSOR_CONVERSATION_OK",
               "metadata": {
                 "cursor_sdk.agent_id": "agent-<uuid:1>",
                 "cursor_sdk.model": "composer-2",
                 "cursor_sdk.operation": "agent.send",
                 "cursor_sdk.run_id": "run-<uuid:2>",
-                "cursor_sdk.status": "error",
+                "cursor_sdk.status": "finished",
+                "cursor_sdk.step_types": [
+                  "thinkingMessage",
+                  "assistantMessage"
+                ],
                 "model": "composer-2",
                 "provider": "cursor"
               },
-              "error": "Cursor run failed"
+              "metrics": {
+                "completion_tokens": 32,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 3584,
+                "prompt_tokens": 12708,
+                "time_to_first_token": 0,
+                "tokens": 12740
+              }
             }
           ],
           "metadata": {

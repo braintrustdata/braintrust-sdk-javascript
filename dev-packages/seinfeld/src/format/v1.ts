@@ -29,6 +29,14 @@ const recordedRequestSchema = z.object({
 });
 
 const recordedResponseSchema = z.object({
+  streamChunks: z
+    .array(
+      z.object({
+        size: z.number().int().positive(),
+        delayMs: z.number().nonnegative(),
+      }),
+    )
+    .optional(),
   status: z.number().int().min(100).max(599),
   statusText: z.string().optional(),
   headers: z.record(z.string()),

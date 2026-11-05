@@ -45,6 +45,8 @@ export interface RecordedRequest {
 
 /** A single recorded response, as it appeared on the wire. */
 export interface RecordedResponse {
+  /** Original wire chunk sizes and inter-chunk delays for interactive streams. */
+  streamChunks?: Array<{ size: number; delayMs: number }>;
   status: number;
   statusText?: string;
   headers: Record<string, string>;

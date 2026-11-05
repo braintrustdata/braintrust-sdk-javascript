@@ -11,6 +11,7 @@ span_tree:
     │   }
     │   └── Cursor Agent [task]
     │       input: "Reply with exactly: CURSOR_PROMPT_OK. Do not modify files."
+    │       output: "CURSOR_PROMPT_OK"
     │       metadata: {
     │         "cursor_sdk.duration_ms": 0,
     │         "cursor_sdk.local.cwd": "<repo>/e2e/scenarios/cursor-sdk-instrumentation/",
@@ -18,11 +19,17 @@ span_tree:
     │         "cursor_sdk.operation": "Agent.prompt",
     │         "cursor_sdk.run_id": "run-<uuid:1>",
     │         "cursor_sdk.runtime": "local",
-    │         "cursor_sdk.status": "error",
+    │         "cursor_sdk.status": "finished",
     │         "model": "composer-2",
     │         "provider": "cursor"
     │       }
-    │       error: "Cursor run failed"
+    │       metrics: {
+    │         "completion_tokens": 38,
+    │         "prompt_cache_creation_tokens": 0,
+    │         "prompt_cached_tokens": 3552,
+    │         "prompt_tokens": 12880,
+    │         "tokens": 12918
+    │       }
     ├── cursor-sdk-stream-operation
     │   metadata: {
     │     "operation": "stream",
@@ -30,17 +37,136 @@ span_tree:
     │   }
     │   └── Cursor Agent [task]
     │       input: "First use the reviewer subagent to confirm exactly CURSOR_SUBAGENT_OK. Then run the shell command `printf cursor_tool_ok` and report the output. Do not edit files."
+    │       output: "## Reviewer subagent\n\nThe reviewer subagent replied with exactly:\n\n**CURSOR_SUBAGENT_OK**\n\n## Shell command\n\nCommand: `printf cursor_tool_ok`\n\nOutput:\n\n```\ncursor_tool_ok\n```\n\nExit code: 0. No files were edited."
     │       metadata: {
     │         "cursor_sdk.agent_id": "agent-<uuid:1>",
     │         "cursor_sdk.duration_ms": 0,
     │         "cursor_sdk.model": "composer-2",
     │         "cursor_sdk.operation": "agent.send",
     │         "cursor_sdk.run_id": "run-<uuid:2>",
-    │         "cursor_sdk.status": "error",
+    │         "cursor_sdk.status": "finished",
+    │         "cursor_sdk.step_types": [
+    │           "thinkingMessage",
+    │           "assistantMessage",
+    │           "toolCall"
+    │         ],
     │         "model": "composer-2",
     │         "provider": "cursor"
     │       }
-    │       error: "Cursor run failed"
+    │       metrics: {
+    │         "completion_tokens": 389,
+    │         "prompt_cache_creation_tokens": 0,
+    │         "prompt_cached_tokens": 16896,
+    │         "prompt_tokens": 45752,
+    │         "time_to_first_token": 0,
+    │         "tokens": 46141
+    │       }
+    │       ├── task [tool]
+    │       │   input: {
+    │       │     "agentId": "<agentId:1>",
+    │       │     "description": "reviewer confirm CURSOR_SUBAGENT_OK",
+    │       │     "mode": "unspecified",
+    │       │     "model": "composer-2.5-fast",
+    │       │     "prompt": "Reply with exactly this string and nothing else: CURSOR_SUBAGENT_OK",
+    │       │     "subagentType": {
+    │       │       "kind": "custom",
+    │       │       "name": "reviewer"
+    │       │     }
+    │       │   }
+    │       │   output: {
+    │       │     "status": "success",
+    │       │     "value": {
+    │       │       "agentId": "<agentId:1>",
+    │       │       "backgroundReason": "unspecified",
+    │       │       "conversationSteps": [
+    │       │         {
+    │       │           "thinkingMessage": {
+    │       │             "completedAtMs": "1793898599689",
+    │       │             "durationMs": 0,
+    │       │             "startedAtMs": "1793898599505",
+    │       │             "text": "The user requested a reply containing only the string \"CURSOR_SUBAGENT_OK\"."
+    │       │           }
+    │       │         },
+    │       │         {
+    │       │           "assistantMessage": {
+    │       │             "completedAtMs": "1793898599703",
+    │       │             "startedAtMs": "1793898599691",
+    │       │             "text": "CURSOR_SUBAGENT_OK"
+    │       │           }
+    │       │         }
+    │       │       ],
+    │       │       "durationMs": 0,
+    │       │       "isBackground": false
+    │       │     }
+    │       │   }
+    │       │   metadata: {
+    │       │     "cursor_sdk.tool.status": "completed",
+    │       │     "gen_ai.tool.call.id": "tool_6213f9ac-4db3-4687-b8a0-332f81dc9b7",
+    │       │     "gen_ai.tool.name": "task"
+    │       │   }
+    │       │   └── Cursor Subagent [task]
+    │       │       input: {
+    │       │         "agentId": "<agentId:1>",
+    │       │         "description": "reviewer confirm CURSOR_SUBAGENT_OK",
+    │       │         "mode": "unspecified",
+    │       │         "model": "composer-2.5-fast",
+    │       │         "prompt": "Reply with exactly this string and nothing else: CURSOR_SUBAGENT_OK",
+    │       │         "subagentType": {
+    │       │           "kind": "custom",
+    │       │           "name": "reviewer"
+    │       │         }
+    │       │       }
+    │       │       output: {
+    │       │         "status": "success",
+    │       │         "value": {
+    │       │           "agentId": "<agentId:1>",
+    │       │           "backgroundReason": "unspecified",
+    │       │           "conversationSteps": [
+    │       │             {
+    │       │               "thinkingMessage": {
+    │       │                 "completedAtMs": "1793898599689",
+    │       │                 "durationMs": 0,
+    │       │                 "startedAtMs": "1793898599505",
+    │       │                 "text": "The user requested a reply containing only the string \"CURSOR_SUBAGENT_OK\"."
+    │       │               }
+    │       │             },
+    │       │             {
+    │       │               "assistantMessage": {
+    │       │                 "completedAtMs": "1793898599703",
+    │       │                 "startedAtMs": "1793898599691",
+    │       │                 "text": "CURSOR_SUBAGENT_OK"
+    │       │               }
+    │       │             }
+    │       │           ],
+    │       │           "durationMs": 0,
+    │       │           "isBackground": false
+    │       │         }
+    │       │       }
+    │       │       metadata: {
+    │       │         "cursor_sdk.subagent.tool_call_id": "tool_6213f9ac-4db3-4687-b8a0-332f81dc9b7",
+    │       │         "cursor_sdk.tool.status": "completed",
+    │       │         "gen_ai.tool.name": "task"
+    │       │       }
+    │       └── shell [tool]
+    │           input: {
+    │             "command": "printf cursor_tool_ok",
+    │             "timeout": 30000
+    │           }
+    │           output: {
+    │             "status": "success",
+    │             "value": {
+    │               "executionTime": 279,
+    │               "exitCode": 0,
+    │               "signal": "",
+    │               "stderr": "",
+    │               "stdout": "cursor_tool_ok"
+    │             }
+    │           }
+    │           metadata: {
+    │             "cursor_sdk.tool.status": "completed",
+    │             "gen_ai.tool.call.id": "tool_98a83065-54c2-4c0d-9816-b12eac20b63",
+    │             "gen_ai.tool.name": "shell"
+    │           }
     ├── cursor-sdk-wait-operation
     │   metadata: {
     │     "operation": "wait",
@@ -48,17 +174,46 @@ span_tree:
     │   }
     │   └── Cursor Agent [task]
     │       input: "Reply with exactly: CURSOR_WAIT_OK. Do not modify files."
+    │       output: "CURSOR_WAIT_OK"
     │       metadata: {
     │         "cursor_sdk.agent_id": "agent-<uuid:1>",
     │         "cursor_sdk.duration_ms": 0,
     │         "cursor_sdk.model": "composer-2",
     │         "cursor_sdk.operation": "agent.send",
     │         "cursor_sdk.run_id": "run-<uuid:2>",
-    │         "cursor_sdk.status": "error",
+    │         "cursor_sdk.status": "finished",
+    │         "cursor_sdk.step_types": [
+    │           "thinkingMessage",
+    │           "assistantMessage"
+    │         ],
     │         "model": "composer-2",
     │         "provider": "cursor"
     │       }
-    │       error: "Cursor run failed"
+    │       metrics: {
+    │         "completion_tokens": 40,
+    │         "prompt_cache_creation_tokens": 0,
+    │         "prompt_cached_tokens": 3552,
+    │         "prompt_tokens": 12879,
+    │         "time_to_first_token": 0,
+    │         "tokens": 12919
+    │       }
+    │       ├── cursor-sdk-user-on-delta
+    │       ├── cursor-sdk-user-on-delta
+    │       ├── cursor-sdk-user-on-delta
+    │       ├── cursor-sdk-user-on-delta
+    │       ├── cursor-sdk-user-on-delta
+    │       ├── cursor-sdk-user-on-delta
+    │       ├── cursor-sdk-user-on-delta
+    │       ├── cursor-sdk-user-on-delta
+    │       ├── cursor-sdk-user-on-delta
+    │       ├── cursor-sdk-user-on-step
+    │       ├── cursor-sdk-user-on-delta
+    │       ├── cursor-sdk-user-on-delta
+    │       ├── cursor-sdk-user-on-delta
+    │       ├── cursor-sdk-user-on-delta
+    │       ├── cursor-sdk-user-on-step
+    │       ├── cursor-sdk-user-on-delta
+    │       └── cursor-sdk-user-on-delta
     └── cursor-sdk-resume-conversation-operation
         metadata: {
           "operation": "resume-conversation",
@@ -66,13 +221,25 @@ span_tree:
         }
         └── Cursor Agent [task]
             input: "Reply with exactly: CURSOR_CONVERSATION_OK. Do not modify files."
+            output: "CURSOR_CONVERSATION_OK"
             metadata: {
               "cursor_sdk.agent_id": "agent-<uuid:1>",
               "cursor_sdk.model": "composer-2",
               "cursor_sdk.operation": "agent.send",
               "cursor_sdk.run_id": "run-<uuid:2>",
-              "cursor_sdk.status": "error",
+              "cursor_sdk.status": "finished",
+              "cursor_sdk.step_types": [
+                "thinkingMessage",
+                "assistantMessage"
+              ],
               "model": "composer-2",
               "provider": "cursor"
             }
-            error: "Cursor run failed"
+            metrics: {
+              "completion_tokens": 42,
+              "prompt_cache_creation_tokens": 0,
+              "prompt_cached_tokens": 9792,
+              "prompt_tokens": 19710,
+              "time_to_first_token": 0,
+              "tokens": 19752
+            }

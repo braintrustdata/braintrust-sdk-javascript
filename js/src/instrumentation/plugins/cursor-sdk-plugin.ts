@@ -56,6 +56,7 @@ type CursorRunState = {
   metadata: Record<string, unknown>;
   metrics: Record<string, number>;
   usageComplete: boolean;
+  usageObserved: boolean;
   run?: CursorSDKRun;
   span: Span;
   startTime: number;
@@ -134,6 +135,7 @@ function createRunState(
     metadata,
     metrics: {},
     usageComplete: true,
+    usageObserved: false,
     span,
     startTime: getCurrentUnixTimestamp(),
     streamText: [],
@@ -837,6 +839,12 @@ function finalizeCursorRun(
     state.finalized = true;
     const event = runInstrumentation(() => {
       const result = params.result;
+      // Newer Cursor versions expose cumulative usage on the result/handle.
+      // Manual Agent.prompt cannot observe its internally created agent's
+      // callbacks. Use this fallback only when no turn usage was observed.
+      if (!state.usageObserved) {
+        addUsageMetrics(state, result?.usage ?? state.run?.usage);
+      }
       const metadata = {
         ...state.metadata,
         ...extractRunMetadata(state.run),
@@ -1049,6 +1057,7 @@ function addUsageMetrics(
   usage: CursorSDKUsage | undefined,
 ): void {
   if (!usage) return;
+  state.usageObserved = true;
   const metrics = state.metrics;
   const count = (value: unknown): value is number =>
     typeof value === "number" && Number.isSafeInteger(value) && value >= 0;

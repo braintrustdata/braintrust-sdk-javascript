@@ -1,12 +1,21 @@
 import { createHash } from "node:crypto";
 
-export const streamingRequests = [/\/agent\.v1\.AgentService\/Run(?:\?|$)/];
+export const streamingRequests = [
+  { url: /\/agent\.v1\.AgentService\/Run(?:\?|$)/, httpVersion: "2" },
+  /\/agent\.v1\.AgentService\/RunSSE(?:\?|$)/,
+  /\/aiserver\.v1\.BidiService\/BidiAppend(?:\?|$)/,
+];
 
 export const filter = [
   "default",
   {
     normalizeRequest(req) {
-      if (req.url.includes("/agent.v1.AgentService/Run")) {
+      // Both transports contain generated run IDs and local tool messages.
+      // Match by endpoint and call order, as for the bidirectional Run stream.
+      if (
+        req.url.includes("/agent.v1.AgentService/Run") ||
+        req.url.includes("/aiserver.v1.BidiService/BidiAppend")
+      ) {
         return {
           ...req,
           body: { kind: "empty" },
@@ -72,7 +81,11 @@ export const redact = [
         teamID: "[REDACTED]",
         userID: "[REDACTED]",
       };
-      outer.config = JSON.stringify(config);
+      // Statsig includes a Mapbox credential unrelated to agent execution.
+      // This nested JSON lives in a binary body, outside preset redaction.
+      outer.config = JSON.stringify(config, (key, value) =>
+        key === "mapbox_access_token" ? "[REDACTED]" : value,
+      );
 
       const bytes = new TextEncoder().encode(JSON.stringify(outer));
       return {

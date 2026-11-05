@@ -115,8 +115,11 @@ export async function buildResponse(
   // Preserving content-encoding would cause callers to attempt a second
   // decode of already-plain bytes, which throws a zlib error.
   const headers = expandSetCookieHeader(stripEncodingHeaders(recorded.headers));
-  const init: ResponseInit = { status: recorded.status, headers };
-  if (recorded.statusText) init.statusText = recorded.statusText;
+  const init: ResponseInit = {
+    status: recorded.status,
+    headers,
+    ...(recorded.statusText ? { statusText: recorded.statusText } : {}),
+  };
   // 1xx/204/304 responses must not have a body, per Fetch spec.
   if (isNullBodyStatus(recorded.status)) return new Response(null, init);
 
@@ -146,6 +149,27 @@ export async function buildResponse(
       ? recorded.body.bytes
       : await decodeBody(recorded.body, ctx);
   if (bytes.length === 0) return new Response(null, init);
+  if (recorded.streamChunks) {
+    // Interactive providers wait for client tool results between chunks.
+    // Preserve the recorded pacing instead of closing the response while
+    // the SDK still has pending writes to its request stream.
+    const chunks = recorded.streamChunks;
+    let index = 0;
+    let offset = 0;
+    const stream = new ReadableStream({
+      async pull(controller) {
+        if (index === chunks.length) {
+          controller.close();
+          return;
+        }
+        const { size, delayMs } = chunks[index++]!;
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+        controller.enqueue(bytes.slice(offset, offset + size));
+        offset += size;
+      },
+    });
+    return new Response(stream, init);
+  }
   // Copy into a fresh ArrayBuffer. (TS 5.7 typed Uint8Array as
   // Uint8Array<ArrayBufferLike>, and `.buffer` may be `SharedArrayBuffer` —
   // neither satisfies the DOM lib's strict ArrayBuffer-only BodyInit.)
