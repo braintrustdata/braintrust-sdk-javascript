@@ -146,6 +146,7 @@ export function runDevServer(
         data,
         scores,
         stream,
+        max_concurrency,
       } = evalBodySchema.parse(req.body);
 
       if (!req.ctx?.state) {
@@ -229,6 +230,10 @@ export function runDevServer(
             state,
             experimentName: experiment_name ?? undefined,
             projectId: project_id ?? undefined,
+            maxConcurrency: resolveMaxConcurrency(
+              evaluator.maxConcurrency,
+              max_concurrency,
+            ),
           },
           {
             // Avoid printing the bar to the console.
@@ -340,6 +345,21 @@ async function getDataset(
   }
 }
 
+// The request can lower the evaluator's maxConcurrency but never raise it, so
+// the playground's default slider value can't exceed a limit set in code.
+function resolveMaxConcurrency(
+  evaluatorMaxConcurrency: number | undefined,
+  requestMaxConcurrency: number | null | undefined,
+): number | undefined {
+  if (requestMaxConcurrency == null) {
+    return evaluatorMaxConcurrency;
+  }
+  if (evaluatorMaxConcurrency === undefined) {
+    return requestMaxConcurrency;
+  }
+  return Math.min(evaluatorMaxConcurrency, requestMaxConcurrency);
+}
+
 function makeScorer(
   state: BraintrustState,
   name: string,
@@ -379,4 +399,5 @@ function makeScorer(
 
 export const _exportsForTestingOnly = {
   getDataset,
+  resolveMaxConcurrency,
 };

@@ -24,6 +24,7 @@ export const evalBodySchema = z.object({
   project_id: z.string().nullish(),
   parent: invokeParentSchema.optional(),
   stream: z.boolean().optional(),
+  max_concurrency: z.number().min(1).transform(Math.floor).nullish(),
 });
 
 export type EvaluatorManifest = Record<
