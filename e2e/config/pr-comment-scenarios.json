@@ -346,6 +346,14 @@
       {
         "variantKey": "google-adk-v1-latest",
         "label": "v1 latest"
+      },
+      {
+        "variantKey": "google-adk-v2",
+        "label": "v2 pinned"
+      },
+      {
+        "variantKey": "google-adk-v2-latest",
+        "label": "v2 latest"
       }
     ]
   },
@@ -613,10 +621,22 @@
     "label": "MCP Handler Instrumentation",
     "metadataScenario": "mcp-handler-instrumentation",
     "variants": [
-      { "variantKey": "mcp-handler-v1", "label": "v1 pinned" },
-      { "variantKey": "mcp-handler-v1-latest", "label": "v1 latest" },
-      { "variantKey": "mcp-handler-v2", "label": "v2 pinned" },
-      { "variantKey": "mcp-handler-v2-latest", "label": "v2 latest" }
+      {
+        "variantKey": "mcp-handler-v1",
+        "label": "v1 pinned"
+      },
+      {
+        "variantKey": "mcp-handler-v1-latest",
+        "label": "v1 latest"
+      },
+      {
+        "variantKey": "mcp-handler-v2",
+        "label": "v2 pinned"
+      },
+      {
+        "variantKey": "mcp-handler-v2-latest",
+        "label": "v2 latest"
+      }
     ]
   },
   {

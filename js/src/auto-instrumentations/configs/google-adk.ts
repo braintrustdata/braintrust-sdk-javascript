@@ -1,7 +1,7 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
 import { googleADKChannels } from "../../instrumentation/plugins/google-adk-interceptors";
 
-const googleADKVersionRange = ">=0.1.0";
+const googleADKVersionRange = ">=0.1.0 <2.0.0";
 const googleADKBundledIndexV06VersionRange = ">=0.6.1 <0.7.0";
 const googleADKBundledIndexV1VersionRange = ">=1.0.0 <2.0.0";
 
@@ -13,6 +13,34 @@ const googleADKBundledIndexV1VersionRange = ">=1.0.0 <2.0.0";
  * shapes independently of the transformer.
  */
 export const googleADKConfigs: InstrumentationConfig[] = [
+  // 2.4.x ships separate modules in both Node entrypoints. Each file has one
+  // runAsync implementation; match that public method without depending on
+  // esbuild's renamed classes (_Runner, _BaseAgent, and _FunctionTool).
+  ...["esm", "cjs"].flatMap((format) =>
+    [
+      {
+        channelName: googleADKChannels.runnerRunAsync.channelName,
+        filePath: "runner/runner.js",
+      },
+      {
+        channelName: googleADKChannels.agentRunAsync.channelName,
+        filePath: "agents/base_agent.js",
+      },
+      {
+        channelName: googleADKChannels.toolRunAsync.channelName,
+        filePath: "tools/function_tool.js",
+      },
+    ].map(({ channelName, filePath }) => ({
+      channelName,
+      module: {
+        name: "@google/adk",
+        versionRange: ">=2.4.0 <3.0.0",
+        filePath: `dist/${format}/${filePath}`,
+      },
+      functionQuery: { methodName: "runAsync" },
+    })),
+  ),
+
   // --- Runner.runAsync --- async generator
 
   // Runner.runAsync — ESM individual module file

@@ -38,6 +38,18 @@ const googleADKScenarios = await Promise.all(
       snapshotName: "google-adk-v1-latest",
       wrapperEntry: "scenario.ts",
     },
+    {
+      autoEntry: "scenario.mjs",
+      dependencyName: "google-adk-sdk-v2",
+      snapshotName: "google-adk-v2",
+      wrapperEntry: "scenario.ts",
+    },
+    {
+      autoEntry: "scenario.mjs",
+      dependencyName: "google-adk-sdk-v2-latest",
+      snapshotName: "google-adk-v2-latest",
+      wrapperEntry: "scenario.ts",
+    },
   ].map(async (scenario) => ({
     ...scenario,
     version: await readInstalledPackageVersion(
@@ -70,26 +82,33 @@ describe.concurrent("variants", () => {
         timeoutMs: TIMEOUT_MS,
       });
 
-      defineGoogleADKInstrumentationAssertions({
-        name: "auto-hook instrumentation",
-        runScenario: async ({ runNodeScenarioDir }) => {
-          await runNodeScenarioDir({
-            entry: scenario.autoEntry,
-            env: { GOOGLE_ADK_PACKAGE_NAME: scenario.dependencyName },
-            nodeArgs: ["--import", "braintrust/hook.mjs"],
-            runContext: {
-              variantKey: scenario.snapshotName,
-              originalScenarioDir,
-            },
-            scenarioDir,
-            timeoutMs: TIMEOUT_MS,
-          });
-        },
-        expectLLMSpan: true,
-        snapshotName: `${scenario.snapshotName}-auto-hook`,
-        testFileUrl: import.meta.url,
-        timeoutMs: TIMEOUT_MS,
-      });
+      const autoEntries = [scenario.autoEntry];
+      if (scenario.dependencyName.startsWith("google-adk-sdk-v2")) {
+        autoEntries.push("scenario.cjs");
+      }
+      for (const entry of autoEntries) {
+        const suffix = entry.endsWith(".cjs") ? "auto-hook-cjs" : "auto-hook";
+        defineGoogleADKInstrumentationAssertions({
+          name: `${suffix} instrumentation`,
+          runScenario: async ({ runNodeScenarioDir }) => {
+            await runNodeScenarioDir({
+              entry,
+              env: { GOOGLE_ADK_PACKAGE_NAME: scenario.dependencyName },
+              nodeArgs: ["--import", "braintrust/hook.mjs"],
+              runContext: {
+                variantKey: scenario.snapshotName,
+                originalScenarioDir,
+              },
+              scenarioDir,
+              timeoutMs: TIMEOUT_MS,
+            });
+          },
+          expectLLMSpan: true,
+          snapshotName: `${scenario.snapshotName}-${suffix}`,
+          testFileUrl: import.meta.url,
+          timeoutMs: TIMEOUT_MS,
+        });
+      }
     });
   }
 });
