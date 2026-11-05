@@ -80,6 +80,7 @@ type OperationState = {
   span: Span;
   startTime: number;
   providerTools: Map<string, { span: Span; ended: boolean }>;
+  toolExecutionIds?: Set<string>;
   recordInputs?: boolean;
   recordOutputs?: boolean;
   tools?: unknown;
@@ -777,8 +778,8 @@ export function braintrustAISDKTelemetry(): any {
         if (shouldSkipTelemetryChildren(state)) {
           return;
         }
-        // Provider-executed tools bypass the local execution callbacks. Both
-        // generateText and streamText expose their normalized parts here.
+        // Capture provider tools that have no execution callbacks. Newer
+        // Harness releases report them through both callbacks and model parts.
         // Timestamps describe when we observe these parts, not server runtime.
         if (state && Array.isArray(event.content)) {
           for (const part of event.content) {
@@ -793,6 +794,9 @@ export function braintrustAISDKTelemetry(): any {
               continue;
             }
             const toolPart = part as AISDKV7ProviderToolPart;
+            if (state.toolExecutionIds?.has(toolPart.toolCallId)) {
+              continue;
+            }
             let tool = state.providerTools.get(toolPart.toolCallId);
             if (tool?.ended) {
               continue;
@@ -999,6 +1003,9 @@ export function braintrustAISDKTelemetry(): any {
         if (!operationKey || !toolCallId) {
           return;
         }
+        if (state) {
+          (state.toolExecutionIds ??= new Set()).add(toolCallId);
+        }
 
         const span = startChildSpan(
           operationKey,
@@ -1035,6 +1042,14 @@ export function braintrustAISDKTelemetry(): any {
         const state = toolCallId ? toolSpans.get(toolCallId) : undefined;
         if (!toolCallId || !state) {
           return;
+        }
+        // A suspended Harness tool can finish in a continuation operation.
+        const operationKey = operationKeyFromEvent(event);
+        const operation = operationKey
+          ? operations.get(operationKey)
+          : undefined;
+        if (operation) {
+          (operation.toolExecutionIds ??= new Set()).add(toolCallId);
         }
 
         const toolOutput = event.toolOutput;

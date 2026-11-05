@@ -34,6 +34,9 @@ export async function runHarnessAgentScenario(HarnessAgent) {
   });
   const agent = new HarnessAgent({
     harness: createCodex({
+      // Use OPENAI_BASE_URL from the cassette harness even when an ambient
+      // AI Gateway key would otherwise take precedence in Codex auth selection.
+      auth: { openai: {} },
       model: process.env.AI_SDK_HARNESS_CODEX_E2E_MODEL ?? "gpt-5.4-mini",
       reasoningEffort: "low",
       webSearch: false,
