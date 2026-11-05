@@ -133,11 +133,27 @@ export const googleGenAIConfigs: InstrumentationConfig[] = [
     channelName: googleGenAIChannels.interactionsCreate.channelName,
     module: {
       name: "@google/genai",
-      versionRange: ">=1.33.0",
+      versionRange: ">=1.33.0 <2.9.0",
       filePath: "dist/node/index.mjs",
     },
     functionQuery: {
       className: "BaseInteractions",
+      methodName: "create",
+    },
+  },
+
+  // SDK 2.9 replaced BaseInteractions with the public Interactions bridge.
+  // Trace the bridge once, including streaming and automatic continuation,
+  // rather than its underlying HTTP requests.
+  {
+    channelName: googleGenAIChannels.interactionsCreate.channelName,
+    module: {
+      name: "@google/genai",
+      versionRange: ">=2.9.0",
+      filePath: "dist/node/index.mjs",
+    },
+    functionQuery: {
+      className: "GeminiNextGenInteractions",
       methodName: "create",
     },
   },

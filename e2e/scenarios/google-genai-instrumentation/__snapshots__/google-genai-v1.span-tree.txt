@@ -4,10 +4,20 @@ span_tree:
       "scenario": "google-genai-instrumentation",
       "testRunId": "<run:1>"
     }
+    context: {
+      "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+      "caller_functionname": "runTracedScenario",
+      "caller_lineno": 0
+    }
     ├── google-generate-operation
     │   metadata: {
     │     "operation": "generate",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── generate_content [llm]
     │       input: {
@@ -74,10 +84,20 @@ span_tree:
     │         "prompt_tokens": 6,
     │         "tokens": 26
     │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
     ├── google-image-generate-operation
     │   metadata: {
     │     "operation": "image-generate",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── generate_content [llm]
     │       input: {
@@ -170,10 +190,20 @@ span_tree:
     │         "prompt_tokens": 13,
     │         "tokens": 1303
     │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
     ├── google-image-generate-stream-operation
     │   metadata: {
     │     "operation": "image-generate-stream",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── generate_content_stream [llm]
     │       input: {
@@ -247,10 +277,20 @@ span_tree:
     │         "time_to_first_token": 0,
     │         "tokens": 1303
     │       }
+    │       context: {
+    │         "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │         "caller_functionname": "collectAsync",
+    │         "caller_lineno": 0
+    │       }
     ├── google-native-image-edit-operation
     │   metadata: {
     │     "operation": "native-image-edit",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── generate_content [llm]
     │       input: {
@@ -364,10 +404,20 @@ span_tree:
     │         "prompt_tokens": 279,
     │         "tokens": 1569
     │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
     ├── google-edit-image-operation
     │   metadata: {
     │     "operation": "edit-image",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── edit_image [llm]
     │       input: {
@@ -398,10 +448,20 @@ span_tree:
     │         "provider": "google"
     │       }
     │       error: "This method is only supported by the Vertex AI."
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
     ├── google-generate-videos-operation
     │   metadata: {
     │     "operation": "generate-videos",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── generate_videos [llm]
     │       input: {
@@ -420,10 +480,20 @@ span_tree:
     │         "model": "veo-3.1-lite-generate-preview",
     │         "provider": "google"
     │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
     ├── google-legacy-image-generate-operation
     │   metadata: {
     │     "operation": "legacy-image-generate",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── generate_images [llm]
     │       input: {
@@ -440,10 +510,20 @@ span_tree:
     │         "provider": "google"
     │       }
     │       error: "{\"error\":{\"code\":404,\"message\":\"models/imagen-4.0-fast-generate-001 is not found for API version v1beta, or is not supported for predict. Call ModelService.ListModels to see the list of available models and their supported methods.\",\"status\":\"NOT_FOUND\"}}"
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
     ├── google-system-instruction-operation
     │   metadata: {
     │     "operation": "system-instruction",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── generate_content [llm]
     │       input: {
@@ -518,10 +598,20 @@ span_tree:
     │         "prompt_tokens": 19,
     │         "tokens": 79
     │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
     ├── google-multi-turn-operation
     │   metadata: {
     │     "operation": "multi-turn",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── generate_content [llm]
     │       input: {
@@ -617,10 +707,20 @@ span_tree:
     │         "prompt_tokens": 28,
     │         "tokens": 66
     │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
     ├── google-embed-operation
     │   metadata: {
     │     "operation": "embed",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── embed_content [llm]
     │       input: {
@@ -637,10 +737,20 @@ span_tree:
     │         "model": "gemini-embedding-001",
     │         "provider": "google"
     │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
     ├── google-multimodal-embed-operation
     │   metadata: {
     │     "operation": "multimodal-embed",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── embed_content [llm]
     │       input: {
@@ -724,10 +834,20 @@ span_tree:
     │         "prompt_tokens": 699,
     │         "tokens": 699
     │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
     ├── google-attachment-operation
     │   metadata: {
     │     "operation": "attachment",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── generate_content [llm]
     │       input: {
@@ -815,10 +935,20 @@ span_tree:
     │         "prompt_tokens": 268,
     │         "tokens": 313
     │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
     ├── google-stream-operation
     │   metadata: {
     │     "operation": "stream",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── generate_content_stream [llm]
     │       input: {
@@ -873,10 +1003,20 @@ span_tree:
     │         "time_to_first_token": 0,
     │         "tokens": 76
     │       }
+    │       context: {
+    │         "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │         "caller_functionname": "collectAsync",
+    │         "caller_lineno": 0
+    │       }
     ├── google-stream-return-operation
     │   metadata: {
     │     "operation": "stream-return",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── generate_content_stream [llm]
     │       input: {
@@ -931,10 +1071,20 @@ span_tree:
     │         "time_to_first_token": 0,
     │         "tokens": 27
     │       }
+    │       context: {
+    │         "caller_filename": "<repo>/e2e/scenarios/google-genai-instrumentation/scenario.impl.mjs",
+    │         "caller_functionname": "<anonymous>",
+    │         "caller_lineno": 0
+    │       }
     ├── google-grounded-generate-operation
     │   metadata: {
     │     "operation": "grounded-generate",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── generate_content [llm]
     │       input: {
@@ -1139,10 +1289,20 @@ span_tree:
     │         "prompt_tokens": 124,
     │         "tokens": 392
     │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
     ├── google-grounded-stream-operation
     │   metadata: {
     │     "operation": "grounded-stream",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── generate_content_stream [llm]
     │       input: {
@@ -1290,10 +1450,20 @@ span_tree:
     │         "time_to_first_token": 0,
     │         "tokens": 293
     │       }
+    │       context: {
+    │         "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │         "caller_functionname": "collectAsync",
+    │         "caller_lineno": 0
+    │       }
     ├── google-tool-operation
     │   metadata: {
     │     "operation": "tool",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── generate_content [llm]
     │       input: {
@@ -1410,10 +1580,20 @@ span_tree:
     │         "prompt_tokens": 65,
     │         "tokens": 164
     │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
     └── google-multi-tool-operation
         metadata: {
           "operation": "multi-tool",
           "testRunId": "<run:1>"
+        }
+        context: {
+          "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+          "caller_functionname": "runOperation",
+          "caller_lineno": 0
         }
         └── generate_content [llm]
             input: {
@@ -1555,4 +1735,9 @@ span_tree:
               "duration": 0,
               "prompt_tokens": 110,
               "tokens": 207
+            }
+            context: {
+              "caller_filename": "<node-internal>",
+              "caller_functionname": "<node-internal>",
+              "caller_lineno": 0
             }
