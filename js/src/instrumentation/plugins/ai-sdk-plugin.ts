@@ -1938,15 +1938,21 @@ const processContentPart = (part: any): any => {
       part.data &&
       (part.mimeType || part.mediaType)
     ) {
+      // AI SDK v7 tags inline bytes as `{ type: "data", data }`
+      // (`SharedV4FileData`). Convert the inner bytes and keep the tagged
+      // envelope so the logged part matches the provider-facing shape.
+      const taggedData = isAISDKInlineFileData(part.data) ? part.data : null;
       const fileAttachment = convertDataToAttachment(
-        part.data,
+        taggedData ? taggedData.data : part.data,
         part.mimeType || part.mediaType,
         part.name || part.filename,
       );
       if (fileAttachment) {
         return {
           ...part,
-          data: fileAttachment,
+          data: taggedData
+            ? { ...taggedData, data: fileAttachment }
+            : fileAttachment,
         };
       }
     }
@@ -1971,6 +1977,11 @@ const processContentPart = (part: any): any => {
 
   return part;
 };
+
+const isAISDKInlineFileData = (
+  data: unknown,
+): data is { type: "data"; data: unknown } =>
+  isObject(data) && data.type === "data" && "data" in data;
 
 const convertImageToAttachment = (
   image: any,

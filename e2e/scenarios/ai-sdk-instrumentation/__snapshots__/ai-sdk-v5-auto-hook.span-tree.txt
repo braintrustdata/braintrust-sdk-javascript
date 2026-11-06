@@ -20,7 +20,7 @@ span_tree:
     │             ],
     │             "provider": "openai.responses"
     │           },
-    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "modelId": "gpt-5.4-nano-2026-03-17",
     │           "specificationVersion": "v2",
     │           "supportedUrls": {
     │             "application/pdf": [
@@ -71,7 +71,7 @@ span_tree:
     │               "role": "assistant"
     │             }
     │           ],
-    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "modelId": "gpt-5.4-nano-2026-03-17",
     │           "timestamp": "<timestamp>"
     │         },
     │         "steps": [
@@ -112,17 +112,23 @@ span_tree:
     │                   "role": "assistant"
     │                 }
     │               ],
-    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "modelId": "gpt-5.4-nano-2026-03-17",
     │               "timestamp": "<timestamp>"
     │             },
     │             "usage": {
     │               "cachedInputTokens": 0,
-    │               "inputTokens": 18,
-    │               "outputTokens": 3,
+    │               "inputTokens": 17,
+    │               "outputTokens": 6,
     │               "reasoningTokens": 0,
-    │               "totalTokens": 21
+    │               "totalTokens": 23
     │             },
-    │             "warnings": []
+    │             "warnings": [
+    │               {
+    │                 "details": "temperature is not supported for reasoning models",
+    │                 "setting": "temperature",
+    │                 "type": "unsupported-setting"
+    │               }
+    │             ]
     │           }
     │         ],
     │         "text": "PARIS",
@@ -130,26 +136,32 @@ span_tree:
     │         "toolResults": [],
     │         "totalUsage": {
     │           "cachedInputTokens": 0,
-    │           "inputTokens": 18,
-    │           "outputTokens": 3,
+    │           "inputTokens": 17,
+    │           "outputTokens": 6,
     │           "reasoningTokens": 0,
-    │           "totalTokens": 21
+    │           "totalTokens": 23
     │         },
     │         "usage": {
     │           "cachedInputTokens": 0,
-    │           "inputTokens": 18,
-    │           "outputTokens": 3,
+    │           "inputTokens": 17,
+    │           "outputTokens": 6,
     │           "reasoningTokens": 0,
-    │           "totalTokens": 21
+    │           "totalTokens": 23
     │         },
-    │         "warnings": []
+    │         "warnings": [
+    │           {
+    │             "details": "temperature is not supported for reasoning models",
+    │             "setting": "temperature",
+    │             "type": "unsupported-setting"
+    │           }
+    │         ]
     │       }
     │       metadata: {
     │         "braintrust": {
     │           "integration_name": "ai-sdk",
     │           "sdk_language": "typescript"
     │         },
-    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "model": "gpt-5.4-nano-2026-03-17",
     │         "provider": "openai.responses"
     │       }
     │       └── doGenerate [llm]
@@ -189,17 +201,23 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "modelId": "gpt-5.4-nano-2026-03-17",
     │               "timestamp": "<timestamp>"
     │             },
     │             "usage": {
     │               "cachedInputTokens": 0,
-    │               "inputTokens": 18,
-    │               "outputTokens": 3,
+    │               "inputTokens": 17,
+    │               "outputTokens": 6,
     │               "reasoningTokens": 0,
-    │               "totalTokens": 21
+    │               "totalTokens": 23
     │             },
-    │             "warnings": []
+    │             "warnings": [
+    │               {
+    │                 "details": "temperature is not supported for reasoning models",
+    │                 "setting": "temperature",
+    │                 "type": "unsupported-setting"
+    │               }
+    │             ]
     │           }
     │           metadata: {
     │             "braintrust": {
@@ -207,16 +225,16 @@ span_tree:
     │               "sdk_language": "typescript"
     │             },
     │             "finish_reason": "stop",
-    │             "model": "gpt-4o-mini-2024-07-18",
+    │             "model": "gpt-5.4-nano-2026-03-17",
     │             "provider": "openai.responses"
     │           }
     │           metrics: {
     │             "completion_reasoning_tokens": 0,
-    │             "completion_tokens": 3,
+    │             "completion_tokens": 6,
     │             "prompt_cached_tokens": 0,
-    │             "prompt_tokens": 18,
+    │             "prompt_tokens": 17,
     │             "reasoning_tokens": 0,
-    │             "tokens": 21
+    │             "tokens": 23
     │           }
     ├── ai-sdk-generate-image-operation
     │   metadata: {
@@ -295,7 +313,7 @@ span_tree:
     │             ],
     │             "provider": "openai.responses"
     │           },
-    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "modelId": "gpt-5.4-nano-2026-03-17",
     │           "specificationVersion": "v2",
     │           "supportedUrls": {
     │             "application/pdf": [
@@ -365,7 +383,7 @@ span_tree:
     │               "role": "assistant"
     │             }
     │           ],
-    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "modelId": "gpt-5.4-nano-2026-03-17",
     │           "timestamp": "<timestamp>"
     │         },
     │         "steps": [
@@ -406,17 +424,23 @@ span_tree:
     │                   "role": "assistant"
     │                 }
     │               ],
-    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "modelId": "gpt-5.4-nano-2026-03-17",
     │               "timestamp": "<timestamp>"
     │             },
     │             "usage": {
     │               "cachedInputTokens": 0,
-    │               "inputTokens": 45,
-    │               "outputTokens": 6,
+    │               "inputTokens": 43,
+    │               "outputTokens": 12,
     │               "reasoningTokens": 0,
-    │               "totalTokens": 51
+    │               "totalTokens": 55
     │             },
-    │             "warnings": []
+    │             "warnings": [
+    │               {
+    │                 "details": "temperature is not supported for reasoning models",
+    │                 "setting": "temperature",
+    │                 "type": "unsupported-setting"
+    │               }
+    │             ]
     │           }
     │         ],
     │         "text": "{\"answer\":\"4\"}",
@@ -424,26 +448,32 @@ span_tree:
     │         "toolResults": [],
     │         "totalUsage": {
     │           "cachedInputTokens": 0,
-    │           "inputTokens": 45,
-    │           "outputTokens": 6,
+    │           "inputTokens": 43,
+    │           "outputTokens": 12,
     │           "reasoningTokens": 0,
-    │           "totalTokens": 51
+    │           "totalTokens": 55
     │         },
     │         "usage": {
     │           "cachedInputTokens": 0,
-    │           "inputTokens": 45,
-    │           "outputTokens": 6,
+    │           "inputTokens": 43,
+    │           "outputTokens": 12,
     │           "reasoningTokens": 0,
-    │           "totalTokens": 51
+    │           "totalTokens": 55
     │         },
-    │         "warnings": []
+    │         "warnings": [
+    │           {
+    │             "details": "temperature is not supported for reasoning models",
+    │             "setting": "temperature",
+    │             "type": "unsupported-setting"
+    │           }
+    │         ]
     │       }
     │       metadata: {
     │         "braintrust": {
     │           "integration_name": "ai-sdk",
     │           "sdk_language": "typescript"
     │         },
-    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "model": "gpt-5.4-nano-2026-03-17",
     │         "provider": "openai.responses"
     │       }
     │       └── doGenerate [llm]
@@ -499,17 +529,23 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "modelId": "gpt-5.4-nano-2026-03-17",
     │               "timestamp": "<timestamp>"
     │             },
     │             "usage": {
     │               "cachedInputTokens": 0,
-    │               "inputTokens": 45,
-    │               "outputTokens": 6,
+    │               "inputTokens": 43,
+    │               "outputTokens": 12,
     │               "reasoningTokens": 0,
-    │               "totalTokens": 51
+    │               "totalTokens": 55
     │             },
-    │             "warnings": []
+    │             "warnings": [
+    │               {
+    │                 "details": "temperature is not supported for reasoning models",
+    │                 "setting": "temperature",
+    │                 "type": "unsupported-setting"
+    │               }
+    │             ]
     │           }
     │           metadata: {
     │             "braintrust": {
@@ -517,16 +553,16 @@ span_tree:
     │               "sdk_language": "typescript"
     │             },
     │             "finish_reason": "stop",
-    │             "model": "gpt-4o-mini-2024-07-18",
+    │             "model": "gpt-5.4-nano-2026-03-17",
     │             "provider": "openai.responses"
     │           }
     │           metrics: {
     │             "completion_reasoning_tokens": 0,
-    │             "completion_tokens": 6,
+    │             "completion_tokens": 12,
     │             "prompt_cached_tokens": 0,
-    │             "prompt_tokens": 45,
+    │             "prompt_tokens": 43,
     │             "reasoning_tokens": 0,
-    │             "tokens": 51
+    │             "tokens": 55
     │           }
     ├── ai-sdk-stream-operation
     │   metadata: {
@@ -543,7 +579,7 @@ span_tree:
     │             ],
     │             "provider": "openai.responses"
     │           },
-    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "modelId": "gpt-5.4-nano-2026-03-17",
     │           "specificationVersion": "v2",
     │           "supportedUrls": {
     │             "application/pdf": [
@@ -559,14 +595,14 @@ span_tree:
     │       }
     │       output: {
     │         "finishReason": "stop",
-    │         "text": "One, two, three."
+    │         "text": "one 1  \ntwo 2  \nthree 3"
     │       }
     │       metadata: {
     │         "braintrust": {
     │           "integration_name": "ai-sdk",
     │           "sdk_language": "typescript"
     │         },
-    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "model": "gpt-5.4-nano-2026-03-17",
     │         "provider": "openai.responses"
     │       }
     │       metrics: {
@@ -591,14 +627,14 @@ span_tree:
     │           }
     │           output: {
     │             "finishReason": "stop",
-    │             "text": "One, two, three.",
+    │             "text": "one 1  \ntwo 2  \nthree 3",
     │             "toolCalls": [],
     │             "usage": {
     │               "cachedInputTokens": 0,
-    │               "inputTokens": 22,
-    │               "outputTokens": 7,
+    │               "inputTokens": 21,
+    │               "outputTokens": 15,
     │               "reasoningTokens": 0,
-    │               "totalTokens": 29
+    │               "totalTokens": 36
     │             }
     │           }
     │           metadata: {
@@ -607,17 +643,140 @@ span_tree:
     │               "sdk_language": "typescript"
     │             },
     │             "finish_reason": "stop",
-    │             "model": "gpt-4o-mini-2024-07-18",
+    │             "model": "gpt-5.4-nano-2026-03-17",
     │             "provider": "openai.responses"
     │           }
     │           metrics: {
     │             "completion_reasoning_tokens": 0,
-    │             "completion_tokens": 7,
+    │             "completion_tokens": 15,
     │             "prompt_cached_tokens": 0,
-    │             "prompt_tokens": 22,
+    │             "prompt_tokens": 21,
     │             "reasoning_tokens": 0,
     │             "time_to_first_token": 0,
-    │             "tokens": 29
+    │             "tokens": 36
+    │           }
+    ├── ai-sdk-stream-image-file-operation
+    │   metadata: {
+    │     "operation": "stream-image-file",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── streamText [function]
+    │       input: {
+    │         "maxOutputTokens": 16,
+    │         "messages": [
+    │           {
+    │             "content": [
+    │               {
+    │                 "text": "What color is this image? Answer with one word.",
+    │                 "type": "text"
+    │               },
+    │               {
+    │                 "data": {
+    │                   "content_type": "image/png",
+    │                   "filename": "red.png",
+    │                   "key": "<uuid:1>",
+    │                   "type": "braintrust_attachment"
+    │                 },
+    │                 "filename": "red.png",
+    │                 "mediaType": "image/png",
+    │                 "type": "file"
+    │               }
+    │             ],
+    │             "role": "user"
+    │           }
+    │         ],
+    │         "model": {
+    │           "config": {
+    │             "fileIdPrefixes": [
+    │               "file-"
+    │             ],
+    │             "provider": "openai.responses"
+    │           },
+    │           "modelId": "gpt-5.4-nano-2026-03-17",
+    │           "specificationVersion": "v2",
+    │           "supportedUrls": {
+    │             "application/pdf": [
+    │               {}
+    │             ],
+    │             "image/*": [
+    │               {}
+    │             ]
+    │           }
+    │         },
+    │         "temperature": 0
+    │       }
+    │       output: {
+    │         "finishReason": "stop",
+    │         "text": "Red"
+    │       }
+    │       metadata: {
+    │         "braintrust": {
+    │           "integration_name": "ai-sdk",
+    │           "sdk_language": "typescript"
+    │         },
+    │         "model": "gpt-5.4-nano-2026-03-17",
+    │         "provider": "openai.responses"
+    │       }
+    │       metrics: {
+    │         "time_to_first_token": 0
+    │       }
+    │       └── doStream [llm]
+    │           input: {
+    │             "includeRawChunks": false,
+    │             "maxOutputTokens": 16,
+    │             "prompt": [
+    │               {
+    │                 "content": [
+    │                   {
+    │                     "text": "What color is this image? Answer with one word.",
+    │                     "type": "text"
+    │                   },
+    │                   {
+    │                     "data": {
+    │                       "content_type": "image/png",
+    │                       "filename": "red.png",
+    │                       "key": "<uuid:1>",
+    │                       "type": "braintrust_attachment"
+    │                     },
+    │                     "filename": "red.png",
+    │                     "mediaType": "image/png",
+    │                     "type": "file"
+    │                   }
+    │                 ],
+    │                 "role": "user"
+    │               }
+    │             ],
+    │             "temperature": 0
+    │           }
+    │           output: {
+    │             "finishReason": "stop",
+    │             "text": "Red",
+    │             "toolCalls": [],
+    │             "usage": {
+    │               "cachedInputTokens": 0,
+    │               "inputTokens": 19,
+    │               "outputTokens": 5,
+    │               "reasoningTokens": 0,
+    │               "totalTokens": 24
+    │             }
+    │           }
+    │           metadata: {
+    │             "braintrust": {
+    │               "integration_name": "ai-sdk",
+    │               "sdk_language": "typescript"
+    │             },
+    │             "finish_reason": "stop",
+    │             "model": "gpt-5.4-nano-2026-03-17",
+    │             "provider": "openai.responses"
+    │           }
+    │           metrics: {
+    │             "completion_reasoning_tokens": 0,
+    │             "completion_tokens": 5,
+    │             "prompt_cached_tokens": 0,
+    │             "prompt_tokens": 19,
+    │             "reasoning_tokens": 0,
+    │             "time_to_first_token": 0,
+    │             "tokens": 24
     │           }
     ├── ai-sdk-embed-operation
     │   metadata: {
@@ -669,7 +828,7 @@ span_tree:
     │             ],
     │             "provider": "openai.responses"
     │           },
-    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "modelId": "gpt-5.4-nano-2026-03-17",
     │           "specificationVersion": "v2",
     │           "supportedUrls": {
     │             "application/pdf": [
@@ -681,6 +840,11 @@ span_tree:
     │           }
     │         },
     │         "prompt": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
+    │         "providerOptions": {
+    │           "openai": {
+    │             "store": false
+    │           }
+    │         },
     │         "system": "You must inspect live weather via the provided get_weather tool before responding.",
     │         "temperature": 0,
     │         "toolChoice": "required",
@@ -859,7 +1023,7 @@ span_tree:
     │               "role": "tool"
     │             }
     │           ],
-    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "modelId": "gpt-5.4-nano-2026-03-17",
     │           "timestamp": "<timestamp>"
     │         },
     │         "steps": [
@@ -928,17 +1092,23 @@ span_tree:
     │                   "role": "tool"
     │                 }
     │               ],
-    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "modelId": "gpt-5.4-nano-2026-03-17",
     │               "timestamp": "<timestamp>"
     │             },
     │             "usage": {
     │               "cachedInputTokens": 0,
-    │               "inputTokens": 94,
-    │               "outputTokens": 8,
+    │               "inputTokens": 90,
+    │               "outputTokens": 20,
     │               "reasoningTokens": 0,
-    │               "totalTokens": 102
+    │               "totalTokens": 110
     │             },
-    │             "warnings": []
+    │             "warnings": [
+    │               {
+    │                 "details": "temperature is not supported for reasoning models",
+    │                 "setting": "temperature",
+    │                 "type": "unsupported-setting"
+    │               }
+    │             ]
     │           },
     │           {
     │             "content": [
@@ -1035,17 +1205,23 @@ span_tree:
     │                   "role": "tool"
     │                 }
     │               ],
-    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "modelId": "gpt-5.4-nano-2026-03-17",
     │               "timestamp": "<timestamp>"
     │             },
     │             "usage": {
     │               "cachedInputTokens": 0,
-    │               "inputTokens": 133,
-    │               "outputTokens": 8,
+    │               "inputTokens": 138,
+    │               "outputTokens": 20,
     │               "reasoningTokens": 0,
-    │               "totalTokens": 141
+    │               "totalTokens": 158
     │             },
-    │             "warnings": []
+    │             "warnings": [
+    │               {
+    │                 "details": "temperature is not supported for reasoning models",
+    │                 "setting": "temperature",
+    │                 "type": "unsupported-setting"
+    │               }
+    │             ]
     │           },
     │           {
     │             "content": [
@@ -1172,17 +1348,23 @@ span_tree:
     │                   "role": "tool"
     │                 }
     │               ],
-    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "modelId": "gpt-5.4-nano-2026-03-17",
     │               "timestamp": "<timestamp>"
     │             },
     │             "usage": {
     │               "cachedInputTokens": 0,
-    │               "inputTokens": 172,
-    │               "outputTokens": 8,
+    │               "inputTokens": 186,
+    │               "outputTokens": 20,
     │               "reasoningTokens": 0,
-    │               "totalTokens": 180
+    │               "totalTokens": 206
     │             },
-    │             "warnings": []
+    │             "warnings": [
+    │               {
+    │                 "details": "temperature is not supported for reasoning models",
+    │                 "setting": "temperature",
+    │                 "type": "unsupported-setting"
+    │               }
+    │             ]
     │           },
     │           {
     │             "content": [
@@ -1339,17 +1521,23 @@ span_tree:
     │                   "role": "tool"
     │                 }
     │               ],
-    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "modelId": "gpt-5.4-nano-2026-03-17",
     │               "timestamp": "<timestamp>"
     │             },
     │             "usage": {
     │               "cachedInputTokens": 0,
-    │               "inputTokens": 211,
-    │               "outputTokens": 8,
+    │               "inputTokens": 234,
+    │               "outputTokens": 20,
     │               "reasoningTokens": 0,
-    │               "totalTokens": 219
+    │               "totalTokens": 254
     │             },
-    │             "warnings": []
+    │             "warnings": [
+    │               {
+    │                 "details": "temperature is not supported for reasoning models",
+    │                 "setting": "temperature",
+    │                 "type": "unsupported-setting"
+    │               }
+    │             ]
     │           }
     │         ],
     │         "text": "",
@@ -1380,26 +1568,32 @@ span_tree:
     │         ],
     │         "totalUsage": {
     │           "cachedInputTokens": 0,
-    │           "inputTokens": 610,
-    │           "outputTokens": 32,
+    │           "inputTokens": 648,
+    │           "outputTokens": 80,
     │           "reasoningTokens": 0,
-    │           "totalTokens": 642
+    │           "totalTokens": 728
     │         },
     │         "usage": {
     │           "cachedInputTokens": 0,
-    │           "inputTokens": 211,
-    │           "outputTokens": 8,
+    │           "inputTokens": 234,
+    │           "outputTokens": 20,
     │           "reasoningTokens": 0,
-    │           "totalTokens": 219
+    │           "totalTokens": 254
     │         },
-    │         "warnings": []
+    │         "warnings": [
+    │           {
+    │             "details": "temperature is not supported for reasoning models",
+    │             "setting": "temperature",
+    │             "type": "unsupported-setting"
+    │           }
+    │         ]
     │       }
     │       metadata: {
     │         "braintrust": {
     │           "integration_name": "ai-sdk",
     │           "sdk_language": "typescript"
     │         },
-    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "model": "gpt-5.4-nano-2026-03-17",
     │         "provider": "openai.responses",
     │         "tools": {
     │           "get_weather": {
@@ -1439,6 +1633,11 @@ span_tree:
     │       │         "role": "user"
     │       │       }
     │       │     ],
+    │       │     "providerOptions": {
+    │       │       "openai": {
+    │       │         "store": false
+    │       │       }
+    │       │     },
     │       │     "temperature": 0,
     │       │     "toolChoice": {
     │       │       "type": "required"
@@ -1487,17 +1686,23 @@ span_tree:
     │       │     },
     │       │     "response": {
     │       │       "body": "<omitted>",
-    │       │       "modelId": "gpt-4o-mini-2024-07-18",
+    │       │       "modelId": "gpt-5.4-nano-2026-03-17",
     │       │       "timestamp": "<timestamp>"
     │       │     },
     │       │     "usage": {
     │       │       "cachedInputTokens": 0,
-    │       │       "inputTokens": 94,
-    │       │       "outputTokens": 8,
+    │       │       "inputTokens": 90,
+    │       │       "outputTokens": 20,
     │       │       "reasoningTokens": 0,
-    │       │       "totalTokens": 102
+    │       │       "totalTokens": 110
     │       │     },
-    │       │     "warnings": []
+    │       │     "warnings": [
+    │       │       {
+    │       │         "details": "temperature is not supported for reasoning models",
+    │       │         "setting": "temperature",
+    │       │         "type": "unsupported-setting"
+    │       │       }
+    │       │     ]
     │       │   }
     │       │   metadata: {
     │       │     "braintrust": {
@@ -1505,16 +1710,16 @@ span_tree:
     │       │       "sdk_language": "typescript"
     │       │     },
     │       │     "finish_reason": "tool-calls",
-    │       │     "model": "gpt-4o-mini-2024-07-18",
+    │       │     "model": "gpt-5.4-nano-2026-03-17",
     │       │     "provider": "openai.responses"
     │       │   }
     │       │   metrics: {
     │       │     "completion_reasoning_tokens": 0,
-    │       │     "completion_tokens": 8,
+    │       │     "completion_tokens": 20,
     │       │     "prompt_cached_tokens": 0,
-    │       │     "prompt_tokens": 94,
+    │       │     "prompt_tokens": 90,
     │       │     "reasoning_tokens": 0,
-    │       │     "tokens": 102
+    │       │     "tokens": 110
     │       │   }
     │       ├── get_weather [tool]
     │       │   input: {
@@ -1569,6 +1774,11 @@ span_tree:
     │       │         "role": "tool"
     │       │       }
     │       │     ],
+    │       │     "providerOptions": {
+    │       │       "openai": {
+    │       │         "store": false
+    │       │       }
+    │       │     },
     │       │     "temperature": 0,
     │       │     "toolChoice": {
     │       │       "type": "required"
@@ -1617,17 +1827,23 @@ span_tree:
     │       │     },
     │       │     "response": {
     │       │       "body": "<omitted>",
-    │       │       "modelId": "gpt-4o-mini-2024-07-18",
+    │       │       "modelId": "gpt-5.4-nano-2026-03-17",
     │       │       "timestamp": "<timestamp>"
     │       │     },
     │       │     "usage": {
     │       │       "cachedInputTokens": 0,
-    │       │       "inputTokens": 133,
-    │       │       "outputTokens": 8,
+    │       │       "inputTokens": 138,
+    │       │       "outputTokens": 20,
     │       │       "reasoningTokens": 0,
-    │       │       "totalTokens": 141
+    │       │       "totalTokens": 158
     │       │     },
-    │       │     "warnings": []
+    │       │     "warnings": [
+    │       │       {
+    │       │         "details": "temperature is not supported for reasoning models",
+    │       │         "setting": "temperature",
+    │       │         "type": "unsupported-setting"
+    │       │       }
+    │       │     ]
     │       │   }
     │       │   metadata: {
     │       │     "braintrust": {
@@ -1635,16 +1851,16 @@ span_tree:
     │       │       "sdk_language": "typescript"
     │       │     },
     │       │     "finish_reason": "tool-calls",
-    │       │     "model": "gpt-4o-mini-2024-07-18",
+    │       │     "model": "gpt-5.4-nano-2026-03-17",
     │       │     "provider": "openai.responses"
     │       │   }
     │       │   metrics: {
     │       │     "completion_reasoning_tokens": 0,
-    │       │     "completion_tokens": 8,
+    │       │     "completion_tokens": 20,
     │       │     "prompt_cached_tokens": 0,
-    │       │     "prompt_tokens": 133,
+    │       │     "prompt_tokens": 138,
     │       │     "reasoning_tokens": 0,
-    │       │     "tokens": 141
+    │       │     "tokens": 158
     │       │   }
     │       ├── get_weather [tool]
     │       │   input: {
@@ -1729,6 +1945,11 @@ span_tree:
     │       │         "role": "tool"
     │       │       }
     │       │     ],
+    │       │     "providerOptions": {
+    │       │       "openai": {
+    │       │         "store": false
+    │       │       }
+    │       │     },
     │       │     "temperature": 0,
     │       │     "toolChoice": {
     │       │       "type": "required"
@@ -1777,17 +1998,23 @@ span_tree:
     │       │     },
     │       │     "response": {
     │       │       "body": "<omitted>",
-    │       │       "modelId": "gpt-4o-mini-2024-07-18",
+    │       │       "modelId": "gpt-5.4-nano-2026-03-17",
     │       │       "timestamp": "<timestamp>"
     │       │     },
     │       │     "usage": {
     │       │       "cachedInputTokens": 0,
-    │       │       "inputTokens": 172,
-    │       │       "outputTokens": 8,
+    │       │       "inputTokens": 186,
+    │       │       "outputTokens": 20,
     │       │       "reasoningTokens": 0,
-    │       │       "totalTokens": 180
+    │       │       "totalTokens": 206
     │       │     },
-    │       │     "warnings": []
+    │       │     "warnings": [
+    │       │       {
+    │       │         "details": "temperature is not supported for reasoning models",
+    │       │         "setting": "temperature",
+    │       │         "type": "unsupported-setting"
+    │       │       }
+    │       │     ]
     │       │   }
     │       │   metadata: {
     │       │     "braintrust": {
@@ -1795,16 +2022,16 @@ span_tree:
     │       │       "sdk_language": "typescript"
     │       │     },
     │       │     "finish_reason": "tool-calls",
-    │       │     "model": "gpt-4o-mini-2024-07-18",
+    │       │     "model": "gpt-5.4-nano-2026-03-17",
     │       │     "provider": "openai.responses"
     │       │   }
     │       │   metrics: {
     │       │     "completion_reasoning_tokens": 0,
-    │       │     "completion_tokens": 8,
+    │       │     "completion_tokens": 20,
     │       │     "prompt_cached_tokens": 0,
-    │       │     "prompt_tokens": 172,
+    │       │     "prompt_tokens": 186,
     │       │     "reasoning_tokens": 0,
-    │       │     "tokens": 180
+    │       │     "tokens": 206
     │       │   }
     │       ├── get_weather [tool]
     │       │   input: {
@@ -1919,6 +2146,11 @@ span_tree:
     │       │         "role": "tool"
     │       │       }
     │       │     ],
+    │       │     "providerOptions": {
+    │       │       "openai": {
+    │       │         "store": false
+    │       │       }
+    │       │     },
     │       │     "temperature": 0,
     │       │     "toolChoice": {
     │       │       "type": "required"
@@ -1967,17 +2199,23 @@ span_tree:
     │       │     },
     │       │     "response": {
     │       │       "body": "<omitted>",
-    │       │       "modelId": "gpt-4o-mini-2024-07-18",
+    │       │       "modelId": "gpt-5.4-nano-2026-03-17",
     │       │       "timestamp": "<timestamp>"
     │       │     },
     │       │     "usage": {
     │       │       "cachedInputTokens": 0,
-    │       │       "inputTokens": 211,
-    │       │       "outputTokens": 8,
+    │       │       "inputTokens": 234,
+    │       │       "outputTokens": 20,
     │       │       "reasoningTokens": 0,
-    │       │       "totalTokens": 219
+    │       │       "totalTokens": 254
     │       │     },
-    │       │     "warnings": []
+    │       │     "warnings": [
+    │       │       {
+    │       │         "details": "temperature is not supported for reasoning models",
+    │       │         "setting": "temperature",
+    │       │         "type": "unsupported-setting"
+    │       │       }
+    │       │     ]
     │       │   }
     │       │   metadata: {
     │       │     "braintrust": {
@@ -1985,16 +2223,16 @@ span_tree:
     │       │       "sdk_language": "typescript"
     │       │     },
     │       │     "finish_reason": "tool-calls",
-    │       │     "model": "gpt-4o-mini-2024-07-18",
+    │       │     "model": "gpt-5.4-nano-2026-03-17",
     │       │     "provider": "openai.responses"
     │       │   }
     │       │   metrics: {
     │       │     "completion_reasoning_tokens": 0,
-    │       │     "completion_tokens": 8,
+    │       │     "completion_tokens": 20,
     │       │     "prompt_cached_tokens": 0,
-    │       │     "prompt_tokens": 211,
+    │       │     "prompt_tokens": 234,
     │       │     "reasoning_tokens": 0,
-    │       │     "tokens": 219
+    │       │     "tokens": 254
     │       │   }
     │       └── get_weather [tool]
     │           input: {
@@ -2016,7 +2254,7 @@ span_tree:
     │             ],
     │             "provider": "openai.responses"
     │           },
-    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "modelId": "gpt-5.4-nano-2026-03-17",
     │           "specificationVersion": "v2",
     │           "supportedUrls": {
     │             "application/pdf": [
@@ -2137,7 +2375,7 @@ span_tree:
     │               "role": "tool"
     │             }
     │           ],
-    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "modelId": "gpt-5.4-nano-2026-03-17",
     │           "timestamp": "<timestamp>"
     │         },
     │         "steps": [
@@ -2203,17 +2441,23 @@ span_tree:
     │                   "role": "tool"
     │                 }
     │               ],
-    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "modelId": "gpt-5.4-nano-2026-03-17",
     │               "timestamp": "<timestamp>"
     │             },
     │             "usage": {
     │               "cachedInputTokens": 0,
-    │               "inputTokens": 61,
-    │               "outputTokens": 2,
+    │               "inputTokens": 56,
+    │               "outputTokens": 15,
     │               "reasoningTokens": 0,
-    │               "totalTokens": 63
+    │               "totalTokens": 71
     │             },
-    │             "warnings": []
+    │             "warnings": [
+    │               {
+    │                 "details": "temperature is not supported for reasoning models",
+    │                 "setting": "temperature",
+    │                 "type": "unsupported-setting"
+    │               }
+    │             ]
     │           },
     │           {
     │             "content": [
@@ -2305,17 +2549,23 @@ span_tree:
     │                   "role": "tool"
     │                 }
     │               ],
-    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "modelId": "gpt-5.4-nano-2026-03-17",
     │               "timestamp": "<timestamp>"
     │             },
     │             "usage": {
     │               "cachedInputTokens": 0,
-    │               "inputTokens": 87,
-    │               "outputTokens": 2,
+    │               "inputTokens": 91,
+    │               "outputTokens": 15,
     │               "reasoningTokens": 0,
-    │               "totalTokens": 89
+    │               "totalTokens": 106
     │             },
-    │             "warnings": []
+    │             "warnings": [
+    │               {
+    │                 "details": "temperature is not supported for reasoning models",
+    │                 "setting": "temperature",
+    │                 "type": "unsupported-setting"
+    │               }
+    │             ]
     │           }
     │         ],
     │         "text": "",
@@ -2345,26 +2595,32 @@ span_tree:
     │         ],
     │         "totalUsage": {
     │           "cachedInputTokens": 0,
-    │           "inputTokens": 148,
-    │           "outputTokens": 4,
+    │           "inputTokens": 147,
+    │           "outputTokens": 30,
     │           "reasoningTokens": 0,
-    │           "totalTokens": 152
+    │           "totalTokens": 177
     │         },
     │         "usage": {
     │           "cachedInputTokens": 0,
-    │           "inputTokens": 87,
-    │           "outputTokens": 2,
+    │           "inputTokens": 91,
+    │           "outputTokens": 15,
     │           "reasoningTokens": 0,
-    │           "totalTokens": 89
+    │           "totalTokens": 106
     │         },
-    │         "warnings": []
+    │         "warnings": [
+    │           {
+    │             "details": "temperature is not supported for reasoning models",
+    │             "setting": "temperature",
+    │             "type": "unsupported-setting"
+    │           }
+    │         ]
     │       }
     │       metadata: {
     │         "braintrust": {
     │           "integration_name": "ai-sdk",
     │           "sdk_language": "typescript"
     │         },
-    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "model": "gpt-5.4-nano-2026-03-17",
     │         "provider": "openai.responses",
     │         "tools": {
     │           "lookup_signups": {
@@ -2437,17 +2693,23 @@ span_tree:
     │       │     },
     │       │     "response": {
     │       │       "body": "<omitted>",
-    │       │       "modelId": "gpt-4o-mini-2024-07-18",
+    │       │       "modelId": "gpt-5.4-nano-2026-03-17",
     │       │       "timestamp": "<timestamp>"
     │       │     },
     │       │     "usage": {
     │       │       "cachedInputTokens": 0,
-    │       │       "inputTokens": 61,
-    │       │       "outputTokens": 2,
+    │       │       "inputTokens": 56,
+    │       │       "outputTokens": 15,
     │       │       "reasoningTokens": 0,
-    │       │       "totalTokens": 63
+    │       │       "totalTokens": 71
     │       │     },
-    │       │     "warnings": []
+    │       │     "warnings": [
+    │       │       {
+    │       │         "details": "temperature is not supported for reasoning models",
+    │       │         "setting": "temperature",
+    │       │         "type": "unsupported-setting"
+    │       │       }
+    │       │     ]
     │       │   }
     │       │   metadata: {
     │       │     "braintrust": {
@@ -2455,16 +2717,16 @@ span_tree:
     │       │       "sdk_language": "typescript"
     │       │     },
     │       │     "finish_reason": "tool-calls",
-    │       │     "model": "gpt-4o-mini-2024-07-18",
+    │       │     "model": "gpt-5.4-nano-2026-03-17",
     │       │     "provider": "openai.responses"
     │       │   }
     │       │   metrics: {
     │       │     "completion_reasoning_tokens": 0,
-    │       │     "completion_tokens": 2,
+    │       │     "completion_tokens": 15,
     │       │     "prompt_cached_tokens": 0,
-    │       │     "prompt_tokens": 61,
+    │       │     "prompt_tokens": 56,
     │       │     "reasoning_tokens": 0,
-    │       │     "tokens": 63
+    │       │     "tokens": 71
     │       │   }
     │       ├── lookup_signups [tool]
     │       │   output: {
@@ -2558,17 +2820,23 @@ span_tree:
     │       │     },
     │       │     "response": {
     │       │       "body": "<omitted>",
-    │       │       "modelId": "gpt-4o-mini-2024-07-18",
+    │       │       "modelId": "gpt-5.4-nano-2026-03-17",
     │       │       "timestamp": "<timestamp>"
     │       │     },
     │       │     "usage": {
     │       │       "cachedInputTokens": 0,
-    │       │       "inputTokens": 87,
-    │       │       "outputTokens": 2,
+    │       │       "inputTokens": 91,
+    │       │       "outputTokens": 15,
     │       │       "reasoningTokens": 0,
-    │       │       "totalTokens": 89
+    │       │       "totalTokens": 106
     │       │     },
-    │       │     "warnings": []
+    │       │     "warnings": [
+    │       │       {
+    │       │         "details": "temperature is not supported for reasoning models",
+    │       │         "setting": "temperature",
+    │       │         "type": "unsupported-setting"
+    │       │       }
+    │       │     ]
     │       │   }
     │       │   metadata: {
     │       │     "braintrust": {
@@ -2576,16 +2844,16 @@ span_tree:
     │       │       "sdk_language": "typescript"
     │       │     },
     │       │     "finish_reason": "tool-calls",
-    │       │     "model": "gpt-4o-mini-2024-07-18",
+    │       │     "model": "gpt-5.4-nano-2026-03-17",
     │       │     "provider": "openai.responses"
     │       │   }
     │       │   metrics: {
     │       │     "completion_reasoning_tokens": 0,
-    │       │     "completion_tokens": 2,
+    │       │     "completion_tokens": 15,
     │       │     "prompt_cached_tokens": 0,
-    │       │     "prompt_tokens": 87,
+    │       │     "prompt_tokens": 91,
     │       │     "reasoning_tokens": 0,
-    │       │     "tokens": 89
+    │       │     "tokens": 106
     │       │   }
     │       └── lookup_signups [tool]
     │           output: {
@@ -2607,7 +2875,7 @@ span_tree:
     │             ],
     │             "provider": "openai.responses"
     │           },
-    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "modelId": "gpt-5.4-nano-2026-03-17",
     │           "specificationVersion": "v2",
     │           "supportedUrls": {
     │             "application/pdf": [
@@ -2647,7 +2915,7 @@ span_tree:
     │           "integration_name": "ai-sdk",
     │           "sdk_language": "typescript"
     │         },
-    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "model": "gpt-5.4-nano-2026-03-17",
     │         "provider": "openai.responses",
     │         "tools": {
     │           "lookup_signups": {
@@ -2719,10 +2987,10 @@ span_tree:
     │       │     ],
     │       │     "usage": {
     │       │       "cachedInputTokens": 0,
-    │       │       "inputTokens": 61,
-    │       │       "outputTokens": 2,
+    │       │       "inputTokens": 56,
+    │       │       "outputTokens": 15,
     │       │       "reasoningTokens": 0,
-    │       │       "totalTokens": 63
+    │       │       "totalTokens": 71
     │       │     }
     │       │   }
     │       │   metadata: {
@@ -2731,17 +2999,17 @@ span_tree:
     │       │       "sdk_language": "typescript"
     │       │     },
     │       │     "finish_reason": "tool-calls",
-    │       │     "model": "gpt-4o-mini-2024-07-18",
+    │       │     "model": "gpt-5.4-nano-2026-03-17",
     │       │     "provider": "openai.responses"
     │       │   }
     │       │   metrics: {
     │       │     "completion_reasoning_tokens": 0,
-    │       │     "completion_tokens": 2,
+    │       │     "completion_tokens": 15,
     │       │     "prompt_cached_tokens": 0,
-    │       │     "prompt_tokens": 61,
+    │       │     "prompt_tokens": 56,
     │       │     "reasoning_tokens": 0,
     │       │     "time_to_first_token": 0,
-    │       │     "tokens": 63
+    │       │     "tokens": 71
     │       │   }
     │       ├── lookup_signups [tool]
     │       │   output: {
@@ -2831,10 +3099,10 @@ span_tree:
     │       │     ],
     │       │     "usage": {
     │       │       "cachedInputTokens": 0,
-    │       │       "inputTokens": 87,
-    │       │       "outputTokens": 2,
+    │       │       "inputTokens": 91,
+    │       │       "outputTokens": 15,
     │       │       "reasoningTokens": 0,
-    │       │       "totalTokens": 89
+    │       │       "totalTokens": 106
     │       │     }
     │       │   }
     │       │   metadata: {
@@ -2843,17 +3111,17 @@ span_tree:
     │       │       "sdk_language": "typescript"
     │       │     },
     │       │     "finish_reason": "tool-calls",
-    │       │     "model": "gpt-4o-mini-2024-07-18",
+    │       │     "model": "gpt-5.4-nano-2026-03-17",
     │       │     "provider": "openai.responses"
     │       │   }
     │       │   metrics: {
     │       │     "completion_reasoning_tokens": 0,
-    │       │     "completion_tokens": 2,
+    │       │     "completion_tokens": 15,
     │       │     "prompt_cached_tokens": 0,
-    │       │     "prompt_tokens": 87,
+    │       │     "prompt_tokens": 91,
     │       │     "reasoning_tokens": 0,
     │       │     "time_to_first_token": 0,
-    │       │     "tokens": 89
+    │       │     "tokens": 106
     │       │   }
     │       └── lookup_signups [tool]
     │           output: {
@@ -2870,7 +3138,7 @@ span_tree:
     │         ],
     │         "provider": "openai.responses"
     │       },
-    │       "modelId": "gpt-4o-mini-2024-07-18",
+    │       "modelId": "gpt-5.4-nano-2026-03-17",
     │       "specificationVersion": "v2",
     │       "supportedUrls": {
     │         "application/pdf": [
@@ -2926,7 +3194,7 @@ span_tree:
     │           "role": "assistant"
     │         }
     │       ],
-    │       "modelId": "gpt-4o-mini-2024-07-18",
+    │       "modelId": "gpt-5.4-nano-2026-03-17",
     │       "timestamp": "<timestamp>"
     │     },
     │     "steps": [
@@ -2967,44 +3235,56 @@ span_tree:
     │               "role": "assistant"
     │             }
     │           ],
-    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "modelId": "gpt-5.4-nano-2026-03-17",
     │           "timestamp": "<timestamp>"
     │         },
     │         "usage": {
-    │           "cachedInputTokens": 3456,
-    │           "inputTokens": 3617,
-    │           "outputTokens": 3,
+    │           "cachedInputTokens": 2816,
+    │           "inputTokens": 3616,
+    │           "outputTokens": 6,
     │           "reasoningTokens": 0,
-    │           "totalTokens": 3620
+    │           "totalTokens": 3622
     │         },
-    │         "warnings": []
+    │         "warnings": [
+    │           {
+    │             "details": "temperature is not supported for reasoning models",
+    │             "setting": "temperature",
+    │             "type": "unsupported-setting"
+    │           }
+    │         ]
     │       }
     │     ],
     │     "text": "CACHE_OK",
     │     "toolCalls": [],
     │     "toolResults": [],
     │     "totalUsage": {
-    │       "cachedInputTokens": 3456,
-    │       "inputTokens": 3617,
-    │       "outputTokens": 3,
+    │       "cachedInputTokens": 2816,
+    │       "inputTokens": 3616,
+    │       "outputTokens": 6,
     │       "reasoningTokens": 0,
-    │       "totalTokens": 3620
+    │       "totalTokens": 3622
     │     },
     │     "usage": {
-    │       "cachedInputTokens": 3456,
-    │       "inputTokens": 3617,
-    │       "outputTokens": 3,
+    │       "cachedInputTokens": 2816,
+    │       "inputTokens": 3616,
+    │       "outputTokens": 6,
     │       "reasoningTokens": 0,
-    │       "totalTokens": 3620
+    │       "totalTokens": 3622
     │     },
-    │     "warnings": []
+    │     "warnings": [
+    │       {
+    │         "details": "temperature is not supported for reasoning models",
+    │         "setting": "temperature",
+    │         "type": "unsupported-setting"
+    │       }
+    │     ]
     │   }
     │   metadata: {
     │     "braintrust": {
     │       "integration_name": "ai-sdk",
     │       "sdk_language": "typescript"
     │     },
-    │     "model": "gpt-4o-mini-2024-07-18",
+    │     "model": "gpt-5.4-nano-2026-03-17",
     │     "provider": "openai.responses"
     │   }
     │   └── doGenerate [llm]
@@ -3049,17 +3329,23 @@ span_tree:
     │         },
     │         "response": {
     │           "body": "<omitted>",
-    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "modelId": "gpt-5.4-nano-2026-03-17",
     │           "timestamp": "<timestamp>"
     │         },
     │         "usage": {
-    │           "cachedInputTokens": 3456,
-    │           "inputTokens": 3617,
-    │           "outputTokens": 3,
+    │           "cachedInputTokens": 2816,
+    │           "inputTokens": 3616,
+    │           "outputTokens": 6,
     │           "reasoningTokens": 0,
-    │           "totalTokens": 3620
+    │           "totalTokens": 3622
     │         },
-    │         "warnings": []
+    │         "warnings": [
+    │           {
+    │             "details": "temperature is not supported for reasoning models",
+    │             "setting": "temperature",
+    │             "type": "unsupported-setting"
+    │           }
+    │         ]
     │       }
     │       metadata: {
     │         "braintrust": {
@@ -3067,16 +3353,16 @@ span_tree:
     │           "sdk_language": "typescript"
     │         },
     │         "finish_reason": "stop",
-    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "model": "gpt-5.4-nano-2026-03-17",
     │         "provider": "openai.responses"
     │       }
     │       metrics: {
     │         "completion_reasoning_tokens": 0,
-    │         "completion_tokens": 3,
-    │         "prompt_cached_tokens": 3456,
-    │         "prompt_tokens": 3617,
+    │         "completion_tokens": 6,
+    │         "prompt_cached_tokens": 2816,
+    │         "prompt_tokens": 3616,
     │         "reasoning_tokens": 0,
-    │         "tokens": 3620
+    │         "tokens": 3622
     │       }
     ├── ai-sdk-openai-cache-operation
     │   metadata: {
@@ -3093,7 +3379,7 @@ span_tree:
     │   │         ],
     │   │         "provider": "openai.responses"
     │   │       },
-    │   │       "modelId": "gpt-4o-mini-2024-07-18",
+    │   │       "modelId": "gpt-5.4-nano-2026-03-17",
     │   │       "specificationVersion": "v2",
     │   │       "supportedUrls": {
     │   │         "application/pdf": [
@@ -3149,7 +3435,7 @@ span_tree:
     │   │           "role": "assistant"
     │   │         }
     │   │       ],
-    │   │       "modelId": "gpt-4o-mini-2024-07-18",
+    │   │       "modelId": "gpt-5.4-nano-2026-03-17",
     │   │       "timestamp": "<timestamp>"
     │   │     },
     │   │     "steps": [
@@ -3190,44 +3476,56 @@ span_tree:
     │   │               "role": "assistant"
     │   │             }
     │   │           ],
-    │   │           "modelId": "gpt-4o-mini-2024-07-18",
+    │   │           "modelId": "gpt-5.4-nano-2026-03-17",
     │   │           "timestamp": "<timestamp>"
     │   │         },
     │   │         "usage": {
-    │   │           "cachedInputTokens": 3456,
-    │   │           "inputTokens": 3617,
-    │   │           "outputTokens": 3,
+    │   │           "cachedInputTokens": 2816,
+    │   │           "inputTokens": 3616,
+    │   │           "outputTokens": 6,
     │   │           "reasoningTokens": 0,
-    │   │           "totalTokens": 3620
+    │   │           "totalTokens": 3622
     │   │         },
-    │   │         "warnings": []
+    │   │         "warnings": [
+    │   │           {
+    │   │             "details": "temperature is not supported for reasoning models",
+    │   │             "setting": "temperature",
+    │   │             "type": "unsupported-setting"
+    │   │           }
+    │   │         ]
     │   │       }
     │   │     ],
     │   │     "text": "CACHE_OK",
     │   │     "toolCalls": [],
     │   │     "toolResults": [],
     │   │     "totalUsage": {
-    │   │       "cachedInputTokens": 3456,
-    │   │       "inputTokens": 3617,
-    │   │       "outputTokens": 3,
+    │   │       "cachedInputTokens": 2816,
+    │   │       "inputTokens": 3616,
+    │   │       "outputTokens": 6,
     │   │       "reasoningTokens": 0,
-    │   │       "totalTokens": 3620
+    │   │       "totalTokens": 3622
     │   │     },
     │   │     "usage": {
-    │   │       "cachedInputTokens": 3456,
-    │   │       "inputTokens": 3617,
-    │   │       "outputTokens": 3,
+    │   │       "cachedInputTokens": 2816,
+    │   │       "inputTokens": 3616,
+    │   │       "outputTokens": 6,
     │   │       "reasoningTokens": 0,
-    │   │       "totalTokens": 3620
+    │   │       "totalTokens": 3622
     │   │     },
-    │   │     "warnings": []
+    │   │     "warnings": [
+    │   │       {
+    │   │         "details": "temperature is not supported for reasoning models",
+    │   │         "setting": "temperature",
+    │   │         "type": "unsupported-setting"
+    │   │       }
+    │   │     ]
     │   │   }
     │   │   metadata: {
     │   │     "braintrust": {
     │   │       "integration_name": "ai-sdk",
     │   │       "sdk_language": "typescript"
     │   │     },
-    │   │     "model": "gpt-4o-mini-2024-07-18",
+    │   │     "model": "gpt-5.4-nano-2026-03-17",
     │   │     "provider": "openai.responses"
     │   │   }
     │   │   └── doGenerate [llm]
@@ -3272,17 +3570,23 @@ span_tree:
     │   │         },
     │   │         "response": {
     │   │           "body": "<omitted>",
-    │   │           "modelId": "gpt-4o-mini-2024-07-18",
+    │   │           "modelId": "gpt-5.4-nano-2026-03-17",
     │   │           "timestamp": "<timestamp>"
     │   │         },
     │   │         "usage": {
-    │   │           "cachedInputTokens": 3456,
-    │   │           "inputTokens": 3617,
-    │   │           "outputTokens": 3,
+    │   │           "cachedInputTokens": 2816,
+    │   │           "inputTokens": 3616,
+    │   │           "outputTokens": 6,
     │   │           "reasoningTokens": 0,
-    │   │           "totalTokens": 3620
+    │   │           "totalTokens": 3622
     │   │         },
-    │   │         "warnings": []
+    │   │         "warnings": [
+    │   │           {
+    │   │             "details": "temperature is not supported for reasoning models",
+    │   │             "setting": "temperature",
+    │   │             "type": "unsupported-setting"
+    │   │           }
+    │   │         ]
     │   │       }
     │   │       metadata: {
     │   │         "braintrust": {
@@ -3290,16 +3594,16 @@ span_tree:
     │   │           "sdk_language": "typescript"
     │   │         },
     │   │         "finish_reason": "stop",
-    │   │         "model": "gpt-4o-mini-2024-07-18",
+    │   │         "model": "gpt-5.4-nano-2026-03-17",
     │   │         "provider": "openai.responses"
     │   │       }
     │   │       metrics: {
     │   │         "completion_reasoning_tokens": 0,
-    │   │         "completion_tokens": 3,
-    │   │         "prompt_cached_tokens": 3456,
-    │   │         "prompt_tokens": 3617,
+    │   │         "completion_tokens": 6,
+    │   │         "prompt_cached_tokens": 2816,
+    │   │         "prompt_tokens": 3616,
     │   │         "reasoning_tokens": 0,
-    │   │         "tokens": 3620
+    │   │         "tokens": 3622
     │   │       }
     │   └── generateText [function]
     │       input: {
@@ -3311,7 +3615,7 @@ span_tree:
     │             ],
     │             "provider": "openai.responses"
     │           },
-    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "modelId": "gpt-5.4-nano-2026-03-17",
     │           "specificationVersion": "v2",
     │           "supportedUrls": {
     │             "application/pdf": [
@@ -3367,7 +3671,7 @@ span_tree:
     │               "role": "assistant"
     │             }
     │           ],
-    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "modelId": "gpt-5.4-nano-2026-03-17",
     │           "timestamp": "<timestamp>"
     │         },
     │         "steps": [
@@ -3408,44 +3712,56 @@ span_tree:
     │                   "role": "assistant"
     │                 }
     │               ],
-    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "modelId": "gpt-5.4-nano-2026-03-17",
     │               "timestamp": "<timestamp>"
     │             },
     │             "usage": {
-    │               "cachedInputTokens": 3456,
-    │               "inputTokens": 3617,
-    │               "outputTokens": 3,
+    │               "cachedInputTokens": 2816,
+    │               "inputTokens": 3616,
+    │               "outputTokens": 6,
     │               "reasoningTokens": 0,
-    │               "totalTokens": 3620
+    │               "totalTokens": 3622
     │             },
-    │             "warnings": []
+    │             "warnings": [
+    │               {
+    │                 "details": "temperature is not supported for reasoning models",
+    │                 "setting": "temperature",
+    │                 "type": "unsupported-setting"
+    │               }
+    │             ]
     │           }
     │         ],
     │         "text": "CACHE_OK",
     │         "toolCalls": [],
     │         "toolResults": [],
     │         "totalUsage": {
-    │           "cachedInputTokens": 3456,
-    │           "inputTokens": 3617,
-    │           "outputTokens": 3,
+    │           "cachedInputTokens": 2816,
+    │           "inputTokens": 3616,
+    │           "outputTokens": 6,
     │           "reasoningTokens": 0,
-    │           "totalTokens": 3620
+    │           "totalTokens": 3622
     │         },
     │         "usage": {
-    │           "cachedInputTokens": 3456,
-    │           "inputTokens": 3617,
-    │           "outputTokens": 3,
+    │           "cachedInputTokens": 2816,
+    │           "inputTokens": 3616,
+    │           "outputTokens": 6,
     │           "reasoningTokens": 0,
-    │           "totalTokens": 3620
+    │           "totalTokens": 3622
     │         },
-    │         "warnings": []
+    │         "warnings": [
+    │           {
+    │             "details": "temperature is not supported for reasoning models",
+    │             "setting": "temperature",
+    │             "type": "unsupported-setting"
+    │           }
+    │         ]
     │       }
     │       metadata: {
     │         "braintrust": {
     │           "integration_name": "ai-sdk",
     │           "sdk_language": "typescript"
     │         },
-    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "model": "gpt-5.4-nano-2026-03-17",
     │         "provider": "openai.responses"
     │       }
     │       └── doGenerate [llm]
@@ -3490,17 +3806,23 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "modelId": "gpt-5.4-nano-2026-03-17",
     │               "timestamp": "<timestamp>"
     │             },
     │             "usage": {
-    │               "cachedInputTokens": 3456,
-    │               "inputTokens": 3617,
-    │               "outputTokens": 3,
+    │               "cachedInputTokens": 2816,
+    │               "inputTokens": 3616,
+    │               "outputTokens": 6,
     │               "reasoningTokens": 0,
-    │               "totalTokens": 3620
+    │               "totalTokens": 3622
     │             },
-    │             "warnings": []
+    │             "warnings": [
+    │               {
+    │                 "details": "temperature is not supported for reasoning models",
+    │                 "setting": "temperature",
+    │                 "type": "unsupported-setting"
+    │               }
+    │             ]
     │           }
     │           metadata: {
     │             "braintrust": {
@@ -3508,16 +3830,16 @@ span_tree:
     │               "sdk_language": "typescript"
     │             },
     │             "finish_reason": "stop",
-    │             "model": "gpt-4o-mini-2024-07-18",
+    │             "model": "gpt-5.4-nano-2026-03-17",
     │             "provider": "openai.responses"
     │           }
     │           metrics: {
     │             "completion_reasoning_tokens": 0,
-    │             "completion_tokens": 3,
-    │             "prompt_cached_tokens": 3456,
-    │             "prompt_tokens": 3617,
+    │             "completion_tokens": 6,
+    │             "prompt_cached_tokens": 2816,
+    │             "prompt_tokens": 3616,
     │             "reasoning_tokens": 0,
-    │             "tokens": 3620
+    │             "tokens": 3622
     │           }
     ├── generateText [function]
     │   input: {
@@ -3575,7 +3897,8 @@ span_tree:
     │           "inference_geo": "not_available",
     │           "input_tokens": 3,
     │           "output_tokens": 7,
-    │           "service_tier": "standard"
+    │           "service_tier": "standard",
+    │           "speed": "standard"
     │         }
     │       }
     │     },
@@ -3621,7 +3944,8 @@ span_tree:
     │               "inference_geo": "not_available",
     │               "input_tokens": 3,
     │               "output_tokens": 7,
-    │               "service_tier": "standard"
+    │               "service_tier": "standard",
+    │               "speed": "standard"
     │             }
     │           }
     │         },
@@ -3723,7 +4047,8 @@ span_tree:
     │               "inference_geo": "not_available",
     │               "input_tokens": 3,
     │               "output_tokens": 7,
-    │               "service_tier": "standard"
+    │               "service_tier": "standard",
+    │               "speed": "standard"
     │             }
     │           }
     │         },
@@ -3816,7 +4141,8 @@ span_tree:
     │   │           "inference_geo": "not_available",
     │   │           "input_tokens": 3,
     │   │           "output_tokens": 7,
-    │   │           "service_tier": "standard"
+    │   │           "service_tier": "standard",
+    │   │           "speed": "standard"
     │   │         }
     │   │       }
     │   │     },
@@ -3862,7 +4188,8 @@ span_tree:
     │   │               "inference_geo": "not_available",
     │   │               "input_tokens": 3,
     │   │               "output_tokens": 7,
-    │   │               "service_tier": "standard"
+    │   │               "service_tier": "standard",
+    │   │               "speed": "standard"
     │   │             }
     │   │           }
     │   │         },
@@ -3964,7 +4291,8 @@ span_tree:
     │   │               "inference_geo": "not_available",
     │   │               "input_tokens": 3,
     │   │               "output_tokens": 7,
-    │   │               "service_tier": "standard"
+    │   │               "service_tier": "standard",
+    │   │               "speed": "standard"
     │   │             }
     │   │           }
     │   │         },
@@ -4052,7 +4380,8 @@ span_tree:
     │               "inference_geo": "not_available",
     │               "input_tokens": 3,
     │               "output_tokens": 7,
-    │               "service_tier": "standard"
+    │               "service_tier": "standard",
+    │               "speed": "standard"
     │             }
     │           }
     │         },
@@ -4098,7 +4427,8 @@ span_tree:
     │                   "inference_geo": "not_available",
     │                   "input_tokens": 3,
     │                   "output_tokens": 7,
-    │                   "service_tier": "standard"
+    │                   "service_tier": "standard",
+    │                   "speed": "standard"
     │                 }
     │               }
     │             },
@@ -4200,7 +4530,8 @@ span_tree:
     │                   "inference_geo": "not_available",
     │                   "input_tokens": 3,
     │                   "output_tokens": 7,
-    │                   "service_tier": "standard"
+    │                   "service_tier": "standard",
+    │                   "speed": "standard"
     │                 }
     │               }
     │             },
@@ -4247,7 +4578,7 @@ span_tree:
     │             ],
     │             "provider": "openai.responses"
     │           },
-    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "modelId": "gpt-5.4-nano-2026-03-17",
     │           "specificationVersion": "v2",
     │           "supportedUrls": {
     │             "application/pdf": [
@@ -4294,12 +4625,12 @@ span_tree:
     │               }
     │             ],
     │             "max_output_tokens": 24,
-    │             "model": "gpt-4o-mini-2024-07-18",
-    │             "temperature": 0
+    │             "model": "gpt-5.4-nano-2026-03-17"
     │           }
     │         },
     │         "response": {
     │           "body": {
+    │             "access_programs": null,
     │             "background": false,
     │             "billing": {
     │               "payer": "developer"
@@ -4308,12 +4639,15 @@ span_tree:
     │             "created_at": 0,
     │             "error": null,
     │             "frequency_penalty": 0,
+    │             "image": {
+    │               "context_compression": "disabled"
+    │             },
     │             "incomplete_details": null,
     │             "instructions": null,
     │             "max_output_tokens": 24,
     │             "max_tool_calls": null,
     │             "metadata": {},
-    │             "model": "gpt-4o-mini-2024-07-18",
+    │             "model": "gpt-5.4-nano-2026-03-17",
     │             "moderation": null,
     │             "object": "response",
     │             "output": [
@@ -4326,6 +4660,7 @@ span_tree:
     │                     "type": "output_text"
     │                   }
     │                 ],
+    │                 "phase": "final_answer",
     │                 "role": "assistant",
     │                 "status": "completed",
     │                 "type": "message"
@@ -4336,15 +4671,16 @@ span_tree:
     │             "previous_response_id": null,
     │             "prompt_cache_retention": "in_memory",
     │             "reasoning": {
-    │               "context": null,
-    │               "effort": null,
+    │               "context": "current_turn",
+    │               "effort": "none",
+    │               "mode": "standard",
     │               "summary": null
     │             },
     │             "safety_identifier": null,
     │             "service_tier": "default",
     │             "status": "completed",
-    │             "store": true,
-    │             "temperature": 0,
+    │             "store": false,
+    │             "temperature": 1,
     │             "text": {
     │               "format": {
     │                 "type": "text"
@@ -4372,19 +4708,19 @@ span_tree:
     │             },
     │             "tools": [],
     │             "top_logprobs": 0,
-    │             "top_p": 1,
+    │             "top_p": 0.98,
     │             "truncation": "disabled",
     │             "usage": {
-    │               "input_tokens": 17,
+    │               "input_tokens": 16,
     │               "input_tokens_details": {
     │                 "cache_write_tokens": 0,
     │                 "cached_tokens": 0
     │               },
-    │               "output_tokens": 3,
+    │               "output_tokens": 6,
     │               "output_tokens_details": {
     │                 "reasoning_tokens": 0
     │               },
-    │               "total_tokens": 20
+    │               "total_tokens": 22
     │             },
     │             "user": null
     │           },
@@ -4404,7 +4740,7 @@ span_tree:
     │               "role": "assistant"
     │             }
     │           ],
-    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "modelId": "gpt-5.4-nano-2026-03-17",
     │           "timestamp": "<timestamp>"
     │         },
     │         "steps": [
@@ -4441,12 +4777,12 @@ span_tree:
     │                   }
     │                 ],
     │                 "max_output_tokens": 24,
-    │                 "model": "gpt-4o-mini-2024-07-18",
-    │                 "temperature": 0
+    │                 "model": "gpt-5.4-nano-2026-03-17"
     │               }
     │             },
     │             "response": {
     │               "body": {
+    │                 "access_programs": null,
     │                 "background": false,
     │                 "billing": {
     │                   "payer": "developer"
@@ -4455,12 +4791,15 @@ span_tree:
     │                 "created_at": 0,
     │                 "error": null,
     │                 "frequency_penalty": 0,
+    │                 "image": {
+    │                   "context_compression": "disabled"
+    │                 },
     │                 "incomplete_details": null,
     │                 "instructions": null,
     │                 "max_output_tokens": 24,
     │                 "max_tool_calls": null,
     │                 "metadata": {},
-    │                 "model": "gpt-4o-mini-2024-07-18",
+    │                 "model": "gpt-5.4-nano-2026-03-17",
     │                 "moderation": null,
     │                 "object": "response",
     │                 "output": [
@@ -4473,6 +4812,7 @@ span_tree:
     │                         "type": "output_text"
     │                       }
     │                     ],
+    │                     "phase": "final_answer",
     │                     "role": "assistant",
     │                     "status": "completed",
     │                     "type": "message"
@@ -4483,15 +4823,16 @@ span_tree:
     │                 "previous_response_id": null,
     │                 "prompt_cache_retention": "in_memory",
     │                 "reasoning": {
-    │                   "context": null,
-    │                   "effort": null,
+    │                   "context": "current_turn",
+    │                   "effort": "none",
+    │                   "mode": "standard",
     │                   "summary": null
     │                 },
     │                 "safety_identifier": null,
     │                 "service_tier": "default",
     │                 "status": "completed",
-    │                 "store": true,
-    │                 "temperature": 0,
+    │                 "store": false,
+    │                 "temperature": 1,
     │                 "text": {
     │                   "format": {
     │                     "type": "text"
@@ -4519,19 +4860,19 @@ span_tree:
     │                 },
     │                 "tools": [],
     │                 "top_logprobs": 0,
-    │                 "top_p": 1,
+    │                 "top_p": 0.98,
     │                 "truncation": "disabled",
     │                 "usage": {
-    │                   "input_tokens": 17,
+    │                   "input_tokens": 16,
     │                   "input_tokens_details": {
     │                     "cache_write_tokens": 0,
     │                     "cached_tokens": 0
     │                   },
-    │                   "output_tokens": 3,
+    │                   "output_tokens": 6,
     │                   "output_tokens_details": {
     │                     "reasoning_tokens": 0
     │                   },
-    │                   "total_tokens": 20
+    │                   "total_tokens": 22
     │                 },
     │                 "user": null
     │               },
@@ -4551,17 +4892,23 @@ span_tree:
     │                   "role": "assistant"
     │                 }
     │               ],
-    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "modelId": "gpt-5.4-nano-2026-03-17",
     │               "timestamp": "<timestamp>"
     │             },
     │             "usage": {
     │               "cachedInputTokens": 0,
-    │               "inputTokens": 17,
-    │               "outputTokens": 3,
+    │               "inputTokens": 16,
+    │               "outputTokens": 6,
     │               "reasoningTokens": 0,
-    │               "totalTokens": 20
+    │               "totalTokens": 22
     │             },
-    │             "warnings": []
+    │             "warnings": [
+    │               {
+    │                 "details": "temperature is not supported for reasoning models",
+    │                 "setting": "temperature",
+    │                 "type": "unsupported-setting"
+    │               }
+    │             ]
     │           }
     │         ],
     │         "text": "<omitted>",
@@ -4569,26 +4916,32 @@ span_tree:
     │         "toolResults": [],
     │         "totalUsage": {
     │           "cachedInputTokens": 0,
-    │           "inputTokens": 17,
-    │           "outputTokens": 3,
+    │           "inputTokens": 16,
+    │           "outputTokens": 6,
     │           "reasoningTokens": 0,
-    │           "totalTokens": 20
+    │           "totalTokens": 22
     │         },
     │         "usage": {
     │           "cachedInputTokens": 0,
-    │           "inputTokens": 17,
-    │           "outputTokens": 3,
+    │           "inputTokens": 16,
+    │           "outputTokens": 6,
     │           "reasoningTokens": 0,
-    │           "totalTokens": 20
+    │           "totalTokens": 22
     │         },
-    │         "warnings": []
+    │         "warnings": [
+    │           {
+    │             "details": "temperature is not supported for reasoning models",
+    │             "setting": "temperature",
+    │             "type": "unsupported-setting"
+    │           }
+    │         ]
     │       }
     │       metadata: {
     │         "braintrust": {
     │           "integration_name": "ai-sdk",
     │           "sdk_language": "typescript"
     │         },
-    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "model": "gpt-5.4-nano-2026-03-17",
     │         "provider": "openai.responses"
     │       }
     │       └── doGenerate [llm]
@@ -4628,17 +4981,23 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "modelId": "gpt-5.4-nano-2026-03-17",
     │               "timestamp": "<timestamp>"
     │             },
     │             "usage": {
     │               "cachedInputTokens": 0,
-    │               "inputTokens": 17,
-    │               "outputTokens": 3,
+    │               "inputTokens": 16,
+    │               "outputTokens": 6,
     │               "reasoningTokens": 0,
-    │               "totalTokens": 20
+    │               "totalTokens": 22
     │             },
-    │             "warnings": []
+    │             "warnings": [
+    │               {
+    │                 "details": "temperature is not supported for reasoning models",
+    │                 "setting": "temperature",
+    │                 "type": "unsupported-setting"
+    │               }
+    │             ]
     │           }
     │           metadata: {
     │             "braintrust": {
@@ -4646,16 +5005,16 @@ span_tree:
     │               "sdk_language": "typescript"
     │             },
     │             "finish_reason": "stop",
-    │             "model": "gpt-4o-mini-2024-07-18",
+    │             "model": "gpt-5.4-nano-2026-03-17",
     │             "provider": "openai.responses"
     │           }
     │           metrics: {
     │             "completion_reasoning_tokens": 0,
-    │             "completion_tokens": 3,
+    │             "completion_tokens": 6,
     │             "prompt_cached_tokens": 0,
-    │             "prompt_tokens": 17,
+    │             "prompt_tokens": 16,
     │             "reasoning_tokens": 0,
-    │             "tokens": 20
+    │             "tokens": 22
     │           }
     ├── ai-sdk-generate-object-operation
     │   metadata: {
@@ -4672,7 +5031,7 @@ span_tree:
     │             ],
     │             "provider": "openai.responses"
     │           },
-    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "modelId": "gpt-5.4-nano-2026-03-17",
     │           "specificationVersion": "v2",
     │           "supportedUrls": {
     │             "application/pdf": [
@@ -4712,24 +5071,30 @@ span_tree:
     │         },
     │         "response": {
     │           "body": "<omitted>",
-    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "modelId": "gpt-5.4-nano-2026-03-17",
     │           "timestamp": "<timestamp>"
     │         },
     │         "usage": {
     │           "cachedInputTokens": 0,
-    │           "inputTokens": 38,
-    │           "outputTokens": 6,
+    │           "inputTokens": 36,
+    │           "outputTokens": 12,
     │           "reasoningTokens": 0,
-    │           "totalTokens": 44
+    │           "totalTokens": 48
     │         },
-    │         "warnings": []
+    │         "warnings": [
+    │           {
+    │             "details": "temperature is not supported for reasoning models",
+    │             "setting": "temperature",
+    │             "type": "unsupported-setting"
+    │           }
+    │         ]
     │       }
     │       metadata: {
     │         "braintrust": {
     │           "integration_name": "ai-sdk",
     │           "sdk_language": "typescript"
     │         },
-    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "model": "gpt-5.4-nano-2026-03-17",
     │         "provider": "openai.responses"
     │       }
     │       └── doGenerate [llm]
@@ -4785,17 +5150,23 @@ span_tree:
     │             },
     │             "response": {
     │               "body": "<omitted>",
-    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "modelId": "gpt-5.4-nano-2026-03-17",
     │               "timestamp": "<timestamp>"
     │             },
     │             "usage": {
     │               "cachedInputTokens": 0,
-    │               "inputTokens": 38,
-    │               "outputTokens": 6,
+    │               "inputTokens": 36,
+    │               "outputTokens": 12,
     │               "reasoningTokens": 0,
-    │               "totalTokens": 44
+    │               "totalTokens": 48
     │             },
-    │             "warnings": []
+    │             "warnings": [
+    │               {
+    │                 "details": "temperature is not supported for reasoning models",
+    │                 "setting": "temperature",
+    │                 "type": "unsupported-setting"
+    │               }
+    │             ]
     │           }
     │           metadata: {
     │             "braintrust": {
@@ -4803,16 +5174,16 @@ span_tree:
     │               "sdk_language": "typescript"
     │             },
     │             "finish_reason": "stop",
-    │             "model": "gpt-4o-mini-2024-07-18",
+    │             "model": "gpt-5.4-nano-2026-03-17",
     │             "provider": "openai.responses"
     │           }
     │           metrics: {
     │             "completion_reasoning_tokens": 0,
-    │             "completion_tokens": 6,
+    │             "completion_tokens": 12,
     │             "prompt_cached_tokens": 0,
-    │             "prompt_tokens": 38,
+    │             "prompt_tokens": 36,
     │             "reasoning_tokens": 0,
-    │             "tokens": 44
+    │             "tokens": 48
     │           }
     ├── ai-sdk-stream-object-operation
     │   metadata: {
@@ -4829,7 +5200,7 @@ span_tree:
     │             ],
     │             "provider": "openai.responses"
     │           },
-    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "modelId": "gpt-5.4-nano-2026-03-17",
     │           "specificationVersion": "v2",
     │           "supportedUrls": {
     │             "application/pdf": [
@@ -4867,7 +5238,7 @@ span_tree:
     │           "integration_name": "ai-sdk",
     │           "sdk_language": "typescript"
     │         },
-    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "model": "gpt-5.4-nano-2026-03-17",
     │         "provider": "openai.responses"
     │       }
     │       metrics: {
@@ -4912,10 +5283,10 @@ span_tree:
     │             "toolCalls": [],
     │             "usage": {
     │               "cachedInputTokens": 0,
-    │               "inputTokens": 38,
-    │               "outputTokens": 6,
+    │               "inputTokens": 36,
+    │               "outputTokens": 12,
     │               "reasoningTokens": 0,
-    │               "totalTokens": 44
+    │               "totalTokens": 48
     │             }
     │           }
     │           metadata: {
@@ -4924,17 +5295,17 @@ span_tree:
     │               "sdk_language": "typescript"
     │             },
     │             "finish_reason": "stop",
-    │             "model": "gpt-4o-mini-2024-07-18",
+    │             "model": "gpt-5.4-nano-2026-03-17",
     │             "provider": "openai.responses"
     │           }
     │           metrics: {
     │             "completion_reasoning_tokens": 0,
-    │             "completion_tokens": 6,
+    │             "completion_tokens": 12,
     │             "prompt_cached_tokens": 0,
-    │             "prompt_tokens": 38,
+    │             "prompt_tokens": 36,
     │             "reasoning_tokens": 0,
     │             "time_to_first_token": 0,
-    │             "tokens": 44
+    │             "tokens": 48
     │           }
     ├── ai-sdk-agent-generate-operation
     │   metadata: {
@@ -4988,7 +5359,7 @@ span_tree:
     │               "role": "assistant"
     │             }
     │           ],
-    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "modelId": "gpt-5.4-nano-2026-03-17",
     │           "timestamp": "<timestamp>"
     │         },
     │         "steps": [
@@ -5029,15 +5400,15 @@ span_tree:
     │                   "role": "assistant"
     │                 }
     │               ],
-    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "modelId": "gpt-5.4-nano-2026-03-17",
     │               "timestamp": "<timestamp>"
     │             },
     │             "usage": {
     │               "cachedInputTokens": 0,
-    │               "inputTokens": 26,
-    │               "outputTokens": 3,
+    │               "inputTokens": 25,
+    │               "outputTokens": 6,
     │               "reasoningTokens": 0,
-    │               "totalTokens": 29
+    │               "totalTokens": 31
     │             },
     │             "warnings": []
     │           }
@@ -5047,17 +5418,17 @@ span_tree:
     │         "toolResults": [],
     │         "totalUsage": {
     │           "cachedInputTokens": 0,
-    │           "inputTokens": 26,
-    │           "outputTokens": 3,
+    │           "inputTokens": 25,
+    │           "outputTokens": 6,
     │           "reasoningTokens": 0,
-    │           "totalTokens": 29
+    │           "totalTokens": 31
     │         },
     │         "usage": {
     │           "cachedInputTokens": 0,
-    │           "inputTokens": 26,
-    │           "outputTokens": 3,
+    │           "inputTokens": 25,
+    │           "outputTokens": 6,
     │           "reasoningTokens": 0,
-    │           "totalTokens": 29
+    │           "totalTokens": 31
     │         },
     │         "warnings": []
     │       }
@@ -5066,7 +5437,7 @@ span_tree:
     │           "integration_name": "ai-sdk",
     │           "sdk_language": "typescript"
     │         },
-    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "model": "gpt-5.4-nano-2026-03-17",
     │         "provider": "openai.responses"
     │       }
     │       └── generateText [function]
@@ -5085,7 +5456,7 @@ span_tree:
     │                 ],
     │                 "provider": "openai.responses"
     │               },
-    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "modelId": "gpt-5.4-nano-2026-03-17",
     │               "specificationVersion": "v2",
     │               "supportedUrls": {
     │                 "application/pdf": [
@@ -5135,7 +5506,7 @@ span_tree:
     │                   "role": "assistant"
     │                 }
     │               ],
-    │               "modelId": "gpt-4o-mini-2024-07-18",
+    │               "modelId": "gpt-5.4-nano-2026-03-17",
     │               "timestamp": "<timestamp>"
     │             },
     │             "steps": [
@@ -5176,15 +5547,15 @@ span_tree:
     │                       "role": "assistant"
     │                     }
     │                   ],
-    │                   "modelId": "gpt-4o-mini-2024-07-18",
+    │                   "modelId": "gpt-5.4-nano-2026-03-17",
     │                   "timestamp": "<timestamp>"
     │                 },
     │                 "usage": {
     │                   "cachedInputTokens": 0,
-    │                   "inputTokens": 26,
-    │                   "outputTokens": 3,
+    │                   "inputTokens": 25,
+    │                   "outputTokens": 6,
     │                   "reasoningTokens": 0,
-    │                   "totalTokens": 29
+    │                   "totalTokens": 31
     │                 },
     │                 "warnings": []
     │               }
@@ -5194,17 +5565,17 @@ span_tree:
     │             "toolResults": [],
     │             "totalUsage": {
     │               "cachedInputTokens": 0,
-    │               "inputTokens": 26,
-    │               "outputTokens": 3,
+    │               "inputTokens": 25,
+    │               "outputTokens": 6,
     │               "reasoningTokens": 0,
-    │               "totalTokens": 29
+    │               "totalTokens": 31
     │             },
     │             "usage": {
     │               "cachedInputTokens": 0,
-    │               "inputTokens": 26,
-    │               "outputTokens": 3,
+    │               "inputTokens": 25,
+    │               "outputTokens": 6,
     │               "reasoningTokens": 0,
-    │               "totalTokens": 29
+    │               "totalTokens": 31
     │             },
     │             "warnings": []
     │           }
@@ -5213,7 +5584,7 @@ span_tree:
     │               "integration_name": "ai-sdk",
     │               "sdk_language": "typescript"
     │             },
-    │             "model": "gpt-4o-mini-2024-07-18",
+    │             "model": "gpt-5.4-nano-2026-03-17",
     │             "provider": "openai.responses"
     │           }
     │           └── doGenerate [llm]
@@ -5256,15 +5627,15 @@ span_tree:
     │                 },
     │                 "response": {
     │                   "body": "<omitted>",
-    │                   "modelId": "gpt-4o-mini-2024-07-18",
+    │                   "modelId": "gpt-5.4-nano-2026-03-17",
     │                   "timestamp": "<timestamp>"
     │                 },
     │                 "usage": {
     │                   "cachedInputTokens": 0,
-    │                   "inputTokens": 26,
-    │                   "outputTokens": 3,
+    │                   "inputTokens": 25,
+    │                   "outputTokens": 6,
     │                   "reasoningTokens": 0,
-    │                   "totalTokens": 29
+    │                   "totalTokens": 31
     │                 },
     │                 "warnings": []
     │               }
@@ -5274,16 +5645,16 @@ span_tree:
     │                   "sdk_language": "typescript"
     │                 },
     │                 "finish_reason": "stop",
-    │                 "model": "gpt-4o-mini-2024-07-18",
+    │                 "model": "gpt-5.4-nano-2026-03-17",
     │                 "provider": "openai.responses"
     │               }
     │               metrics: {
     │                 "completion_reasoning_tokens": 0,
-    │                 "completion_tokens": 3,
+    │                 "completion_tokens": 6,
     │                 "prompt_cached_tokens": 0,
-    │                 "prompt_tokens": 26,
+    │                 "prompt_tokens": 25,
     │                 "reasoning_tokens": 0,
-    │                 "tokens": 29
+    │                 "tokens": 31
     │               }
     └── ai-sdk-agent-stream-operation
         metadata: {
@@ -5309,7 +5680,7 @@ span_tree:
                 "integration_name": "ai-sdk",
                 "sdk_language": "typescript"
               },
-              "model": "gpt-4o-mini-2024-07-18",
+              "model": "gpt-5.4-nano-2026-03-17",
               "provider": "openai.responses"
             }
             metrics: {
@@ -5331,7 +5702,7 @@ span_tree:
                       ],
                       "provider": "openai.responses"
                     },
-                    "modelId": "gpt-4o-mini-2024-07-18",
+                    "modelId": "gpt-5.4-nano-2026-03-17",
                     "specificationVersion": "v2",
                     "supportedUrls": {
                       "application/pdf": [
@@ -5353,7 +5724,7 @@ span_tree:
                     "integration_name": "ai-sdk",
                     "sdk_language": "typescript"
                   },
-                  "model": "gpt-4o-mini-2024-07-18",
+                  "model": "gpt-5.4-nano-2026-03-17",
                   "provider": "openai.responses"
                 }
                 metrics: {
@@ -5385,10 +5756,10 @@ span_tree:
                       "toolCalls": [],
                       "usage": {
                         "cachedInputTokens": 0,
-                        "inputTokens": 27,
-                        "outputTokens": 4,
+                        "inputTokens": 26,
+                        "outputTokens": 7,
                         "reasoningTokens": 0,
-                        "totalTokens": 31
+                        "totalTokens": 33
                       }
                     }
                     metadata: {
@@ -5397,15 +5768,15 @@ span_tree:
                         "sdk_language": "typescript"
                       },
                       "finish_reason": "stop",
-                      "model": "gpt-4o-mini-2024-07-18",
+                      "model": "gpt-5.4-nano-2026-03-17",
                       "provider": "openai.responses"
                     }
                     metrics: {
                       "completion_reasoning_tokens": 0,
-                      "completion_tokens": 4,
+                      "completion_tokens": 7,
                       "prompt_cached_tokens": 0,
-                      "prompt_tokens": 27,
+                      "prompt_tokens": 26,
                       "reasoning_tokens": 0,
                       "time_to_first_token": 0,
-                      "tokens": 31
+                      "tokens": 33
                     }
