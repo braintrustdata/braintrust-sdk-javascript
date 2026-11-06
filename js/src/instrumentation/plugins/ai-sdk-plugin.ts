@@ -1939,7 +1939,7 @@ const processContentPart = (part: any): any => {
       (part.mimeType || part.mediaType)
     ) {
       const fileAttachment = convertDataToAttachment(
-        part.data,
+        unwrapInlineFileData(part.data),
         part.mimeType || part.mediaType,
         part.name || part.filename,
       );
@@ -1971,6 +1971,10 @@ const processContentPart = (part: any): any => {
 
   return part;
 };
+
+// AI SDK v7 tags inline file bytes as { type: "data", data }.
+const unwrapInlineFileData = (data: unknown): unknown =>
+  isObject(data) && data.type === "data" && "data" in data ? data.data : data;
 
 const convertImageToAttachment = (
   image: any,
