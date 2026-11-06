@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { runInNewContext } from "node:vm";
 import {
   classifyMastraTarget,
   patchMastraSource,
@@ -68,9 +69,50 @@ describe("patchMastraSource — @mastra/core ESM entry", () => {
     const patched = patchMastraSource(original, "core", "esm");
     expect(patched).toContain("../chunk-DIFFERENT.js");
   });
+
+  it("imports the aliased class exported by Mastra 1.81", async () => {
+    const chunk = `data:text/javascript,${encodeURIComponent(
+      "export class t { constructor(options) { this.options = options; } }",
+    )}`;
+    const original = `export { t as Mastra } from "${chunk}";`;
+    const patched = patchMastraSource(original, "core", "esm");
+
+    expect(patched).toContain("new Proxy(__braintrustOrigMastra,");
+    const { Mastra } = await import(
+      `data:text/javascript,${encodeURIComponent(patched)}`
+    );
+    const options = { observability: {} };
+    expect(new Mastra(options).options).toBe(options);
+  });
 });
 
 describe("patchMastraSource — @mastra/core CJS entry", () => {
+  it("wraps the named chunk exported by Mastra 1.81", () => {
+    const original = `Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
+const require_mastra = require("./mastra-HWojjf5a.cjs");
+exports.Mastra = require_mastra.Mastra;`;
+    const patched = patchMastraSource(original, "core", "cjs");
+    class Mastra {
+      constructor(public options: { observability?: unknown }) {}
+    }
+    class Observability {}
+    const exports = {} as { Mastra: typeof Mastra };
+    runInNewContext(patched, {
+      exports,
+      require: (name: string) => {
+        if (name === "./mastra-HWojjf5a.cjs") return { Mastra };
+        if (name === "@mastra/observability") return { Observability };
+        throw new Error(`Unexpected import: ${name}`);
+      },
+    });
+
+    const options = {};
+    const instance = new exports.Mastra(options);
+    expect(instance).toBeInstanceOf(Mastra);
+    expect(instance.options.observability).toBeInstanceOf(Observability);
+    expect(options).toEqual({});
+  });
+
   it("rewrites the require + defineProperty shape into a Proxy", () => {
     const original = `'use strict';
 var chunkVOP4TUHG_cjs = require('./chunk-VOP4TUHG.cjs');
