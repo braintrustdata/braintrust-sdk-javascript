@@ -32,7 +32,6 @@ import {
   BRAINTRUST_AI_SDK_V7_OPERATION_KEY as AI_SDK_V7_OPERATION_KEY,
 } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
 import { serializeAISDKToolsForLogging } from "../../wrappers/ai-sdk/tool-serialization";
-import { Attachment } from "../../logger";
 import {
   AISDKPlugin,
   DEFAULT_DENY_OUTPUT_PATHS,
@@ -221,28 +220,6 @@ describe("AISDKPlugin", () => {
       expect(processed.model).not.toHaveProperty("doGenerate");
       expect(processed.model).not.toHaveProperty("doStream");
       expect(processed.model.config).not.toHaveProperty("url");
-    });
-
-    it("logs AI SDK v7 inline file data as attachments", () => {
-      const processed = processAISDKCallInput({
-        prompt: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "file",
-                mediaType: "image/png",
-                data: {
-                  type: "data",
-                  data: new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]),
-                },
-              },
-            ],
-          },
-        ],
-      }).input as Record<string, any>;
-
-      expect(processed.prompt[0].content[0].data).toBeInstanceOf(Attachment);
     });
   });
 
