@@ -246,7 +246,7 @@
     "express": "^5.2.1",
     "http-errors": "^2.0.0",
     "meriyah": "^6.1.4",
-    "minimatch": "^10.2.5",
+    "minimatch": "^11.0.1",
     "module-details-from-path": "^1.0.4",
     "mustache": "^4.2.0",
     "pluralize": "^8.0.0",
