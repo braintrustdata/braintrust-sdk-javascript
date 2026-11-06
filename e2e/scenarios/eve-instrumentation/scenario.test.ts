@@ -292,10 +292,12 @@ describe.sequential("eve instrumentation variants", () => {
           scenario: "eve-instrumentation",
           testRunId: expect.any(String),
         });
-        // Eve 0.70+ runs subagents as tasks, so the call returns a receipt and
-        // the result reaches the parent in a later step.
+        // Earlier task APIs settle the call with a receipt. Eve 0.91's
+        // call.settled event carries the completed child's result instead.
         expect(researcher?.output).toContain(
-          scenario.tasks ? "Started task researcher-" : "Researcher result",
+          scenario.tasks && Number(scenario.version.split(".")[1]) < 91
+            ? "Started task researcher-"
+            : "Researcher result",
         );
         expect(researcher?.error).toBeUndefined();
 
