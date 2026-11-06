@@ -18,7 +18,9 @@
     "metadata": {
       "entity_id": "weather-agent",
       "entity_name": "Weather Agent",
-      "entity_type": "agent"
+      "entity_type": "agent",
+      "model": "mock-model-id",
+      "provider": "mock-provider"
     },
     "name": "agent run: 'weather-agent'",
     "output": {
@@ -74,7 +76,16 @@
     "type": "llm"
   },
   {
-    "input": {},
+    "input": [
+      {
+        "content": "Answer weather questions with the provided mock forecast.",
+        "role": "system"
+      },
+      {
+        "content": "What is the weather in Paris?",
+        "role": "user"
+      }
+    ],
     "metadata": {
       "entity_id": "weather-agent",
       "entity_name": "Weather Agent",
@@ -91,6 +102,78 @@
       "toolCalls": []
     },
     "type": "llm"
+  },
+  {
+    "input": {
+      "prompt": [
+        {
+          "content": "Answer weather questions with the provided mock forecast.",
+          "role": "system"
+        },
+        {
+          "content": [
+            {
+              "providerOptions": {
+                "mastra": {
+                  "createdAt": 0
+                }
+              },
+              "text": "What is the weather in Paris?",
+              "type": "text"
+            }
+          ],
+          "role": "user"
+        }
+      ],
+      "retryCount": 0,
+      "stepNumber": 0
+    },
+    "metadata": {
+      "entity_id": "provider-history-compat",
+      "entity_name": "Provider History Compat",
+      "entity_type": "input_processor"
+    },
+    "name": "llm request processor: provider-history-compat",
+    "output": {
+      "shortCircuited": false
+    },
+    "type": "function"
+  },
+  {
+    "input": {
+      "prompt": [
+        {
+          "content": "Answer weather questions with the provided mock forecast.",
+          "role": "system"
+        },
+        {
+          "content": [
+            {
+              "providerOptions": {
+                "mastra": {
+                  "createdAt": 0
+                }
+              },
+              "text": "What is the weather in Paris?",
+              "type": "text"
+            }
+          ],
+          "role": "user"
+        }
+      ],
+      "retryCount": 0,
+      "stepNumber": 0
+    },
+    "metadata": {
+      "entity_id": "unsupported-file-handler",
+      "entity_name": "Unsupported File Handler",
+      "entity_type": "input_processor"
+    },
+    "name": "llm request processor: unsupported-file-handler",
+    "output": {
+      "shortCircuited": false
+    },
+    "type": "function"
   },
   {
     "metadata": {
@@ -116,7 +199,9 @@
     "metadata": {
       "entity_id": "weather-agent",
       "entity_name": "Weather Agent",
-      "entity_type": "agent"
+      "entity_type": "agent",
+      "model": "mock-model-id",
+      "provider": "mock-provider"
     },
     "name": "agent run: 'weather-agent'",
     "output": {
@@ -172,7 +257,16 @@
     "type": "llm"
   },
   {
-    "input": {},
+    "input": [
+      {
+        "content": "Answer weather questions with the provided mock forecast.",
+        "role": "system"
+      },
+      {
+        "content": "Stream the Paris forecast.",
+        "role": "user"
+      }
+    ],
     "metadata": {
       "entity_id": "weather-agent",
       "entity_name": "Weather Agent",
@@ -189,6 +283,78 @@
       "toolCalls": []
     },
     "type": "llm"
+  },
+  {
+    "input": {
+      "prompt": [
+        {
+          "content": "Answer weather questions with the provided mock forecast.",
+          "role": "system"
+        },
+        {
+          "content": [
+            {
+              "providerOptions": {
+                "mastra": {
+                  "createdAt": 0
+                }
+              },
+              "text": "Stream the Paris forecast.",
+              "type": "text"
+            }
+          ],
+          "role": "user"
+        }
+      ],
+      "retryCount": 0,
+      "stepNumber": 0
+    },
+    "metadata": {
+      "entity_id": "provider-history-compat",
+      "entity_name": "Provider History Compat",
+      "entity_type": "input_processor"
+    },
+    "name": "llm request processor: provider-history-compat",
+    "output": {
+      "shortCircuited": false
+    },
+    "type": "function"
+  },
+  {
+    "input": {
+      "prompt": [
+        {
+          "content": "Answer weather questions with the provided mock forecast.",
+          "role": "system"
+        },
+        {
+          "content": [
+            {
+              "providerOptions": {
+                "mastra": {
+                  "createdAt": 0
+                }
+              },
+              "text": "Stream the Paris forecast.",
+              "type": "text"
+            }
+          ],
+          "role": "user"
+        }
+      ],
+      "retryCount": 0,
+      "stepNumber": 0
+    },
+    "metadata": {
+      "entity_id": "unsupported-file-handler",
+      "entity_name": "Unsupported File Handler",
+      "entity_type": "input_processor"
+    },
+    "name": "llm request processor: unsupported-file-handler",
+    "output": {
+      "shortCircuited": false
+    },
+    "type": "function"
   },
   {
     "metadata": {
