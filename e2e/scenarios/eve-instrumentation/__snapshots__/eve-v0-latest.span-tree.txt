@@ -84,7 +84,7 @@ span_tree:
 │   │   input: {
 │   │     "message": "Run the Braintrust Eve instrumentation e2e scenario"
 │   │   }
-│   │   output: "Started task researcher-<id>. Its result will arrive in a <task_result> message. To send it another message, call researcher again with taskId researcher-<id>."
+│   │   output: "Researcher result: Eve instrumentation https://eve.dev/docs/guides/instrumentation"
 │   │   metadata: {
 │   │     "eve.action_kind": "subagent-call",
 │   │     "eve.session_id": "<eve.session_id:1>",
@@ -750,7 +750,7 @@ span_tree:
 │   │   input: {
 │   │     "message": "Run the Braintrust Eve instrumentation e2e scenario again"
 │   │   }
-│   │   output: "Started task researcher-<id>. Its result will arrive in a <task_result> message. To send it another message, call researcher again with taskId researcher-<id>."
+│   │   output: "Researcher result: Eve instrumentation https://eve.dev/docs/guides/instrumentation"
 │   │   metadata: {
 │   │     "eve.action_kind": "subagent-call",
 │   │     "eve.session_id": "<eve.session_id:1>",
@@ -1537,7 +1537,7 @@ span_tree:
         │   input: {
         │     "message": "Run the Braintrust Eve instrumentation e2e scenario from a traced caller"
         │   }
-        │   output: "Started task researcher-<id>. Its result will arrive in a <task_result> message. To send it another message, call researcher again with taskId researcher-<id>."
+        │   output: "Researcher result: Eve instrumentation https://eve.dev/docs/guides/instrumentation"
         │   metadata: {
         │     "eve.action_kind": "subagent-call",
         │     "eve.session_id": "<eve.session_id:1>",

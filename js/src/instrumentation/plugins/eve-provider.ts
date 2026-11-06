@@ -17,14 +17,19 @@ import type {
   EveInstrumentationAttemptScope,
   EveProviderActionStartedEvent,
   EveProviderActionTerminalEvent,
+  EveProviderCallRequestedEvent,
+  EveProviderCallSettledEvent,
   EveProviderContext,
   EveProviderDefinition,
   EveProviderModelCallStartedEvent,
+  EveProviderModelCallSettledEvent,
   EveProviderModelCallTerminalEvent,
+  EveProviderModelRunTerminalEvent,
   EveProviderStepAttemptTerminalEvent,
   EveProviderToolCallStartedEvent,
   EveProviderToolCallTerminalEvent,
   EveProviderTurnStartedEvent,
+  EveProviderTurnSettledEvent,
   EveProviderTurnTerminalEvent,
   EveProviderUsage,
 } from "../../vendor-sdk-types/eve";
@@ -55,6 +60,11 @@ type ActiveSpan = {
 };
 
 type EveProviderEvent =
+  | EveProviderCallRequestedEvent
+  | EveProviderCallSettledEvent
+  | EveProviderModelCallSettledEvent
+  | EveProviderModelRunTerminalEvent
+  | EveProviderTurnSettledEvent
   | EveProviderActionStartedEvent
   | EveProviderActionTerminalEvent
   | EveProviderModelCallStartedEvent
@@ -92,6 +102,80 @@ export function createEveInstrumentationProvider(
       recordOutputs: true,
     }),
     events: {
+      "call.requested": providerHandler("call.requested", (event, context) =>
+        bridge.handleActionStarted(
+          {
+            ...event,
+            type: "tool.call.started",
+            kind:
+              event.capability.kind === "skill"
+                ? "load-skill"
+                : event.capability.kind === "agent"
+                  ? event.capability.remote
+                    ? "remote-agent-call"
+                    : "subagent-call"
+                  : "tool-call",
+          },
+          context,
+        ),
+      ),
+      "call.settled": providerHandler("call.settled", (event, context) =>
+        bridge.handleActionTerminal(
+          event.outcome === "completed"
+            ? {
+                ...event,
+                type: "tool.call.completed",
+                outcome: "completed",
+                output: { type: "result", output: event.output },
+              }
+            : {
+                ...event,
+                type: "tool.call.failed",
+                outcome:
+                  event.outcome === "interrupted" ? "abandoned" : event.outcome,
+              },
+          context,
+        ),
+      ),
+      "model.call.settled": providerHandler(
+        "model.call.settled",
+        (event, context) =>
+          bridge.handleModelTerminal(
+            event.outcome === "completed"
+              ? { ...event, type: "model.call.completed" }
+              : { ...event, type: "model.call.failed" },
+            context,
+          ),
+      ),
+      "model.settled": providerHandler("model.settled", (event) =>
+        bridge.handleStepAttemptTerminal({
+          ...event,
+          type:
+            event.outcome === "failed"
+              ? "step.attempt.failed"
+              : "step.attempt.completed",
+        }),
+      ),
+      "model.retried": providerHandler("model.retried", (event) =>
+        bridge.handleStepAttemptTerminal({
+          ...event,
+          type: "step.attempt.failed",
+        }),
+      ),
+      "turn.settled": providerHandler("turn.settled", (event, context) =>
+        bridge.handleTurnTerminal(
+          {
+            ...event,
+            type:
+              event.outcome === "failed"
+                ? "turn.failed"
+                : event.outcome === "cancelled"
+                  ? "turn.cancelled"
+                  : "turn.completed",
+          },
+          context,
+        ),
+      ),
       "action.completed": providerHandler(
         "action.completed",
         bridge.handleActionTerminal.bind(bridge),
@@ -334,9 +418,10 @@ class EveProviderBridge {
         span,
         turnKey: turnKey(event.scope.sessionId, event.scope.turnId),
       });
-      const keys = this.modelsByAttempt.get(event.scope.attemptId) ?? new Set();
+      const attempt = attemptKey(event.scope);
+      const keys = this.modelsByAttempt.get(attempt) ?? new Set();
       keys.add(event.idempotencyKey);
-      this.modelsByAttempt.set(event.scope.attemptId, keys);
+      this.modelsByAttempt.set(attempt, keys);
     });
   }
 
@@ -395,7 +480,7 @@ class EveProviderBridge {
         }
       }
       this.settledOperations.set(event.idempotencyKey, true);
-      this.forgetModel(event.scope.attemptId, event.idempotencyKey);
+      this.forgetModel(attemptKey(event.scope), event.idempotencyKey);
       context.state.set(undefined);
     });
   }
@@ -548,7 +633,8 @@ class EveProviderBridge {
 
   handleStepAttemptTerminal(event: EveProviderStepAttemptTerminalEvent): void {
     void this.contain("step attempt terminal", () => {
-      const keys = this.modelsByAttempt.get(event.scope.attemptId);
+      const attempt = attemptKey(event.scope);
+      const keys = this.modelsByAttempt.get(attempt);
       if (!keys) return;
       for (const key of keys) {
         const active = this.activeModels.get(key);
@@ -559,7 +645,7 @@ class EveProviderBridge {
         active.span.end();
         this.activeModels.delete(key);
       }
-      this.modelsByAttempt.delete(event.scope.attemptId);
+      this.modelsByAttempt.delete(attempt);
     });
   }
 
@@ -769,6 +855,12 @@ function turnKey(sessionId: string, turnId: string): string {
   return `${sessionId}:${turnId}`;
 }
 
+function attemptKey(scope: EveInstrumentationAttemptScope): string {
+  return "attemptId" in scope
+    ? scope.attemptId
+    : JSON.stringify([scope.sessionId, scope.runId, scope.attempt]);
+}
+
 function turnIdempotencyKey(sessionId: string, turnId: string): string {
   return `turn:${sessionId}:${turnId}`;
 }
@@ -831,11 +923,16 @@ function isEveProviderEvent<TType extends EveProviderEvent["type"]>(
   if (
     type === "turn.cancelled" ||
     type === "turn.completed" ||
-    type === "turn.failed"
+    type === "turn.failed" ||
+    type === "turn.settled"
   ) {
     return (
       typeof event["sessionId"] === "string" &&
-      typeof event["turnId"] === "string"
+      typeof event["turnId"] === "string" &&
+      (type !== "turn.settled" ||
+        event["outcome"] === "completed" ||
+        event["outcome"] === "failed" ||
+        event["outcome"] === "cancelled")
     );
   }
   if (!isEveProviderScope(event["scope"])) {
@@ -849,15 +946,47 @@ function isEveProviderEvent<TType extends EveProviderEvent["type"]>(
       typeof model["provider"] === "string"
     );
   }
-  if (type === "model.call.completed") {
+  if (
+    type === "model.call.completed" ||
+    (type === "model.call.settled" && event["outcome"] === "completed")
+  ) {
     return (
       typeof event["finishReason"] === "string" &&
       isObject(event["usage"]) &&
       (event["content"] === undefined || Array.isArray(event["content"]))
     );
   }
-  if (type === "model.call.failed") {
+  if (
+    type === "model.call.failed" ||
+    (type === "model.call.settled" && event["outcome"] === "failed")
+  ) {
     return true;
+  }
+  if (type === "call.requested") {
+    const capability = event["capability"];
+    return (
+      typeof event["callId"] === "string" &&
+      typeof event["toolName"] === "string" &&
+      isObject(capability) &&
+      ["tool", "agent", "skill", "control"].some(
+        (kind) => kind === capability["kind"],
+      )
+    );
+  }
+  if (type === "call.settled") {
+    return ["completed", "failed", "rejected", "interrupted", "abandoned"].some(
+      (outcome) => outcome === event["outcome"],
+    );
+  }
+  if (type === "model.retried") return true;
+  if (type === "model.settled") {
+    return [
+      "completed",
+      "failed",
+      "interrupted",
+      "abandoned",
+      "cancelled",
+    ].some((outcome) => outcome === event["outcome"]);
   }
   if (type === "tool.call.started") {
     return (
@@ -926,12 +1055,15 @@ function isEveProviderScope(
 ): value is EveInstrumentationAttemptScope {
   return (
     isObject(value) &&
-    typeof value["attemptId"] === "string" &&
-    typeof value["attemptIndex"] === "number" &&
-    Number.isFinite(value["attemptIndex"]) &&
+    ((typeof value["attemptId"] === "string" &&
+      typeof value["attemptIndex"] === "number" &&
+      Number.isFinite(value["attemptIndex"]) &&
+      typeof value["stepIndex"] === "number" &&
+      Number.isFinite(value["stepIndex"])) ||
+      (typeof value["runId"] === "string" &&
+        typeof value["attempt"] === "number" &&
+        Number.isFinite(value["attempt"]))) &&
     typeof value["sessionId"] === "string" &&
-    typeof value["stepIndex"] === "number" &&
-    Number.isFinite(value["stepIndex"]) &&
     typeof value["turnId"] === "string" &&
     (value["rootSessionId"] === undefined ||
       typeof value["rootSessionId"] === "string")

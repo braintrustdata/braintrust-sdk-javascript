@@ -90,6 +90,295 @@ describe("braintrustEveInstrumentation provider lifecycle", () => {
     expect(instrumentationExports).not.toHaveProperty("braintrustEveProvider");
   });
 
+  it.each([false, true])(
+    "records Eve 0.91 settled events with replacement process: %s",
+    async (replaceProvider) => {
+      const provider = braintrustEveInstrumentation({});
+      const turnContext = providerContext();
+      const modelContext = providerContext();
+      const toolContext = providerContext();
+      const scope = {
+        sessionId: "session",
+        rootSessionId: "session",
+        turnId: "turn",
+        runId: "run",
+        attempt: 0,
+      };
+      await provider.events["turn.started"](
+        {
+          type: "turn.started",
+          idempotencyKey: "turn:session:turn",
+          sessionId: "session",
+          rootSessionId: "session",
+          turnId: "turn",
+          sequence: 0,
+        },
+        turnContext,
+      );
+      await provider.events["model.call.started"](
+        {
+          type: "model.call.started",
+          idempotencyKey: "model",
+          scope,
+          model: { modelId: "test-model", provider: "test-provider" },
+          input: { messages: [{ role: "user", content: "Find Eve" }] },
+        },
+        modelContext,
+      );
+      await provider.events["call.requested"](
+        {
+          type: "call.requested",
+          idempotencyKey: "action:session:turn:search",
+          callId: "search",
+          capability: { kind: "tool" },
+          scope,
+          toolName: "search",
+          input: { query: "Eve" },
+          startedAtMs: 122_000,
+        },
+        toolContext,
+      );
+      const terminal = replaceProvider
+        ? braintrustEveInstrumentation({})
+        : provider;
+      await terminal.events["model.call.settled"](
+        {
+          type: "model.call.settled",
+          outcome: "completed",
+          idempotencyKey: "model",
+          scope,
+          content: [{ type: "text", text: "Found Eve" }],
+          finishReason: "stop",
+          usage: { inputTokens: 10, outputTokens: 5 },
+        },
+        modelContext,
+      );
+      await terminal.events["call.settled"](
+        {
+          type: "call.settled",
+          outcome: "completed",
+          idempotencyKey: "action:session:turn:search",
+          scope,
+          output: { title: "Eve" },
+          completedAtMs: 123_000,
+        },
+        toolContext,
+      );
+      // A duplicate failure must not overwrite a completed operation.
+      await terminal.events["call.settled"](
+        {
+          type: "call.settled",
+          outcome: "failed",
+          idempotencyKey: "action:session:turn:search",
+          scope,
+          error: new Error("stale failure"),
+        },
+        toolContext,
+      );
+      await terminal.events["turn.settled"](
+        {
+          type: "turn.settled",
+          outcome: "completed",
+          idempotencyKey: "turn:session:turn",
+          sessionId: "session",
+          turnId: "turn",
+        },
+        turnContext,
+      );
+      const writes = (await backgroundLogger.drain()) as Array<
+        Record<string, any> & { id: string }
+      >;
+      const spans = mergeRowBatch([...writes].reverse());
+      expect(spans).toHaveLength(3);
+      const turn = spans.find(
+        (span) => span.span_attributes?.name === "eve.turn",
+      );
+      const model = spans.find(
+        (span) => span.span_attributes?.name === "eve.step",
+      );
+      const tool = spans.find(
+        (span) => span.span_attributes?.name === "search",
+      );
+      expect(turn).toMatchObject({
+        input: [{ role: "user", content: "Find Eve" }],
+        metrics: { end: expect.any(Number) },
+      });
+      expect(model).toMatchObject({
+        span_parents: [turn?.span_id],
+        output: [{ message: { role: "assistant", content: "Found Eve" } }],
+        metrics: {
+          prompt_tokens: 10,
+          completion_tokens: 5,
+          tokens: 15,
+          end: expect.any(Number),
+        },
+      });
+      expect(tool).toMatchObject({
+        span_parents: [turn?.span_id],
+        input: { query: "Eve" },
+        output: { title: "Eve" },
+        metrics: { start: 122, end: 123 },
+      });
+      expect(tool).not.toHaveProperty("error");
+      expect(turnContext.state.get()).toBeUndefined();
+      expect(modelContext.state.get()).toBeUndefined();
+      expect(toolContext.state.get()).toBeUndefined();
+    },
+  );
+
+  it.each(["failed", "cancelled"] as const)(
+    "preserves Eve 0.91 turn outcome %s and model/tool failures",
+    async (outcome) => {
+      const provider = braintrustEveInstrumentation({});
+      const turnContext = providerContext();
+      const modelContext = providerContext();
+      const toolContext = providerContext();
+      const scope = {
+        sessionId: "session",
+        turnId: "turn",
+        runId: "run",
+        attempt: 0,
+      };
+      await provider.events["turn.started"](
+        {
+          type: "turn.started",
+          idempotencyKey: "turn",
+          sessionId: "session",
+          rootSessionId: "session",
+          turnId: "turn",
+          sequence: 0,
+        },
+        turnContext,
+      );
+      await provider.events["model.call.started"](
+        {
+          type: "model.call.started",
+          idempotencyKey: "model",
+          scope,
+          model: { modelId: "test", provider: "test" },
+        },
+        modelContext,
+      );
+      await provider.events["model.call.settled"](
+        {
+          type: "model.call.settled",
+          outcome: "failed",
+          idempotencyKey: "model",
+          scope,
+          error: new Error("model failed"),
+        },
+        modelContext,
+      );
+      await provider.events["call.requested"](
+        {
+          type: "call.requested",
+          idempotencyKey: "tool",
+          scope,
+          callId: "tool",
+          toolName: "search",
+          capability: { kind: "tool" },
+        },
+        toolContext,
+      );
+      await provider.events["call.settled"](
+        {
+          type: "call.settled",
+          outcome: "failed",
+          idempotencyKey: "tool",
+          scope,
+          error: new Error("tool failed"),
+        },
+        toolContext,
+      );
+      await provider.events["turn.settled"](
+        {
+          type: "turn.settled",
+          outcome,
+          idempotencyKey: "turn",
+          sessionId: "session",
+          turnId: "turn",
+          error: new Error("turn failed"),
+        },
+        turnContext,
+      );
+      const writes = (await backgroundLogger.drain()) as Array<
+        Record<string, any> & { id: string }
+      >;
+      const spans = mergeRowBatch([...writes].reverse());
+      expect(spans).toHaveLength(3);
+      expect(
+        spans.find((span) => span.span_attributes?.name === "eve.step")?.error,
+      ).toContain("model failed");
+      expect(
+        spans.find((span) => span.span_attributes?.name === "search")?.error,
+      ).toContain("tool failed");
+      const turn = spans.find(
+        (span) => span.span_attributes?.name === "eve.turn",
+      );
+      if (outcome === "failed") expect(turn?.error).toContain("turn failed");
+      else expect(turn).not.toHaveProperty("error");
+      for (const span of spans)
+        expect(span.metrics?.end).toEqual(expect.any(Number));
+    },
+  );
+
+  it("isolates Eve model runs and ends incomplete calls on retry or cancellation", async () => {
+    const provider = braintrustEveInstrumentation({});
+    for (const runId of ["retry", "cancel"]) {
+      await provider.events["model.call.started"](
+        {
+          type: "model.call.started",
+          idempotencyKey: runId,
+          scope: { sessionId: "session", turnId: "turn", runId, attempt: 0 },
+          model: { modelId: runId, provider: "test" },
+        },
+        providerContext(),
+      );
+    }
+    await provider.events["model.retried"](
+      {
+        type: "model.retried",
+        idempotencyKey: "retry-run",
+        scope: {
+          sessionId: "session",
+          turnId: "turn",
+          runId: "retry",
+          attempt: 0,
+        },
+        error: new Error("retry this run"),
+      },
+      providerContext(),
+    );
+    await provider.events["model.settled"](
+      {
+        type: "model.settled",
+        outcome: "cancelled",
+        idempotencyKey: "cancel-run",
+        scope: {
+          sessionId: "session",
+          turnId: "turn",
+          runId: "cancel",
+          attempt: 0,
+        },
+        error: new Error("cancellation is not a failure"),
+      },
+      providerContext(),
+    );
+    const writes = (await backgroundLogger.drain()) as Array<
+      Record<string, any> & { id: string }
+    >;
+    const spans = mergeRowBatch([...writes].reverse());
+    expect(spans).toHaveLength(2);
+    expect(
+      spans.find((span) => span.metadata?.model === "retry")?.error,
+    ).toContain("retry this run");
+    expect(
+      spans.find((span) => span.metadata?.model === "cancel"),
+    ).not.toHaveProperty("error");
+    for (const span of spans)
+      expect(span.metrics?.end).toEqual(expect.any(Number));
+  });
+
   it("records durable task, model, and action spans", async () => {
     const provider = braintrustEveInstrumentation({
       metadata: { scenario: "eve-provider-unit" },
@@ -632,9 +921,11 @@ describe("braintrustEveInstrumentation provider lifecycle", () => {
     });
   });
 
-  it.each(["action", "tool.call"] as const)(
+  it.each(["action", "tool.call", "call"] as const)(
     "preserves the trace root for depth-two subagents after provider replacement (%s)",
     async (eventFamily) => {
+      const startedType =
+        eventFamily === "call" ? "call.requested" : `${eventFamily}.started`;
       const metadata = { scenario: "eve-provider-replacement" };
       const provider = braintrustEveInstrumentation({ metadata });
       const rootContext = providerContext();
@@ -667,7 +958,7 @@ describe("braintrustEveInstrumentation provider lifecycle", () => {
         },
         rootContext,
       );
-      await provider.events?.[`${eventFamily}.started`]?.(
+      await provider.events?.[startedType]?.(
         {
           callId: "call-child",
           idempotencyKey: "action:root-session:turn_0:call-child",
@@ -677,19 +968,20 @@ describe("braintrustEveInstrumentation provider lifecycle", () => {
             ? { name: "child" }
             : { toolName: "child" }),
           scope: {
-            attemptId: "root-attempt",
-            attemptIndex: 0,
+            ...(eventFamily === "call"
+              ? { runId: "root-run", attempt: 0 }
+              : { attemptId: "root-attempt", attemptIndex: 0, stepIndex: 0 }),
             rootSessionId: "root-session",
             sessionId: "root-session",
-            stepIndex: 0,
             turnId: "turn_0",
           },
-          type: `${eventFamily}.started`,
+          type: startedType,
+          ...(eventFamily === "call" ? { capability: { kind: "agent" } } : {}),
         },
         childActionContext,
       );
       await provider.events?.["turn.started"]?.(childTurn, childContext);
-      await provider.events?.[`${eventFamily}.started`]?.(
+      await provider.events?.[startedType]?.(
         {
           callId: "call-grandchild",
           idempotencyKey: "action:child-session:turn_0:call-grandchild",
@@ -700,14 +992,15 @@ describe("braintrustEveInstrumentation provider lifecycle", () => {
             ? { name: "grandchild" }
             : { toolName: "grandchild" }),
           scope: {
-            attemptId: "child-attempt",
-            attemptIndex: 0,
+            ...(eventFamily === "call"
+              ? { runId: "child-run", attempt: 0 }
+              : { attemptId: "child-attempt", attemptIndex: 0, stepIndex: 0 }),
             rootSessionId: "root-session",
             sessionId: "child-session",
-            stepIndex: 0,
             turnId: "turn_0",
           },
-          type: `${eventFamily}.started`,
+          type: startedType,
+          ...(eventFamily === "call" ? { capability: { kind: "agent" } } : {}),
         },
         grandchildActionContext,
       );
@@ -753,6 +1046,7 @@ describe("braintrustEveInstrumentation provider lifecycle", () => {
       );
 
       expect(root).toBeDefined();
+      expect(childAction?.metadata?.["eve.action_kind"]).toBe("subagent-call");
       expect(childContext.state.get()).toMatchObject({
         exported: expect.any(String),
         rootSpanId: root?.root_span_id,
