@@ -360,7 +360,8 @@
             "description": "Name of the api key"
           },
           "preview_name": {
-            "type": "string"
+            "type": "string",
+            "description": "Masked preview showing the key prefix and last four characters, e.g. sk-…AbCd."
           },
           "user_id": {
             "type": ["string", "null"],
@@ -402,6 +403,9 @@
                 "enum": ["score_update"]
               },
               "token": {
+                "type": "string"
+              },
+              "triggered_xact_id": {
                 "type": "string"
               }
             },
@@ -1669,7 +1673,7 @@
                           },
                           "snapshot_ref": {
                             "type": "string",
-                            "description": "sandbox snapshot ref"
+                            "description": "The Modal snapshot to start the sandbox from"
                           }
                         },
                         "required": ["provider", "snapshot_ref"]
@@ -1830,7 +1834,7 @@
           },
           "span_id": {
             "type": "string",
-            "description": "A unique identifier used to link different dataset events together as part of a full trace. See the [tracing guide](https://www.braintrust.dev/docs/instrument) for full details on tracing"
+            "description": "A unique identifier used to link different dataset events together as part of a full trace. See the [tracing guide](https://docs.braintrust.dev/instrument) for full details on tracing"
           },
           "root_span_id": {
             "type": "string",
@@ -1973,7 +1977,7 @@
           },
           "xact_id": {
             "type": "string",
-            "description": "Transaction id of the brainstore version at the time of the snapshot"
+            "description": "Transaction ID of the dataset version at the time of the snapshot"
           },
           "created": {
             "type": ["string", "null"],
@@ -2054,7 +2058,7 @@
               "automation_integration"
             ],
             "default": "env_var",
-            "description": "The category of the secret: env_var for regular environment variables, ai_provider for AI provider API keys"
+            "description": "The category of the secret: env_var for regular environment variables, ai_provider for AI provider API keys, sandbox_provider for sandbox provider credentials, automation_integration for automation delivery credentials"
           }
         },
         "required": ["id", "object_type", "object_id", "name"]
@@ -2205,7 +2209,7 @@
               "minimum": 0,
               "maximum": 1
             },
-            "description": "A dictionary of numeric values (between 0 and 1) to log. The scores should give you a variety of signals that help you determine how accurate the outputs are compared to what you expect and diagnose failures. For example, a summarization app might have one score that tells you how accurate the summary is, and another that measures the word similarity between the generated and grouth truth summary. The word similarity score could help you determine whether the summarization was covering similar concepts or not. You can use these scores to help you sort, filter, and compare experiments"
+            "description": "A dictionary of numeric values (between 0 and 1) to log. The scores should give you a variety of signals that help you determine how accurate the outputs are compared to what you expect and diagnose failures. For example, a summarization app might have one score that tells you how accurate the summary is, and another that measures the word similarity between the generated and ground truth summary. The word similarity score could help you determine whether the summarization was covering similar concepts or not. You can use these scores to help you sort, filter, and compare experiments."
           },
           "metadata": {
             "type": ["object", "null"],
@@ -2249,13 +2253,13 @@
                 "description": "The total number of tokens in the input and output of the experiment event."
               },
               "caller_functionname": {
-                "description": "This metric is deprecated"
+                "description": "Deprecated. Use `context.caller_functionname` instead."
               },
               "caller_filename": {
-                "description": "This metric is deprecated"
+                "description": "Deprecated. Use `context.caller_filename` instead."
               },
               "caller_lineno": {
-                "description": "This metric is deprecated"
+                "description": "Deprecated. Use `context.caller_lineno` instead."
               }
             },
             "additionalProperties": {
@@ -2284,7 +2288,7 @@
           },
           "span_id": {
             "type": "string",
-            "description": "A unique identifier used to link different experiment events together as part of a full trace. See the [tracing guide](https://www.braintrust.dev/docs/instrument) for full details on tracing"
+            "description": "A unique identifier used to link different experiment events together as part of a full trace. See the [tracing guide](https://docs.braintrust.dev/instrument) for full details on tracing"
           },
           "span_parents": {
             "type": ["array", "null"],
@@ -2670,7 +2674,7 @@
               },
               "internal": {
                 "type": ["boolean", "null"],
-                "description": "The function exists for internal purposes and should not be displayed in the list of functions."
+                "description": "If true, the function was created for use by another Braintrust object and is hidden from function lists in the Braintrust UI."
               }
             },
             "required": ["object_type", "object_id"]
@@ -2881,12 +2885,193 @@
                 "title": "topic_map"
               }
             ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["simulation"]
+              },
+              "config": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "initiator": {
+                        "type": "string",
+                        "enum": ["agent", "simulated_user"],
+                        "default": "agent",
+                        "description": "Who speaks first in the conversation"
+                      },
+                      "timeout_seconds": {
+                        "type": "integer",
+                        "minimum": 15,
+                        "maximum": 3600,
+                        "default": 600,
+                        "description": "Maximum conversation duration in seconds"
+                      },
+                      "modality": {
+                        "type": "string",
+                        "enum": ["voice"],
+                        "default": "voice"
+                      },
+                      "agent": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": ["livekit"]
+                              },
+                              "server_url": {
+                                "type": "string",
+                                "minLength": 1,
+                                "description": "The WebSocket URL of the LiveKit project hosting the agent"
+                              },
+                              "agent_name": {
+                                "type": "string",
+                                "minLength": 1,
+                                "description": "The name of the LiveKit agent to dispatch"
+                              }
+                            },
+                            "required": ["type", "server_url", "agent_name"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": ["phone"]
+                              },
+                              "phone_number": {
+                                "type": "string",
+                                "pattern": "^\\+[1-9]\\d{7,14}$"
+                              }
+                            },
+                            "required": ["type", "phone_number"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": ["sip"]
+                              },
+                              "uri": {
+                                "type": "string",
+                                "pattern": "^sips?:[^\\s]+$"
+                              }
+                            },
+                            "required": ["type", "uri"],
+                            "additionalProperties": false
+                          }
+                        ]
+                      }
+                    },
+                    "required": ["agent"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "initiator": {
+                        "type": "string",
+                        "enum": ["agent", "simulated_user"],
+                        "default": "agent",
+                        "description": "Who speaks first in the conversation"
+                      },
+                      "timeout_seconds": {
+                        "type": "integer",
+                        "minimum": 15,
+                        "maximum": 3600,
+                        "default": 600,
+                        "description": "Maximum conversation duration in seconds"
+                      },
+                      "modality": {
+                        "type": "string",
+                        "enum": ["text"]
+                      },
+                      "agent": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": ["livekit"]
+                              },
+                              "server_url": {
+                                "type": "string",
+                                "minLength": 1,
+                                "description": "The WebSocket URL of the LiveKit project hosting the agent"
+                              },
+                              "agent_name": {
+                                "type": "string",
+                                "minLength": 1,
+                                "description": "The name of the LiveKit agent to dispatch"
+                              }
+                            },
+                            "required": ["type", "server_url", "agent_name"],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": ["acp"]
+                              },
+                              "command": {
+                                "type": "string",
+                                "minLength": 1,
+                                "description": "Executable for the ACP agent subprocess, communicating over stdio"
+                              },
+                              "args": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "default": [],
+                                "description": "Arguments passed to the executable without shell interpretation"
+                              },
+                              "cwd": {
+                                "type": "string",
+                                "pattern": "^(?:[/]|[A-Za-z]:[\\\\/]|\\\\\\\\)",
+                                "description": "Absolute working directory for the ACP session on the execution host"
+                              },
+                              "permissions": {
+                                "type": "string",
+                                "enum": ["deny"],
+                                "default": "deny",
+                                "description": "Deny ACP permission requests; this does not sandbox the subprocess"
+                              }
+                            },
+                            "required": ["type", "command", "cwd"],
+                            "additionalProperties": false
+                          }
+                        ]
+                      }
+                    },
+                    "required": ["modality", "agent"],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": ["type", "config"],
+            "additionalProperties": false,
+            "description": "A task function that runs a conversation between an agent and a simulated user.",
+            "title": "simulation"
           }
         ]
       },
       "FunctionFormat": {
         "type": "string",
-        "enum": ["llm", "code", "global", "graph", "topic_map"]
+        "enum": ["llm", "code", "global", "graph", "topic_map", "simulation"]
       },
       "FunctionId": {
         "anyOf": [
@@ -3557,6 +3742,10 @@
           {
             "type": "object",
             "properties": {
+              "request_source": {
+                "type": "string",
+                "description": "A label identifying the caller, used to attribute usage"
+              },
               "input": {
                 "description": "Argument to the function, which can be any JSON serializable value"
               },
@@ -3566,7 +3755,7 @@
               "metadata": {
                 "type": ["object", "null"],
                 "additionalProperties": {},
-                "description": "Any relevant metadata. This will be logged and available as the `metadata` argument."
+                "description": "Any relevant metadata to log on the span. For prompts, this is available as the `metadata` template variable. For code functions, this is passed through hooks and is not added to `input`."
               },
               "tags": {
                 "type": ["array", "null"],
@@ -3653,7 +3842,7 @@
                   }
                 },
                 "required": ["id", "span_id", "root_span_id"],
-                "description": "Identifiers for the row to to log a subspan under"
+                "description": "Identifiers for the row to log a subspan under"
               },
               "propagated_event": {
                 "type": ["object", "null"],
@@ -4112,6 +4301,11 @@
           "status": {
             "$ref": "#/components/schemas/AutomationStatus"
           },
+          "service_tier": {
+            "type": "string",
+            "enum": ["standard", "flex"],
+            "description": "Service tier for online scoring. If omitted, prompt-level service tiers are preserved."
+          },
           "sampling_rate": {
             "type": "number",
             "minimum": 0,
@@ -4177,19 +4371,24 @@
             "description": "Name of the organization"
           },
           "api_url": {
-            "type": ["string", "null"]
+            "type": ["string", "null"],
+            "description": "URL of the organization's data plane API. If unset, the Braintrust-hosted API is used."
           },
           "is_universal_api": {
-            "type": ["boolean", "null"]
+            "type": ["boolean", "null"],
+            "description": "Whether the data plane at `api_url` also serves the AI proxy, at `api_url` with `/v1/proxy` appended"
           },
           "is_dataplane_private": {
-            "type": ["boolean", "null"]
+            "type": ["boolean", "null"],
+            "description": "Whether the organization's data plane is only reachable from a private network"
           },
           "proxy_url": {
-            "type": ["string", "null"]
+            "type": ["string", "null"],
+            "description": "URL of the organization's AI proxy"
           },
           "realtime_url": {
-            "type": ["string", "null"]
+            "type": ["string", "null"],
+            "description": "URL of the organization's realtime service"
           },
           "created": {
             "type": ["string", "null"],
@@ -4198,11 +4397,13 @@
           },
           "archived_at": {
             "type": ["string", "null"],
-            "format": "date-time"
+            "format": "date-time",
+            "description": "Date the organization was archived"
           },
           "deleted_at": {
             "type": ["string", "null"],
-            "format": "date-time"
+            "format": "date-time",
+            "description": "Date the organization was deleted"
           },
           "image_rendering_mode": {
             "$ref": "#/components/schemas/ImageRenderingMode"
@@ -4276,7 +4477,7 @@
           "update_acls",
           "delete_acls"
         ],
-        "description": "Each permission permits a certain type of operation on an object in the system\n\nPermissions can be assigned to to objects on an individual basis, or grouped into roles"
+        "description": "Each permission permits a certain type of operation on an object in the system\n\nPermissions can be assigned to objects on an individual basis, or grouped into roles"
       },
       "PreprocessorId": {
         "anyOf": [
@@ -4483,7 +4684,7 @@
                             "type": "string",
                             "minLength": 1,
                             "maxLength": 10000,
-                            "description": "Publish a Slack mrkdwn digest.\n\nPattern selection requirement: include every selected Pattern whose final status is active at the end of this automation run, plus every selected Pattern that changed from active to inactive during this run (a newly inactive outcome). Exclude Patterns that were already inactive before this run and remained inactive. Do not mention excluded Patterns anywhere in the digest, including Highlights. If no selected Patterns meet these criteria, say \"No current pattern outcomes.\" This requirement overrides conflicting formatting guidance.\n\nInclude a complete \"*Pattern outcomes*\" section with one row for every included Pattern.\n\nUse this row format exactly:\n• <pattern_url|Pattern title> — `outcome`\n\nIf a Pattern has no URL, use the plain title instead. Do not use GitHub Markdown tables or code-block tables, because links must remain clickable. Do not omit any active selected Pattern.\n\nAfter the outcome list, include a \"*Highlights*\" section with one very short paragraph, 2-3 sentences maximum. Summarize what changed or what broadly stands out among the included active Patterns. Do not introduce new claims beyond the run report."
+                            "description": "Instructions for Loop to format content sent to this destination"
                           }
                         },
                         "required": ["type", "workspace_id", "channel"]
@@ -4805,7 +5006,7 @@
                             "type": "string",
                             "minLength": 1,
                             "maxLength": 10000,
-                            "description": "Publish a Slack mrkdwn digest.\n\nPattern selection requirement: include every selected Pattern whose final status is active at the end of this automation run, plus every selected Pattern that changed from active to inactive during this run (a newly inactive outcome). Exclude Patterns that were already inactive before this run and remained inactive. Do not mention excluded Patterns anywhere in the digest, including Highlights. If no selected Patterns meet these criteria, say \"No current pattern outcomes.\" This requirement overrides conflicting formatting guidance.\n\nInclude a complete \"*Pattern outcomes*\" section with one row for every included Pattern.\n\nUse this row format exactly:\n• <pattern_url|Pattern title> — `outcome`\n\nIf a Pattern has no URL, use the plain title instead. Do not use GitHub Markdown tables or code-block tables, because links must remain clickable. Do not omit any active selected Pattern.\n\nAfter the outcome list, include a \"*Highlights*\" section with one very short paragraph, 2-3 sentences maximum. Summarize what changed or what broadly stands out among the included active Patterns. Do not introduce new claims beyond the run report."
+                            "description": "Instructions for Loop to format content sent to this destination"
                           }
                         },
                         "required": ["type", "workspace_id", "channel"]
@@ -4915,11 +5116,11 @@
               "type": "string",
               "format": "uuid"
             },
-            "description": "Sorted ids of active projects in this project group"
+            "description": "Sorted ids of active projects in this project group. Modifying membership requires project_group:update on the group."
           }
         },
         "required": ["id", "org_id", "name", "member_projects"],
-        "description": "A project group is a collection of projects which can inherit access from project-group ACLs"
+        "description": "A project group is a collection of projects which inherit access from project_group_projects ACLs. The group's definition and membership are governed separately by project_group ACLs."
       },
       "ProjectLogsEvent": {
         "type": "object",
@@ -4975,7 +5176,7 @@
               "minimum": 0,
               "maximum": 1
             },
-            "description": "A dictionary of numeric values (between 0 and 1) to log. The scores should give you a variety of signals that help you determine how accurate the outputs are compared to what you expect and diagnose failures. For example, a summarization app might have one score that tells you how accurate the summary is, and another that measures the word similarity between the generated and grouth truth summary. The word similarity score could help you determine whether the summarization was covering similar concepts or not. You can use these scores to help you sort, filter, and compare logs."
+            "description": "A dictionary of numeric values (between 0 and 1) to log. The scores should give you a variety of signals that help you determine how accurate the outputs are compared to what you expect and diagnose failures. For example, a summarization app might have one score that tells you how accurate the summary is, and another that measures the word similarity between the generated and ground truth summary. The word similarity score could help you determine whether the summarization was covering similar concepts or not. You can use these scores to help you sort, filter, and compare logs."
           },
           "metadata": {
             "type": ["object", "null"],
@@ -5019,13 +5220,13 @@
                 "description": "The total number of tokens in the input and output of the project logs event."
               },
               "caller_functionname": {
-                "description": "This metric is deprecated"
+                "description": "Deprecated. Use `context.caller_functionname` instead."
               },
               "caller_filename": {
-                "description": "This metric is deprecated"
+                "description": "Deprecated. Use `context.caller_filename` instead."
               },
               "caller_lineno": {
-                "description": "This metric is deprecated"
+                "description": "Deprecated. Use `context.caller_lineno` instead."
               }
             },
             "additionalProperties": {
@@ -5054,7 +5255,7 @@
           },
           "span_id": {
             "type": "string",
-            "description": "A unique identifier used to link different project logs events together as part of a full trace. See the [tracing guide](https://www.braintrust.dev/docs/instrument) for full details on tracing"
+            "description": "A unique identifier used to link different project logs events together as part of a full trace. See the [tracing guide](https://docs.braintrust.dev/instrument) for full details on tracing"
           },
           "span_parents": {
             "type": ["array", "null"],
@@ -5455,6 +5656,106 @@
             "type": ["boolean", "null"],
             "description": "If true, automatically complete a review after every assigned reviewer fills all human review scores visible to them."
           },
+          "user_id_fields": {
+            "type": ["array", "null"],
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "minItems": 2,
+              "maxItems": 32,
+              "description": "Path to the application's end-user identifier in metadata or span_attributes, for example [\"metadata\", \"customer_id\"]. This identifies an end user, not a session, request, organization, or the Braintrust user who created the project."
+            }
+          },
+          "pattern_alert_destinations": {
+            "type": ["array", "null"],
+            "items": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": ["webhook"],
+                      "description": "The type of action to take"
+                    },
+                    "url": {
+                      "type": "string",
+                      "description": "The webhook URL to send the request to"
+                    },
+                    "formatting_prompt": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 10000,
+                      "description": "Instructions for Loop to format content sent to this destination"
+                    }
+                  },
+                  "required": ["type", "url"]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": ["slack"],
+                      "description": "The type of action to take"
+                    },
+                    "workspace_id": {
+                      "type": "string",
+                      "description": "The Slack workspace ID to post to"
+                    },
+                    "channel": {
+                      "type": "string",
+                      "description": "The Slack channel ID to post to"
+                    },
+                    "message_template": {
+                      "type": "string",
+                      "description": "Custom message template for the alert"
+                    },
+                    "formatting_prompt": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 10000,
+                      "description": "Instructions for Loop to format content sent to this destination"
+                    }
+                  },
+                  "required": ["type", "workspace_id", "channel"]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": ["pagerduty"],
+                      "description": "The type of action to take"
+                    },
+                    "routing_key_secret_name": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The data-plane secret containing the PagerDuty routing key"
+                    },
+                    "severity": {
+                      "type": "string",
+                      "enum": ["critical", "error", "warning", "info"]
+                    },
+                    "formatting_prompt": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 10000,
+                      "description": "Instructions for Loop to format content sent to this destination"
+                    }
+                  },
+                  "required": ["type", "routing_key_secret_name", "severity"]
+                }
+              ],
+              "description": "A delivery action available to an automation"
+            },
+            "maxItems": 20,
+            "description": "Project-wide Slack, webhook, and PagerDuty destinations for new and reactivated Pattern alerts. An empty array disables alerts."
+          },
           "default_preprocessor": {
             "$ref": "#/components/schemas/NullableSavedFunctionId"
           }
@@ -5610,6 +5911,140 @@
             },
             "required": ["type", "content"],
             "title": "completion"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["decisions"]
+              },
+              "input": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "role": {
+                          "type": "string",
+                          "enum": ["system", "developer", "user", "assistant"]
+                        },
+                        "content": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/ChatCompletionContentPartText"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "required": ["role", "content"]
+                    }
+                  }
+                ]
+              },
+              "questions": {
+                "type": "array",
+                "items": {
+                  "allOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "instructions": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["instructions"]
+                    },
+                    {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": ["predicate"]
+                            }
+                          },
+                          "required": ["type"]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": ["choice"]
+                            },
+                            "choices": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "value": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "boolean"
+                                      }
+                                    ]
+                                  },
+                                  "description": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": ["value"]
+                              }
+                            }
+                          },
+                          "required": ["type", "choices"]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": ["score"]
+                            },
+                            "levels": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "label": {
+                                    "type": "string"
+                                  },
+                                  "description": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": ["label"]
+                              }
+                            }
+                          },
+                          "required": ["type", "levels"]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            },
+            "required": ["type", "input", "questions"],
+            "title": "decisions"
           }
         ]
       },
@@ -5648,6 +6083,140 @@
             },
             "required": ["type", "content"],
             "title": "completion"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["decisions"]
+              },
+              "input": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "role": {
+                          "type": "string",
+                          "enum": ["system", "developer", "user", "assistant"]
+                        },
+                        "content": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/ChatCompletionContentPartText"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "required": ["role", "content"]
+                    }
+                  }
+                ]
+              },
+              "questions": {
+                "type": "array",
+                "items": {
+                  "allOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "instructions": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["instructions"]
+                    },
+                    {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": ["predicate"]
+                            }
+                          },
+                          "required": ["type"]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": ["choice"]
+                            },
+                            "choices": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "value": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "boolean"
+                                      }
+                                    ]
+                                  },
+                                  "description": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": ["value"]
+                              }
+                            }
+                          },
+                          "required": ["type", "choices"]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": ["score"]
+                            },
+                            "levels": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "label": {
+                                    "type": "string"
+                                  },
+                                  "description": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": ["label"]
+                              }
+                            }
+                          },
+                          "required": ["type", "levels"]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            },
+            "required": ["type", "input", "questions"],
+            "title": "decisions"
           },
           {
             "type": "null"
@@ -6231,7 +6800,8 @@
                   },
                   "_internal_btql": {
                     "type": ["object", "null"],
-                    "additionalProperties": {}
+                    "additionalProperties": {},
+                    "description": "Internal BTQL query overrides in parsed JSON form that select which dataset rows to evaluate. `filter` is a BTQL expression object, `sort` is an array of BTQL sort expressions, and `limit` is an integer."
                   }
                 },
                 "required": ["dataset_id"],
@@ -6257,7 +6827,8 @@
                   },
                   "_internal_btql": {
                     "type": ["object", "null"],
-                    "additionalProperties": {}
+                    "additionalProperties": {},
+                    "description": "Internal BTQL query overrides in parsed JSON form that select which dataset rows to evaluate. `filter` is a BTQL expression object, `sort` is an array of BTQL sort expressions, and `limit` is an integer."
                   }
                 },
                 "required": ["project_name", "dataset_name"],
@@ -6270,6 +6841,10 @@
                   "data": {
                     "type": "array",
                     "items": {}
+                  },
+                  "source_dataset_id": {
+                    "type": "string",
+                    "description": "The saved dataset these rows came from. Its project scopes saved simulated-user references; the caller must have read access to the dataset and source project."
                   }
                 },
                 "required": ["data"],
@@ -6349,7 +6924,7 @@
           },
           "timeout": {
             "type": ["number", "null"],
-            "description": "The maximum duration, in milliseconds, to run the evaluation. Defaults to undefined, in which case there is no timeout."
+            "description": "The maximum duration, in milliseconds, to run the evaluation. There is no timeout by default."
           },
           "max_concurrency": {
             "type": ["number", "null"],
@@ -6542,7 +7117,8 @@
             "description": "Name of the service token"
           },
           "preview_name": {
-            "type": "string"
+            "type": "string",
+            "description": "Masked preview showing the token prefix and last four characters, e.g. bt-st-…AbCd."
           },
           "service_account_id": {
             "type": ["string", "null"],
@@ -6666,6 +7242,7 @@
           "preprocessor",
           "classifier",
           "review",
+          "decision",
           "question",
           "log"
         ],
@@ -6967,7 +7544,7 @@
                 "type": "string",
                 "minLength": 1,
                 "maxLength": 10000,
-                "description": "Publish a Slack mrkdwn digest.\n\nPattern selection requirement: include every selected Pattern whose final status is active at the end of this automation run, plus every selected Pattern that changed from active to inactive during this run (a newly inactive outcome). Exclude Patterns that were already inactive before this run and remained inactive. Do not mention excluded Patterns anywhere in the digest, including Highlights. If no selected Patterns meet these criteria, say \"No current pattern outcomes.\" This requirement overrides conflicting formatting guidance.\n\nInclude a complete \"*Pattern outcomes*\" section with one row for every included Pattern.\n\nUse this row format exactly:\n• <pattern_url|Pattern title> — `outcome`\n\nIf a Pattern has no URL, use the plain title instead. Do not use GitHub Markdown tables or code-block tables, because links must remain clickable. Do not omit any active selected Pattern.\n\nAfter the outcome list, include a \"*Highlights*\" section with one very short paragraph, 2-3 sentences maximum. Summarize what changed or what broadly stands out among the included active Patterns. Do not introduce new claims beyond the run report."
+                "description": "Instructions for Loop to format content sent to this destination"
               }
             },
             "required": ["type", "workspace_id", "channel"],
@@ -7264,6 +7841,7 @@
               "scorers",
               "classifiers",
               "logs",
+              "patterns",
               "monitor",
               "for_review_project_log",
               "for_review_experiments",
@@ -7355,6 +7933,10 @@
               "options": {
                 "type": "object",
                 "properties": {
+                  "filterScope": {
+                    "type": "string",
+                    "enum": ["span", "trace"]
+                  },
                   "spanType": {
                     "type": ["string", "null"],
                     "enum": ["range", "frame"]
@@ -7573,11 +8155,15 @@
           },
           "product_origin": {
             "type": ["string", "null"],
-            "enum": ["patterns"],
+            "enum": ["patterns", "dashboard", "digest"],
             "description": "The product surface that created and manages the automation"
           },
           "status": {
             "$ref": "#/components/schemas/AutomationStatus"
+          },
+          "continuous": {
+            "type": "boolean",
+            "description": "Between scheduled runs, check for accumulated new work. The executor decides how to process it."
           },
           "threshold": {
             "type": "object",
@@ -7743,6 +8329,16 @@
                 "maxLength": 10000,
                 "description": "Instructions for the Loop agent"
               },
+              "digest": {
+                "type": "object",
+                "properties": {
+                  "writing_style": {
+                    "type": "string",
+                    "enum": ["compact", "detailed"]
+                  }
+                },
+                "required": ["writing_style"]
+              },
               "include_trigger_input": {
                 "type": "boolean",
                 "default": false,
@@ -7764,13 +8360,13 @@
               },
               "harness": {
                 "type": "string",
-                "enum": ["codex", "native", "claude-code"],
-                "description": "Required when saving a Loop automation. Currently only Codex is supported."
+                "enum": ["native", "codex", "claude-code", "pi"],
+                "description": "Required for an explicit model selection. Currently only Codex is supported."
               },
               "model": {
                 "type": "string",
                 "minLength": 1,
-                "description": "Required when saving a Loop automation."
+                "description": "Omit harness, model, and endpoint_name to inherit the organization default provider and its recommended execution settings."
               },
               "endpoint_name": {
                 "type": "string",
@@ -7787,6 +8383,21 @@
                   "xhigh",
                   "max"
                 ]
+              },
+              "target": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["dashboard"]
+                  },
+                  "id": {
+                    "type": "string",
+                    "enum": ["overview"]
+                  }
+                },
+                "required": ["type", "id"],
+                "description": "The object this automation writes to or maintains"
               }
             },
             "required": ["prompt", "agent_slug"],
@@ -7841,7 +8452,7 @@
                       "type": "string",
                       "minLength": 1,
                       "maxLength": 10000,
-                      "description": "Publish a Slack mrkdwn digest.\n\nPattern selection requirement: include every selected Pattern whose final status is active at the end of this automation run, plus every selected Pattern that changed from active to inactive during this run (a newly inactive outcome). Exclude Patterns that were already inactive before this run and remained inactive. Do not mention excluded Patterns anywhere in the digest, including Highlights. If no selected Patterns meet these criteria, say \"No current pattern outcomes.\" This requirement overrides conflicting formatting guidance.\n\nInclude a complete \"*Pattern outcomes*\" section with one row for every included Pattern.\n\nUse this row format exactly:\n• <pattern_url|Pattern title> — `outcome`\n\nIf a Pattern has no URL, use the plain title instead. Do not use GitHub Markdown tables or code-block tables, because links must remain clickable. Do not omit any active selected Pattern.\n\nAfter the outcome list, include a \"*Highlights*\" section with one very short paragraph, 2-3 sentences maximum. Summarize what changed or what broadly stands out among the included active Patterns. Do not introduce new claims beyond the run report."
+                      "description": "Instructions for Loop to format content sent to this destination"
                     }
                   },
                   "required": ["type", "workspace_id", "channel"]
