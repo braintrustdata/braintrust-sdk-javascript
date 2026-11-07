@@ -1,3 +1,5 @@
+import { isPromiseLike } from "../util";
+
 export * from "../util";
 
 export const GLOBAL_PROJECT = "Global";
@@ -13,10 +15,19 @@ export function runCatchFinally<R>(
   let runSyncCleanup = true;
   try {
     const ret = f();
-    if (ret instanceof Promise) {
+    const isNativePromise = ret instanceof Promise;
+    if (isNativePromise || isPromiseLike(ret)) {
+      const promise =
+        isNativePromise ||
+        ("catch" in ret &&
+          typeof ret.catch === "function" &&
+          "finally" in ret &&
+          typeof ret.finally === "function")
+          ? ret
+          : Promise.resolve(ret);
       runSyncCleanup = false;
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
-      return (ret as any).catch(catchF).finally(finallyF) as R;
+      return (promise as any).catch(catchF).finally(finallyF) as R;
     } else {
       return ret;
     }
