@@ -77,13 +77,13 @@ class BraintrustActivityInterceptor implements ActivityInboundCallsInterceptor {
     next: Next<ActivityInboundCallsInterceptor, "execute">,
   ): Promise<unknown> {
     const info = this.ctx.info;
-    const runId = info.workflowExecution.runId;
+    const runId = info.workflowExecution?.runId;
 
     // Try to get workflow span export - first check local Map, then headers
     let parent: string | undefined;
 
     // Check if we have the workflow span export locally (same worker as workflow)
-    const spanExportPromise = getWorkflowSpanExport(runId);
+    const spanExportPromise = runId ? getWorkflowSpanExport(runId) : undefined;
     if (spanExportPromise) {
       try {
         parent = await spanExportPromise;
@@ -159,7 +159,7 @@ class BraintrustActivityInterceptor implements ActivityInboundCallsInterceptor {
         metadata: {
           "temporal.activity_type": info.activityType,
           "temporal.activity_id": info.activityId,
-          "temporal.workflow_id": info.workflowExecution.workflowId,
+          "temporal.workflow_id": info.workflowExecution?.workflowId,
           "temporal.workflow_run_id": runId,
         },
       },
