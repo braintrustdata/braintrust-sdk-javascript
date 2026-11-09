@@ -1,3 +1,4 @@
+import assert from "node:assert/strict";
 import { wrapOpenRouter } from "braintrust";
 import { z } from "zod";
 import {
@@ -189,6 +190,12 @@ async function runOpenRouterInstrumentationScenario(
             });
           },
         );
+      }
+
+      // callModel moved to @openrouter/agent in SDK 1.5.57.
+      if (process.env.OPENROUTER_SUPPORTS_CALL_MODEL === "false") {
+        assert.equal(client.callModel, undefined);
+        return;
       }
 
       await runOperation(

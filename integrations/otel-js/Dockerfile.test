@@ -33,17 +33,10 @@ WORKDIR /workspace
 # Copy the entire SDK repository (build context is SDK repo root)
 COPY . .
 
-# Build braintrust SDK first (required peer dependency)
-WORKDIR /workspace/js
-RUN pnpm install --ignore-workspace
-RUN pnpm run build
-
-# Build @braintrust/otel package
-WORKDIR /workspace/integrations/otel-js
-# Replace workspace:* with file: path for braintrust dependency
-RUN sed -i.bak 's/"braintrust": "workspace:\*"/"braintrust": "file:..\/..\/js"/' package.json && rm -f package.json.bak
-RUN pnpm install --ignore-workspace
-RUN pnpm run build
+# Build both packages with the workspace lockfile so peer dependencies do not
+# resolve to untested releases. Tests install their own version-specific deps.
+RUN pnpm install --frozen-lockfile
+RUN pnpm exec turbo run build --filter=braintrust --filter=@braintrust/otel
 
 # Set the test directory as environment variable (available at runtime)
 ENV TEST_DIR=${TEST_DIR}
