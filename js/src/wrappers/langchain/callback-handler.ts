@@ -377,7 +377,12 @@ export class BraintrustLangChainCallbackHandler<
     parentRunId?: string,
     tags?: string[],
   ): Promise<void> {
-    this.endSpan({ runId, parentRunId, output: action, tags });
+    this.endSpan({
+      runId,
+      parentRunId,
+      ...(this.options.captureChainOutputs !== false ? { output: action } : {}),
+      tags,
+    });
   }
 
   async handleRetrieverStart(

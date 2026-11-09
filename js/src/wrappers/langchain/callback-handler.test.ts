@@ -456,7 +456,28 @@ describe("LangChain capture options", () => {
     },
   );
 
-  it.each(["end", "error"])(
+  it.each([undefined, true, false])(
+    "controls chain output when an agent completes first (%s)",
+    async (captureChainOutputs) => {
+      const { handler, logs, span } = createHarness({ captureChainOutputs });
+      const output = { output: "answer" };
+      const action = { returnValues: output, log: "agent finished" };
+      await handler.handleChainStart({ name: "AgentExecutor" }, {}, "chain");
+      await handler.handleAgentEnd(action, "chain", undefined, ["tag"]);
+      await handler.handleChainEnd(output, "chain");
+
+      expect(logs).toHaveLength(1);
+      if (captureChainOutputs === false) {
+        expect(logs[0]).not.toHaveProperty("output");
+      } else {
+        expect(logs[0]).toHaveProperty("output", action);
+      }
+      expect(logs[0]).toHaveProperty("metadata.tags", ["tag"]);
+      expect(span.end).toHaveBeenCalledOnce();
+    },
+  );
+
+  it.each(["end", "error", "agent"])(
     "never serializes suppressed chain payloads on %s",
     async (completion) => {
       const toJSON = vi.fn(() => {
@@ -474,6 +495,12 @@ describe("LangChain capture options", () => {
         await handler.handleChainError(error, "chain", undefined, [], kwargs);
         expect(logs[0]).toHaveProperty("error", error);
       } else {
+        if (completion === "agent") {
+          await handler.handleAgentEnd(
+            { returnValues: state, log: "agent finished" },
+            "chain",
+          );
+        }
         await handler.handleChainEnd(state, "chain", undefined, [], kwargs);
       }
       expect(toJSON).not.toHaveBeenCalled();
