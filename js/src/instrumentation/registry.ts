@@ -112,6 +112,7 @@ class PluginRegistry {
     // Read config from environment variables
     const envConfig = this.readEnvConfig();
     const finalConfig = {
+      langchain: this.config.langchain,
       streamingAttachmentBufferBytes:
         this.config.streamingAttachmentBufferBytes,
       integrations: {

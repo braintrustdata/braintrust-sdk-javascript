@@ -1,18 +1,26 @@
 import { describe, expect, it, vi } from "vitest";
 import { BraintrustLangChainCallbackHandler } from "./callback-handler";
 
-function createHarness() {
+import { deepCopyEvent, type StartSpanArgs } from "../../logger";
+import type { LangChainCaptureOptions } from "../../vendor-sdk-types/langchain";
+
+function createHarness(options: LangChainCaptureOptions = {}) {
   const logs: unknown[] = [];
   const span = {
     log: vi.fn((event: unknown) => {
+      deepCopyEvent(event as Parameters<typeof deepCopyEvent>[0]);
       logs.push(event);
     }),
     end: vi.fn(),
   };
   const parent = {
-    startSpan: vi.fn(() => span),
+    startSpan: vi.fn((args: StartSpanArgs) => {
+      deepCopyEvent(args.event ?? {});
+      return span;
+    }),
   };
   const handler = new BraintrustLangChainCallbackHandler({
+    ...options,
     parent: parent as never,
   });
 
@@ -403,4 +411,215 @@ describe("BraintrustLangChainCallbackHandler model attribution", () => {
       expect(logs.at(-1)).not.toHaveProperty("metadata.model");
     },
   );
+});
+
+describe("LangChain capture options", () => {
+  it.each([undefined, true, false])(
+    "controls chain input and output independently (%s)",
+    async (capture) => {
+      for (const option of [
+        "captureChainInputs",
+        "captureChainOutputs",
+      ] as const) {
+        const { handler, parent, logs, span } = createHarness({
+          [option]: capture,
+        });
+        const input = { messages: ["history"] };
+        const output = { messages: ["answer"] };
+        const kwargs = { inputs: input, retained: "metadata" };
+        await handler.handleChainStart({ name: "graph" }, input, "chain");
+        await handler.handleChainEnd(
+          output,
+          "chain",
+          undefined,
+          ["tag"],
+          kwargs,
+        );
+        const startEvent = parent.startSpan.mock.calls[0][0].event!;
+        const endEvent = logs[0];
+        if (option === "captureChainInputs" && capture === false) {
+          expect(startEvent).not.toHaveProperty("input");
+          expect(endEvent).not.toHaveProperty("metadata.inputs");
+        } else {
+          expect(startEvent.input).toBe(input);
+          expect(endEvent).toHaveProperty("metadata.inputs", input);
+        }
+        if (option === "captureChainOutputs" && capture === false) {
+          expect(endEvent).not.toHaveProperty("output");
+        } else {
+          expect(endEvent).toHaveProperty("output", output);
+        }
+        expect(endEvent).toHaveProperty("metadata.retained", "metadata");
+        expect(kwargs.inputs).toBe(input);
+        expect(span.end).toHaveBeenCalledOnce();
+      }
+    },
+  );
+
+  it.each([undefined, true, false])(
+    "controls chain output when an agent completes first (%s)",
+    async (captureChainOutputs) => {
+      const { handler, logs, span } = createHarness({ captureChainOutputs });
+      const output = { output: "answer" };
+      const action = { returnValues: output, log: "agent finished" };
+      await handler.handleChainStart({ name: "AgentExecutor" }, {}, "chain");
+      await handler.handleAgentEnd(action, "chain", undefined, ["tag"]);
+      await handler.handleChainEnd(output, "chain");
+
+      expect(logs).toHaveLength(1);
+      if (captureChainOutputs === false) {
+        expect(logs[0]).not.toHaveProperty("output");
+      } else {
+        expect(logs[0]).toHaveProperty("output", action);
+      }
+      expect(logs[0]).toHaveProperty("metadata.tags", ["tag"]);
+      expect(span.end).toHaveBeenCalledOnce();
+    },
+  );
+
+  it.each(["end", "error", "agent"])(
+    "never serializes suppressed chain payloads on %s",
+    async (completion) => {
+      const toJSON = vi.fn(() => {
+        throw new Error("must not copy state");
+      });
+      const state = { toJSON };
+      const { handler, logs, span } = createHarness({
+        captureChainInputs: false,
+        captureChainOutputs: false,
+      });
+      await handler.handleChainStart({ name: "graph" }, state, "chain");
+      const kwargs = { inputs: state };
+      if (completion === "error") {
+        const error = new Error("chain failed");
+        await handler.handleChainError(error, "chain", undefined, [], kwargs);
+        expect(logs[0]).toHaveProperty("error", error);
+      } else {
+        if (completion === "agent") {
+          await handler.handleAgentEnd(
+            { returnValues: state, log: "agent finished" },
+            "chain",
+          );
+        }
+        await handler.handleChainEnd(state, "chain", undefined, [], kwargs);
+      }
+      expect(toJSON).not.toHaveBeenCalled();
+      expect(kwargs.inputs).toBe(state);
+      expect(span.end).toHaveBeenCalledOnce();
+    },
+  );
+
+  it.each(["handleChatModelStart", "handleLLMStart"] as const)(
+    "%s suppresses inputs before serialization and preserves errors",
+    async (method) => {
+      const toJSON = vi.fn(() => {
+        throw new Error("must not copy messages");
+      });
+      const { handler, parent, logs, span } = createHarness({
+        captureModelInputs: false,
+      });
+      await handler[method](
+        { name: "model" },
+        Object.assign([], { toJSON }),
+        "model",
+      );
+      expect(parent.startSpan.mock.calls[0][0].event).not.toHaveProperty(
+        "input",
+      );
+      const error = new Error("model failed");
+      await handler.handleLLMError(error, "model");
+      expect(logs[0]).toHaveProperty("error", error);
+      expect(toJSON).not.toHaveBeenCalled();
+      expect(span.end).toHaveBeenCalledOnce();
+    },
+  );
+
+  it.each([undefined, true, false])(
+    "controls model input, output and usage independently (%s)",
+    async (capture) => {
+      for (const option of [
+        "captureModelInputs",
+        "captureModelOutputs",
+        "captureModelTokenUsage",
+      ] as const) {
+        const { handler, parent, logs, span } = createHarness({
+          [option]: capture,
+        });
+        const messages = [[{ content: "hello" }]];
+        const response = {
+          llmOutput: { tokenUsage: { promptTokens: 10, completionTokens: 2 } },
+        };
+        await handler.handleChatModelStart(
+          { name: "model" },
+          messages,
+          "model",
+        );
+        await handler.handleLLMNewToken(
+          "hi",
+          { prompt: 0, completion: 0 },
+          "model",
+        );
+        await handler.handleLLMEnd(response, "model");
+        const startEvent = parent.startSpan.mock.calls[0][0].event!;
+        if (option === "captureModelInputs" && capture === false) {
+          expect(startEvent).not.toHaveProperty("input");
+        } else {
+          expect(startEvent.input).toBe(messages);
+        }
+        if (option === "captureModelOutputs" && capture === false) {
+          expect(logs[0]).not.toHaveProperty("output");
+        } else {
+          expect(logs[0]).toHaveProperty("output", response);
+        }
+        expect(logs[0]).toHaveProperty(
+          "metrics.time_to_first_token",
+          expect.any(Number),
+        );
+        if (option === "captureModelTokenUsage" && capture === false) {
+          expect(logs[0]).toHaveProperty("metrics", {
+            time_to_first_token: expect.any(Number),
+          });
+        } else {
+          expect(logs[0]).toHaveProperty("metrics.tokens", 12);
+        }
+        expect(span.end).toHaveBeenCalledOnce();
+      }
+    },
+  );
+
+  it("skips result serialization and token extraction while retaining model attribution", async () => {
+    const toJSON = vi.fn(() => {
+      throw new Error("must not copy result");
+    });
+    const usage = vi.fn(() => {
+      throw new Error("must not extract usage");
+    });
+    const response = {
+      toJSON,
+      generations: [
+        [
+          {
+            message: {
+              get usage_metadata() {
+                return usage();
+              },
+              response_metadata: { model: "resolved-model" },
+            },
+          },
+        ],
+      ],
+    };
+    const { handler, logs } = createHarness({
+      captureModelOutputs: false,
+      captureModelTokenUsage: false,
+    });
+    await handler.handleChatModelStart({ name: "model" }, [], "model");
+    await handler.handleLLMEnd(response, "model");
+    expect(toJSON).not.toHaveBeenCalled();
+    expect(usage).not.toHaveBeenCalled();
+    expect(logs[0]).toMatchObject({
+      metadata: { model: "resolved-model" },
+      metrics: {},
+    });
+  });
 });
