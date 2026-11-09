@@ -67,6 +67,20 @@ const eveScenarios = await Promise.all(
       tasks: true,
       variantKey: "eve-v0-latest",
     },
+    {
+      dependencyName: "eve-v1",
+      label: "v1 pinned",
+      provider: true,
+      tasks: true,
+      variantKey: "eve-v1",
+    },
+    {
+      dependencyName: "eve-v1-latest",
+      label: "v1 latest",
+      provider: true,
+      tasks: true,
+      variantKey: "eve-v1-latest",
+    },
   ].map(async (scenario) => ({
     ...scenario,
     version: await readInstalledPackageVersion(
@@ -81,11 +95,10 @@ const TIMEOUT_MS =
 describe.sequential("eve instrumentation variants", () => {
   for (const scenario of eveScenarios) {
     describe(`${scenario.label} (${scenario.version})`, () => {
+      const [major, minor] = scenario.version.split(".").map(Number);
       // Eve 0.76 moved built-in tools into the eve namespace.
       const taskWaitName =
-        Number(scenario.version.split(".")[1]) >= 76
-          ? "eve__task_wait"
-          : "task_wait";
+        major >= 1 || minor >= 76 ? "eve__task_wait" : "task_wait";
       let events: CapturedLogEvent[] = [];
       let payloads: CapturedLogPayload[] = [];
 
@@ -278,6 +291,20 @@ describe.sequential("eve instrumentation variants", () => {
             expect(step.metadata).not.toHaveProperty("model");
             expect(step.metadata).not.toHaveProperty("provider");
           }
+          if (major >= 1) {
+            expect(step.metadata?.tools).toEqual(
+              expect.arrayContaining([
+                expect.objectContaining({
+                  type: "function",
+                  function: expect.objectContaining({ name: "researcher" }),
+                }),
+                expect.objectContaining({
+                  type: "function",
+                  function: expect.objectContaining({ name: "read" }),
+                }),
+              ]),
+            );
+          }
         }
 
         expect(researcher).toBeDefined();
@@ -292,10 +319,12 @@ describe.sequential("eve instrumentation variants", () => {
           scenario: "eve-instrumentation",
           testRunId: expect.any(String),
         });
-        // Eve 0.70+ runs subagents as tasks, so the call returns a receipt and
-        // the result reaches the parent in a later step.
+        // Earlier task APIs settle the call with a receipt. Eve 0.91's
+        // call.settled event carries the completed child's result instead.
         expect(researcher?.output).toContain(
-          scenario.tasks ? "Started task researcher-" : "Researcher result",
+          scenario.tasks && major === 0 && minor < 91
+            ? "Started task researcher-"
+            : "Researcher result",
         );
         expect(researcher?.error).toBeUndefined();
 

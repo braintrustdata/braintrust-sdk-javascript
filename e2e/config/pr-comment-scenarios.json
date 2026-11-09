@@ -913,6 +913,14 @@
       {
         "variantKey": "eve-v0-latest",
         "label": "v0 latest"
+      },
+      {
+        "variantKey": "eve-v1",
+        "label": "v1 pinned"
+      },
+      {
+        "variantKey": "eve-v1-latest",
+        "label": "v1 latest"
       }
     ]
   },

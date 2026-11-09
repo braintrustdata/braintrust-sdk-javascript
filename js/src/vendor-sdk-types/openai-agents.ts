@@ -25,6 +25,19 @@ export type OpenAIAgentsFunctionSpanData = OpenAIAgentsSpanDataBase & {
   mcp_data?: string;
 };
 
+export type OpenAIAgentsTaskSpanData = OpenAIAgentsSpanDataBase & {
+  type: "task";
+  name: string;
+  usage?: Record<string, unknown>;
+};
+
+export type OpenAIAgentsTurnSpanData = OpenAIAgentsSpanDataBase & {
+  type: "turn";
+  turn: number;
+  agent_name: string;
+  usage?: Record<string, unknown>;
+};
+
 export type OpenAIAgentsGenerationSpanData = OpenAIAgentsSpanDataBase & {
   type: "generation";
   input?: Array<Record<string, unknown>>;
@@ -94,6 +107,8 @@ export type OpenAIAgentsMCPListToolsSpanData = OpenAIAgentsSpanDataBase & {
 
 export type OpenAIAgentsSpanData =
   | OpenAIAgentsAgentSpanData
+  | OpenAIAgentsTaskSpanData
+  | OpenAIAgentsTurnSpanData
   | OpenAIAgentsFunctionSpanData
   | OpenAIAgentsGenerationSpanData
   | OpenAIAgentsResponseSpanData

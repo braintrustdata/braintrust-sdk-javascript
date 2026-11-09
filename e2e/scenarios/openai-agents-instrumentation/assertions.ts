@@ -44,6 +44,7 @@ function findModelSpans(
 
 export function defineOpenAIAgentsAutoInstrumentationAssertions(options: {
   name: string;
+  hasTurnSpans: boolean;
   runScenario: RunOpenAIAgentsScenario;
   snapshotName: string;
   testFileUrl: string;
@@ -76,13 +77,19 @@ export function defineOpenAIAgentsAutoInstrumentationAssertions(options: {
           "Agent workflow",
           operation?.span.id,
         );
-        const agent = findLatestChildSpan(
+        const task = options.hasTurnSpans
+          ? findLatestChildSpan(events, "Agent workflow", workflow?.span.id)
+          : workflow;
+        const agent = findLatestChildSpan(events, AGENT_NAME, task?.span.id);
+        const turns = findChildSpans(events, "Turn", agent?.span.id);
+        const modelSpans = options.hasTurnSpans
+          ? turns.flatMap((turn) => findModelSpans(events, turn.span.id))
+          : findModelSpans(events, agent?.span.id);
+        const toolSpan = findLatestChildSpan(
           events,
-          AGENT_NAME,
-          workflow?.span.id,
+          TOOL_NAME,
+          options.hasTurnSpans ? turns[0]?.span.id : agent?.span.id,
         );
-        const modelSpans = findModelSpans(events, agent?.span.id);
-        const toolSpan = findLatestChildSpan(events, TOOL_NAME, agent?.span.id);
 
         expect(root).toBeDefined();
         expect(root?.row.metadata).toMatchObject({
@@ -95,6 +102,38 @@ export function defineOpenAIAgentsAutoInstrumentationAssertions(options: {
         expect(workflow?.span.type).toBe("task");
         expect(workflow?.span.parentIds).toEqual([operation?.span.id ?? ""]);
 
+        if (options.hasTurnSpans) {
+          expect(task?.span.type).toBe("task");
+          expect(task?.span.parentIds).toEqual([workflow?.span.id]);
+          expect(turns).toHaveLength(2);
+          for (const [index, turn] of turns.entries()) {
+            expect(turn.span.type).toBe("task");
+            expect(turn.row.metadata).toMatchObject({
+              turn: index + 1,
+              agent_name: AGENT_NAME,
+            });
+            expect(findModelSpans(events, turn.span.id)).toHaveLength(1);
+          }
+          for (const parent of [task, ...turns]) {
+            const children =
+              parent === task
+                ? modelSpans
+                : findModelSpans(events, parent?.span.id);
+            for (const metric of [
+              "prompt_tokens",
+              "completion_tokens",
+              "tokens",
+            ]) {
+              expect(parent?.metrics?.[metric]).toBe(
+                children.reduce(
+                  (sum, child) => sum + (child.metrics?.[metric] as number),
+                  0,
+                ),
+              );
+            }
+          }
+        }
+
         expect(agent).toBeDefined();
         expect(agent?.span.type).toBe("task");
         expect(agent?.row.metadata).toMatchObject({
@@ -105,7 +144,9 @@ export function defineOpenAIAgentsAutoInstrumentationAssertions(options: {
         expect(modelSpans.length).toBeGreaterThanOrEqual(1);
         for (const modelSpan of modelSpans) {
           expect(modelSpan.span.type).toBe("llm");
-          expect(String(modelSpan.row.metadata?.model)).toContain(MODEL_NAME);
+          expect(modelSpan.row.metadata).toMatchObject({
+            model: expect.stringContaining(MODEL_NAME),
+          });
           expect(modelSpan.metrics).toMatchObject({
             completion_tokens: expect.any(Number),
             prompt_tokens: expect.any(Number),

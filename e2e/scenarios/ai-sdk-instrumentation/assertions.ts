@@ -267,6 +267,29 @@ function findStreamTrace(events: CapturedLogEvent[]) {
   return { child, operation, parent };
 }
 
+function findStreamImageFileTrace(events: CapturedLogEvent[]) {
+  const operation = findLatestSpan(
+    events,
+    "ai-sdk-stream-image-file-operation",
+  );
+  const parent = findParentSpan(events, "streamText", operation?.span.id);
+  const child = findLatestModelSpan(events, parent?.span.id, "doStream");
+
+  return { child, operation, parent };
+}
+
+function findFileParts(value: unknown, depth = 0): Record<string, unknown>[] {
+  if (depth > 32 || typeof value !== "object" || value === null) {
+    return [];
+  }
+  if (isRecord(value) && value.type === "file") {
+    return [value];
+  }
+  return Object.values(value).flatMap((child) =>
+    findFileParts(child, depth + 1),
+  );
+}
+
 function findEmbedTrace(events: CapturedLogEvent[]) {
   const operation = findLatestSpan(events, "ai-sdk-embed-operation");
   const parent = findParentSpan(events, "embed", operation?.span.id);
@@ -831,6 +854,46 @@ export function defineAISDKInstrumentationAssertions(options: {
               "prompt_cache_creation_tokens",
             ),
           ).not.toHaveLength(0);
+        },
+      );
+    }
+
+    if (options.sdkMajorVersion >= 5) {
+      test(
+        "logs inline file bytes as attachments for streamText()",
+        testConfig,
+        () => {
+          const root = findLatestSpan(events, ROOT_NAME);
+          const trace = findStreamImageFileTrace(events);
+
+          expectOperationParentedByRoot(trace.operation, root);
+          expectAISDKParentSpan(trace.parent);
+          expectAISDKModelChildSpan(trace.child);
+          expect(operationName(trace.operation)).toBe("stream-image-file");
+
+          const attachment = {
+            type: "braintrust_attachment",
+            content_type: "image/png",
+            filename: "red.png",
+            key: expect.any(String),
+          };
+          for (const span of [trace.parent, trace.child]) {
+            const attachments = findAttachmentReferences(span?.input);
+            expect(attachments).toHaveLength(1);
+            expect(attachments[0]).toEqual(attachment);
+
+            // Raw bytes must never be copied into the span, e.g. as an
+            // object with one key per byte.
+            const fileParts = findFileParts(span?.input);
+            expect(fileParts).toHaveLength(1);
+            // The v7 scenario passes the tagged `{ type: "data", data }`
+            // shape (`SharedV4FileData`); older versions pass raw bytes.
+            expect(fileParts[0].data).toEqual(
+              options.sdkMajorVersion >= 7
+                ? { type: "data", data: attachment }
+                : attachment,
+            );
+          }
         },
       );
     }

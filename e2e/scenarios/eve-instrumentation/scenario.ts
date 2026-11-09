@@ -37,6 +37,7 @@ async function main() {
   const evePackage = JSON.parse(
     await readFile(path.join(evePackageDir, "package.json"), "utf8"),
   ) as { bin?: string | Record<string, string>; version: string };
+  process.env.EVE_VERSION = evePackage.version;
   const eveBinPath =
     typeof evePackage.bin === "string" ? evePackage.bin : evePackage.bin?.eve;
   if (!eveBinPath) {
@@ -100,7 +101,17 @@ async function main() {
     [eveBin, "start", "--host", "127.0.0.1", "--port", String(port)],
     {
       cwd: process.cwd(),
-      env: process.env,
+      // Eve 1.x starts the application in a child process. Stop both together.
+      detached: process.platform !== "win32",
+      env: {
+        ...process.env,
+        // The callback receiver is local. Eve 0.91 requires explicit dev mode
+        // before accepting loopback callback URLs.
+        ...(Number(process.env.EVE_VERSION?.split(".")[0]) >= 1 ||
+        Number(process.env.EVE_VERSION?.split(".")[1]) >= 91
+          ? { EVE_DEV: "1" }
+          : {}),
+      },
       stdio: ["ignore", "pipe", "pipe"],
     },
   );
@@ -171,6 +182,9 @@ async function main() {
       await runTracedCallerSession(baseUrl);
     }
     await new Promise((resolve) => setTimeout(resolve, 5000));
+  } catch (error) {
+    console.error(output());
+    throw error;
   } finally {
     await stopServer(server);
   }
@@ -204,6 +218,10 @@ async function runTracedCallerSession(baseUrl: string): Promise<void> {
       async (span) => {
         const response = await fetch(`${baseUrl}/eve/v1/session`, {
           body: JSON.stringify({
+            ...(Number(process.env.EVE_VERSION?.split(".")[0]) >= 1 ||
+            Number(process.env.EVE_VERSION?.split(".")[1]) >= 91
+              ? { protocolVersion: 3 }
+              : {}),
             callback: {
               callId: "call-traced-caller",
               subagentName: "traced-caller",
@@ -366,38 +384,63 @@ async function streamUntil(
         if (!trimmed) {
           continue;
         }
-        const event = JSON.parse(trimmed) as {
-          data?: { childSessionId?: string; message?: string };
+        type StreamEvent = {
+          data?: {
+            childSessionId?: string;
+            sessionId?: string;
+            message?: string;
+            outcome?: string;
+            error?: { message?: string };
+          };
           type?: string;
         };
+        const record = JSON.parse(trimmed) as StreamEvent & {
+          facts?: StreamEvent[];
+          $eve?: string;
+          next?: number;
+        };
+        if (record.$eve) {
+          if (record.$eve === "position" && record.next !== undefined) {
+            nextIndex = record.next;
+          }
+          continue;
+        }
         nextIndex++;
-        if (
-          event.type === "step.failed" ||
-          event.type === "turn.failed" ||
-          event.type === "session.failed"
-        ) {
-          throw new Error(
-            `Eve emitted ${event.type}: ${event.data?.message ?? trimmed}`,
-          );
-        }
-        if (
-          event.type === "subagent.called" &&
-          typeof event.data?.childSessionId === "string" &&
-          !seenSessionIds.has(event.data.childSessionId)
-        ) {
-          seenSessionIds.add(event.data.childSessionId);
-          childStreams.push(
-            streamUntil(
-              baseUrl,
-              event.data.childSessionId,
-              seenSessionIds,
-              "turn.completed",
-            ).then(() => undefined),
-          );
-        }
-        if (event.type === until) {
-          await Promise.all(childStreams);
-          return nextIndex;
+        // Eve 0.91 streams commits containing multiple session facts.
+        for (const event of record.facts ?? [record]) {
+          if (
+            event.type === "step.failed" ||
+            event.type === "turn.failed" ||
+            event.type === "session.failed" ||
+            ((event.type === "turn.settled" ||
+              event.type === "session.ended") &&
+              event.data?.outcome === "failed")
+          ) {
+            throw new Error(
+              `Eve emitted ${event.type}: ${event.data?.error?.message ?? event.data?.message ?? trimmed}`,
+            );
+          }
+          const childSessionId =
+            event.type === "child.opened"
+              ? event.data?.sessionId
+              : event.type === "subagent.called"
+                ? event.data?.childSessionId
+                : undefined;
+          if (childSessionId && !seenSessionIds.has(childSessionId)) {
+            seenSessionIds.add(childSessionId);
+            childStreams.push(
+              streamUntil(
+                baseUrl,
+                childSessionId,
+                seenSessionIds,
+                "turn.completed",
+              ).then(() => undefined),
+            );
+          }
+          if (event.type === until || event.type === "turn.settled") {
+            await Promise.all(childStreams);
+            return nextIndex;
+          }
         }
       }
     }
@@ -413,8 +456,26 @@ async function stopServer(
   if (server.exitCode !== null) {
     return;
   }
-  server.kill("SIGTERM");
-  const timeout = setTimeout(() => server.kill("SIGKILL"), 5_000);
+  try {
+    if (process.platform !== "win32" && server.pid) {
+      process.kill(-server.pid, "SIGTERM");
+    } else {
+      server.kill("SIGTERM");
+    }
+  } catch {
+    // The server may have exited before receiving the signal.
+  }
+  const timeout = setTimeout(() => {
+    try {
+      if (process.platform !== "win32" && server.pid) {
+        process.kill(-server.pid, "SIGKILL");
+      } else {
+        server.kill("SIGKILL");
+      }
+    } catch {
+      // The process group may have exited before forced shutdown.
+    }
+  }, 5_000);
   try {
     await once(server, "close");
   } finally {

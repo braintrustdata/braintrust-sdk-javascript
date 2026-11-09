@@ -453,6 +453,21 @@ export interface EveInstrumentationModelInput {
     | EveSystemModelMessage
     | readonly EveSystemModelMessage[];
   readonly messages: readonly EveModelMessage[];
+  readonly tools?: readonly (
+    | {
+        readonly type: "function";
+        readonly name: string;
+        readonly description?: string;
+        readonly inputSchema?: EveJsonObject;
+        readonly strict?: boolean;
+      }
+    | {
+        readonly type: "provider";
+        readonly id: string;
+        readonly name: string;
+        readonly args: EveJsonObject;
+      }
+  )[];
 }
 
 export interface EveInstrumentationStepStartedEventInput {
@@ -506,15 +521,20 @@ export interface EveProviderContext {
   readonly state: EveProviderState;
 }
 
-export interface EveInstrumentationAttemptScope {
-  readonly attemptId: string;
-  readonly attemptIndex: number;
+export type EveInstrumentationAttemptScope = {
   readonly functionId?: string;
   readonly rootSessionId?: string;
   readonly sessionId: string;
-  readonly stepIndex: number;
-  readonly turnId: string;
-}
+  // Eve 1.x also runs model calls (for example compaction) outside a turn.
+  readonly turnId?: string;
+} & (
+  | {
+      readonly attemptId: string;
+      readonly attemptIndex: number;
+      readonly stepIndex: number;
+    }
+  | { readonly runId: string; readonly attempt: number }
+);
 
 export interface EveInstrumentationParentLineage {
   readonly callId: string;
@@ -592,6 +612,7 @@ export type EveProviderContentPart =
     };
 
 export interface EveProviderUsage {
+  readonly costUsd?: number;
   readonly inputTokenDetails?: {
     readonly cacheReadTokens?: number;
     readonly cacheWriteTokens?: number;
@@ -702,6 +723,79 @@ export type EveProviderStepAttemptTerminalEvent = {
   readonly type: "step.attempt.completed" | "step.attempt.failed";
 };
 
+/** Eve 0.91 uses settled events and identifies attempts by model run. */
+export interface EveProviderTurnSettledEvent {
+  readonly type: "turn.settled";
+  readonly outcome: "completed" | "failed" | "cancelled";
+  readonly error?: unknown;
+  readonly idempotencyKey: string;
+  readonly sessionId: string;
+  readonly turnId: string;
+}
+
+export type EveProviderModelCallSettledEvent =
+  | (Omit<
+      Extract<
+        EveProviderModelCallTerminalEvent,
+        { type: "model.call.completed" }
+      >,
+      "type"
+    > & {
+      readonly type: "model.call.settled";
+      readonly outcome: "completed";
+    })
+  | (Omit<
+      Extract<EveProviderModelCallTerminalEvent, { type: "model.call.failed" }>,
+      "type"
+    > & {
+      readonly type: "model.call.settled";
+      readonly outcome: "failed";
+    });
+
+export interface EveProviderCallRequestedEvent {
+  readonly type: "call.requested";
+  readonly capability: {
+    readonly kind: "tool" | "agent" | "skill" | "control";
+    readonly remote?: true;
+  };
+  readonly callId: string;
+  readonly idempotencyKey: string;
+  readonly input?: unknown;
+  readonly startedAtMs?: number;
+  readonly scope: EveInstrumentationAttemptScope;
+  readonly toolName: string;
+}
+
+export interface EveProviderCallSettledEvent {
+  readonly type: "call.settled";
+  readonly outcome:
+    | "completed"
+    | "failed"
+    | "rejected"
+    | "interrupted"
+    | "abandoned";
+  readonly output?: unknown;
+  readonly error?: unknown;
+  readonly errorCode?: string;
+  readonly acceptedAtMs?: number;
+  readonly completedAtMs?: number;
+  readonly idempotencyKey: string;
+  readonly scope: EveInstrumentationAttemptScope;
+}
+
+export interface EveProviderModelRunTerminalEvent {
+  readonly type: "model.settled" | "model.retried";
+  readonly outcome?:
+    | "completed"
+    | "failed"
+    | "interrupted"
+    | "abandoned"
+    | "cancelled";
+  readonly error?: unknown;
+  readonly idempotencyKey: string;
+  readonly scope: EveInstrumentationAttemptScope;
+}
+
 type EveProviderHandler<TEvent> = (
   event: TEvent,
   context: EveProviderContext,
@@ -730,6 +824,12 @@ type EveTraceCapturePolicy = (
 export interface EveProviderDefinition {
   readonly tracePolicy?: EveTraceCapturePolicy;
   readonly events?: {
+    readonly "call.requested"?: EveProviderHandler<EveProviderCallRequestedEvent>;
+    readonly "call.settled"?: EveProviderHandler<EveProviderCallSettledEvent>;
+    readonly "model.call.settled"?: EveProviderHandler<EveProviderModelCallSettledEvent>;
+    readonly "model.settled"?: EveProviderHandler<EveProviderModelRunTerminalEvent>;
+    readonly "model.retried"?: EveProviderHandler<EveProviderModelRunTerminalEvent>;
+    readonly "turn.settled"?: EveProviderHandler<EveProviderTurnSettledEvent>;
     readonly "action.completed"?: EveProviderHandler<EveProviderActionTerminalEvent>;
     readonly "action.failed"?: EveProviderHandler<EveProviderActionTerminalEvent>;
     readonly "action.started"?: EveProviderHandler<EveProviderActionStartedEvent>;
