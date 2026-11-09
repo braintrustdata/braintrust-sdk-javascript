@@ -379,16 +379,32 @@ class EveProviderBridge {
         context.state.set({ skip: true });
         return;
       }
-      const parent = await this.parentForScope(event.scope);
       const { rowId, spanId } = await generateEveIds(
         "step",
         event.idempotencyKey,
       );
+      const parent = event.scope.turnId
+        ? await this.parentForScope(event.scope)
+        : { parentSpanIds: [], rootSpanId: spanId };
       const input = event.input ? capturedModelInput(event.input) : undefined;
+      const tools = event.input?.tools?.map((tool) =>
+        tool.type === "function"
+          ? {
+              type: "function",
+              function: {
+                name: tool.name,
+                description: tool.description,
+                parameters: tool.inputSchema,
+                strict: tool.strict,
+              },
+            }
+          : { type: tool.type, id: tool.id, name: tool.name, args: tool.args },
+      );
       const metadata = {
         ...this.spanMetadata(event.scope.sessionId),
         model: event.model.modelId,
         provider: event.model.provider,
+        ...(tools?.length ? { tools } : {}),
       };
       const span = await this.startSpan(context, {
         event: {
@@ -498,8 +514,10 @@ class EveProviderBridge {
         context.state.set({ skip: true });
         return;
       }
-      const parent = await this.parentForScope(event.scope);
-      if (event.type === "tool.call.started" && event.parentCallId) {
+      const parent = event.scope.turnId
+        ? await this.parentForScope(event.scope)
+        : undefined;
+      if (parent && event.type === "tool.call.started" && event.parentCallId) {
         parent.spanId = (
           await generateEveIds(
             "tool",
@@ -533,7 +551,7 @@ class EveProviderBridge {
         },
         name: event.type === "tool.call.started" ? event.toolName : event.name,
         ...(start !== undefined ? { startTime: start / 1000 } : {}),
-        parentSpanIds: parent,
+        parentSpanIds: parent ?? { parentSpanIds: [], rootSpanId: spanId },
         spanAttributes: { type: SpanTypeAttribute.TOOL },
         spanId,
       });
@@ -800,6 +818,7 @@ function modelOutput(
 }
 
 function usageMetrics(usage: EveProviderUsage): Record<string, number> {
+  const cost = nonNegativeNumber(usage?.costUsd);
   const promptTokens = nonNegativeNumber(usage?.inputTokens);
   const completionTokens = nonNegativeNumber(usage?.outputTokens);
   const cachedTokens = nonNegativeNumber(
@@ -809,6 +828,7 @@ function usageMetrics(usage: EveProviderUsage): Record<string, number> {
     usage?.inputTokenDetails?.cacheWriteTokens,
   );
   return {
+    ...(cost !== undefined ? { estimated_cost: cost } : {}),
     ...(promptTokens !== undefined ? { prompt_tokens: promptTokens } : {}),
     ...(completionTokens !== undefined
       ? { completion_tokens: completionTokens }
@@ -851,7 +871,7 @@ function safeJsonStringify(value: unknown): string {
   }
 }
 
-function turnKey(sessionId: string, turnId: string): string {
+function turnKey(sessionId: string, turnId: string | undefined): string {
   return `${sessionId}:${turnId}`;
 }
 
@@ -861,13 +881,16 @@ function attemptKey(scope: EveInstrumentationAttemptScope): string {
     : JSON.stringify([scope.sessionId, scope.runId, scope.attempt]);
 }
 
-function turnIdempotencyKey(sessionId: string, turnId: string): string {
+function turnIdempotencyKey(
+  sessionId: string,
+  turnId: string | undefined,
+): string {
   return `turn:${sessionId}:${turnId}`;
 }
 
 function actionIdempotencyKey(
   sessionId: string,
-  turnId: string,
+  turnId: string | undefined,
   callId: string,
 ): string {
   return `action:${sessionId}:${turnId}:${callId}`;
@@ -1064,7 +1087,7 @@ function isEveProviderScope(
         typeof value["attempt"] === "number" &&
         Number.isFinite(value["attempt"]))) &&
     typeof value["sessionId"] === "string" &&
-    typeof value["turnId"] === "string" &&
+    (value["turnId"] === undefined || typeof value["turnId"] === "string") &&
     (value["rootSessionId"] === undefined ||
       typeof value["rootSessionId"] === "string")
   );

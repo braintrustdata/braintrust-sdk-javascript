@@ -26,7 +26,8 @@ export default defineAgent({
     : {}),
   model: defineDynamic(
     // Eve 0.91 resolves dynamic values from a function of the session.
-    (Number(process.env.EVE_VERSION?.split(".")[1]) >= 91
+    (Number(process.env.EVE_VERSION?.split(".")[0]) >= 1 ||
+    Number(process.env.EVE_VERSION?.split(".")[1]) >= 91
       ? () => ({ model: dynamicModel, modelContextWindowTokens: 32_768 })
       : {
           ...(providerInstrumentation ? {} : { fallback: dynamicModel }),

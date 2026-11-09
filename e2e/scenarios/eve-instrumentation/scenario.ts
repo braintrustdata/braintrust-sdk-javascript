@@ -101,11 +101,14 @@ async function main() {
     [eveBin, "start", "--host", "127.0.0.1", "--port", String(port)],
     {
       cwd: process.cwd(),
+      // Eve 1.x starts the application in a child process. Stop both together.
+      detached: process.platform !== "win32",
       env: {
         ...process.env,
         // The callback receiver is local. Eve 0.91 requires explicit dev mode
         // before accepting loopback callback URLs.
-        ...(Number(process.env.EVE_VERSION?.split(".")[1]) >= 91
+        ...(Number(process.env.EVE_VERSION?.split(".")[0]) >= 1 ||
+        Number(process.env.EVE_VERSION?.split(".")[1]) >= 91
           ? { EVE_DEV: "1" }
           : {}),
       },
@@ -215,7 +218,8 @@ async function runTracedCallerSession(baseUrl: string): Promise<void> {
       async (span) => {
         const response = await fetch(`${baseUrl}/eve/v1/session`, {
           body: JSON.stringify({
-            ...(Number(process.env.EVE_VERSION?.split(".")[1]) >= 91
+            ...(Number(process.env.EVE_VERSION?.split(".")[0]) >= 1 ||
+            Number(process.env.EVE_VERSION?.split(".")[1]) >= 91
               ? { protocolVersion: 3 }
               : {}),
             callback: {
@@ -452,8 +456,26 @@ async function stopServer(
   if (server.exitCode !== null) {
     return;
   }
-  server.kill("SIGTERM");
-  const timeout = setTimeout(() => server.kill("SIGKILL"), 5_000);
+  try {
+    if (process.platform !== "win32" && server.pid) {
+      process.kill(-server.pid, "SIGTERM");
+    } else {
+      server.kill("SIGTERM");
+    }
+  } catch {
+    // The server may have exited before receiving the signal.
+  }
+  const timeout = setTimeout(() => {
+    try {
+      if (process.platform !== "win32" && server.pid) {
+        process.kill(-server.pid, "SIGKILL");
+      } else {
+        server.kill("SIGKILL");
+      }
+    } catch {
+      // The process group may have exited before forced shutdown.
+    }
+  }, 5_000);
   try {
     await once(server, "close");
   } finally {
