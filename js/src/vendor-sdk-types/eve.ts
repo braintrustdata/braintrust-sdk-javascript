@@ -453,6 +453,21 @@ export interface EveInstrumentationModelInput {
     | EveSystemModelMessage
     | readonly EveSystemModelMessage[];
   readonly messages: readonly EveModelMessage[];
+  readonly tools?: readonly (
+    | {
+        readonly type: "function";
+        readonly name: string;
+        readonly description?: string;
+        readonly inputSchema?: EveJsonObject;
+        readonly strict?: boolean;
+      }
+    | {
+        readonly type: "provider";
+        readonly id: string;
+        readonly name: string;
+        readonly args: EveJsonObject;
+      }
+  )[];
 }
 
 export interface EveInstrumentationStepStartedEventInput {
@@ -510,7 +525,8 @@ export type EveInstrumentationAttemptScope = {
   readonly functionId?: string;
   readonly rootSessionId?: string;
   readonly sessionId: string;
-  readonly turnId: string;
+  // Eve 1.x also runs model calls (for example compaction) outside a turn.
+  readonly turnId?: string;
 } & (
   | {
       readonly attemptId: string;
@@ -596,6 +612,7 @@ export type EveProviderContentPart =
     };
 
 export interface EveProviderUsage {
+  readonly costUsd?: number;
   readonly inputTokenDetails?: {
     readonly cacheReadTokens?: number;
     readonly cacheWriteTokens?: number;

@@ -91,6 +91,117 @@ describe("braintrustEveInstrumentation provider lifecycle", () => {
   });
 
   it.each([false, true])(
+    "records Eve 1.x operations outside a turn with replacement process: %s",
+    async (replaceProvider) => {
+      const provider = braintrustEveInstrumentation({});
+      const modelContext = providerContext();
+      const toolContext = providerContext();
+      const scope = {
+        sessionId: "session",
+        rootSessionId: "session",
+        runId: "compaction",
+        attempt: 0,
+      };
+      await provider.events["model.call.started"](
+        {
+          type: "model.call.started",
+          idempotencyKey: "compaction-model",
+          scope,
+          model: { modelId: "test-model", provider: "test-provider" },
+          input: {
+            messages: [{ role: "user", content: "Summarize" }],
+            tools: [
+              {
+                type: "function",
+                name: "search",
+                description: "Search Eve documentation",
+                inputSchema: { type: "object" },
+                strict: false,
+                execute: () => "Must not be logged",
+              },
+            ],
+          },
+        },
+        modelContext,
+      );
+      await provider.events["call.requested"](
+        {
+          type: "call.requested",
+          idempotencyKey: "direct-tool",
+          callId: "search",
+          capability: { kind: "tool" },
+          scope,
+          toolName: "search",
+          input: { query: "Eve" },
+        },
+        toolContext,
+      );
+      const terminal = replaceProvider
+        ? braintrustEveInstrumentation({})
+        : provider;
+      await terminal.events["model.call.settled"](
+        {
+          type: "model.call.settled",
+          outcome: "completed",
+          idempotencyKey: "compaction-model",
+          scope,
+          content: [{ type: "text", text: "Summary" }],
+          finishReason: "stop",
+          usage: { inputTokens: 10, outputTokens: 5, costUsd: 0.001 },
+        },
+        modelContext,
+      );
+      await terminal.events["call.settled"](
+        {
+          type: "call.settled",
+          outcome: "completed",
+          idempotencyKey: "direct-tool",
+          scope,
+          output: "Found Eve",
+        },
+        toolContext,
+      );
+      const writes = (await backgroundLogger.drain()) as Array<
+        Record<string, any> & { id: string }
+      >;
+      const spans = mergeRowBatch([...writes].reverse());
+      expect(spans).toHaveLength(2);
+      for (const span of spans) {
+        expect(span.span_parents ?? []).toEqual([]);
+        expect(span.root_span_id).toBe(span.span_id);
+        expect(span.metrics.end).toEqual(expect.any(Number));
+      }
+      expect(
+        spans.find((span) => span.span_attributes.name === "eve.step"),
+      ).toMatchObject({
+        input: [{ role: "user", content: "Summarize" }],
+        output: [{ message: { content: "Summary" } }],
+        metrics: { tokens: 15, estimated_cost: 0.001 },
+        metadata: {
+          tools: [
+            {
+              type: "function",
+              function: {
+                name: "search",
+                description: "Search Eve documentation",
+                parameters: { type: "object" },
+                strict: false,
+              },
+            },
+          ],
+        },
+      });
+      const model = spans.find(
+        (span) => span.span_attributes.name === "eve.step",
+      );
+      expect(model?.metadata.tools[0]).not.toHaveProperty("execute");
+      expect(
+        spans.find((span) => span.span_attributes.name === "search"),
+      ).toMatchObject({ output: "Found Eve" });
+    },
+  );
+
+  it.each([false, true])(
     "records Eve 0.91 settled events with replacement process: %s",
     async (replaceProvider) => {
       const provider = braintrustEveInstrumentation({});
@@ -1168,7 +1279,7 @@ describe("braintrustEveInstrumentation provider lifecycle", () => {
         idempotencyKey: "model-partial",
         scope,
         type: "model.call.completed",
-        usage: { inputTokens: "invalid", outputTokens: -1 },
+        usage: { inputTokens: "invalid", outputTokens: -1, costUsd: NaN },
       },
       context,
     );

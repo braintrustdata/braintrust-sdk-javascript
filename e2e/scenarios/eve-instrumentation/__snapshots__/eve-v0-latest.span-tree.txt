@@ -66,7 +66,252 @@ span_tree:
 │   │     "model": "qwen/qwen3-30b-a3b",
 │   │     "provider": "openrouter",
 │   │     "scenario": "eve-instrumentation",
-│   │     "testRunId": "<run:1>"
+│   │     "testRunId": "<run:1>",
+│   │     "tools": [
+│   │       {
+│   │         "function": {
+│   │           "description": "Execute a shell command in the shared workspace environment. A command still running after 30 seconds keeps running in the background and returns status \"running\" with its output so far and how to check on or stop it.",
+│   │           "name": "bash",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "command": {
+│   │                 "description": "The shell command to execute.",
+│   │                 "type": "string"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "command"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Read a file from the local filesystem. If the path does not exist, an error is returned.\n\nUsage:\n- The filePath parameter is an absolute path, a path relative to the workspace root (where `bash` commands start), or a path beginning with $HOME/.\n- By default, this tool returns up to 2000 lines from the start of the file.\n- The offset parameter is the line number to start from (1-indexed).\n- To read later sections, call this tool again with a larger offset.\n- Contents are returned with each line prefixed by its line number as `<line>: <content>`. For example, if a file has contents \"foo\\n\", you will receive \"1: foo\\n\".\n- Any line longer than 2000 characters is truncated.\n- PNG, JPEG, GIF, and WebP images up to 3 MiB and PDFs up to 20 MiB are shown to you as files, including files named in `Attached file <path>` references.\n- Call this tool in parallel when you know there are multiple files you want to read.\n- Avoid tiny repeated slices (30 line chunks). If you need more context, read a larger window.",
+│   │           "name": "read_file",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "filePath": {
+│   │                 "description": "The path to the file to read: absolute, relative to the workspace root, or beginning with $HOME/.",
+│   │                 "type": "string"
+│   │               },
+│   │               "limit": {
+│   │                 "description": "Maximum number of lines to return. Defaults to 2000.",
+│   │                 "minimum": 1,
+│   │                 "type": "integer"
+│   │               },
+│   │               "offset": {
+│   │                 "description": "1-based line number to start from. Defaults to 1.",
+│   │                 "minimum": 1,
+│   │                 "type": "integer"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "filePath"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Writes a file to the local filesystem.\n\nUsage:\n- This tool will overwrite the existing file if there is one at the provided path.\n- If this is an existing file, you MUST use the read_file tool first to read the file's contents. This tool will fail if you did not read the file first.\n- ALWAYS prefer editing existing files in the codebase. NEVER write new files unless explicitly required.\n- NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.\n- Only use emojis if the user explicitly requests it. Avoid writing emojis to files unless asked.",
+│   │           "name": "write_file",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "content": {
+│   │                 "description": "Complete replacement file contents.",
+│   │                 "type": "string"
+│   │               },
+│   │               "filePath": {
+│   │                 "description": "The path to the file to write: absolute, relative to the workspace root, or beginning with $HOME/.",
+│   │                 "type": "string"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "content",
+│   │               "filePath"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Fetch a webpage and return its content in the requested format. Use this to retrieve and analyze content from URLs.\n\nUsage notes:\n- The URL must be a fully-formed valid URL starting with https://\n- HTML responses are automatically converted to markdown or plain text based on the requested format\n- Format options: \"markdown\" (default), \"text\", or \"html\"\n- Default timeout is 30 seconds (max 120 seconds)\n- Maximum response size is 5 MB; content is further capped at the shared tool-output budget (50 KB / 2000 lines)\n- This tool is read-only and does not modify any files",
+│   │           "name": "web_fetch",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "format": {
+│   │                 "description": "The format to return the content in (text, markdown, or html). HTML responses are automatically converted to the requested format. Defaults to \"markdown\".",
+│   │                 "enum": [
+│   │                   "markdown",
+│   │                   "text",
+│   │                   "html"
+│   │                 ],
+│   │                 "type": "string"
+│   │               },
+│   │               "timeout": {
+│   │                 "description": "Optional timeout in seconds, greater than 0. Defaults to 30, max 120.",
+│   │                 "type": "number"
+│   │               },
+│   │               "url": {
+│   │                 "description": "The fully-formed URL to fetch content from. Must start with https://.",
+│   │                 "type": "string"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "url"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Delegate a focused subtask to a copy of yourself. Use it to isolate complex work or split a large task into independent pieces. Each call starts a task, so several agents can work at once: start every independent one before you wait. A new child has fresh history and state but reuses your tools and sandbox, so give parallel writers non-overlapping scopes. In message, state the goal, what to return, and whether it may change files. It does not see this conversation, so put everything it needs in message. To correct or continue an agent task, call this tool again with its taskId; without taskId, each call starts a new agent.",
+│   │           "name": "agent",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "message": {
+│   │                 "description": "The message to send to the agent, with everything it needs to do the work.",
+│   │                 "type": "string"
+│   │               },
+│   │               "taskId": {
+│   │                 "description": "The id of a task this tool started, copied from its \"Started task\" receipt or the [Tasks] note, to send it this input. Omit it to start a new task.",
+│   │                 "type": "string"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "message"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Reads a deterministic Eve documentation page fixture.",
+│   │           "name": "read",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "url": {
+│   │                 "type": "string"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "url"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Searches the Eve instrumentation documentation fixture.",
+│   │           "name": "search",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "query": {
+│   │                 "type": "string"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "query"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Research the Eve instrumentation documentation before the parent reads it. It does not see this conversation, so put everything it needs in message. To correct or continue an agent task, call this tool again with its taskId; without taskId, each call starts a new agent.",
+│   │           "name": "researcher",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "message": {
+│   │                 "description": "The message to send to the agent, with everything it needs to do the work.",
+│   │                 "type": "string"
+│   │               },
+│   │               "taskId": {
+│   │                 "description": "The id of a task this tool started, copied from its \"Started task\" receipt or the [Tasks] note, to send it this input. Omit it to start a new task.",
+│   │                 "type": "string"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "message"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Call eve__task_wait sparingly, only when you deliberately want to withhold a message from the user while waiting for a task result. Tasks keep running and their results reach you without calling eve__task_wait. If the user should hear from you now, reply instead. Wait silently until any of your tasks has a result, a new message arrives, or timeoutSeconds pass. It returns after the first result, which follows in a <task_result> message; wait again only if you still want to withhold a reply until another result arrives. Waiting never stops a task.",
+│   │           "name": "eve__task_wait",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "timeoutSeconds": {
+│   │                 "description": "Optional. Seconds to wait before returning without a result. Omit it to wait for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
+│   │                 "minimum": 1,
+│   │                 "type": "integer"
+│   │               }
+│   │             },
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Stop a task's current work. That work never reports back; if it already had a result, that result is still delivered. Cancelling an agent or one-shot task ends it; start a new task to delegate again. Other tasks that accept more input stay available: call their tool with the taskId to give them new work.",
+│   │           "name": "eve__task_cancel",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "taskId": {
+│   │                 "description": "The id of the task to stop, copied from its \"Started task\" receipt or the [Tasks] note.",
+│   │                 "minLength": 1,
+│   │                 "type": "string"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "taskId"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       }
+│   │     ]
 │   │   }
 │   │   metrics: {
 │   │     "completion_tokens": 299,
@@ -155,7 +400,141 @@ span_tree:
 │   │       │     "model": "qwen/qwen3-30b-a3b",
 │   │       │     "provider": "openrouter",
 │   │       │     "scenario": "eve-instrumentation",
-│   │       │     "testRunId": "<run:1>"
+│   │       │     "testRunId": "<run:1>",
+│   │       │     "tools": [
+│   │       │       {
+│   │       │         "function": {
+│   │       │           "description": "Execute a shell command in the shared workspace environment. A command still running after 30 seconds keeps running in the background and returns status \"running\" with its output so far and how to check on or stop it.",
+│   │       │           "name": "bash",
+│   │       │           "parameters": {
+│   │       │             "additionalProperties": false,
+│   │       │             "properties": {
+│   │       │               "command": {
+│   │       │                 "description": "The shell command to execute.",
+│   │       │                 "type": "string"
+│   │       │               }
+│   │       │             },
+│   │       │             "required": [
+│   │       │               "command"
+│   │       │             ],
+│   │       │             "type": "object"
+│   │       │           },
+│   │       │           "strict": false
+│   │       │         },
+│   │       │         "type": "function"
+│   │       │       },
+│   │       │       {
+│   │       │         "function": {
+│   │       │           "description": "Read a file from the local filesystem. If the path does not exist, an error is returned.\n\nUsage:\n- The filePath parameter is an absolute path, a path relative to the workspace root (where `bash` commands start), or a path beginning with $HOME/.\n- By default, this tool returns up to 2000 lines from the start of the file.\n- The offset parameter is the line number to start from (1-indexed).\n- To read later sections, call this tool again with a larger offset.\n- Contents are returned with each line prefixed by its line number as `<line>: <content>`. For example, if a file has contents \"foo\\n\", you will receive \"1: foo\\n\".\n- Any line longer than 2000 characters is truncated.\n- PNG, JPEG, GIF, and WebP images up to 3 MiB and PDFs up to 20 MiB are shown to you as files, including files named in `Attached file <path>` references.\n- Call this tool in parallel when you know there are multiple files you want to read.\n- Avoid tiny repeated slices (30 line chunks). If you need more context, read a larger window.",
+│   │       │           "name": "read_file",
+│   │       │           "parameters": {
+│   │       │             "additionalProperties": false,
+│   │       │             "properties": {
+│   │       │               "filePath": {
+│   │       │                 "description": "The path to the file to read: absolute, relative to the workspace root, or beginning with $HOME/.",
+│   │       │                 "type": "string"
+│   │       │               },
+│   │       │               "limit": {
+│   │       │                 "description": "Maximum number of lines to return. Defaults to 2000.",
+│   │       │                 "minimum": 1,
+│   │       │                 "type": "integer"
+│   │       │               },
+│   │       │               "offset": {
+│   │       │                 "description": "1-based line number to start from. Defaults to 1.",
+│   │       │                 "minimum": 1,
+│   │       │                 "type": "integer"
+│   │       │               }
+│   │       │             },
+│   │       │             "required": [
+│   │       │               "filePath"
+│   │       │             ],
+│   │       │             "type": "object"
+│   │       │           },
+│   │       │           "strict": false
+│   │       │         },
+│   │       │         "type": "function"
+│   │       │       },
+│   │       │       {
+│   │       │         "function": {
+│   │       │           "description": "Writes a file to the local filesystem.\n\nUsage:\n- This tool will overwrite the existing file if there is one at the provided path.\n- If this is an existing file, you MUST use the read_file tool first to read the file's contents. This tool will fail if you did not read the file first.\n- ALWAYS prefer editing existing files in the codebase. NEVER write new files unless explicitly required.\n- NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.\n- Only use emojis if the user explicitly requests it. Avoid writing emojis to files unless asked.",
+│   │       │           "name": "write_file",
+│   │       │           "parameters": {
+│   │       │             "additionalProperties": false,
+│   │       │             "properties": {
+│   │       │               "content": {
+│   │       │                 "description": "Complete replacement file contents.",
+│   │       │                 "type": "string"
+│   │       │               },
+│   │       │               "filePath": {
+│   │       │                 "description": "The path to the file to write: absolute, relative to the workspace root, or beginning with $HOME/.",
+│   │       │                 "type": "string"
+│   │       │               }
+│   │       │             },
+│   │       │             "required": [
+│   │       │               "content",
+│   │       │               "filePath"
+│   │       │             ],
+│   │       │             "type": "object"
+│   │       │           },
+│   │       │           "strict": false
+│   │       │         },
+│   │       │         "type": "function"
+│   │       │       },
+│   │       │       {
+│   │       │         "function": {
+│   │       │           "description": "Fetch a webpage and return its content in the requested format. Use this to retrieve and analyze content from URLs.\n\nUsage notes:\n- The URL must be a fully-formed valid URL starting with https://\n- HTML responses are automatically converted to markdown or plain text based on the requested format\n- Format options: \"markdown\" (default), \"text\", or \"html\"\n- Default timeout is 30 seconds (max 120 seconds)\n- Maximum response size is 5 MB; content is further capped at the shared tool-output budget (50 KB / 2000 lines)\n- This tool is read-only and does not modify any files",
+│   │       │           "name": "web_fetch",
+│   │       │           "parameters": {
+│   │       │             "additionalProperties": false,
+│   │       │             "properties": {
+│   │       │               "format": {
+│   │       │                 "description": "The format to return the content in (text, markdown, or html). HTML responses are automatically converted to the requested format. Defaults to \"markdown\".",
+│   │       │                 "enum": [
+│   │       │                   "markdown",
+│   │       │                   "text",
+│   │       │                   "html"
+│   │       │                 ],
+│   │       │                 "type": "string"
+│   │       │               },
+│   │       │               "timeout": {
+│   │       │                 "description": "Optional timeout in seconds, greater than 0. Defaults to 30, max 120.",
+│   │       │                 "type": "number"
+│   │       │               },
+│   │       │               "url": {
+│   │       │                 "description": "The fully-formed URL to fetch content from. Must start with https://.",
+│   │       │                 "type": "string"
+│   │       │               }
+│   │       │             },
+│   │       │             "required": [
+│   │       │               "url"
+│   │       │             ],
+│   │       │             "type": "object"
+│   │       │           },
+│   │       │           "strict": false
+│   │       │         },
+│   │       │         "type": "function"
+│   │       │       },
+│   │       │       {
+│   │       │         "function": {
+│   │       │           "description": "Searches the Eve instrumentation documentation fixture.",
+│   │       │           "name": "search",
+│   │       │           "parameters": {
+│   │       │             "additionalProperties": false,
+│   │       │             "properties": {
+│   │       │               "query": {
+│   │       │                 "type": "string"
+│   │       │               }
+│   │       │             },
+│   │       │             "required": [
+│   │       │               "query"
+│   │       │             ],
+│   │       │             "type": "object"
+│   │       │           },
+│   │       │           "strict": false
+│   │       │         },
+│   │       │         "type": "function"
+│   │       │       }
+│   │       │     ]
 │   │       │   }
 │   │       │   metrics: {
 │   │       │     "completion_tokens": 156,
@@ -255,7 +634,141 @@ span_tree:
 │   │             "model": "qwen/qwen3-30b-a3b",
 │   │             "provider": "openrouter",
 │   │             "scenario": "eve-instrumentation",
-│   │             "testRunId": "<run:1>"
+│   │             "testRunId": "<run:1>",
+│   │             "tools": [
+│   │               {
+│   │                 "function": {
+│   │                   "description": "Execute a shell command in the shared workspace environment. A command still running after 30 seconds keeps running in the background and returns status \"running\" with its output so far and how to check on or stop it.",
+│   │                   "name": "bash",
+│   │                   "parameters": {
+│   │                     "additionalProperties": false,
+│   │                     "properties": {
+│   │                       "command": {
+│   │                         "description": "The shell command to execute.",
+│   │                         "type": "string"
+│   │                       }
+│   │                     },
+│   │                     "required": [
+│   │                       "command"
+│   │                     ],
+│   │                     "type": "object"
+│   │                   },
+│   │                   "strict": false
+│   │                 },
+│   │                 "type": "function"
+│   │               },
+│   │               {
+│   │                 "function": {
+│   │                   "description": "Read a file from the local filesystem. If the path does not exist, an error is returned.\n\nUsage:\n- The filePath parameter is an absolute path, a path relative to the workspace root (where `bash` commands start), or a path beginning with $HOME/.\n- By default, this tool returns up to 2000 lines from the start of the file.\n- The offset parameter is the line number to start from (1-indexed).\n- To read later sections, call this tool again with a larger offset.\n- Contents are returned with each line prefixed by its line number as `<line>: <content>`. For example, if a file has contents \"foo\\n\", you will receive \"1: foo\\n\".\n- Any line longer than 2000 characters is truncated.\n- PNG, JPEG, GIF, and WebP images up to 3 MiB and PDFs up to 20 MiB are shown to you as files, including files named in `Attached file <path>` references.\n- Call this tool in parallel when you know there are multiple files you want to read.\n- Avoid tiny repeated slices (30 line chunks). If you need more context, read a larger window.",
+│   │                   "name": "read_file",
+│   │                   "parameters": {
+│   │                     "additionalProperties": false,
+│   │                     "properties": {
+│   │                       "filePath": {
+│   │                         "description": "The path to the file to read: absolute, relative to the workspace root, or beginning with $HOME/.",
+│   │                         "type": "string"
+│   │                       },
+│   │                       "limit": {
+│   │                         "description": "Maximum number of lines to return. Defaults to 2000.",
+│   │                         "minimum": 1,
+│   │                         "type": "integer"
+│   │                       },
+│   │                       "offset": {
+│   │                         "description": "1-based line number to start from. Defaults to 1.",
+│   │                         "minimum": 1,
+│   │                         "type": "integer"
+│   │                       }
+│   │                     },
+│   │                     "required": [
+│   │                       "filePath"
+│   │                     ],
+│   │                     "type": "object"
+│   │                   },
+│   │                   "strict": false
+│   │                 },
+│   │                 "type": "function"
+│   │               },
+│   │               {
+│   │                 "function": {
+│   │                   "description": "Writes a file to the local filesystem.\n\nUsage:\n- This tool will overwrite the existing file if there is one at the provided path.\n- If this is an existing file, you MUST use the read_file tool first to read the file's contents. This tool will fail if you did not read the file first.\n- ALWAYS prefer editing existing files in the codebase. NEVER write new files unless explicitly required.\n- NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.\n- Only use emojis if the user explicitly requests it. Avoid writing emojis to files unless asked.",
+│   │                   "name": "write_file",
+│   │                   "parameters": {
+│   │                     "additionalProperties": false,
+│   │                     "properties": {
+│   │                       "content": {
+│   │                         "description": "Complete replacement file contents.",
+│   │                         "type": "string"
+│   │                       },
+│   │                       "filePath": {
+│   │                         "description": "The path to the file to write: absolute, relative to the workspace root, or beginning with $HOME/.",
+│   │                         "type": "string"
+│   │                       }
+│   │                     },
+│   │                     "required": [
+│   │                       "content",
+│   │                       "filePath"
+│   │                     ],
+│   │                     "type": "object"
+│   │                   },
+│   │                   "strict": false
+│   │                 },
+│   │                 "type": "function"
+│   │               },
+│   │               {
+│   │                 "function": {
+│   │                   "description": "Fetch a webpage and return its content in the requested format. Use this to retrieve and analyze content from URLs.\n\nUsage notes:\n- The URL must be a fully-formed valid URL starting with https://\n- HTML responses are automatically converted to markdown or plain text based on the requested format\n- Format options: \"markdown\" (default), \"text\", or \"html\"\n- Default timeout is 30 seconds (max 120 seconds)\n- Maximum response size is 5 MB; content is further capped at the shared tool-output budget (50 KB / 2000 lines)\n- This tool is read-only and does not modify any files",
+│   │                   "name": "web_fetch",
+│   │                   "parameters": {
+│   │                     "additionalProperties": false,
+│   │                     "properties": {
+│   │                       "format": {
+│   │                         "description": "The format to return the content in (text, markdown, or html). HTML responses are automatically converted to the requested format. Defaults to \"markdown\".",
+│   │                         "enum": [
+│   │                           "markdown",
+│   │                           "text",
+│   │                           "html"
+│   │                         ],
+│   │                         "type": "string"
+│   │                       },
+│   │                       "timeout": {
+│   │                         "description": "Optional timeout in seconds, greater than 0. Defaults to 30, max 120.",
+│   │                         "type": "number"
+│   │                       },
+│   │                       "url": {
+│   │                         "description": "The fully-formed URL to fetch content from. Must start with https://.",
+│   │                         "type": "string"
+│   │                       }
+│   │                     },
+│   │                     "required": [
+│   │                       "url"
+│   │                     ],
+│   │                     "type": "object"
+│   │                   },
+│   │                   "strict": false
+│   │                 },
+│   │                 "type": "function"
+│   │               },
+│   │               {
+│   │                 "function": {
+│   │                   "description": "Searches the Eve instrumentation documentation fixture.",
+│   │                   "name": "search",
+│   │                   "parameters": {
+│   │                     "additionalProperties": false,
+│   │                     "properties": {
+│   │                       "query": {
+│   │                         "type": "string"
+│   │                       }
+│   │                     },
+│   │                     "required": [
+│   │                       "query"
+│   │                     ],
+│   │                     "type": "object"
+│   │                   },
+│   │                   "strict": false
+│   │                 },
+│   │                 "type": "function"
+│   │               }
+│   │             ]
 │   │           }
 │   │           metrics: {
 │   │             "completion_tokens": 153,
@@ -388,7 +901,252 @@ span_tree:
 │   │     "model": "qwen/qwen3-30b-a3b",
 │   │     "provider": "openrouter",
 │   │     "scenario": "eve-instrumentation",
-│   │     "testRunId": "<run:1>"
+│   │     "testRunId": "<run:1>",
+│   │     "tools": [
+│   │       {
+│   │         "function": {
+│   │           "description": "Execute a shell command in the shared workspace environment. A command still running after 30 seconds keeps running in the background and returns status \"running\" with its output so far and how to check on or stop it.",
+│   │           "name": "bash",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "command": {
+│   │                 "description": "The shell command to execute.",
+│   │                 "type": "string"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "command"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Read a file from the local filesystem. If the path does not exist, an error is returned.\n\nUsage:\n- The filePath parameter is an absolute path, a path relative to the workspace root (where `bash` commands start), or a path beginning with $HOME/.\n- By default, this tool returns up to 2000 lines from the start of the file.\n- The offset parameter is the line number to start from (1-indexed).\n- To read later sections, call this tool again with a larger offset.\n- Contents are returned with each line prefixed by its line number as `<line>: <content>`. For example, if a file has contents \"foo\\n\", you will receive \"1: foo\\n\".\n- Any line longer than 2000 characters is truncated.\n- PNG, JPEG, GIF, and WebP images up to 3 MiB and PDFs up to 20 MiB are shown to you as files, including files named in `Attached file <path>` references.\n- Call this tool in parallel when you know there are multiple files you want to read.\n- Avoid tiny repeated slices (30 line chunks). If you need more context, read a larger window.",
+│   │           "name": "read_file",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "filePath": {
+│   │                 "description": "The path to the file to read: absolute, relative to the workspace root, or beginning with $HOME/.",
+│   │                 "type": "string"
+│   │               },
+│   │               "limit": {
+│   │                 "description": "Maximum number of lines to return. Defaults to 2000.",
+│   │                 "minimum": 1,
+│   │                 "type": "integer"
+│   │               },
+│   │               "offset": {
+│   │                 "description": "1-based line number to start from. Defaults to 1.",
+│   │                 "minimum": 1,
+│   │                 "type": "integer"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "filePath"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Writes a file to the local filesystem.\n\nUsage:\n- This tool will overwrite the existing file if there is one at the provided path.\n- If this is an existing file, you MUST use the read_file tool first to read the file's contents. This tool will fail if you did not read the file first.\n- ALWAYS prefer editing existing files in the codebase. NEVER write new files unless explicitly required.\n- NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.\n- Only use emojis if the user explicitly requests it. Avoid writing emojis to files unless asked.",
+│   │           "name": "write_file",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "content": {
+│   │                 "description": "Complete replacement file contents.",
+│   │                 "type": "string"
+│   │               },
+│   │               "filePath": {
+│   │                 "description": "The path to the file to write: absolute, relative to the workspace root, or beginning with $HOME/.",
+│   │                 "type": "string"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "content",
+│   │               "filePath"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Fetch a webpage and return its content in the requested format. Use this to retrieve and analyze content from URLs.\n\nUsage notes:\n- The URL must be a fully-formed valid URL starting with https://\n- HTML responses are automatically converted to markdown or plain text based on the requested format\n- Format options: \"markdown\" (default), \"text\", or \"html\"\n- Default timeout is 30 seconds (max 120 seconds)\n- Maximum response size is 5 MB; content is further capped at the shared tool-output budget (50 KB / 2000 lines)\n- This tool is read-only and does not modify any files",
+│   │           "name": "web_fetch",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "format": {
+│   │                 "description": "The format to return the content in (text, markdown, or html). HTML responses are automatically converted to the requested format. Defaults to \"markdown\".",
+│   │                 "enum": [
+│   │                   "markdown",
+│   │                   "text",
+│   │                   "html"
+│   │                 ],
+│   │                 "type": "string"
+│   │               },
+│   │               "timeout": {
+│   │                 "description": "Optional timeout in seconds, greater than 0. Defaults to 30, max 120.",
+│   │                 "type": "number"
+│   │               },
+│   │               "url": {
+│   │                 "description": "The fully-formed URL to fetch content from. Must start with https://.",
+│   │                 "type": "string"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "url"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Delegate a focused subtask to a copy of yourself. Use it to isolate complex work or split a large task into independent pieces. Each call starts a task, so several agents can work at once: start every independent one before you wait. A new child has fresh history and state but reuses your tools and sandbox, so give parallel writers non-overlapping scopes. In message, state the goal, what to return, and whether it may change files. It does not see this conversation, so put everything it needs in message. To correct or continue an agent task, call this tool again with its taskId; without taskId, each call starts a new agent.",
+│   │           "name": "agent",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "message": {
+│   │                 "description": "The message to send to the agent, with everything it needs to do the work.",
+│   │                 "type": "string"
+│   │               },
+│   │               "taskId": {
+│   │                 "description": "The id of a task this tool started, copied from its \"Started task\" receipt or the [Tasks] note, to send it this input. Omit it to start a new task.",
+│   │                 "type": "string"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "message"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Reads a deterministic Eve documentation page fixture.",
+│   │           "name": "read",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "url": {
+│   │                 "type": "string"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "url"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Searches the Eve instrumentation documentation fixture.",
+│   │           "name": "search",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "query": {
+│   │                 "type": "string"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "query"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Research the Eve instrumentation documentation before the parent reads it. It does not see this conversation, so put everything it needs in message. To correct or continue an agent task, call this tool again with its taskId; without taskId, each call starts a new agent.",
+│   │           "name": "researcher",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "message": {
+│   │                 "description": "The message to send to the agent, with everything it needs to do the work.",
+│   │                 "type": "string"
+│   │               },
+│   │               "taskId": {
+│   │                 "description": "The id of a task this tool started, copied from its \"Started task\" receipt or the [Tasks] note, to send it this input. Omit it to start a new task.",
+│   │                 "type": "string"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "message"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Call eve__task_wait sparingly, only when you deliberately want to withhold a message from the user while waiting for a task result. Tasks keep running and their results reach you without calling eve__task_wait. If the user should hear from you now, reply instead. Wait silently until any of your tasks has a result, a new message arrives, or timeoutSeconds pass. It returns after the first result, which follows in a <task_result> message; wait again only if you still want to withhold a reply until another result arrives. Waiting never stops a task.",
+│   │           "name": "eve__task_wait",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "timeoutSeconds": {
+│   │                 "description": "Optional. Seconds to wait before returning without a result. Omit it to wait for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
+│   │                 "minimum": 1,
+│   │                 "type": "integer"
+│   │               }
+│   │             },
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Stop a task's current work. That work never reports back; if it already had a result, that result is still delivered. Cancelling an agent or one-shot task ends it; start a new task to delegate again. Other tasks that accept more input stay available: call their tool with the taskId to give them new work.",
+│   │           "name": "eve__task_cancel",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "taskId": {
+│   │                 "description": "The id of the task to stop, copied from its \"Started task\" receipt or the [Tasks] note.",
+│   │                 "minLength": 1,
+│   │                 "type": "string"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "taskId"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       }
+│   │     ]
 │   │   }
 │   │   metrics: {
 │   │     "completion_tokens": 431,
@@ -540,7 +1298,252 @@ span_tree:
 │         "model": "qwen/qwen3-30b-a3b",
 │         "provider": "openrouter",
 │         "scenario": "eve-instrumentation",
-│         "testRunId": "<run:1>"
+│         "testRunId": "<run:1>",
+│         "tools": [
+│           {
+│             "function": {
+│               "description": "Execute a shell command in the shared workspace environment. A command still running after 30 seconds keeps running in the background and returns status \"running\" with its output so far and how to check on or stop it.",
+│               "name": "bash",
+│               "parameters": {
+│                 "additionalProperties": false,
+│                 "properties": {
+│                   "command": {
+│                     "description": "The shell command to execute.",
+│                     "type": "string"
+│                   }
+│                 },
+│                 "required": [
+│                   "command"
+│                 ],
+│                 "type": "object"
+│               },
+│               "strict": false
+│             },
+│             "type": "function"
+│           },
+│           {
+│             "function": {
+│               "description": "Read a file from the local filesystem. If the path does not exist, an error is returned.\n\nUsage:\n- The filePath parameter is an absolute path, a path relative to the workspace root (where `bash` commands start), or a path beginning with $HOME/.\n- By default, this tool returns up to 2000 lines from the start of the file.\n- The offset parameter is the line number to start from (1-indexed).\n- To read later sections, call this tool again with a larger offset.\n- Contents are returned with each line prefixed by its line number as `<line>: <content>`. For example, if a file has contents \"foo\\n\", you will receive \"1: foo\\n\".\n- Any line longer than 2000 characters is truncated.\n- PNG, JPEG, GIF, and WebP images up to 3 MiB and PDFs up to 20 MiB are shown to you as files, including files named in `Attached file <path>` references.\n- Call this tool in parallel when you know there are multiple files you want to read.\n- Avoid tiny repeated slices (30 line chunks). If you need more context, read a larger window.",
+│               "name": "read_file",
+│               "parameters": {
+│                 "additionalProperties": false,
+│                 "properties": {
+│                   "filePath": {
+│                     "description": "The path to the file to read: absolute, relative to the workspace root, or beginning with $HOME/.",
+│                     "type": "string"
+│                   },
+│                   "limit": {
+│                     "description": "Maximum number of lines to return. Defaults to 2000.",
+│                     "minimum": 1,
+│                     "type": "integer"
+│                   },
+│                   "offset": {
+│                     "description": "1-based line number to start from. Defaults to 1.",
+│                     "minimum": 1,
+│                     "type": "integer"
+│                   }
+│                 },
+│                 "required": [
+│                   "filePath"
+│                 ],
+│                 "type": "object"
+│               },
+│               "strict": false
+│             },
+│             "type": "function"
+│           },
+│           {
+│             "function": {
+│               "description": "Writes a file to the local filesystem.\n\nUsage:\n- This tool will overwrite the existing file if there is one at the provided path.\n- If this is an existing file, you MUST use the read_file tool first to read the file's contents. This tool will fail if you did not read the file first.\n- ALWAYS prefer editing existing files in the codebase. NEVER write new files unless explicitly required.\n- NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.\n- Only use emojis if the user explicitly requests it. Avoid writing emojis to files unless asked.",
+│               "name": "write_file",
+│               "parameters": {
+│                 "additionalProperties": false,
+│                 "properties": {
+│                   "content": {
+│                     "description": "Complete replacement file contents.",
+│                     "type": "string"
+│                   },
+│                   "filePath": {
+│                     "description": "The path to the file to write: absolute, relative to the workspace root, or beginning with $HOME/.",
+│                     "type": "string"
+│                   }
+│                 },
+│                 "required": [
+│                   "content",
+│                   "filePath"
+│                 ],
+│                 "type": "object"
+│               },
+│               "strict": false
+│             },
+│             "type": "function"
+│           },
+│           {
+│             "function": {
+│               "description": "Fetch a webpage and return its content in the requested format. Use this to retrieve and analyze content from URLs.\n\nUsage notes:\n- The URL must be a fully-formed valid URL starting with https://\n- HTML responses are automatically converted to markdown or plain text based on the requested format\n- Format options: \"markdown\" (default), \"text\", or \"html\"\n- Default timeout is 30 seconds (max 120 seconds)\n- Maximum response size is 5 MB; content is further capped at the shared tool-output budget (50 KB / 2000 lines)\n- This tool is read-only and does not modify any files",
+│               "name": "web_fetch",
+│               "parameters": {
+│                 "additionalProperties": false,
+│                 "properties": {
+│                   "format": {
+│                     "description": "The format to return the content in (text, markdown, or html). HTML responses are automatically converted to the requested format. Defaults to \"markdown\".",
+│                     "enum": [
+│                       "markdown",
+│                       "text",
+│                       "html"
+│                     ],
+│                     "type": "string"
+│                   },
+│                   "timeout": {
+│                     "description": "Optional timeout in seconds, greater than 0. Defaults to 30, max 120.",
+│                     "type": "number"
+│                   },
+│                   "url": {
+│                     "description": "The fully-formed URL to fetch content from. Must start with https://.",
+│                     "type": "string"
+│                   }
+│                 },
+│                 "required": [
+│                   "url"
+│                 ],
+│                 "type": "object"
+│               },
+│               "strict": false
+│             },
+│             "type": "function"
+│           },
+│           {
+│             "function": {
+│               "description": "Delegate a focused subtask to a copy of yourself. Use it to isolate complex work or split a large task into independent pieces. Each call starts a task, so several agents can work at once: start every independent one before you wait. A new child has fresh history and state but reuses your tools and sandbox, so give parallel writers non-overlapping scopes. In message, state the goal, what to return, and whether it may change files. It does not see this conversation, so put everything it needs in message. To correct or continue an agent task, call this tool again with its taskId; without taskId, each call starts a new agent.",
+│               "name": "agent",
+│               "parameters": {
+│                 "additionalProperties": false,
+│                 "properties": {
+│                   "message": {
+│                     "description": "The message to send to the agent, with everything it needs to do the work.",
+│                     "type": "string"
+│                   },
+│                   "taskId": {
+│                     "description": "The id of a task this tool started, copied from its \"Started task\" receipt or the [Tasks] note, to send it this input. Omit it to start a new task.",
+│                     "type": "string"
+│                   }
+│                 },
+│                 "required": [
+│                   "message"
+│                 ],
+│                 "type": "object"
+│               },
+│               "strict": false
+│             },
+│             "type": "function"
+│           },
+│           {
+│             "function": {
+│               "description": "Reads a deterministic Eve documentation page fixture.",
+│               "name": "read",
+│               "parameters": {
+│                 "additionalProperties": false,
+│                 "properties": {
+│                   "url": {
+│                     "type": "string"
+│                   }
+│                 },
+│                 "required": [
+│                   "url"
+│                 ],
+│                 "type": "object"
+│               },
+│               "strict": false
+│             },
+│             "type": "function"
+│           },
+│           {
+│             "function": {
+│               "description": "Searches the Eve instrumentation documentation fixture.",
+│               "name": "search",
+│               "parameters": {
+│                 "additionalProperties": false,
+│                 "properties": {
+│                   "query": {
+│                     "type": "string"
+│                   }
+│                 },
+│                 "required": [
+│                   "query"
+│                 ],
+│                 "type": "object"
+│               },
+│               "strict": false
+│             },
+│             "type": "function"
+│           },
+│           {
+│             "function": {
+│               "description": "Research the Eve instrumentation documentation before the parent reads it. It does not see this conversation, so put everything it needs in message. To correct or continue an agent task, call this tool again with its taskId; without taskId, each call starts a new agent.",
+│               "name": "researcher",
+│               "parameters": {
+│                 "additionalProperties": false,
+│                 "properties": {
+│                   "message": {
+│                     "description": "The message to send to the agent, with everything it needs to do the work.",
+│                     "type": "string"
+│                   },
+│                   "taskId": {
+│                     "description": "The id of a task this tool started, copied from its \"Started task\" receipt or the [Tasks] note, to send it this input. Omit it to start a new task.",
+│                     "type": "string"
+│                   }
+│                 },
+│                 "required": [
+│                   "message"
+│                 ],
+│                 "type": "object"
+│               },
+│               "strict": false
+│             },
+│             "type": "function"
+│           },
+│           {
+│             "function": {
+│               "description": "Call eve__task_wait sparingly, only when you deliberately want to withhold a message from the user while waiting for a task result. Tasks keep running and their results reach you without calling eve__task_wait. If the user should hear from you now, reply instead. Wait silently until any of your tasks has a result, a new message arrives, or timeoutSeconds pass. It returns after the first result, which follows in a <task_result> message; wait again only if you still want to withhold a reply until another result arrives. Waiting never stops a task.",
+│               "name": "eve__task_wait",
+│               "parameters": {
+│                 "additionalProperties": false,
+│                 "properties": {
+│                   "timeoutSeconds": {
+│                     "description": "Optional. Seconds to wait before returning without a result. Omit it to wait for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
+│                     "minimum": 1,
+│                     "type": "integer"
+│                   }
+│                 },
+│                 "type": "object"
+│               },
+│               "strict": false
+│             },
+│             "type": "function"
+│           },
+│           {
+│             "function": {
+│               "description": "Stop a task's current work. That work never reports back; if it already had a result, that result is still delivered. Cancelling an agent or one-shot task ends it; start a new task to delegate again. Other tasks that accept more input stay available: call their tool with the taskId to give them new work.",
+│               "name": "eve__task_cancel",
+│               "parameters": {
+│                 "additionalProperties": false,
+│                 "properties": {
+│                   "taskId": {
+│                     "description": "The id of the task to stop, copied from its \"Started task\" receipt or the [Tasks] note.",
+│                     "minLength": 1,
+│                     "type": "string"
+│                   }
+│                 },
+│                 "required": [
+│                   "taskId"
+│                 ],
+│                 "type": "object"
+│               },
+│               "strict": false
+│             },
+│             "type": "function"
+│           }
+│         ]
 │       }
 │       metrics: {
 │         "completion_tokens": 438,
@@ -732,7 +1735,252 @@ span_tree:
 │   │     "model": "qwen/qwen3-30b-a3b",
 │   │     "provider": "openrouter",
 │   │     "scenario": "eve-instrumentation",
-│   │     "testRunId": "<run:1>"
+│   │     "testRunId": "<run:1>",
+│   │     "tools": [
+│   │       {
+│   │         "function": {
+│   │           "description": "Execute a shell command in the shared workspace environment. A command still running after 30 seconds keeps running in the background and returns status \"running\" with its output so far and how to check on or stop it.",
+│   │           "name": "bash",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "command": {
+│   │                 "description": "The shell command to execute.",
+│   │                 "type": "string"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "command"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Read a file from the local filesystem. If the path does not exist, an error is returned.\n\nUsage:\n- The filePath parameter is an absolute path, a path relative to the workspace root (where `bash` commands start), or a path beginning with $HOME/.\n- By default, this tool returns up to 2000 lines from the start of the file.\n- The offset parameter is the line number to start from (1-indexed).\n- To read later sections, call this tool again with a larger offset.\n- Contents are returned with each line prefixed by its line number as `<line>: <content>`. For example, if a file has contents \"foo\\n\", you will receive \"1: foo\\n\".\n- Any line longer than 2000 characters is truncated.\n- PNG, JPEG, GIF, and WebP images up to 3 MiB and PDFs up to 20 MiB are shown to you as files, including files named in `Attached file <path>` references.\n- Call this tool in parallel when you know there are multiple files you want to read.\n- Avoid tiny repeated slices (30 line chunks). If you need more context, read a larger window.",
+│   │           "name": "read_file",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "filePath": {
+│   │                 "description": "The path to the file to read: absolute, relative to the workspace root, or beginning with $HOME/.",
+│   │                 "type": "string"
+│   │               },
+│   │               "limit": {
+│   │                 "description": "Maximum number of lines to return. Defaults to 2000.",
+│   │                 "minimum": 1,
+│   │                 "type": "integer"
+│   │               },
+│   │               "offset": {
+│   │                 "description": "1-based line number to start from. Defaults to 1.",
+│   │                 "minimum": 1,
+│   │                 "type": "integer"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "filePath"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Writes a file to the local filesystem.\n\nUsage:\n- This tool will overwrite the existing file if there is one at the provided path.\n- If this is an existing file, you MUST use the read_file tool first to read the file's contents. This tool will fail if you did not read the file first.\n- ALWAYS prefer editing existing files in the codebase. NEVER write new files unless explicitly required.\n- NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.\n- Only use emojis if the user explicitly requests it. Avoid writing emojis to files unless asked.",
+│   │           "name": "write_file",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "content": {
+│   │                 "description": "Complete replacement file contents.",
+│   │                 "type": "string"
+│   │               },
+│   │               "filePath": {
+│   │                 "description": "The path to the file to write: absolute, relative to the workspace root, or beginning with $HOME/.",
+│   │                 "type": "string"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "content",
+│   │               "filePath"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Fetch a webpage and return its content in the requested format. Use this to retrieve and analyze content from URLs.\n\nUsage notes:\n- The URL must be a fully-formed valid URL starting with https://\n- HTML responses are automatically converted to markdown or plain text based on the requested format\n- Format options: \"markdown\" (default), \"text\", or \"html\"\n- Default timeout is 30 seconds (max 120 seconds)\n- Maximum response size is 5 MB; content is further capped at the shared tool-output budget (50 KB / 2000 lines)\n- This tool is read-only and does not modify any files",
+│   │           "name": "web_fetch",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "format": {
+│   │                 "description": "The format to return the content in (text, markdown, or html). HTML responses are automatically converted to the requested format. Defaults to \"markdown\".",
+│   │                 "enum": [
+│   │                   "markdown",
+│   │                   "text",
+│   │                   "html"
+│   │                 ],
+│   │                 "type": "string"
+│   │               },
+│   │               "timeout": {
+│   │                 "description": "Optional timeout in seconds, greater than 0. Defaults to 30, max 120.",
+│   │                 "type": "number"
+│   │               },
+│   │               "url": {
+│   │                 "description": "The fully-formed URL to fetch content from. Must start with https://.",
+│   │                 "type": "string"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "url"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Delegate a focused subtask to a copy of yourself. Use it to isolate complex work or split a large task into independent pieces. Each call starts a task, so several agents can work at once: start every independent one before you wait. A new child has fresh history and state but reuses your tools and sandbox, so give parallel writers non-overlapping scopes. In message, state the goal, what to return, and whether it may change files. It does not see this conversation, so put everything it needs in message. To correct or continue an agent task, call this tool again with its taskId; without taskId, each call starts a new agent.",
+│   │           "name": "agent",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "message": {
+│   │                 "description": "The message to send to the agent, with everything it needs to do the work.",
+│   │                 "type": "string"
+│   │               },
+│   │               "taskId": {
+│   │                 "description": "The id of a task this tool started, copied from its \"Started task\" receipt or the [Tasks] note, to send it this input. Omit it to start a new task.",
+│   │                 "type": "string"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "message"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Reads a deterministic Eve documentation page fixture.",
+│   │           "name": "read",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "url": {
+│   │                 "type": "string"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "url"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Searches the Eve instrumentation documentation fixture.",
+│   │           "name": "search",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "query": {
+│   │                 "type": "string"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "query"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Research the Eve instrumentation documentation before the parent reads it. It does not see this conversation, so put everything it needs in message. To correct or continue an agent task, call this tool again with its taskId; without taskId, each call starts a new agent.",
+│   │           "name": "researcher",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "message": {
+│   │                 "description": "The message to send to the agent, with everything it needs to do the work.",
+│   │                 "type": "string"
+│   │               },
+│   │               "taskId": {
+│   │                 "description": "The id of a task this tool started, copied from its \"Started task\" receipt or the [Tasks] note, to send it this input. Omit it to start a new task.",
+│   │                 "type": "string"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "message"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Call eve__task_wait sparingly, only when you deliberately want to withhold a message from the user while waiting for a task result. Tasks keep running and their results reach you without calling eve__task_wait. If the user should hear from you now, reply instead. Wait silently until any of your tasks has a result, a new message arrives, or timeoutSeconds pass. It returns after the first result, which follows in a <task_result> message; wait again only if you still want to withhold a reply until another result arrives. Waiting never stops a task.",
+│   │           "name": "eve__task_wait",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "timeoutSeconds": {
+│   │                 "description": "Optional. Seconds to wait before returning without a result. Omit it to wait for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
+│   │                 "minimum": 1,
+│   │                 "type": "integer"
+│   │               }
+│   │             },
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Stop a task's current work. That work never reports back; if it already had a result, that result is still delivered. Cancelling an agent or one-shot task ends it; start a new task to delegate again. Other tasks that accept more input stay available: call their tool with the taskId to give them new work.",
+│   │           "name": "eve__task_cancel",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "taskId": {
+│   │                 "description": "The id of the task to stop, copied from its \"Started task\" receipt or the [Tasks] note.",
+│   │                 "minLength": 1,
+│   │                 "type": "string"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "taskId"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       }
+│   │     ]
 │   │   }
 │   │   metrics: {
 │   │     "completion_tokens": 394,
@@ -821,7 +2069,141 @@ span_tree:
 │   │       │     "model": "qwen/qwen3-30b-a3b",
 │   │       │     "provider": "openrouter",
 │   │       │     "scenario": "eve-instrumentation",
-│   │       │     "testRunId": "<run:1>"
+│   │       │     "testRunId": "<run:1>",
+│   │       │     "tools": [
+│   │       │       {
+│   │       │         "function": {
+│   │       │           "description": "Execute a shell command in the shared workspace environment. A command still running after 30 seconds keeps running in the background and returns status \"running\" with its output so far and how to check on or stop it.",
+│   │       │           "name": "bash",
+│   │       │           "parameters": {
+│   │       │             "additionalProperties": false,
+│   │       │             "properties": {
+│   │       │               "command": {
+│   │       │                 "description": "The shell command to execute.",
+│   │       │                 "type": "string"
+│   │       │               }
+│   │       │             },
+│   │       │             "required": [
+│   │       │               "command"
+│   │       │             ],
+│   │       │             "type": "object"
+│   │       │           },
+│   │       │           "strict": false
+│   │       │         },
+│   │       │         "type": "function"
+│   │       │       },
+│   │       │       {
+│   │       │         "function": {
+│   │       │           "description": "Read a file from the local filesystem. If the path does not exist, an error is returned.\n\nUsage:\n- The filePath parameter is an absolute path, a path relative to the workspace root (where `bash` commands start), or a path beginning with $HOME/.\n- By default, this tool returns up to 2000 lines from the start of the file.\n- The offset parameter is the line number to start from (1-indexed).\n- To read later sections, call this tool again with a larger offset.\n- Contents are returned with each line prefixed by its line number as `<line>: <content>`. For example, if a file has contents \"foo\\n\", you will receive \"1: foo\\n\".\n- Any line longer than 2000 characters is truncated.\n- PNG, JPEG, GIF, and WebP images up to 3 MiB and PDFs up to 20 MiB are shown to you as files, including files named in `Attached file <path>` references.\n- Call this tool in parallel when you know there are multiple files you want to read.\n- Avoid tiny repeated slices (30 line chunks). If you need more context, read a larger window.",
+│   │       │           "name": "read_file",
+│   │       │           "parameters": {
+│   │       │             "additionalProperties": false,
+│   │       │             "properties": {
+│   │       │               "filePath": {
+│   │       │                 "description": "The path to the file to read: absolute, relative to the workspace root, or beginning with $HOME/.",
+│   │       │                 "type": "string"
+│   │       │               },
+│   │       │               "limit": {
+│   │       │                 "description": "Maximum number of lines to return. Defaults to 2000.",
+│   │       │                 "minimum": 1,
+│   │       │                 "type": "integer"
+│   │       │               },
+│   │       │               "offset": {
+│   │       │                 "description": "1-based line number to start from. Defaults to 1.",
+│   │       │                 "minimum": 1,
+│   │       │                 "type": "integer"
+│   │       │               }
+│   │       │             },
+│   │       │             "required": [
+│   │       │               "filePath"
+│   │       │             ],
+│   │       │             "type": "object"
+│   │       │           },
+│   │       │           "strict": false
+│   │       │         },
+│   │       │         "type": "function"
+│   │       │       },
+│   │       │       {
+│   │       │         "function": {
+│   │       │           "description": "Writes a file to the local filesystem.\n\nUsage:\n- This tool will overwrite the existing file if there is one at the provided path.\n- If this is an existing file, you MUST use the read_file tool first to read the file's contents. This tool will fail if you did not read the file first.\n- ALWAYS prefer editing existing files in the codebase. NEVER write new files unless explicitly required.\n- NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.\n- Only use emojis if the user explicitly requests it. Avoid writing emojis to files unless asked.",
+│   │       │           "name": "write_file",
+│   │       │           "parameters": {
+│   │       │             "additionalProperties": false,
+│   │       │             "properties": {
+│   │       │               "content": {
+│   │       │                 "description": "Complete replacement file contents.",
+│   │       │                 "type": "string"
+│   │       │               },
+│   │       │               "filePath": {
+│   │       │                 "description": "The path to the file to write: absolute, relative to the workspace root, or beginning with $HOME/.",
+│   │       │                 "type": "string"
+│   │       │               }
+│   │       │             },
+│   │       │             "required": [
+│   │       │               "content",
+│   │       │               "filePath"
+│   │       │             ],
+│   │       │             "type": "object"
+│   │       │           },
+│   │       │           "strict": false
+│   │       │         },
+│   │       │         "type": "function"
+│   │       │       },
+│   │       │       {
+│   │       │         "function": {
+│   │       │           "description": "Fetch a webpage and return its content in the requested format. Use this to retrieve and analyze content from URLs.\n\nUsage notes:\n- The URL must be a fully-formed valid URL starting with https://\n- HTML responses are automatically converted to markdown or plain text based on the requested format\n- Format options: \"markdown\" (default), \"text\", or \"html\"\n- Default timeout is 30 seconds (max 120 seconds)\n- Maximum response size is 5 MB; content is further capped at the shared tool-output budget (50 KB / 2000 lines)\n- This tool is read-only and does not modify any files",
+│   │       │           "name": "web_fetch",
+│   │       │           "parameters": {
+│   │       │             "additionalProperties": false,
+│   │       │             "properties": {
+│   │       │               "format": {
+│   │       │                 "description": "The format to return the content in (text, markdown, or html). HTML responses are automatically converted to the requested format. Defaults to \"markdown\".",
+│   │       │                 "enum": [
+│   │       │                   "markdown",
+│   │       │                   "text",
+│   │       │                   "html"
+│   │       │                 ],
+│   │       │                 "type": "string"
+│   │       │               },
+│   │       │               "timeout": {
+│   │       │                 "description": "Optional timeout in seconds, greater than 0. Defaults to 30, max 120.",
+│   │       │                 "type": "number"
+│   │       │               },
+│   │       │               "url": {
+│   │       │                 "description": "The fully-formed URL to fetch content from. Must start with https://.",
+│   │       │                 "type": "string"
+│   │       │               }
+│   │       │             },
+│   │       │             "required": [
+│   │       │               "url"
+│   │       │             ],
+│   │       │             "type": "object"
+│   │       │           },
+│   │       │           "strict": false
+│   │       │         },
+│   │       │         "type": "function"
+│   │       │       },
+│   │       │       {
+│   │       │         "function": {
+│   │       │           "description": "Searches the Eve instrumentation documentation fixture.",
+│   │       │           "name": "search",
+│   │       │           "parameters": {
+│   │       │             "additionalProperties": false,
+│   │       │             "properties": {
+│   │       │               "query": {
+│   │       │                 "type": "string"
+│   │       │               }
+│   │       │             },
+│   │       │             "required": [
+│   │       │               "query"
+│   │       │             ],
+│   │       │             "type": "object"
+│   │       │           },
+│   │       │           "strict": false
+│   │       │         },
+│   │       │         "type": "function"
+│   │       │       }
+│   │       │     ]
 │   │       │   }
 │   │       │   metrics: {
 │   │       │     "completion_tokens": 165,
@@ -921,7 +2303,141 @@ span_tree:
 │   │             "model": "qwen/qwen3-30b-a3b",
 │   │             "provider": "openrouter",
 │   │             "scenario": "eve-instrumentation",
-│   │             "testRunId": "<run:1>"
+│   │             "testRunId": "<run:1>",
+│   │             "tools": [
+│   │               {
+│   │                 "function": {
+│   │                   "description": "Execute a shell command in the shared workspace environment. A command still running after 30 seconds keeps running in the background and returns status \"running\" with its output so far and how to check on or stop it.",
+│   │                   "name": "bash",
+│   │                   "parameters": {
+│   │                     "additionalProperties": false,
+│   │                     "properties": {
+│   │                       "command": {
+│   │                         "description": "The shell command to execute.",
+│   │                         "type": "string"
+│   │                       }
+│   │                     },
+│   │                     "required": [
+│   │                       "command"
+│   │                     ],
+│   │                     "type": "object"
+│   │                   },
+│   │                   "strict": false
+│   │                 },
+│   │                 "type": "function"
+│   │               },
+│   │               {
+│   │                 "function": {
+│   │                   "description": "Read a file from the local filesystem. If the path does not exist, an error is returned.\n\nUsage:\n- The filePath parameter is an absolute path, a path relative to the workspace root (where `bash` commands start), or a path beginning with $HOME/.\n- By default, this tool returns up to 2000 lines from the start of the file.\n- The offset parameter is the line number to start from (1-indexed).\n- To read later sections, call this tool again with a larger offset.\n- Contents are returned with each line prefixed by its line number as `<line>: <content>`. For example, if a file has contents \"foo\\n\", you will receive \"1: foo\\n\".\n- Any line longer than 2000 characters is truncated.\n- PNG, JPEG, GIF, and WebP images up to 3 MiB and PDFs up to 20 MiB are shown to you as files, including files named in `Attached file <path>` references.\n- Call this tool in parallel when you know there are multiple files you want to read.\n- Avoid tiny repeated slices (30 line chunks). If you need more context, read a larger window.",
+│   │                   "name": "read_file",
+│   │                   "parameters": {
+│   │                     "additionalProperties": false,
+│   │                     "properties": {
+│   │                       "filePath": {
+│   │                         "description": "The path to the file to read: absolute, relative to the workspace root, or beginning with $HOME/.",
+│   │                         "type": "string"
+│   │                       },
+│   │                       "limit": {
+│   │                         "description": "Maximum number of lines to return. Defaults to 2000.",
+│   │                         "minimum": 1,
+│   │                         "type": "integer"
+│   │                       },
+│   │                       "offset": {
+│   │                         "description": "1-based line number to start from. Defaults to 1.",
+│   │                         "minimum": 1,
+│   │                         "type": "integer"
+│   │                       }
+│   │                     },
+│   │                     "required": [
+│   │                       "filePath"
+│   │                     ],
+│   │                     "type": "object"
+│   │                   },
+│   │                   "strict": false
+│   │                 },
+│   │                 "type": "function"
+│   │               },
+│   │               {
+│   │                 "function": {
+│   │                   "description": "Writes a file to the local filesystem.\n\nUsage:\n- This tool will overwrite the existing file if there is one at the provided path.\n- If this is an existing file, you MUST use the read_file tool first to read the file's contents. This tool will fail if you did not read the file first.\n- ALWAYS prefer editing existing files in the codebase. NEVER write new files unless explicitly required.\n- NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.\n- Only use emojis if the user explicitly requests it. Avoid writing emojis to files unless asked.",
+│   │                   "name": "write_file",
+│   │                   "parameters": {
+│   │                     "additionalProperties": false,
+│   │                     "properties": {
+│   │                       "content": {
+│   │                         "description": "Complete replacement file contents.",
+│   │                         "type": "string"
+│   │                       },
+│   │                       "filePath": {
+│   │                         "description": "The path to the file to write: absolute, relative to the workspace root, or beginning with $HOME/.",
+│   │                         "type": "string"
+│   │                       }
+│   │                     },
+│   │                     "required": [
+│   │                       "content",
+│   │                       "filePath"
+│   │                     ],
+│   │                     "type": "object"
+│   │                   },
+│   │                   "strict": false
+│   │                 },
+│   │                 "type": "function"
+│   │               },
+│   │               {
+│   │                 "function": {
+│   │                   "description": "Fetch a webpage and return its content in the requested format. Use this to retrieve and analyze content from URLs.\n\nUsage notes:\n- The URL must be a fully-formed valid URL starting with https://\n- HTML responses are automatically converted to markdown or plain text based on the requested format\n- Format options: \"markdown\" (default), \"text\", or \"html\"\n- Default timeout is 30 seconds (max 120 seconds)\n- Maximum response size is 5 MB; content is further capped at the shared tool-output budget (50 KB / 2000 lines)\n- This tool is read-only and does not modify any files",
+│   │                   "name": "web_fetch",
+│   │                   "parameters": {
+│   │                     "additionalProperties": false,
+│   │                     "properties": {
+│   │                       "format": {
+│   │                         "description": "The format to return the content in (text, markdown, or html). HTML responses are automatically converted to the requested format. Defaults to \"markdown\".",
+│   │                         "enum": [
+│   │                           "markdown",
+│   │                           "text",
+│   │                           "html"
+│   │                         ],
+│   │                         "type": "string"
+│   │                       },
+│   │                       "timeout": {
+│   │                         "description": "Optional timeout in seconds, greater than 0. Defaults to 30, max 120.",
+│   │                         "type": "number"
+│   │                       },
+│   │                       "url": {
+│   │                         "description": "The fully-formed URL to fetch content from. Must start with https://.",
+│   │                         "type": "string"
+│   │                       }
+│   │                     },
+│   │                     "required": [
+│   │                       "url"
+│   │                     ],
+│   │                     "type": "object"
+│   │                   },
+│   │                   "strict": false
+│   │                 },
+│   │                 "type": "function"
+│   │               },
+│   │               {
+│   │                 "function": {
+│   │                   "description": "Searches the Eve instrumentation documentation fixture.",
+│   │                   "name": "search",
+│   │                   "parameters": {
+│   │                     "additionalProperties": false,
+│   │                     "properties": {
+│   │                       "query": {
+│   │                         "type": "string"
+│   │                       }
+│   │                     },
+│   │                     "required": [
+│   │                       "query"
+│   │                     ],
+│   │                     "type": "object"
+│   │                   },
+│   │                   "strict": false
+│   │                 },
+│   │                 "type": "function"
+│   │               }
+│   │             ]
 │   │           }
 │   │           metrics: {
 │   │             "completion_tokens": 125,
@@ -1165,7 +2681,252 @@ span_tree:
 │   │     "model": "qwen/qwen3-30b-a3b",
 │   │     "provider": "openrouter",
 │   │     "scenario": "eve-instrumentation",
-│   │     "testRunId": "<run:1>"
+│   │     "testRunId": "<run:1>",
+│   │     "tools": [
+│   │       {
+│   │         "function": {
+│   │           "description": "Execute a shell command in the shared workspace environment. A command still running after 30 seconds keeps running in the background and returns status \"running\" with its output so far and how to check on or stop it.",
+│   │           "name": "bash",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "command": {
+│   │                 "description": "The shell command to execute.",
+│   │                 "type": "string"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "command"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Read a file from the local filesystem. If the path does not exist, an error is returned.\n\nUsage:\n- The filePath parameter is an absolute path, a path relative to the workspace root (where `bash` commands start), or a path beginning with $HOME/.\n- By default, this tool returns up to 2000 lines from the start of the file.\n- The offset parameter is the line number to start from (1-indexed).\n- To read later sections, call this tool again with a larger offset.\n- Contents are returned with each line prefixed by its line number as `<line>: <content>`. For example, if a file has contents \"foo\\n\", you will receive \"1: foo\\n\".\n- Any line longer than 2000 characters is truncated.\n- PNG, JPEG, GIF, and WebP images up to 3 MiB and PDFs up to 20 MiB are shown to you as files, including files named in `Attached file <path>` references.\n- Call this tool in parallel when you know there are multiple files you want to read.\n- Avoid tiny repeated slices (30 line chunks). If you need more context, read a larger window.",
+│   │           "name": "read_file",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "filePath": {
+│   │                 "description": "The path to the file to read: absolute, relative to the workspace root, or beginning with $HOME/.",
+│   │                 "type": "string"
+│   │               },
+│   │               "limit": {
+│   │                 "description": "Maximum number of lines to return. Defaults to 2000.",
+│   │                 "minimum": 1,
+│   │                 "type": "integer"
+│   │               },
+│   │               "offset": {
+│   │                 "description": "1-based line number to start from. Defaults to 1.",
+│   │                 "minimum": 1,
+│   │                 "type": "integer"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "filePath"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Writes a file to the local filesystem.\n\nUsage:\n- This tool will overwrite the existing file if there is one at the provided path.\n- If this is an existing file, you MUST use the read_file tool first to read the file's contents. This tool will fail if you did not read the file first.\n- ALWAYS prefer editing existing files in the codebase. NEVER write new files unless explicitly required.\n- NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.\n- Only use emojis if the user explicitly requests it. Avoid writing emojis to files unless asked.",
+│   │           "name": "write_file",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "content": {
+│   │                 "description": "Complete replacement file contents.",
+│   │                 "type": "string"
+│   │               },
+│   │               "filePath": {
+│   │                 "description": "The path to the file to write: absolute, relative to the workspace root, or beginning with $HOME/.",
+│   │                 "type": "string"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "content",
+│   │               "filePath"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Fetch a webpage and return its content in the requested format. Use this to retrieve and analyze content from URLs.\n\nUsage notes:\n- The URL must be a fully-formed valid URL starting with https://\n- HTML responses are automatically converted to markdown or plain text based on the requested format\n- Format options: \"markdown\" (default), \"text\", or \"html\"\n- Default timeout is 30 seconds (max 120 seconds)\n- Maximum response size is 5 MB; content is further capped at the shared tool-output budget (50 KB / 2000 lines)\n- This tool is read-only and does not modify any files",
+│   │           "name": "web_fetch",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "format": {
+│   │                 "description": "The format to return the content in (text, markdown, or html). HTML responses are automatically converted to the requested format. Defaults to \"markdown\".",
+│   │                 "enum": [
+│   │                   "markdown",
+│   │                   "text",
+│   │                   "html"
+│   │                 ],
+│   │                 "type": "string"
+│   │               },
+│   │               "timeout": {
+│   │                 "description": "Optional timeout in seconds, greater than 0. Defaults to 30, max 120.",
+│   │                 "type": "number"
+│   │               },
+│   │               "url": {
+│   │                 "description": "The fully-formed URL to fetch content from. Must start with https://.",
+│   │                 "type": "string"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "url"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Delegate a focused subtask to a copy of yourself. Use it to isolate complex work or split a large task into independent pieces. Each call starts a task, so several agents can work at once: start every independent one before you wait. A new child has fresh history and state but reuses your tools and sandbox, so give parallel writers non-overlapping scopes. In message, state the goal, what to return, and whether it may change files. It does not see this conversation, so put everything it needs in message. To correct or continue an agent task, call this tool again with its taskId; without taskId, each call starts a new agent.",
+│   │           "name": "agent",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "message": {
+│   │                 "description": "The message to send to the agent, with everything it needs to do the work.",
+│   │                 "type": "string"
+│   │               },
+│   │               "taskId": {
+│   │                 "description": "The id of a task this tool started, copied from its \"Started task\" receipt or the [Tasks] note, to send it this input. Omit it to start a new task.",
+│   │                 "type": "string"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "message"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Reads a deterministic Eve documentation page fixture.",
+│   │           "name": "read",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "url": {
+│   │                 "type": "string"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "url"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Searches the Eve instrumentation documentation fixture.",
+│   │           "name": "search",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "query": {
+│   │                 "type": "string"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "query"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Research the Eve instrumentation documentation before the parent reads it. It does not see this conversation, so put everything it needs in message. To correct or continue an agent task, call this tool again with its taskId; without taskId, each call starts a new agent.",
+│   │           "name": "researcher",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "message": {
+│   │                 "description": "The message to send to the agent, with everything it needs to do the work.",
+│   │                 "type": "string"
+│   │               },
+│   │               "taskId": {
+│   │                 "description": "The id of a task this tool started, copied from its \"Started task\" receipt or the [Tasks] note, to send it this input. Omit it to start a new task.",
+│   │                 "type": "string"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "message"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Call eve__task_wait sparingly, only when you deliberately want to withhold a message from the user while waiting for a task result. Tasks keep running and their results reach you without calling eve__task_wait. If the user should hear from you now, reply instead. Wait silently until any of your tasks has a result, a new message arrives, or timeoutSeconds pass. It returns after the first result, which follows in a <task_result> message; wait again only if you still want to withhold a reply until another result arrives. Waiting never stops a task.",
+│   │           "name": "eve__task_wait",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "timeoutSeconds": {
+│   │                 "description": "Optional. Seconds to wait before returning without a result. Omit it to wait for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
+│   │                 "minimum": 1,
+│   │                 "type": "integer"
+│   │               }
+│   │             },
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       },
+│   │       {
+│   │         "function": {
+│   │           "description": "Stop a task's current work. That work never reports back; if it already had a result, that result is still delivered. Cancelling an agent or one-shot task ends it; start a new task to delegate again. Other tasks that accept more input stay available: call their tool with the taskId to give them new work.",
+│   │           "name": "eve__task_cancel",
+│   │           "parameters": {
+│   │             "additionalProperties": false,
+│   │             "properties": {
+│   │               "taskId": {
+│   │                 "description": "The id of the task to stop, copied from its \"Started task\" receipt or the [Tasks] note.",
+│   │                 "minLength": 1,
+│   │                 "type": "string"
+│   │               }
+│   │             },
+│   │             "required": [
+│   │               "taskId"
+│   │             ],
+│   │             "type": "object"
+│   │           },
+│   │           "strict": false
+│   │         },
+│   │         "type": "function"
+│   │       }
+│   │     ]
 │   │   }
 │   │   metrics: {
 │   │     "completion_tokens": 211,
@@ -1428,7 +3189,252 @@ span_tree:
 │         "model": "qwen/qwen3-30b-a3b",
 │         "provider": "openrouter",
 │         "scenario": "eve-instrumentation",
-│         "testRunId": "<run:1>"
+│         "testRunId": "<run:1>",
+│         "tools": [
+│           {
+│             "function": {
+│               "description": "Execute a shell command in the shared workspace environment. A command still running after 30 seconds keeps running in the background and returns status \"running\" with its output so far and how to check on or stop it.",
+│               "name": "bash",
+│               "parameters": {
+│                 "additionalProperties": false,
+│                 "properties": {
+│                   "command": {
+│                     "description": "The shell command to execute.",
+│                     "type": "string"
+│                   }
+│                 },
+│                 "required": [
+│                   "command"
+│                 ],
+│                 "type": "object"
+│               },
+│               "strict": false
+│             },
+│             "type": "function"
+│           },
+│           {
+│             "function": {
+│               "description": "Read a file from the local filesystem. If the path does not exist, an error is returned.\n\nUsage:\n- The filePath parameter is an absolute path, a path relative to the workspace root (where `bash` commands start), or a path beginning with $HOME/.\n- By default, this tool returns up to 2000 lines from the start of the file.\n- The offset parameter is the line number to start from (1-indexed).\n- To read later sections, call this tool again with a larger offset.\n- Contents are returned with each line prefixed by its line number as `<line>: <content>`. For example, if a file has contents \"foo\\n\", you will receive \"1: foo\\n\".\n- Any line longer than 2000 characters is truncated.\n- PNG, JPEG, GIF, and WebP images up to 3 MiB and PDFs up to 20 MiB are shown to you as files, including files named in `Attached file <path>` references.\n- Call this tool in parallel when you know there are multiple files you want to read.\n- Avoid tiny repeated slices (30 line chunks). If you need more context, read a larger window.",
+│               "name": "read_file",
+│               "parameters": {
+│                 "additionalProperties": false,
+│                 "properties": {
+│                   "filePath": {
+│                     "description": "The path to the file to read: absolute, relative to the workspace root, or beginning with $HOME/.",
+│                     "type": "string"
+│                   },
+│                   "limit": {
+│                     "description": "Maximum number of lines to return. Defaults to 2000.",
+│                     "minimum": 1,
+│                     "type": "integer"
+│                   },
+│                   "offset": {
+│                     "description": "1-based line number to start from. Defaults to 1.",
+│                     "minimum": 1,
+│                     "type": "integer"
+│                   }
+│                 },
+│                 "required": [
+│                   "filePath"
+│                 ],
+│                 "type": "object"
+│               },
+│               "strict": false
+│             },
+│             "type": "function"
+│           },
+│           {
+│             "function": {
+│               "description": "Writes a file to the local filesystem.\n\nUsage:\n- This tool will overwrite the existing file if there is one at the provided path.\n- If this is an existing file, you MUST use the read_file tool first to read the file's contents. This tool will fail if you did not read the file first.\n- ALWAYS prefer editing existing files in the codebase. NEVER write new files unless explicitly required.\n- NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.\n- Only use emojis if the user explicitly requests it. Avoid writing emojis to files unless asked.",
+│               "name": "write_file",
+│               "parameters": {
+│                 "additionalProperties": false,
+│                 "properties": {
+│                   "content": {
+│                     "description": "Complete replacement file contents.",
+│                     "type": "string"
+│                   },
+│                   "filePath": {
+│                     "description": "The path to the file to write: absolute, relative to the workspace root, or beginning with $HOME/.",
+│                     "type": "string"
+│                   }
+│                 },
+│                 "required": [
+│                   "content",
+│                   "filePath"
+│                 ],
+│                 "type": "object"
+│               },
+│               "strict": false
+│             },
+│             "type": "function"
+│           },
+│           {
+│             "function": {
+│               "description": "Fetch a webpage and return its content in the requested format. Use this to retrieve and analyze content from URLs.\n\nUsage notes:\n- The URL must be a fully-formed valid URL starting with https://\n- HTML responses are automatically converted to markdown or plain text based on the requested format\n- Format options: \"markdown\" (default), \"text\", or \"html\"\n- Default timeout is 30 seconds (max 120 seconds)\n- Maximum response size is 5 MB; content is further capped at the shared tool-output budget (50 KB / 2000 lines)\n- This tool is read-only and does not modify any files",
+│               "name": "web_fetch",
+│               "parameters": {
+│                 "additionalProperties": false,
+│                 "properties": {
+│                   "format": {
+│                     "description": "The format to return the content in (text, markdown, or html). HTML responses are automatically converted to the requested format. Defaults to \"markdown\".",
+│                     "enum": [
+│                       "markdown",
+│                       "text",
+│                       "html"
+│                     ],
+│                     "type": "string"
+│                   },
+│                   "timeout": {
+│                     "description": "Optional timeout in seconds, greater than 0. Defaults to 30, max 120.",
+│                     "type": "number"
+│                   },
+│                   "url": {
+│                     "description": "The fully-formed URL to fetch content from. Must start with https://.",
+│                     "type": "string"
+│                   }
+│                 },
+│                 "required": [
+│                   "url"
+│                 ],
+│                 "type": "object"
+│               },
+│               "strict": false
+│             },
+│             "type": "function"
+│           },
+│           {
+│             "function": {
+│               "description": "Delegate a focused subtask to a copy of yourself. Use it to isolate complex work or split a large task into independent pieces. Each call starts a task, so several agents can work at once: start every independent one before you wait. A new child has fresh history and state but reuses your tools and sandbox, so give parallel writers non-overlapping scopes. In message, state the goal, what to return, and whether it may change files. It does not see this conversation, so put everything it needs in message. To correct or continue an agent task, call this tool again with its taskId; without taskId, each call starts a new agent.",
+│               "name": "agent",
+│               "parameters": {
+│                 "additionalProperties": false,
+│                 "properties": {
+│                   "message": {
+│                     "description": "The message to send to the agent, with everything it needs to do the work.",
+│                     "type": "string"
+│                   },
+│                   "taskId": {
+│                     "description": "The id of a task this tool started, copied from its \"Started task\" receipt or the [Tasks] note, to send it this input. Omit it to start a new task.",
+│                     "type": "string"
+│                   }
+│                 },
+│                 "required": [
+│                   "message"
+│                 ],
+│                 "type": "object"
+│               },
+│               "strict": false
+│             },
+│             "type": "function"
+│           },
+│           {
+│             "function": {
+│               "description": "Reads a deterministic Eve documentation page fixture.",
+│               "name": "read",
+│               "parameters": {
+│                 "additionalProperties": false,
+│                 "properties": {
+│                   "url": {
+│                     "type": "string"
+│                   }
+│                 },
+│                 "required": [
+│                   "url"
+│                 ],
+│                 "type": "object"
+│               },
+│               "strict": false
+│             },
+│             "type": "function"
+│           },
+│           {
+│             "function": {
+│               "description": "Searches the Eve instrumentation documentation fixture.",
+│               "name": "search",
+│               "parameters": {
+│                 "additionalProperties": false,
+│                 "properties": {
+│                   "query": {
+│                     "type": "string"
+│                   }
+│                 },
+│                 "required": [
+│                   "query"
+│                 ],
+│                 "type": "object"
+│               },
+│               "strict": false
+│             },
+│             "type": "function"
+│           },
+│           {
+│             "function": {
+│               "description": "Research the Eve instrumentation documentation before the parent reads it. It does not see this conversation, so put everything it needs in message. To correct or continue an agent task, call this tool again with its taskId; without taskId, each call starts a new agent.",
+│               "name": "researcher",
+│               "parameters": {
+│                 "additionalProperties": false,
+│                 "properties": {
+│                   "message": {
+│                     "description": "The message to send to the agent, with everything it needs to do the work.",
+│                     "type": "string"
+│                   },
+│                   "taskId": {
+│                     "description": "The id of a task this tool started, copied from its \"Started task\" receipt or the [Tasks] note, to send it this input. Omit it to start a new task.",
+│                     "type": "string"
+│                   }
+│                 },
+│                 "required": [
+│                   "message"
+│                 ],
+│                 "type": "object"
+│               },
+│               "strict": false
+│             },
+│             "type": "function"
+│           },
+│           {
+│             "function": {
+│               "description": "Call eve__task_wait sparingly, only when you deliberately want to withhold a message from the user while waiting for a task result. Tasks keep running and their results reach you without calling eve__task_wait. If the user should hear from you now, reply instead. Wait silently until any of your tasks has a result, a new message arrives, or timeoutSeconds pass. It returns after the first result, which follows in a <task_result> message; wait again only if you still want to withhold a reply until another result arrives. Waiting never stops a task.",
+│               "name": "eve__task_wait",
+│               "parameters": {
+│                 "additionalProperties": false,
+│                 "properties": {
+│                   "timeoutSeconds": {
+│                     "description": "Optional. Seconds to wait before returning without a result. Omit it to wait for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
+│                     "minimum": 1,
+│                     "type": "integer"
+│                   }
+│                 },
+│                 "type": "object"
+│               },
+│               "strict": false
+│             },
+│             "type": "function"
+│           },
+│           {
+│             "function": {
+│               "description": "Stop a task's current work. That work never reports back; if it already had a result, that result is still delivered. Cancelling an agent or one-shot task ends it; start a new task to delegate again. Other tasks that accept more input stay available: call their tool with the taskId to give them new work.",
+│               "name": "eve__task_cancel",
+│               "parameters": {
+│                 "additionalProperties": false,
+│                 "properties": {
+│                   "taskId": {
+│                     "description": "The id of the task to stop, copied from its \"Started task\" receipt or the [Tasks] note.",
+│                     "minLength": 1,
+│                     "type": "string"
+│                   }
+│                 },
+│                 "required": [
+│                   "taskId"
+│                 ],
+│                 "type": "object"
+│               },
+│               "strict": false
+│             },
+│             "type": "function"
+│           }
+│         ]
 │       }
 │       metrics: {
 │         "completion_tokens": 267,
@@ -1519,7 +3525,252 @@ span_tree:
         │     "model": "qwen/qwen3-30b-a3b",
         │     "provider": "openrouter",
         │     "scenario": "eve-instrumentation",
-        │     "testRunId": "<run:1>"
+        │     "testRunId": "<run:1>",
+        │     "tools": [
+        │       {
+        │         "function": {
+        │           "description": "Execute a shell command in the shared workspace environment. A command still running after 30 seconds keeps running in the background and returns status \"running\" with its output so far and how to check on or stop it.",
+        │           "name": "bash",
+        │           "parameters": {
+        │             "additionalProperties": false,
+        │             "properties": {
+        │               "command": {
+        │                 "description": "The shell command to execute.",
+        │                 "type": "string"
+        │               }
+        │             },
+        │             "required": [
+        │               "command"
+        │             ],
+        │             "type": "object"
+        │           },
+        │           "strict": false
+        │         },
+        │         "type": "function"
+        │       },
+        │       {
+        │         "function": {
+        │           "description": "Read a file from the local filesystem. If the path does not exist, an error is returned.\n\nUsage:\n- The filePath parameter is an absolute path, a path relative to the workspace root (where `bash` commands start), or a path beginning with $HOME/.\n- By default, this tool returns up to 2000 lines from the start of the file.\n- The offset parameter is the line number to start from (1-indexed).\n- To read later sections, call this tool again with a larger offset.\n- Contents are returned with each line prefixed by its line number as `<line>: <content>`. For example, if a file has contents \"foo\\n\", you will receive \"1: foo\\n\".\n- Any line longer than 2000 characters is truncated.\n- PNG, JPEG, GIF, and WebP images up to 3 MiB and PDFs up to 20 MiB are shown to you as files, including files named in `Attached file <path>` references.\n- Call this tool in parallel when you know there are multiple files you want to read.\n- Avoid tiny repeated slices (30 line chunks). If you need more context, read a larger window.",
+        │           "name": "read_file",
+        │           "parameters": {
+        │             "additionalProperties": false,
+        │             "properties": {
+        │               "filePath": {
+        │                 "description": "The path to the file to read: absolute, relative to the workspace root, or beginning with $HOME/.",
+        │                 "type": "string"
+        │               },
+        │               "limit": {
+        │                 "description": "Maximum number of lines to return. Defaults to 2000.",
+        │                 "minimum": 1,
+        │                 "type": "integer"
+        │               },
+        │               "offset": {
+        │                 "description": "1-based line number to start from. Defaults to 1.",
+        │                 "minimum": 1,
+        │                 "type": "integer"
+        │               }
+        │             },
+        │             "required": [
+        │               "filePath"
+        │             ],
+        │             "type": "object"
+        │           },
+        │           "strict": false
+        │         },
+        │         "type": "function"
+        │       },
+        │       {
+        │         "function": {
+        │           "description": "Writes a file to the local filesystem.\n\nUsage:\n- This tool will overwrite the existing file if there is one at the provided path.\n- If this is an existing file, you MUST use the read_file tool first to read the file's contents. This tool will fail if you did not read the file first.\n- ALWAYS prefer editing existing files in the codebase. NEVER write new files unless explicitly required.\n- NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.\n- Only use emojis if the user explicitly requests it. Avoid writing emojis to files unless asked.",
+        │           "name": "write_file",
+        │           "parameters": {
+        │             "additionalProperties": false,
+        │             "properties": {
+        │               "content": {
+        │                 "description": "Complete replacement file contents.",
+        │                 "type": "string"
+        │               },
+        │               "filePath": {
+        │                 "description": "The path to the file to write: absolute, relative to the workspace root, or beginning with $HOME/.",
+        │                 "type": "string"
+        │               }
+        │             },
+        │             "required": [
+        │               "content",
+        │               "filePath"
+        │             ],
+        │             "type": "object"
+        │           },
+        │           "strict": false
+        │         },
+        │         "type": "function"
+        │       },
+        │       {
+        │         "function": {
+        │           "description": "Fetch a webpage and return its content in the requested format. Use this to retrieve and analyze content from URLs.\n\nUsage notes:\n- The URL must be a fully-formed valid URL starting with https://\n- HTML responses are automatically converted to markdown or plain text based on the requested format\n- Format options: \"markdown\" (default), \"text\", or \"html\"\n- Default timeout is 30 seconds (max 120 seconds)\n- Maximum response size is 5 MB; content is further capped at the shared tool-output budget (50 KB / 2000 lines)\n- This tool is read-only and does not modify any files",
+        │           "name": "web_fetch",
+        │           "parameters": {
+        │             "additionalProperties": false,
+        │             "properties": {
+        │               "format": {
+        │                 "description": "The format to return the content in (text, markdown, or html). HTML responses are automatically converted to the requested format. Defaults to \"markdown\".",
+        │                 "enum": [
+        │                   "markdown",
+        │                   "text",
+        │                   "html"
+        │                 ],
+        │                 "type": "string"
+        │               },
+        │               "timeout": {
+        │                 "description": "Optional timeout in seconds, greater than 0. Defaults to 30, max 120.",
+        │                 "type": "number"
+        │               },
+        │               "url": {
+        │                 "description": "The fully-formed URL to fetch content from. Must start with https://.",
+        │                 "type": "string"
+        │               }
+        │             },
+        │             "required": [
+        │               "url"
+        │             ],
+        │             "type": "object"
+        │           },
+        │           "strict": false
+        │         },
+        │         "type": "function"
+        │       },
+        │       {
+        │         "function": {
+        │           "description": "Delegate a focused subtask to a copy of yourself. Use it to isolate complex work or split a large task into independent pieces. Each call starts a task, so several agents can work at once: start every independent one before you wait. A new child has fresh history and state but reuses your tools and sandbox, so give parallel writers non-overlapping scopes. In message, state the goal, what to return, and whether it may change files. It does not see this conversation, so put everything it needs in message. To correct or continue an agent task, call this tool again with its taskId; without taskId, each call starts a new agent.",
+        │           "name": "agent",
+        │           "parameters": {
+        │             "additionalProperties": false,
+        │             "properties": {
+        │               "message": {
+        │                 "description": "The message to send to the agent, with everything it needs to do the work.",
+        │                 "type": "string"
+        │               },
+        │               "taskId": {
+        │                 "description": "The id of a task this tool started, copied from its \"Started task\" receipt or the [Tasks] note, to send it this input. Omit it to start a new task.",
+        │                 "type": "string"
+        │               }
+        │             },
+        │             "required": [
+        │               "message"
+        │             ],
+        │             "type": "object"
+        │           },
+        │           "strict": false
+        │         },
+        │         "type": "function"
+        │       },
+        │       {
+        │         "function": {
+        │           "description": "Reads a deterministic Eve documentation page fixture.",
+        │           "name": "read",
+        │           "parameters": {
+        │             "additionalProperties": false,
+        │             "properties": {
+        │               "url": {
+        │                 "type": "string"
+        │               }
+        │             },
+        │             "required": [
+        │               "url"
+        │             ],
+        │             "type": "object"
+        │           },
+        │           "strict": false
+        │         },
+        │         "type": "function"
+        │       },
+        │       {
+        │         "function": {
+        │           "description": "Searches the Eve instrumentation documentation fixture.",
+        │           "name": "search",
+        │           "parameters": {
+        │             "additionalProperties": false,
+        │             "properties": {
+        │               "query": {
+        │                 "type": "string"
+        │               }
+        │             },
+        │             "required": [
+        │               "query"
+        │             ],
+        │             "type": "object"
+        │           },
+        │           "strict": false
+        │         },
+        │         "type": "function"
+        │       },
+        │       {
+        │         "function": {
+        │           "description": "Research the Eve instrumentation documentation before the parent reads it. It does not see this conversation, so put everything it needs in message. To correct or continue an agent task, call this tool again with its taskId; without taskId, each call starts a new agent.",
+        │           "name": "researcher",
+        │           "parameters": {
+        │             "additionalProperties": false,
+        │             "properties": {
+        │               "message": {
+        │                 "description": "The message to send to the agent, with everything it needs to do the work.",
+        │                 "type": "string"
+        │               },
+        │               "taskId": {
+        │                 "description": "The id of a task this tool started, copied from its \"Started task\" receipt or the [Tasks] note, to send it this input. Omit it to start a new task.",
+        │                 "type": "string"
+        │               }
+        │             },
+        │             "required": [
+        │               "message"
+        │             ],
+        │             "type": "object"
+        │           },
+        │           "strict": false
+        │         },
+        │         "type": "function"
+        │       },
+        │       {
+        │         "function": {
+        │           "description": "Call eve__task_wait sparingly, only when you deliberately want to withhold a message from the user while waiting for a task result. Tasks keep running and their results reach you without calling eve__task_wait. If the user should hear from you now, reply instead. Wait silently until any of your tasks has a result, a new message arrives, or timeoutSeconds pass. It returns after the first result, which follows in a <task_result> message; wait again only if you still want to withhold a reply until another result arrives. Waiting never stops a task.",
+        │           "name": "eve__task_wait",
+        │           "parameters": {
+        │             "additionalProperties": false,
+        │             "properties": {
+        │               "timeoutSeconds": {
+        │                 "description": "Optional. Seconds to wait before returning without a result. Omit it to wait for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
+        │                 "minimum": 1,
+        │                 "type": "integer"
+        │               }
+        │             },
+        │             "type": "object"
+        │           },
+        │           "strict": false
+        │         },
+        │         "type": "function"
+        │       },
+        │       {
+        │         "function": {
+        │           "description": "Stop a task's current work. That work never reports back; if it already had a result, that result is still delivered. Cancelling an agent or one-shot task ends it; start a new task to delegate again. Other tasks that accept more input stay available: call their tool with the taskId to give them new work.",
+        │           "name": "eve__task_cancel",
+        │           "parameters": {
+        │             "additionalProperties": false,
+        │             "properties": {
+        │               "taskId": {
+        │                 "description": "The id of the task to stop, copied from its \"Started task\" receipt or the [Tasks] note.",
+        │                 "minLength": 1,
+        │                 "type": "string"
+        │               }
+        │             },
+        │             "required": [
+        │               "taskId"
+        │             ],
+        │             "type": "object"
+        │           },
+        │           "strict": false
+        │         },
+        │         "type": "function"
+        │       }
+        │     ]
         │   }
         │   metrics: {
         │     "completion_tokens": 547,
@@ -1608,7 +3859,141 @@ span_tree:
         │       │     "model": "qwen/qwen3-30b-a3b",
         │       │     "provider": "openrouter",
         │       │     "scenario": "eve-instrumentation",
-        │       │     "testRunId": "<run:1>"
+        │       │     "testRunId": "<run:1>",
+        │       │     "tools": [
+        │       │       {
+        │       │         "function": {
+        │       │           "description": "Execute a shell command in the shared workspace environment. A command still running after 30 seconds keeps running in the background and returns status \"running\" with its output so far and how to check on or stop it.",
+        │       │           "name": "bash",
+        │       │           "parameters": {
+        │       │             "additionalProperties": false,
+        │       │             "properties": {
+        │       │               "command": {
+        │       │                 "description": "The shell command to execute.",
+        │       │                 "type": "string"
+        │       │               }
+        │       │             },
+        │       │             "required": [
+        │       │               "command"
+        │       │             ],
+        │       │             "type": "object"
+        │       │           },
+        │       │           "strict": false
+        │       │         },
+        │       │         "type": "function"
+        │       │       },
+        │       │       {
+        │       │         "function": {
+        │       │           "description": "Read a file from the local filesystem. If the path does not exist, an error is returned.\n\nUsage:\n- The filePath parameter is an absolute path, a path relative to the workspace root (where `bash` commands start), or a path beginning with $HOME/.\n- By default, this tool returns up to 2000 lines from the start of the file.\n- The offset parameter is the line number to start from (1-indexed).\n- To read later sections, call this tool again with a larger offset.\n- Contents are returned with each line prefixed by its line number as `<line>: <content>`. For example, if a file has contents \"foo\\n\", you will receive \"1: foo\\n\".\n- Any line longer than 2000 characters is truncated.\n- PNG, JPEG, GIF, and WebP images up to 3 MiB and PDFs up to 20 MiB are shown to you as files, including files named in `Attached file <path>` references.\n- Call this tool in parallel when you know there are multiple files you want to read.\n- Avoid tiny repeated slices (30 line chunks). If you need more context, read a larger window.",
+        │       │           "name": "read_file",
+        │       │           "parameters": {
+        │       │             "additionalProperties": false,
+        │       │             "properties": {
+        │       │               "filePath": {
+        │       │                 "description": "The path to the file to read: absolute, relative to the workspace root, or beginning with $HOME/.",
+        │       │                 "type": "string"
+        │       │               },
+        │       │               "limit": {
+        │       │                 "description": "Maximum number of lines to return. Defaults to 2000.",
+        │       │                 "minimum": 1,
+        │       │                 "type": "integer"
+        │       │               },
+        │       │               "offset": {
+        │       │                 "description": "1-based line number to start from. Defaults to 1.",
+        │       │                 "minimum": 1,
+        │       │                 "type": "integer"
+        │       │               }
+        │       │             },
+        │       │             "required": [
+        │       │               "filePath"
+        │       │             ],
+        │       │             "type": "object"
+        │       │           },
+        │       │           "strict": false
+        │       │         },
+        │       │         "type": "function"
+        │       │       },
+        │       │       {
+        │       │         "function": {
+        │       │           "description": "Writes a file to the local filesystem.\n\nUsage:\n- This tool will overwrite the existing file if there is one at the provided path.\n- If this is an existing file, you MUST use the read_file tool first to read the file's contents. This tool will fail if you did not read the file first.\n- ALWAYS prefer editing existing files in the codebase. NEVER write new files unless explicitly required.\n- NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.\n- Only use emojis if the user explicitly requests it. Avoid writing emojis to files unless asked.",
+        │       │           "name": "write_file",
+        │       │           "parameters": {
+        │       │             "additionalProperties": false,
+        │       │             "properties": {
+        │       │               "content": {
+        │       │                 "description": "Complete replacement file contents.",
+        │       │                 "type": "string"
+        │       │               },
+        │       │               "filePath": {
+        │       │                 "description": "The path to the file to write: absolute, relative to the workspace root, or beginning with $HOME/.",
+        │       │                 "type": "string"
+        │       │               }
+        │       │             },
+        │       │             "required": [
+        │       │               "content",
+        │       │               "filePath"
+        │       │             ],
+        │       │             "type": "object"
+        │       │           },
+        │       │           "strict": false
+        │       │         },
+        │       │         "type": "function"
+        │       │       },
+        │       │       {
+        │       │         "function": {
+        │       │           "description": "Fetch a webpage and return its content in the requested format. Use this to retrieve and analyze content from URLs.\n\nUsage notes:\n- The URL must be a fully-formed valid URL starting with https://\n- HTML responses are automatically converted to markdown or plain text based on the requested format\n- Format options: \"markdown\" (default), \"text\", or \"html\"\n- Default timeout is 30 seconds (max 120 seconds)\n- Maximum response size is 5 MB; content is further capped at the shared tool-output budget (50 KB / 2000 lines)\n- This tool is read-only and does not modify any files",
+        │       │           "name": "web_fetch",
+        │       │           "parameters": {
+        │       │             "additionalProperties": false,
+        │       │             "properties": {
+        │       │               "format": {
+        │       │                 "description": "The format to return the content in (text, markdown, or html). HTML responses are automatically converted to the requested format. Defaults to \"markdown\".",
+        │       │                 "enum": [
+        │       │                   "markdown",
+        │       │                   "text",
+        │       │                   "html"
+        │       │                 ],
+        │       │                 "type": "string"
+        │       │               },
+        │       │               "timeout": {
+        │       │                 "description": "Optional timeout in seconds, greater than 0. Defaults to 30, max 120.",
+        │       │                 "type": "number"
+        │       │               },
+        │       │               "url": {
+        │       │                 "description": "The fully-formed URL to fetch content from. Must start with https://.",
+        │       │                 "type": "string"
+        │       │               }
+        │       │             },
+        │       │             "required": [
+        │       │               "url"
+        │       │             ],
+        │       │             "type": "object"
+        │       │           },
+        │       │           "strict": false
+        │       │         },
+        │       │         "type": "function"
+        │       │       },
+        │       │       {
+        │       │         "function": {
+        │       │           "description": "Searches the Eve instrumentation documentation fixture.",
+        │       │           "name": "search",
+        │       │           "parameters": {
+        │       │             "additionalProperties": false,
+        │       │             "properties": {
+        │       │               "query": {
+        │       │                 "type": "string"
+        │       │               }
+        │       │             },
+        │       │             "required": [
+        │       │               "query"
+        │       │             ],
+        │       │             "type": "object"
+        │       │           },
+        │       │           "strict": false
+        │       │         },
+        │       │         "type": "function"
+        │       │       }
+        │       │     ]
         │       │   }
         │       │   metrics: {
         │       │     "completion_tokens": 136,
@@ -1708,7 +4093,141 @@ span_tree:
         │             "model": "qwen/qwen3-30b-a3b",
         │             "provider": "openrouter",
         │             "scenario": "eve-instrumentation",
-        │             "testRunId": "<run:1>"
+        │             "testRunId": "<run:1>",
+        │             "tools": [
+        │               {
+        │                 "function": {
+        │                   "description": "Execute a shell command in the shared workspace environment. A command still running after 30 seconds keeps running in the background and returns status \"running\" with its output so far and how to check on or stop it.",
+        │                   "name": "bash",
+        │                   "parameters": {
+        │                     "additionalProperties": false,
+        │                     "properties": {
+        │                       "command": {
+        │                         "description": "The shell command to execute.",
+        │                         "type": "string"
+        │                       }
+        │                     },
+        │                     "required": [
+        │                       "command"
+        │                     ],
+        │                     "type": "object"
+        │                   },
+        │                   "strict": false
+        │                 },
+        │                 "type": "function"
+        │               },
+        │               {
+        │                 "function": {
+        │                   "description": "Read a file from the local filesystem. If the path does not exist, an error is returned.\n\nUsage:\n- The filePath parameter is an absolute path, a path relative to the workspace root (where `bash` commands start), or a path beginning with $HOME/.\n- By default, this tool returns up to 2000 lines from the start of the file.\n- The offset parameter is the line number to start from (1-indexed).\n- To read later sections, call this tool again with a larger offset.\n- Contents are returned with each line prefixed by its line number as `<line>: <content>`. For example, if a file has contents \"foo\\n\", you will receive \"1: foo\\n\".\n- Any line longer than 2000 characters is truncated.\n- PNG, JPEG, GIF, and WebP images up to 3 MiB and PDFs up to 20 MiB are shown to you as files, including files named in `Attached file <path>` references.\n- Call this tool in parallel when you know there are multiple files you want to read.\n- Avoid tiny repeated slices (30 line chunks). If you need more context, read a larger window.",
+        │                   "name": "read_file",
+        │                   "parameters": {
+        │                     "additionalProperties": false,
+        │                     "properties": {
+        │                       "filePath": {
+        │                         "description": "The path to the file to read: absolute, relative to the workspace root, or beginning with $HOME/.",
+        │                         "type": "string"
+        │                       },
+        │                       "limit": {
+        │                         "description": "Maximum number of lines to return. Defaults to 2000.",
+        │                         "minimum": 1,
+        │                         "type": "integer"
+        │                       },
+        │                       "offset": {
+        │                         "description": "1-based line number to start from. Defaults to 1.",
+        │                         "minimum": 1,
+        │                         "type": "integer"
+        │                       }
+        │                     },
+        │                     "required": [
+        │                       "filePath"
+        │                     ],
+        │                     "type": "object"
+        │                   },
+        │                   "strict": false
+        │                 },
+        │                 "type": "function"
+        │               },
+        │               {
+        │                 "function": {
+        │                   "description": "Writes a file to the local filesystem.\n\nUsage:\n- This tool will overwrite the existing file if there is one at the provided path.\n- If this is an existing file, you MUST use the read_file tool first to read the file's contents. This tool will fail if you did not read the file first.\n- ALWAYS prefer editing existing files in the codebase. NEVER write new files unless explicitly required.\n- NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.\n- Only use emojis if the user explicitly requests it. Avoid writing emojis to files unless asked.",
+        │                   "name": "write_file",
+        │                   "parameters": {
+        │                     "additionalProperties": false,
+        │                     "properties": {
+        │                       "content": {
+        │                         "description": "Complete replacement file contents.",
+        │                         "type": "string"
+        │                       },
+        │                       "filePath": {
+        │                         "description": "The path to the file to write: absolute, relative to the workspace root, or beginning with $HOME/.",
+        │                         "type": "string"
+        │                       }
+        │                     },
+        │                     "required": [
+        │                       "content",
+        │                       "filePath"
+        │                     ],
+        │                     "type": "object"
+        │                   },
+        │                   "strict": false
+        │                 },
+        │                 "type": "function"
+        │               },
+        │               {
+        │                 "function": {
+        │                   "description": "Fetch a webpage and return its content in the requested format. Use this to retrieve and analyze content from URLs.\n\nUsage notes:\n- The URL must be a fully-formed valid URL starting with https://\n- HTML responses are automatically converted to markdown or plain text based on the requested format\n- Format options: \"markdown\" (default), \"text\", or \"html\"\n- Default timeout is 30 seconds (max 120 seconds)\n- Maximum response size is 5 MB; content is further capped at the shared tool-output budget (50 KB / 2000 lines)\n- This tool is read-only and does not modify any files",
+        │                   "name": "web_fetch",
+        │                   "parameters": {
+        │                     "additionalProperties": false,
+        │                     "properties": {
+        │                       "format": {
+        │                         "description": "The format to return the content in (text, markdown, or html). HTML responses are automatically converted to the requested format. Defaults to \"markdown\".",
+        │                         "enum": [
+        │                           "markdown",
+        │                           "text",
+        │                           "html"
+        │                         ],
+        │                         "type": "string"
+        │                       },
+        │                       "timeout": {
+        │                         "description": "Optional timeout in seconds, greater than 0. Defaults to 30, max 120.",
+        │                         "type": "number"
+        │                       },
+        │                       "url": {
+        │                         "description": "The fully-formed URL to fetch content from. Must start with https://.",
+        │                         "type": "string"
+        │                       }
+        │                     },
+        │                     "required": [
+        │                       "url"
+        │                     ],
+        │                     "type": "object"
+        │                   },
+        │                   "strict": false
+        │                 },
+        │                 "type": "function"
+        │               },
+        │               {
+        │                 "function": {
+        │                   "description": "Searches the Eve instrumentation documentation fixture.",
+        │                   "name": "search",
+        │                   "parameters": {
+        │                     "additionalProperties": false,
+        │                     "properties": {
+        │                       "query": {
+        │                         "type": "string"
+        │                       }
+        │                     },
+        │                     "required": [
+        │                       "query"
+        │                     ],
+        │                     "type": "object"
+        │                   },
+        │                   "strict": false
+        │                 },
+        │                 "type": "function"
+        │               }
+        │             ]
         │           }
         │           metrics: {
         │             "completion_tokens": 157,
@@ -1841,7 +4360,252 @@ span_tree:
         │     "model": "qwen/qwen3-30b-a3b",
         │     "provider": "openrouter",
         │     "scenario": "eve-instrumentation",
-        │     "testRunId": "<run:1>"
+        │     "testRunId": "<run:1>",
+        │     "tools": [
+        │       {
+        │         "function": {
+        │           "description": "Execute a shell command in the shared workspace environment. A command still running after 30 seconds keeps running in the background and returns status \"running\" with its output so far and how to check on or stop it.",
+        │           "name": "bash",
+        │           "parameters": {
+        │             "additionalProperties": false,
+        │             "properties": {
+        │               "command": {
+        │                 "description": "The shell command to execute.",
+        │                 "type": "string"
+        │               }
+        │             },
+        │             "required": [
+        │               "command"
+        │             ],
+        │             "type": "object"
+        │           },
+        │           "strict": false
+        │         },
+        │         "type": "function"
+        │       },
+        │       {
+        │         "function": {
+        │           "description": "Read a file from the local filesystem. If the path does not exist, an error is returned.\n\nUsage:\n- The filePath parameter is an absolute path, a path relative to the workspace root (where `bash` commands start), or a path beginning with $HOME/.\n- By default, this tool returns up to 2000 lines from the start of the file.\n- The offset parameter is the line number to start from (1-indexed).\n- To read later sections, call this tool again with a larger offset.\n- Contents are returned with each line prefixed by its line number as `<line>: <content>`. For example, if a file has contents \"foo\\n\", you will receive \"1: foo\\n\".\n- Any line longer than 2000 characters is truncated.\n- PNG, JPEG, GIF, and WebP images up to 3 MiB and PDFs up to 20 MiB are shown to you as files, including files named in `Attached file <path>` references.\n- Call this tool in parallel when you know there are multiple files you want to read.\n- Avoid tiny repeated slices (30 line chunks). If you need more context, read a larger window.",
+        │           "name": "read_file",
+        │           "parameters": {
+        │             "additionalProperties": false,
+        │             "properties": {
+        │               "filePath": {
+        │                 "description": "The path to the file to read: absolute, relative to the workspace root, or beginning with $HOME/.",
+        │                 "type": "string"
+        │               },
+        │               "limit": {
+        │                 "description": "Maximum number of lines to return. Defaults to 2000.",
+        │                 "minimum": 1,
+        │                 "type": "integer"
+        │               },
+        │               "offset": {
+        │                 "description": "1-based line number to start from. Defaults to 1.",
+        │                 "minimum": 1,
+        │                 "type": "integer"
+        │               }
+        │             },
+        │             "required": [
+        │               "filePath"
+        │             ],
+        │             "type": "object"
+        │           },
+        │           "strict": false
+        │         },
+        │         "type": "function"
+        │       },
+        │       {
+        │         "function": {
+        │           "description": "Writes a file to the local filesystem.\n\nUsage:\n- This tool will overwrite the existing file if there is one at the provided path.\n- If this is an existing file, you MUST use the read_file tool first to read the file's contents. This tool will fail if you did not read the file first.\n- ALWAYS prefer editing existing files in the codebase. NEVER write new files unless explicitly required.\n- NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.\n- Only use emojis if the user explicitly requests it. Avoid writing emojis to files unless asked.",
+        │           "name": "write_file",
+        │           "parameters": {
+        │             "additionalProperties": false,
+        │             "properties": {
+        │               "content": {
+        │                 "description": "Complete replacement file contents.",
+        │                 "type": "string"
+        │               },
+        │               "filePath": {
+        │                 "description": "The path to the file to write: absolute, relative to the workspace root, or beginning with $HOME/.",
+        │                 "type": "string"
+        │               }
+        │             },
+        │             "required": [
+        │               "content",
+        │               "filePath"
+        │             ],
+        │             "type": "object"
+        │           },
+        │           "strict": false
+        │         },
+        │         "type": "function"
+        │       },
+        │       {
+        │         "function": {
+        │           "description": "Fetch a webpage and return its content in the requested format. Use this to retrieve and analyze content from URLs.\n\nUsage notes:\n- The URL must be a fully-formed valid URL starting with https://\n- HTML responses are automatically converted to markdown or plain text based on the requested format\n- Format options: \"markdown\" (default), \"text\", or \"html\"\n- Default timeout is 30 seconds (max 120 seconds)\n- Maximum response size is 5 MB; content is further capped at the shared tool-output budget (50 KB / 2000 lines)\n- This tool is read-only and does not modify any files",
+        │           "name": "web_fetch",
+        │           "parameters": {
+        │             "additionalProperties": false,
+        │             "properties": {
+        │               "format": {
+        │                 "description": "The format to return the content in (text, markdown, or html). HTML responses are automatically converted to the requested format. Defaults to \"markdown\".",
+        │                 "enum": [
+        │                   "markdown",
+        │                   "text",
+        │                   "html"
+        │                 ],
+        │                 "type": "string"
+        │               },
+        │               "timeout": {
+        │                 "description": "Optional timeout in seconds, greater than 0. Defaults to 30, max 120.",
+        │                 "type": "number"
+        │               },
+        │               "url": {
+        │                 "description": "The fully-formed URL to fetch content from. Must start with https://.",
+        │                 "type": "string"
+        │               }
+        │             },
+        │             "required": [
+        │               "url"
+        │             ],
+        │             "type": "object"
+        │           },
+        │           "strict": false
+        │         },
+        │         "type": "function"
+        │       },
+        │       {
+        │         "function": {
+        │           "description": "Delegate a focused subtask to a copy of yourself. Use it to isolate complex work or split a large task into independent pieces. Each call starts a task, so several agents can work at once: start every independent one before you wait. A new child has fresh history and state but reuses your tools and sandbox, so give parallel writers non-overlapping scopes. In message, state the goal, what to return, and whether it may change files. It does not see this conversation, so put everything it needs in message. To correct or continue an agent task, call this tool again with its taskId; without taskId, each call starts a new agent.",
+        │           "name": "agent",
+        │           "parameters": {
+        │             "additionalProperties": false,
+        │             "properties": {
+        │               "message": {
+        │                 "description": "The message to send to the agent, with everything it needs to do the work.",
+        │                 "type": "string"
+        │               },
+        │               "taskId": {
+        │                 "description": "The id of a task this tool started, copied from its \"Started task\" receipt or the [Tasks] note, to send it this input. Omit it to start a new task.",
+        │                 "type": "string"
+        │               }
+        │             },
+        │             "required": [
+        │               "message"
+        │             ],
+        │             "type": "object"
+        │           },
+        │           "strict": false
+        │         },
+        │         "type": "function"
+        │       },
+        │       {
+        │         "function": {
+        │           "description": "Reads a deterministic Eve documentation page fixture.",
+        │           "name": "read",
+        │           "parameters": {
+        │             "additionalProperties": false,
+        │             "properties": {
+        │               "url": {
+        │                 "type": "string"
+        │               }
+        │             },
+        │             "required": [
+        │               "url"
+        │             ],
+        │             "type": "object"
+        │           },
+        │           "strict": false
+        │         },
+        │         "type": "function"
+        │       },
+        │       {
+        │         "function": {
+        │           "description": "Searches the Eve instrumentation documentation fixture.",
+        │           "name": "search",
+        │           "parameters": {
+        │             "additionalProperties": false,
+        │             "properties": {
+        │               "query": {
+        │                 "type": "string"
+        │               }
+        │             },
+        │             "required": [
+        │               "query"
+        │             ],
+        │             "type": "object"
+        │           },
+        │           "strict": false
+        │         },
+        │         "type": "function"
+        │       },
+        │       {
+        │         "function": {
+        │           "description": "Research the Eve instrumentation documentation before the parent reads it. It does not see this conversation, so put everything it needs in message. To correct or continue an agent task, call this tool again with its taskId; without taskId, each call starts a new agent.",
+        │           "name": "researcher",
+        │           "parameters": {
+        │             "additionalProperties": false,
+        │             "properties": {
+        │               "message": {
+        │                 "description": "The message to send to the agent, with everything it needs to do the work.",
+        │                 "type": "string"
+        │               },
+        │               "taskId": {
+        │                 "description": "The id of a task this tool started, copied from its \"Started task\" receipt or the [Tasks] note, to send it this input. Omit it to start a new task.",
+        │                 "type": "string"
+        │               }
+        │             },
+        │             "required": [
+        │               "message"
+        │             ],
+        │             "type": "object"
+        │           },
+        │           "strict": false
+        │         },
+        │         "type": "function"
+        │       },
+        │       {
+        │         "function": {
+        │           "description": "Call eve__task_wait sparingly, only when you deliberately want to withhold a message from the user while waiting for a task result. Tasks keep running and their results reach you without calling eve__task_wait. If the user should hear from you now, reply instead. Wait silently until any of your tasks has a result, a new message arrives, or timeoutSeconds pass. It returns after the first result, which follows in a <task_result> message; wait again only if you still want to withhold a reply until another result arrives. Waiting never stops a task.",
+        │           "name": "eve__task_wait",
+        │           "parameters": {
+        │             "additionalProperties": false,
+        │             "properties": {
+        │               "timeoutSeconds": {
+        │                 "description": "Optional. Seconds to wait before returning without a result. Omit it to wait for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
+        │                 "minimum": 1,
+        │                 "type": "integer"
+        │               }
+        │             },
+        │             "type": "object"
+        │           },
+        │           "strict": false
+        │         },
+        │         "type": "function"
+        │       },
+        │       {
+        │         "function": {
+        │           "description": "Stop a task's current work. That work never reports back; if it already had a result, that result is still delivered. Cancelling an agent or one-shot task ends it; start a new task to delegate again. Other tasks that accept more input stay available: call their tool with the taskId to give them new work.",
+        │           "name": "eve__task_cancel",
+        │           "parameters": {
+        │             "additionalProperties": false,
+        │             "properties": {
+        │               "taskId": {
+        │                 "description": "The id of the task to stop, copied from its \"Started task\" receipt or the [Tasks] note.",
+        │                 "minLength": 1,
+        │                 "type": "string"
+        │               }
+        │             },
+        │             "required": [
+        │               "taskId"
+        │             ],
+        │             "type": "object"
+        │           },
+        │           "strict": false
+        │         },
+        │         "type": "function"
+        │       }
+        │     ]
         │   }
         │   metrics: {
         │     "completion_tokens": 256,
@@ -1993,7 +4757,252 @@ span_tree:
               "model": "qwen/qwen3-30b-a3b",
               "provider": "openrouter",
               "scenario": "eve-instrumentation",
-              "testRunId": "<run:1>"
+              "testRunId": "<run:1>",
+              "tools": [
+                {
+                  "function": {
+                    "description": "Execute a shell command in the shared workspace environment. A command still running after 30 seconds keeps running in the background and returns status \"running\" with its output so far and how to check on or stop it.",
+                    "name": "bash",
+                    "parameters": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "command": {
+                          "description": "The shell command to execute.",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "command"
+                      ],
+                      "type": "object"
+                    },
+                    "strict": false
+                  },
+                  "type": "function"
+                },
+                {
+                  "function": {
+                    "description": "Read a file from the local filesystem. If the path does not exist, an error is returned.\n\nUsage:\n- The filePath parameter is an absolute path, a path relative to the workspace root (where `bash` commands start), or a path beginning with $HOME/.\n- By default, this tool returns up to 2000 lines from the start of the file.\n- The offset parameter is the line number to start from (1-indexed).\n- To read later sections, call this tool again with a larger offset.\n- Contents are returned with each line prefixed by its line number as `<line>: <content>`. For example, if a file has contents \"foo\\n\", you will receive \"1: foo\\n\".\n- Any line longer than 2000 characters is truncated.\n- PNG, JPEG, GIF, and WebP images up to 3 MiB and PDFs up to 20 MiB are shown to you as files, including files named in `Attached file <path>` references.\n- Call this tool in parallel when you know there are multiple files you want to read.\n- Avoid tiny repeated slices (30 line chunks). If you need more context, read a larger window.",
+                    "name": "read_file",
+                    "parameters": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "filePath": {
+                          "description": "The path to the file to read: absolute, relative to the workspace root, or beginning with $HOME/.",
+                          "type": "string"
+                        },
+                        "limit": {
+                          "description": "Maximum number of lines to return. Defaults to 2000.",
+                          "minimum": 1,
+                          "type": "integer"
+                        },
+                        "offset": {
+                          "description": "1-based line number to start from. Defaults to 1.",
+                          "minimum": 1,
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "filePath"
+                      ],
+                      "type": "object"
+                    },
+                    "strict": false
+                  },
+                  "type": "function"
+                },
+                {
+                  "function": {
+                    "description": "Writes a file to the local filesystem.\n\nUsage:\n- This tool will overwrite the existing file if there is one at the provided path.\n- If this is an existing file, you MUST use the read_file tool first to read the file's contents. This tool will fail if you did not read the file first.\n- ALWAYS prefer editing existing files in the codebase. NEVER write new files unless explicitly required.\n- NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.\n- Only use emojis if the user explicitly requests it. Avoid writing emojis to files unless asked.",
+                    "name": "write_file",
+                    "parameters": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "content": {
+                          "description": "Complete replacement file contents.",
+                          "type": "string"
+                        },
+                        "filePath": {
+                          "description": "The path to the file to write: absolute, relative to the workspace root, or beginning with $HOME/.",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "content",
+                        "filePath"
+                      ],
+                      "type": "object"
+                    },
+                    "strict": false
+                  },
+                  "type": "function"
+                },
+                {
+                  "function": {
+                    "description": "Fetch a webpage and return its content in the requested format. Use this to retrieve and analyze content from URLs.\n\nUsage notes:\n- The URL must be a fully-formed valid URL starting with https://\n- HTML responses are automatically converted to markdown or plain text based on the requested format\n- Format options: \"markdown\" (default), \"text\", or \"html\"\n- Default timeout is 30 seconds (max 120 seconds)\n- Maximum response size is 5 MB; content is further capped at the shared tool-output budget (50 KB / 2000 lines)\n- This tool is read-only and does not modify any files",
+                    "name": "web_fetch",
+                    "parameters": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "format": {
+                          "description": "The format to return the content in (text, markdown, or html). HTML responses are automatically converted to the requested format. Defaults to \"markdown\".",
+                          "enum": [
+                            "markdown",
+                            "text",
+                            "html"
+                          ],
+                          "type": "string"
+                        },
+                        "timeout": {
+                          "description": "Optional timeout in seconds, greater than 0. Defaults to 30, max 120.",
+                          "type": "number"
+                        },
+                        "url": {
+                          "description": "The fully-formed URL to fetch content from. Must start with https://.",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "url"
+                      ],
+                      "type": "object"
+                    },
+                    "strict": false
+                  },
+                  "type": "function"
+                },
+                {
+                  "function": {
+                    "description": "Delegate a focused subtask to a copy of yourself. Use it to isolate complex work or split a large task into independent pieces. Each call starts a task, so several agents can work at once: start every independent one before you wait. A new child has fresh history and state but reuses your tools and sandbox, so give parallel writers non-overlapping scopes. In message, state the goal, what to return, and whether it may change files. It does not see this conversation, so put everything it needs in message. To correct or continue an agent task, call this tool again with its taskId; without taskId, each call starts a new agent.",
+                    "name": "agent",
+                    "parameters": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "message": {
+                          "description": "The message to send to the agent, with everything it needs to do the work.",
+                          "type": "string"
+                        },
+                        "taskId": {
+                          "description": "The id of a task this tool started, copied from its \"Started task\" receipt or the [Tasks] note, to send it this input. Omit it to start a new task.",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "type": "object"
+                    },
+                    "strict": false
+                  },
+                  "type": "function"
+                },
+                {
+                  "function": {
+                    "description": "Reads a deterministic Eve documentation page fixture.",
+                    "name": "read",
+                    "parameters": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "url": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "url"
+                      ],
+                      "type": "object"
+                    },
+                    "strict": false
+                  },
+                  "type": "function"
+                },
+                {
+                  "function": {
+                    "description": "Searches the Eve instrumentation documentation fixture.",
+                    "name": "search",
+                    "parameters": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "query": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "query"
+                      ],
+                      "type": "object"
+                    },
+                    "strict": false
+                  },
+                  "type": "function"
+                },
+                {
+                  "function": {
+                    "description": "Research the Eve instrumentation documentation before the parent reads it. It does not see this conversation, so put everything it needs in message. To correct or continue an agent task, call this tool again with its taskId; without taskId, each call starts a new agent.",
+                    "name": "researcher",
+                    "parameters": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "message": {
+                          "description": "The message to send to the agent, with everything it needs to do the work.",
+                          "type": "string"
+                        },
+                        "taskId": {
+                          "description": "The id of a task this tool started, copied from its \"Started task\" receipt or the [Tasks] note, to send it this input. Omit it to start a new task.",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "type": "object"
+                    },
+                    "strict": false
+                  },
+                  "type": "function"
+                },
+                {
+                  "function": {
+                    "description": "Call eve__task_wait sparingly, only when you deliberately want to withhold a message from the user while waiting for a task result. Tasks keep running and their results reach you without calling eve__task_wait. If the user should hear from you now, reply instead. Wait silently until any of your tasks has a result, a new message arrives, or timeoutSeconds pass. It returns after the first result, which follows in a <task_result> message; wait again only if you still want to withhold a reply until another result arrives. Waiting never stops a task.",
+                    "name": "eve__task_wait",
+                    "parameters": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "timeoutSeconds": {
+                          "description": "Optional. Seconds to wait before returning without a result. Omit it to wait for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
+                          "minimum": 1,
+                          "type": "integer"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "strict": false
+                  },
+                  "type": "function"
+                },
+                {
+                  "function": {
+                    "description": "Stop a task's current work. That work never reports back; if it already had a result, that result is still delivered. Cancelling an agent or one-shot task ends it; start a new task to delegate again. Other tasks that accept more input stay available: call their tool with the taskId to give them new work.",
+                    "name": "eve__task_cancel",
+                    "parameters": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "taskId": {
+                          "description": "The id of the task to stop, copied from its \"Started task\" receipt or the [Tasks] note.",
+                          "minLength": 1,
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "taskId"
+                      ],
+                      "type": "object"
+                    },
+                    "strict": false
+                  },
+                  "type": "function"
+                }
+              ]
             }
             metrics: {
               "completion_tokens": 232,

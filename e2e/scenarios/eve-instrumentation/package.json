@@ -8,6 +8,11 @@
         "eve-v0-latest": {
           "package": "eve",
           "range": ">=0.72 <0.92"
+        },
+        "eve-v1-latest": {
+          "package": "eve",
+          "range": ">=1.0.0-rc.6 <2.0.0-0",
+          "allowPrerelease": true
         }
       }
     }
@@ -22,6 +27,8 @@
     "eve-v0-70": "npm:eve@0.70.0",
     "eve-v0-72": "npm:eve@0.72.0",
     "eve-v0-latest": "npm:eve@0.91.0",
+    "eve-v1": "npm:eve@1.0.0-rc.6",
+    "eve-v1-latest": "npm:eve@1.0.0-rc.6",
     "zod": "4.3.6"
   },
   "pnpm": {
