@@ -18,6 +18,7 @@ const openRouterScenarios = await Promise.all(
       autoEntry: "scenario.openrouter-v0911.mjs",
       dependencyName: "openrouter-sdk-v0",
       snapshotName: "openrouter-v0",
+      supportsCallModel: true,
       supportsRerank: false,
       wrapperEntry: "scenario.openrouter-v0911.ts",
     },
@@ -25,6 +26,7 @@ const openRouterScenarios = await Promise.all(
       autoEntry: "scenario.mjs",
       dependencyName: "openrouter-sdk-v0-latest",
       snapshotName: "openrouter-v0-latest",
+      supportsCallModel: true,
       supportsRerank: true,
       wrapperEntry: "scenario.ts",
     },
@@ -32,6 +34,7 @@ const openRouterScenarios = await Promise.all(
       autoEntry: "scenario.mjs",
       dependencyName: "openrouter-sdk-v1",
       snapshotName: "openrouter-v1",
+      supportsCallModel: true,
       supportsRerank: true,
       wrapperEntry: "scenario.ts",
     },
@@ -39,6 +42,7 @@ const openRouterScenarios = await Promise.all(
       autoEntry: "scenario.mjs",
       dependencyName: "openrouter-sdk-v1-latest",
       snapshotName: "openrouter-v1-latest",
+      supportsCallModel: false,
       supportsRerank: true,
       wrapperEntry: "scenario.ts",
     },
@@ -59,7 +63,12 @@ describe.concurrent("variants", () => {
         runScenario: async ({ runScenarioDir }) => {
           await runScenarioDir({
             entry: scenario.wrapperEntry,
-            env: { OPENROUTER_PACKAGE_NAME: scenario.dependencyName },
+            env: {
+              OPENROUTER_PACKAGE_NAME: scenario.dependencyName,
+              OPENROUTER_SUPPORTS_CALL_MODEL: String(
+                scenario.supportsCallModel,
+              ),
+            },
             runContext: {
               variantKey: scenario.snapshotName,
               originalScenarioDir,
@@ -69,6 +78,7 @@ describe.concurrent("variants", () => {
           });
         },
         snapshotName: scenario.snapshotName,
+        supportsCallModel: scenario.supportsCallModel,
         supportsRerank: scenario.supportsRerank,
         testFileUrl: import.meta.url,
         timeoutMs: TIMEOUT_MS,
@@ -79,7 +89,12 @@ describe.concurrent("variants", () => {
         runScenario: async ({ runNodeScenarioDir }) => {
           await runNodeScenarioDir({
             entry: scenario.autoEntry,
-            env: { OPENROUTER_PACKAGE_NAME: scenario.dependencyName },
+            env: {
+              OPENROUTER_PACKAGE_NAME: scenario.dependencyName,
+              OPENROUTER_SUPPORTS_CALL_MODEL: String(
+                scenario.supportsCallModel,
+              ),
+            },
             nodeArgs: ["--import", "braintrust/hook.mjs"],
             runContext: {
               variantKey: scenario.snapshotName,
@@ -90,6 +105,7 @@ describe.concurrent("variants", () => {
           });
         },
         snapshotName: scenario.snapshotName,
+        supportsCallModel: scenario.supportsCallModel,
         supportsRerank: scenario.supportsRerank,
         testFileUrl: import.meta.url,
         timeoutMs: TIMEOUT_MS,

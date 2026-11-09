@@ -138,6 +138,7 @@ export function defineOpenRouterTraceAssertions(options: {
   name: string;
   runScenario: RunOpenRouterScenario;
   snapshotName: string;
+  supportsCallModel: boolean;
   supportsRerank: boolean;
   testFileUrl: string;
   timeoutMs: number;
@@ -336,7 +337,7 @@ export function defineOpenRouterTraceAssertions(options: {
       expect(span?.output).toBeDefined();
     });
 
-    test(
+    test.runIf(options.supportsCallModel)(
       "captures trace for client.callModel() and the nested tool call",
       testConfig,
       () => {
