@@ -1,7 +1,10 @@
 import { BasePlugin } from "../core";
 import { runInstrumentation } from "../core/observe-result";
 
-import type { LangChainCallbackManager } from "../../vendor-sdk-types/langchain";
+import type {
+  LangChainCaptureOptions,
+  LangChainCallbackManager,
+} from "../../vendor-sdk-types/langchain";
 import {
   BRAINTRUST_LANGCHAIN_CALLBACK_HANDLER_NAME,
   BraintrustLangChainCallbackHandler,
@@ -15,6 +18,10 @@ type LangChainConfigureChannel =
 
 export class LangChainPlugin extends BasePlugin {
   private injectedManagers = new WeakSet<object>();
+
+  constructor(private readonly captureOptions: LangChainCaptureOptions = {}) {
+    super();
+  }
 
   protected onEnable(): void {
     this.subscribeToConfigure(langChainChannels.configure);
@@ -40,7 +47,7 @@ export class LangChainPlugin extends BasePlugin {
           self: receiver,
         } as ChannelMessage<LangChainConfigureChannel>;
         const prepare = (event: ChannelMessage<LangChainConfigureChannel>) => {
-          injectHandlerIntoArguments(event.arguments);
+          injectHandlerIntoArguments(event.arguments, this.captureOptions);
         };
         const returned = (event: ChannelMessage<LangChainConfigureChannel>) => {
           this.injectHandler(event.result);
@@ -70,7 +77,10 @@ export class LangChainPlugin extends BasePlugin {
     }
 
     try {
-      result.addHandler(new BraintrustLangChainCallbackHandler(), true);
+      result.addHandler(
+        new BraintrustLangChainCallbackHandler(this.captureOptions),
+        true,
+      );
       this.injectedManagers.add(result);
     } catch {
       // Instrumentation must never break LangChain user code.
@@ -102,13 +112,16 @@ function hasBraintrustHandler(manager: LangChainCallbackManager): boolean {
   );
 }
 
-function injectHandlerIntoArguments(args: ArrayLike<unknown>): void {
+function injectHandlerIntoArguments(
+  args: ArrayLike<unknown>,
+  captureOptions: LangChainCaptureOptions,
+): void {
   if (!isWritableArgumentsObject(args)) {
     return;
   }
 
   const inheritedHandlers = Reflect.get(args, "0");
-  const handler = new BraintrustLangChainCallbackHandler();
+  const handler = new BraintrustLangChainCallbackHandler(captureOptions);
 
   if (inheritedHandlers === undefined || inheritedHandlers === null) {
     Reflect.set(args, "0", [handler]);

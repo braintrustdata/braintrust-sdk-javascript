@@ -37,9 +37,13 @@ import { WorkersAIPlugin } from "./plugins/workers-ai-plugin";
 import { TypeSafePlugin } from "./plugins/typesafe-plugin";
 import { CloudflareAIChatPlugin } from "./plugins/cloudflare-ai-chat-plugin";
 import { CloudflareAgentsPlugin } from "./plugins/cloudflare-agents-plugin";
-import type { InstrumentationIntegrationsConfig } from "./config";
+import type {
+  InstrumentationConfig,
+  InstrumentationIntegrationsConfig,
+} from "./config";
 
 export interface BraintrustPluginConfig {
+  langchain?: InstrumentationConfig["langchain"];
   integrations?: InstrumentationIntegrationsConfig;
   streamingAttachmentBufferBytes?: number;
 }
@@ -318,7 +322,7 @@ export class BraintrustPlugin extends BasePlugin {
     }
 
     if (integrations.langchain !== false && integrations.langgraph !== false) {
-      this.langChainPlugin = new LangChainPlugin();
+      this.langChainPlugin = new LangChainPlugin(this.config.langchain);
       this.langChainPlugin.enable();
     }
 

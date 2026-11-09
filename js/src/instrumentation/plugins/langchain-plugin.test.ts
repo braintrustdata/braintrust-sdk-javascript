@@ -1,6 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { langChainChannels } from "./langchain-interceptors";
 import { LangChainPlugin } from "./langchain-plugin";
+import type {
+  LangChainStartSpanArgs,
+  LangChainEndSpanArgs,
+} from "../../vendor-sdk-types/langchain";
+import { BraintrustLangChainCallbackHandler } from "../../wrappers/langchain/callback-handler";
 
 function createManager(handlers: unknown[] = []) {
   return {
@@ -124,3 +129,52 @@ describe("LangChainPlugin", () => {
     plugin.disable();
   });
 });
+
+it.each(["arguments", "result"] as const)(
+  "applies capture options to the handler injected into %s",
+  async (path) => {
+    const plugin = new LangChainPlugin({
+      captureChainInputs: false,
+      captureChainOutputs: false,
+      captureModelInputs: false,
+      captureModelOutputs: false,
+      captureModelTokenUsage: false,
+    });
+    plugin.enable();
+    let handler: BraintrustLangChainCallbackHandler;
+    try {
+      if (path === "arguments") {
+        handler = traceConfigureArguments([])[0][0];
+      } else {
+        const manager = createManager();
+        traceConfigureResult(manager);
+        handler = manager.handlers[0] as BraintrustLangChainCallbackHandler;
+      }
+    } finally {
+      plugin.disable();
+    }
+    // Observe the boundary before any logger copying happens.
+    const boundary = handler as unknown as {
+      startSpan(args: LangChainStartSpanArgs): void;
+      endSpan(args: LangChainEndSpanArgs): void;
+    };
+    const start = vi.spyOn(boundary, "startSpan").mockImplementation(() => {});
+    const end = vi.spyOn(boundary, "endSpan").mockImplementation(() => {});
+    await handler.handleChainStart({}, { state: "input" }, "chain");
+    await handler.handleChainEnd({ state: "output" }, "chain");
+    await handler.handleChatModelStart({}, [[{ content: "hello" }]], "model");
+    await handler.handleLLMEnd(
+      { llmOutput: { tokenUsage: { totalTokens: 10 } } },
+      "model",
+    );
+    for (const [args] of start.mock.calls) {
+      expect(args).not.toHaveProperty("event.input");
+    }
+    for (const [args] of end.mock.calls) {
+      expect(args).not.toHaveProperty("output");
+      expect(args).not.toHaveProperty("metrics.tokens");
+    }
+    expect(start).toHaveBeenCalledTimes(2);
+    expect(end).toHaveBeenCalledTimes(2);
+  },
+);

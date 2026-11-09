@@ -9,6 +9,10 @@ import {
 const { ChatAnthropic } = await import(
   process.env.LANGCHAIN_ANTHROPIC_PACKAGE_NAME
 );
+const captureOptions =
+  process.env.DISABLE_LANGCHAIN_CAPTURE === "1"
+    ? (await import("./capture-config.mjs")).captureOptions
+    : {};
 const MODEL = "claude-haiku-4-5-20251001";
 
 runMain(async () => {
@@ -20,7 +24,9 @@ runMain(async () => {
       for (const mode of ["manual", "auto"]) {
         // The hook respects an explicit handler and injects one when absent.
         const callbacks =
-          mode === "manual" ? [new BraintrustLangChainCallbackHandler()] : [];
+          mode === "manual"
+            ? [new BraintrustLangChainCallbackHandler(captureOptions)]
+            : [];
         for (const operation of ["invoke", "streaming-invoke", "stream"]) {
           await runOperation(
             `anthropic-${mode}-${operation}`,
