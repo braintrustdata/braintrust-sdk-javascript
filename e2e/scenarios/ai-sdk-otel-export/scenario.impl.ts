@@ -1,5 +1,6 @@
+import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { SimpleSpanProcessor } from "@opentelemetry/sdk-trace-base";
-import { BraintrustExporter } from "@braintrust/otel";
+import { BraintrustExporter, braintrustOtlpConfig } from "@braintrust/otel";
 import {
   createTracerProvider,
   getTestRunId,
@@ -32,9 +33,13 @@ export async function runAISDKOtelExport(options: AISDKOtelScenarioOptions) {
   const projectName = scopedName("e2e-ai-sdk-otel-export", testRunId);
 
   const exporter = new BraintrustExporter({
-    apiKey: process.env.BRAINTRUST_API_KEY!,
-    apiUrl: process.env.BRAINTRUST_API_URL!,
-    parent: `project_name:${projectName}`,
+    exporter: new OTLPTraceExporter(
+      braintrustOtlpConfig({
+        apiKey: process.env.BRAINTRUST_API_KEY!,
+        apiUrl: process.env.BRAINTRUST_API_URL!,
+        parent: `project_name:${projectName}`,
+      }),
+    ),
     filterAISpans: true,
   });
 

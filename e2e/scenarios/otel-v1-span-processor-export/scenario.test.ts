@@ -1,5 +1,3 @@
-import { readFile } from "node:fs/promises";
-import { createRequire } from "node:module";
 import { expect, test } from "vite-plus/test";
 import {
   prepareScenarioDir,
@@ -12,22 +10,14 @@ import { extractOtelSpans } from "../../helpers/trace-summary";
 const scenarioDir = await prepareScenarioDir({
   scenarioDir: resolveScenarioDir(import.meta.url),
 });
-const require = createRequire(import.meta.url);
 const otelSdkVersion = await readInstalledPackageVersion(
   scenarioDir,
   "@opentelemetry/sdk-trace-base",
 );
-const braintrustOtelEntry = require.resolve("@braintrust/otel");
-const otlpExporterManifestPath = require.resolve(
-  "@opentelemetry/exporter-trace-otlp-http/package.json",
-  {
-    paths: [braintrustOtelEntry],
-  },
+const otlpExporterVersion = await readInstalledPackageVersion(
+  scenarioDir,
+  "@opentelemetry/exporter-trace-otlp-http",
 );
-const otlpExporterManifest = JSON.parse(
-  await readFile(otlpExporterManifestPath, "utf8"),
-) as { version: string };
-const otlpExporterVersion = otlpExporterManifest.version;
 
 type OtlpTraceRequest = {
   resourceSpans?: Array<{
@@ -45,7 +35,7 @@ type OtlpTraceRequest = {
 
 test(`otel-v1-span-processor-export exports real OTel ${otelSdkVersion} spans through OTLP exporter ${otlpExporterVersion}`, async () => {
   expect(otelSdkVersion).toMatch(/^1\./);
-  expect(Number(otlpExporterVersion.split(".")[1])).toBeGreaterThanOrEqual(200);
+  expect(otlpExporterVersion).toMatch(/^0\.57\./);
 
   await withScenarioHarness(
     async ({ requestsAfter, runScenarioDir, testRunId }) => {

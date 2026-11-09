@@ -83,3 +83,49 @@ describe("registerOtelFlush", () => {
     await state.flushOtel();
   });
 });
+
+test("OTel flush registrations coexist and can be removed independently", async () => {
+  _exportsForTestingOnly.setInitialTestState();
+  const { registerOtelFlush } = await import("../logger/core");
+  const state = _internalGetGlobalState();
+  const calls: string[] = [];
+  const removeFirst = registerOtelFlush(async () => {
+    calls.push("first");
+  });
+  const removeSecond = registerOtelFlush(async () => {
+    calls.push("second");
+  });
+  try {
+    await state.flushOtel();
+    expect(calls).toEqual(["first", "second"]);
+    removeFirst();
+    removeFirst();
+    calls.length = 0;
+    await state.flushOtel();
+    expect(calls).toEqual(["second"]);
+  } finally {
+    removeFirst();
+    removeSecond();
+  }
+});
+
+test("a failed OTel flush still starts every registered callback", async () => {
+  _exportsForTestingOnly.setInitialTestState();
+  const { registerOtelFlush } = await import("../logger/core");
+  const state = _internalGetGlobalState();
+  const error = new Error("flush failed");
+  let secondFlushed = false;
+  const removeFirst = registerOtelFlush(() => {
+    throw error;
+  });
+  const removeSecond = registerOtelFlush(async () => {
+    secondFlushed = true;
+  });
+  try {
+    await expect(state.flushOtel()).rejects.toBe(error);
+    expect(secondFlushed).toBe(true);
+  } finally {
+    removeFirst();
+    removeSecond();
+  }
+});

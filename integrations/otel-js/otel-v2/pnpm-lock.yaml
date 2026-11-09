@@ -32,7 +32,7 @@ importers:
     devDependencies:
       '@braintrust/otel':
         specifier: file:..
-        version: file:..(@opentelemetry/api@1.9.0)(@opentelemetry/core@2.0.0(@opentelemetry/api@1.9.0))(@opentelemetry/exporter-trace-otlp-http@0.200.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.0.0(@opentelemetry/api@1.9.0))(braintrust@file:../../../js(zod@4.4.3))
+        version: file:..(@opentelemetry/api@1.9.0)(braintrust@file:../../../js(zod@4.4.3))
       '@opentelemetry/api':
         specifier: 1.9.0
         version: 1.9.0
@@ -97,11 +97,8 @@ packages:
     resolution: {directory: .., type: directory}
     engines: {node: '>=22.18.0'}
     peerDependencies:
-      '@opentelemetry/api': '>=1.9.0'
-      '@opentelemetry/core': '>=1.9.0'
-      '@opentelemetry/exporter-trace-otlp-http': '>=0.35.0'
-      '@opentelemetry/sdk-trace-base': '>=1.9.0'
-      braintrust: '>=1.0.0-0'
+      '@opentelemetry/api': ^1.9.0
+      braintrust: workspace:^
 
   '@esbuild/aix-ppc64@0.28.1':
     resolution: {integrity: sha512-Svl7tq8k/08+p6CXPpRjQ1fKX+1odH/BQbb48fV6fj3CWHhsoIOoY87w1oHXm0qEpkIK3ZfVgp0hed3XBXzXMQ==}
@@ -1855,12 +1852,9 @@ snapshots:
 
   '@blazediff/core@1.10.0': {}
 
-  '@braintrust/otel@file:..(@opentelemetry/api@1.9.0)(@opentelemetry/core@2.0.0(@opentelemetry/api@1.9.0))(@opentelemetry/exporter-trace-otlp-http@0.200.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.0.0(@opentelemetry/api@1.9.0))(braintrust@file:../../../js(zod@4.4.3))':
+  '@braintrust/otel@file:..(@opentelemetry/api@1.9.0)(braintrust@file:../../../js(zod@4.4.3))':
     dependencies:
       '@opentelemetry/api': 1.9.0
-      '@opentelemetry/core': 2.0.0(@opentelemetry/api@1.9.0)
-      '@opentelemetry/exporter-trace-otlp-http': 0.200.0(@opentelemetry/api@1.9.0)
-      '@opentelemetry/sdk-trace-base': 2.0.0(@opentelemetry/api@1.9.0)
       braintrust: file:../../../js(zod@4.4.3)
 
   '@esbuild/aix-ppc64@0.28.1':

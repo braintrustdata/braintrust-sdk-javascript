@@ -6,7 +6,8 @@
   "scripts": {
     "clean": "rm -rf dist/*",
     "build:deps": "(cd ../../.. && pnpm exec vp run --filter=braintrust --filter=@braintrust/otel build)",
-    "test": "pnpm run build:deps && vp test run"
+    "test": "pnpm run build:deps && pnpm run check:typings && vp test run",
+    "check:typings": "tsc --noEmit"
   },
   "author": "Braintrust Data Inc.",
   "license": "MIT",

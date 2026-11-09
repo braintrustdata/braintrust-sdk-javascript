@@ -24,13 +24,12 @@ import {
   SimpleSpanProcessor,
   type ReadableSpan,
 } from "@opentelemetry/sdk-trace-base";
-import {
-  setupOtelCompat,
-  resetOtelCompat,
-  BraintrustSpanProcessor,
-  BraintrustExporter,
-} from "./";
+import { setupOtelCompat, resetOtelCompat, BraintrustSpanProcessor } from "./";
 import { createTracerProvider } from "../tests/utils";
+import {
+  createTestExporter,
+  createTestProcessor,
+} from "../tests/export-fixtures";
 
 type Data = Record<string, any>;
 const shared = globalThis as Record<string | symbol, any>;
@@ -127,7 +126,7 @@ describe("OpenTelemetry span customizers at the HTTP boundary", () => {
   }
 
   async function send(spans: ReadableSpan[]): Promise<void> {
-    const exporter = new BraintrustExporter({
+    const exporter = createTestExporter({
       apiKey: "test",
       apiUrl,
       parent: "project_name:default",
@@ -436,7 +435,7 @@ describe("OpenTelemetry span customizers at the HTTP boundary", () => {
       return { name: "redacted" };
     });
     shared[customizersKey] = [{ onSpanExport: hook }];
-    const processor = new BraintrustSpanProcessor({
+    const processor = createTestProcessor({
       apiKey: "test",
       apiUrl,
       parent: "project_name:test",
@@ -468,13 +467,13 @@ describe("OpenTelemetry span customizers at the HTTP boundary", () => {
     });
     vi.spyOn(console, "error").mockImplementation(() => {});
     shared[customizersKey] = [{ onSpanExport: hook }];
-    const exporter = new BraintrustExporter({
+    const exporter = createTestExporter({
       apiKey: "test",
       apiUrl,
       parent: "project_name:test",
     });
     const processor = new BraintrustSpanProcessor({
-      _spanProcessor: new SimpleSpanProcessor(exporter),
+      processor: new SimpleSpanProcessor(exporter),
     });
     const spans = await fixture();
     processor.onEnd(spans[0]);
@@ -514,7 +513,7 @@ describe("OpenTelemetry span customizers at the HTTP boundary", () => {
   });
 
   test("compatibility mode customizes native logger/experiment and OTel roots and children", async () => {
-    const processor = new BraintrustSpanProcessor({
+    const processor = createTestProcessor({
       apiKey: "test",
       apiUrl,
       parent: "project_name:test",
@@ -625,10 +624,11 @@ describe("OpenTelemetry span customizers at the HTTP boundary", () => {
         calls++;
         return { name: "bootstrap-redacted" };
       } }] });
-      const { BraintrustExporter, setupOtelCompat } = require("@braintrust/otel");
+      const { BraintrustExporter, braintrustOtlpConfig, setupOtelCompat } = require("@braintrust/otel");
+      const { OTLPTraceExporter } = require("@opentelemetry/exporter-trace-otlp-http");
       setupOtelCompat();
       const exporter = new BraintrustExporter({
-        apiKey: "test", apiUrl: ${JSON.stringify(apiUrl)}, parent: "project_name:bootstrap"
+        exporter: new OTLPTraceExporter(braintrustOtlpConfig({ apiKey: "test", apiUrl: ${JSON.stringify(apiUrl)}, parent: "project_name:bootstrap" }))
       });
       const span = {
         name: "PRIVATE", spanContext: () => ({ traceId: "1".repeat(32), spanId: "2".repeat(16), traceFlags: 1 }),
@@ -670,7 +670,7 @@ describe("OpenTelemetry span customizers at the HTTP boundary", () => {
         return typeof value === "function" ? value.bind(target) : value;
       },
     });
-    const processor = new BraintrustSpanProcessor({
+    const processor = createTestProcessor({
       apiKey: "test",
       apiUrl,
       parent: "project_name:test",
@@ -697,14 +697,14 @@ describe("OpenTelemetry span customizers at the HTTP boundary", () => {
       return data;
     });
     shared[customizersKey] = [{ onSpanExport: hook }];
-    const exporter = new BraintrustExporter({
+    const exporter = createTestExporter({
       apiKey: "test",
       apiUrl,
       parent: "project_name:test",
       filterAISpans: true,
     });
     const processor = new BraintrustSpanProcessor({
-      _spanProcessor: new SimpleSpanProcessor(exporter),
+      processor: new SimpleSpanProcessor(exporter),
     });
     const provider = createTracerProvider(BasicTracerProvider, [processor]);
     try {
@@ -801,7 +801,7 @@ describe("OpenTelemetry span customizers at the HTTP boundary", () => {
   test("does not customize unsampled recorded spans", async () => {
     const hook = vi.fn((data: Data) => data);
     shared[customizersKey] = [{ onSpanExport: hook }];
-    const processor = new BraintrustSpanProcessor({
+    const processor = createTestProcessor({
       apiKey: "test",
       apiUrl,
       parent: "project_name:test",
@@ -916,7 +916,7 @@ describe("OpenTelemetry span customizers at the HTTP boundary", () => {
   test("customFilter sees span origin context before customization", async () => {
     const contexts: unknown[] = [];
     shared[customizersKey] = [{ onSpanExport: (data: Data) => data }];
-    const processor = new BraintrustSpanProcessor({
+    const processor = createTestProcessor({
       apiKey: "test",
       apiUrl,
       parent: "project_name:test",

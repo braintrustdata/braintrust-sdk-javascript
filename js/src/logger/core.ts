@@ -150,6 +150,9 @@ export const InlineAttachmentReferenceSchema: z.ZodType<{
 export interface ContextParentSpanIds {
   rootSpanId: string;
   spanParents: string[];
+  /** W3C state inherited from an external tracing context. */
+  traceFlags?: number;
+  traceState?: string;
 }
 
 export class LoginInvalidOrgError extends Error {
@@ -751,7 +754,7 @@ export class BraintrustState {
   >({ max: 1000 });
   private _idGenerator: IDGenerator | null = null;
   private _contextManager: ContextManager | null = null;
-  private _otelFlushCallback: (() => Promise<void>) | null = null;
+  private readonly _otelFlushCallbacks = new Set<() => Promise<void>>();
   public spanOriginEnvironment: SpanOriginEnvironment | undefined;
   private traceContextSigningSecret: string | undefined;
   private loaderLoginCache = new WeakMap<
@@ -994,10 +997,13 @@ export class BraintrustState {
 
   /**
    * Register an OTEL flush callback. This is called by @braintrust/otel
-   * when it initializes a BraintrustSpanProcessor/Exporter.
+   * when it initializes a BraintrustSpanProcessor. Returns an unregister callback.
    */
-  public registerOtelFlush(callback: () => Promise<void>): void {
-    this._otelFlushCallback = callback;
+  public registerOtelFlush(callback: () => Promise<void>): () => void {
+    this._otelFlushCallbacks.add(callback);
+    return () => {
+      this._otelFlushCallbacks.delete(callback);
+    };
   }
 
   /**
@@ -1005,9 +1011,11 @@ export class BraintrustState {
    * Called during ensureSpansFlushed to ensure OTEL spans are visible in BTQL.
    */
   public async flushOtel(): Promise<void> {
-    if (this._otelFlushCallback) {
-      await this._otelFlushCallback();
-    }
+    await Promise.all(
+      Array.from(this._otelFlushCallbacks, (callback) =>
+        Promise.resolve().then(callback),
+      ),
+    );
   }
 
   public copyLoginInfo(other: BraintrustState): void {
@@ -1411,18 +1419,20 @@ export function _internalGetGlobalState(): BraintrustState {
 
 /**
  * Register a callback to flush OTEL spans. This is called by @braintrust/otel
- * when it initializes a BraintrustSpanProcessor/Exporter.
+ * when it initializes a BraintrustSpanProcessor. Returns an unregister callback.
  *
  * When ensureSpansFlushed is called (e.g., before a BTQL query in scorers),
- * this callback will be invoked to ensure OTEL spans are flushed to the server.
+ * all registered callbacks run to flush OTEL spans to the server.
+ * Returns an idempotent callback that removes this registration.
  *
  * Also disables the span cache, since OTEL spans aren't in the local cache
  * and we need BTQL to see the complete span tree (both native + OTEL spans).
  */
-export function registerOtelFlush(callback: () => Promise<void>): void {
-  _internalGetGlobalState().registerOtelFlush(callback);
+export function registerOtelFlush(callback: () => Promise<void>): () => void {
+  const unregister = _internalGetGlobalState().registerOtelFlush(callback);
   // Disable span cache since OTEL spans aren't in the local cache
   _internalGetGlobalState().spanCache.disable();
+  return unregister;
 }
 
 export class FailedHTTPResponse extends Error {
@@ -6381,6 +6391,7 @@ interface ResolvedSpanIds {
   spanId: string;
   rootSpanId: string;
   spanParents: string[] | undefined;
+  propagatedState?: PropagatedState;
 }
 
 /**
@@ -6425,6 +6436,16 @@ function _resolveSpanIds(
         spanId: resolvedSpanId,
         rootSpanId: parentInfo.rootSpanId,
         spanParents: parentInfo.spanParents,
+        propagatedState:
+          parentInfo.traceFlags !== undefined ||
+          parentInfo.traceState !== undefined
+            ? {
+                traceFlags: parentInfo.traceFlags
+                  ?.toString(16)
+                  .padStart(2, "0"),
+                tracestate: parentInfo.traceState,
+              }
+            : undefined,
       };
     }
   }
@@ -6505,7 +6526,6 @@ export class SpanImpl implements Span {
       configurable: true,
       writable: true,
     });
-    this._propagatedState = args.propagatedState;
     const instrumentationName =
       getSpanInstrumentationName(args) ??
       INSTRUMENTATION_NAMES.BRAINTRUST_JS_LOGGER;
@@ -6573,6 +6593,7 @@ export class SpanImpl implements Span {
       this._state.contextManager,
     );
 
+    this._propagatedState = args.propagatedState ?? resolvedIds.propagatedState;
     this._spanId = resolvedIds.spanId;
     this._rootSpanId = resolvedIds.rootSpanId;
     this._spanParents = resolvedIds.spanParents;

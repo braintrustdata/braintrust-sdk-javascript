@@ -162,7 +162,7 @@ instrumentation context.
 ### OpenTelemetry spans
 
 The same registration applies to spans exported through `@braintrust/otel`'s
-`BraintrustSpanProcessor` or `BraintrustExporter`, including compatibility mode
+`BraintrustExporter`, including pipelines composed with `BraintrustSpanProcessor` and compatibility mode
 (`BRAINTRUST_OTEL_COMPAT` or `setupOtelCompat()`). Compatibility mode is not
 required to customize OTel exports. Native spans still use the native record
 shape above; OTel hooks receive an isolated plain snapshot, not a live
