@@ -36,7 +36,7 @@ interface OtelCompatFields {
 }
 
 /** Normalize fields renamed between OTel 1.x and 2.x so either serializer works. */
-export function otelCompatFields(span: ReadableSpan): OtelCompatFields {
+function otelCompatFields(span: ReadableSpan): OtelCompatFields {
   const compatible = span as ReadableSpan & OtelCompatFields;
   return {
     instrumentationScope:
