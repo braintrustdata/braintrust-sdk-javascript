@@ -35,7 +35,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@deepseek-ai/schemastery": "^3.18.1",
+    "@deepseek-ai/schemastery": "^3.19.0",
     "braintrust": "workspace:^",
     "zod": "4.6.7"
   },
