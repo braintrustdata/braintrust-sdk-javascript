@@ -53,6 +53,118 @@ describe("SpanCache (disk-based)", () => {
       expect(spans).toContainEqual(span2);
     });
 
+    test("writes each queued record once during a synchronous burst", async () => {
+      const appendFile = vi.fn(async (_lines: string, _encoding: string) => {});
+      const close = vi.fn(async () => {});
+      const openFile = vi
+        .spyOn(iso, "openFile")
+        .mockResolvedValue({ appendFile, close });
+      try {
+        for (let i = 0; i < 20; i++) {
+          cache.queueWrite("root-123", `span-${i}`, { span_id: `span-${i}` });
+        }
+        await cache.waitForPendingWrites();
+        const records = appendFile.mock.calls.flatMap(([lines]) =>
+          String(lines)
+            .trim()
+            .split("\n")
+            .map((line) => JSON.parse(line)),
+        );
+        expect(records).toHaveLength(20);
+        expect(records.map((record) => record.spanId)).toEqual(
+          Array.from({ length: 20 }, (_, i) => `span-${i}`),
+        );
+      } finally {
+        openFile.mockRestore();
+      }
+    });
+
+    test("serializes writes queued during an append and waits for the whole drain", async () => {
+      let finishFirst: () => void = () => {};
+      const firstAppend = new Promise<void>((resolve) => {
+        finishFirst = resolve;
+      });
+      let finishSecond: () => void = () => {};
+      const secondAppend = new Promise<void>((resolve) => {
+        finishSecond = resolve;
+      });
+      const appendFile = vi
+        .fn(async (_lines: string, _encoding: string) => {})
+        .mockImplementationOnce(() => firstAppend)
+        .mockImplementationOnce(() => secondAppend);
+      const close = vi.fn(async () => {});
+      const openFile = vi
+        .spyOn(iso, "openFile")
+        .mockResolvedValue({ appendFile, close });
+      try {
+        cache.queueWrite("root-123", "span-1", { span_id: "span-1" });
+        await vi.waitFor(() => expect(appendFile).toHaveBeenCalledTimes(1));
+        cache.queueWrite("root-123", "span-2", { span_id: "span-2" });
+        let drained = false;
+        const pending = cache.waitForPendingWrites().then(() => {
+          drained = true;
+        });
+        await Promise.resolve();
+        expect(appendFile).toHaveBeenCalledTimes(1);
+        expect(cache.getByRootSpanId("root-123")).toHaveLength(2);
+        finishFirst();
+        await vi.waitFor(() => expect(appendFile).toHaveBeenCalledTimes(2));
+        expect(drained).toBe(false);
+        expect(JSON.parse(appendFile.mock.calls[1][0])).toMatchObject({
+          spanId: "span-2",
+        });
+        finishSecond();
+        await pending;
+        expect(drained).toBe(true);
+      } finally {
+        finishFirst();
+        finishSecond();
+        await cache.waitForPendingWrites();
+        openFile.mockRestore();
+      }
+    });
+
+    test("an empty explicit flush does not strand a subsequent queued write", async () => {
+      const appendFile = vi.fn(async (_lines: string, _encoding: string) => {});
+      const close = vi.fn(async () => {});
+      const openFile = vi
+        .spyOn(iso, "openFile")
+        .mockResolvedValue({ appendFile, close });
+      try {
+        const empty = cache.flushWriteBuffer();
+        cache.queueWrite("root-123", "span-1", { span_id: "span-1" });
+        await empty;
+        await cache.waitForPendingWrites();
+        expect(appendFile).toHaveBeenCalledOnce();
+      } finally {
+        openFile.mockRestore();
+      }
+    });
+
+    test("retains records after a failed append so an explicit flush can retry", async () => {
+      const appendFile = vi
+        .fn(async (_lines: string, _encoding: string) => {})
+        .mockRejectedValueOnce(new Error("append failed"));
+      const close = vi.fn(async () => {});
+      const openFile = vi
+        .spyOn(iso, "openFile")
+        .mockResolvedValue({ appendFile, close });
+      try {
+        cache.queueWrite("root-123", "span-1", { span_id: "span-1" });
+        await expect(cache.waitForPendingWrites()).rejects.toThrow(
+          "append failed",
+        );
+        expect(cache.getByRootSpanId("root-123")).toEqual([
+          { span_id: "span-1" },
+        ]);
+        await cache.flushWriteBuffer();
+        expect(appendFile).toHaveBeenCalledTimes(2);
+        expect(appendFile.mock.calls[1][0]).toBe(appendFile.mock.calls[0][0]);
+      } finally {
+        openFile.mockRestore();
+      }
+    });
+
     test("should return undefined for unknown rootSpanId", () => {
       const spans = cache.getByRootSpanId("nonexistent");
       expect(spans).toBeUndefined();
