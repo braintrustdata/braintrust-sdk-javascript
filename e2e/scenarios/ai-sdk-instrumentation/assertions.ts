@@ -756,6 +756,11 @@ export function defineAISDKInstrumentationAssertions(options: {
       expectAISDKParentSpan(trace.parent);
       expect(trace.child).toBeDefined();
       expectAISDKModelChildSpan(trace.child);
+      if (options.sdkMajorVersion >= 7) {
+        expect(trace.child?.row.metadata).toMatchObject({
+          served_service_tier: "default",
+        });
+      }
       expect(trace.child?.metrics).toMatchObject({
         completion_tokens: expect.any(Number),
         prompt_tokens: expect.any(Number),

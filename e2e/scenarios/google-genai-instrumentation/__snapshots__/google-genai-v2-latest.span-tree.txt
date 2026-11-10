@@ -75,6 +75,7 @@ span_tree:
     │       metadata: {
     │         "maxOutputTokens": 24,
     │         "model": "gemini-2.5-flash",
+    │         "served_service_tier": "standard",
     │         "temperature": 0
     │       }
     │       metrics: {
@@ -181,7 +182,8 @@ span_tree:
     │         "model": "gemini-2.5-flash-image",
     │         "responseModalities": [
     │           "IMAGE"
-    │         ]
+    │         ],
+    │         "served_service_tier": "standard"
     │       }
     │       metrics: {
     │         "completion_image_tokens": 1290,
@@ -267,7 +269,8 @@ span_tree:
     │         "model": "gemini-2.5-flash-image",
     │         "responseModalities": [
     │           "IMAGE"
-    │         ]
+    │         ],
+    │         "served_service_tier": "standard"
     │       }
     │       metrics: {
     │         "completion_image_tokens": 1290,
@@ -395,7 +398,8 @@ span_tree:
     │         "model": "gemini-2.5-flash-image",
     │         "responseModalities": [
     │           "IMAGE"
-    │         ]
+    │         ],
+    │         "served_service_tier": "standard"
     │       }
     │       metrics: {
     │         "completion_image_tokens": 1290,
@@ -588,6 +592,7 @@ span_tree:
     │       metadata: {
     │         "maxOutputTokens": 64,
     │         "model": "gemini-2.5-flash",
+    │         "served_service_tier": "standard",
     │         "systemInstruction": "You are a pirate. Always respond in pirate speak.",
     │         "temperature": 0
     │       }
@@ -698,6 +703,7 @@ span_tree:
     │       metadata: {
     │         "maxOutputTokens": 64,
     │         "model": "gemini-2.5-flash",
+    │         "served_service_tier": "standard",
     │         "temperature": 0
     │       }
     │       metrics: {
@@ -878,6 +884,7 @@ span_tree:
     │         "interaction_id": "<interaction_id:1>",
     │         "model": "gemini-omni-1.1-flash",
     │         "provider": "google",
+    │         "served_service_tier": "standard",
     │         "status": "completed"
     │       }
     │       metrics: {
@@ -980,6 +987,7 @@ span_tree:
     │         "interaction_id": "<interaction_id:1>",
     │         "model": "gemini-2.5-flash",
     │         "provider": "google",
+    │         "served_service_tier": "standard",
     │         "status": "completed"
     │       }
     │       metrics: {
@@ -1064,6 +1072,7 @@ span_tree:
     │         "interaction_id": "<interaction_id:1>",
     │         "model": "gemini-2.5-flash",
     │         "provider": "google",
+    │         "served_service_tier": "standard",
     │         "status": "completed"
     │       }
     │       metrics: {
@@ -1167,6 +1176,7 @@ span_tree:
     │         "interaction_id": "<interaction_id:1>",
     │         "model": "gemini-2.5-flash",
     │         "provider": "google",
+    │         "served_service_tier": "standard",
     │         "status": "completed"
     │       }
     │       metrics: {
@@ -1270,6 +1280,7 @@ span_tree:
     │         "interaction_id": "<interaction_id:1>",
     │         "model": "gemini-2.5-flash",
     │         "provider": "google",
+    │         "served_service_tier": "standard",
     │         "status": "completed"
     │       }
     │       metrics: {
@@ -1377,6 +1388,7 @@ span_tree:
     │       metadata: {
     │         "maxOutputTokens": 48,
     │         "model": "gemini-2.5-flash",
+    │         "served_service_tier": "standard",
     │         "temperature": 0
     │       }
     │       metrics: {
@@ -1478,6 +1490,7 @@ span_tree:
     │       metadata: {
     │         "maxOutputTokens": 24,
     │         "model": "gemini-2.5-flash",
+    │         "served_service_tier": "standard",
     │         "temperature": 0
     │       }
     │       metrics: {
@@ -1628,6 +1641,7 @@ span_tree:
     │         },
     │         "maxOutputTokens": 256,
     │         "model": "gemini-2.5-flash",
+    │         "served_service_tier": "standard",
     │         "temperature": 0,
     │         "tools": [
     │           {
@@ -1788,6 +1802,7 @@ span_tree:
     │         },
     │         "maxOutputTokens": 256,
     │         "model": "gemini-2.5-flash",
+    │         "served_service_tier": "standard",
     │         "temperature": 0,
     │         "tools": [
     │           {
@@ -1894,6 +1909,7 @@ span_tree:
     │       metadata: {
     │         "maxOutputTokens": 128,
     │         "model": "gemini-2.5-flash",
+    │         "served_service_tier": "standard",
     │         "temperature": 0,
     │         "toolConfig": {
     │           "functionCallingConfig": {
@@ -2033,6 +2049,7 @@ span_tree:
             metadata: {
               "maxOutputTokens": 128,
               "model": "gemini-2.5-flash",
+              "served_service_tier": "standard",
               "temperature": 0,
               "toolConfig": {
                 "functionCallingConfig": {

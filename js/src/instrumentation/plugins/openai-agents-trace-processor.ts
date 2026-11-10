@@ -1,3 +1,4 @@
+import { serviceTierMetadata } from "../core/service-tier";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { SpanTypeAttribute, isObject } from "../../../util/index";
 import {
@@ -428,7 +429,10 @@ export class OpenAIAgentsTraceProcessor {
       input: spanData._input,
       output,
       metadata: isObject(response)
-        ? this.omitKeys(response, ["output", "usage"])
+        ? {
+            ...this.omitKeys(response, ["output", "usage"]),
+            ...serviceTierMetadata({ served: response.service_tier }),
+          }
         : {},
       metrics,
     };

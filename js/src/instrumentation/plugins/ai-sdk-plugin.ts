@@ -1,3 +1,5 @@
+import { serviceTierMetadata } from "../core/service-tier";
+import { aiSDKServiceTierMetadata } from "./ai-sdk-service-tier";
 import { traceAISDKCodeMode } from "./ai-sdk-code-mode";
 import { currentAISDKToolSpan, traceAISDKTool } from "./ai-sdk-tool-tracing";
 import { prepareTypedAttachments } from "../../typed-attachments";
@@ -1307,11 +1309,7 @@ function buildAISDKModelSpanArgs(
     {
       name,
       spanAttributes: { type: SpanTypeAttribute.LLM },
-      event: buildAISDKModelStartEvent(
-        params,
-        buildAISDKChildMetadata(model),
-        {},
-      ),
+      event: buildAISDKModelStartEvent(params, model, {}),
     },
     INSTRUMENTATION_NAMES.AI_SDK,
   );
@@ -1424,6 +1422,8 @@ function interceptAISDKModelStream(
       };
 
       const processChunk = (chunk: AISDKModelStreamChunk) => {
+        const tier = aiSDKServiceTierMetadata(chunk.providerMetadata, "served");
+        if (Object.keys(tier).length) span.log({ metadata: tier });
         if (firstChunkTime === undefined && isAISDKContentStreamChunk(chunk)) {
           firstChunkTime = getCurrentUnixTimestamp();
         }
@@ -2463,7 +2463,17 @@ function extractMetadataFromCallParams(
   params: AISDKCallParams,
   self?: unknown,
 ): Record<string, unknown> {
-  const metadata = extractBaseMetadata(params.model, self);
+  const model = params.model ?? resolveModelFromSelf(self);
+  const metadata = extractBaseMetadata(model);
+  Object.assign(
+    metadata,
+    aiSDKServiceTierMetadata(
+      params.providerOptions ?? params.experimental_providerMetadata,
+      "requested",
+      typeof model === "string" ? "gateway" : model?.provider,
+      typeof model === "string" ? model : model?.modelId,
+    ),
+  );
   const tools = serializeAISDKToolsForLogging(
     params.tools ?? resolveToolsFromSelf(self),
   );
@@ -2685,16 +2695,26 @@ function sanitizeAISDKMetadataValue(value: unknown, depth = 0): unknown {
 
 function buildAISDKModelStartEvent(
   callOptions: AISDKCallParams,
-  baseMetadata: Record<string, unknown>,
+  model: AISDKModel | undefined,
   options: { workflowAgent?: boolean },
 ): {
   input: unknown;
   metadata: Record<string, unknown>;
 } {
+  const baseMetadata = buildAISDKChildMetadata(model);
   if (!options.workflowAgent) {
     return {
       input: processAISDKCallInput(callOptions).input,
-      metadata: baseMetadata,
+      metadata: {
+        ...baseMetadata,
+        ...aiSDKServiceTierMetadata(
+          callOptions.providerOptions ??
+            callOptions.experimental_providerMetadata,
+          "requested",
+          typeof model === "string" ? "gateway" : model?.provider,
+          typeof model === "string" ? model : model?.modelId,
+        ),
+      },
     };
   }
 
@@ -2702,7 +2722,7 @@ function buildAISDKModelStartEvent(
     input: processAISDKWorkflowAgentModelCallInput(callOptions).input,
     metadata: {
       ...baseMetadata,
-      ...extractWorkflowMetadataFromCallParams(callOptions),
+      ...extractWorkflowMetadataFromCallParams({ ...callOptions, model }),
     },
   };
 }
@@ -2737,7 +2757,7 @@ type AISDKChildTracingOptions = {
 
 type AISDKModelPatchEntry = {
   activeSpanIds: Set<string>;
-  baseMetadata: Record<string, unknown>;
+  model: AISDKLanguageModel;
   childTracingOptions: AISDKChildTracingOptions;
   denyOutputPaths: string[];
   openSpans: Set<Span>;
@@ -2931,7 +2951,7 @@ function prepareAISDKChildTracing(
     };
     const entry: AISDKModelPatchEntry = {
       activeSpanIds: new Set([parentSpan.spanId]),
-      baseMetadata: buildAISDKChildMetadata(resolvedModel),
+      model: resolvedModel,
       childTracingOptions,
       denyOutputPaths,
       openSpans: new Set(),
@@ -3055,13 +3075,9 @@ function prepareAISDKChildTracing(
             spanAttributes: {
               type: SpanTypeAttribute.LLM,
             },
-            event: buildAISDKModelStartEvent(
-              callOptions,
-              activeEntry.baseMetadata,
-              {
-                workflowAgent: activeEntry.childTracingOptions.workflowAgent,
-              },
-            ),
+            event: buildAISDKModelStartEvent(callOptions, activeEntry.model, {
+              workflowAgent: activeEntry.childTracingOptions.workflowAgent,
+            }),
           },
           INSTRUMENTATION_NAMES.AI_SDK,
         ),
@@ -3085,13 +3101,9 @@ function prepareAISDKChildTracing(
               spanAttributes: {
                 type: SpanTypeAttribute.LLM,
               },
-              event: buildAISDKModelStartEvent(
-                callOptions,
-                activeEntry.baseMetadata,
-                {
-                  workflowAgent: activeEntry.childTracingOptions.workflowAgent,
-                },
-              ),
+              event: buildAISDKModelStartEvent(callOptions, activeEntry.model, {
+                workflowAgent: activeEntry.childTracingOptions.workflowAgent,
+              }),
             },
             INSTRUMENTATION_NAMES.AI_SDK,
           ),
@@ -3162,6 +3174,11 @@ function prepareAISDKChildTracing(
 
         const transformStream = new TransformStream({
           transform(chunk: AISDKModelStreamChunk, controller) {
+            const tier = aiSDKServiceTierMetadata(
+              chunk.providerMetadata,
+              "served",
+            );
+            if (Object.keys(tier).length) span.log({ metadata: tier });
             if (
               firstChunkTime === undefined &&
               isAISDKContentStreamChunk(chunk)
@@ -4137,7 +4154,31 @@ function buildResolvedMetadataPayload(result: AISDKResult): {
   metadata?: Record<string, unknown>;
 } {
   const gatewayInfo = extractGatewayRoutingInfo(result);
-  const metadata: Record<string, unknown> = {};
+  const metadata: Record<string, unknown> = aiSDKServiceTierMetadata(
+    safeSerializableFieldRead(result, "providerMetadata") ??
+      safeSerializableFieldRead(result, "experimental_providerMetadata"),
+    "served",
+  );
+
+  // Older providers keep the served tier only in the raw response body.
+  if (!metadata.served_service_tier) {
+    const response = safeSerializableFieldRead(result, "response");
+    const body = isObject(response) ? response.body : undefined;
+    if (isObject(body)) {
+      Object.assign(
+        metadata,
+        serviceTierMetadata({
+          served:
+            body.service_tier ??
+            (isObject(body.usage) ? body.usage.service_tier : undefined) ??
+            (isObject(body.usageMetadata)
+              ? body.usageMetadata.serviceTier
+              : undefined) ??
+            (isObject(body.serviceTier) ? body.serviceTier.type : undefined),
+        }),
+      );
+    }
+  }
 
   if (gatewayInfo?.provider) {
     metadata.provider = gatewayInfo.provider;

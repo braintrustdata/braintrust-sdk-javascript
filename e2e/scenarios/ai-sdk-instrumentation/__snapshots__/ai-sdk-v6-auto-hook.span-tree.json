@@ -95,7 +95,8 @@
                       "unified": "stop"
                     },
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -508,7 +509,8 @@
                       "unified": "stop"
                     },
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -810,7 +812,8 @@
                       "unified": "stop"
                     },
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -944,7 +947,8 @@
                       "unified": "stop"
                     },
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -1235,7 +1239,8 @@
                       "unified": "tool-calls"
                     },
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -1414,7 +1419,8 @@
                       "unified": "tool-calls"
                     },
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -1630,7 +1636,8 @@
                       "unified": "tool-calls"
                     },
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -1883,7 +1890,8 @@
                       "unified": "tool-calls"
                     },
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -3062,7 +3070,8 @@
                       "unified": "tool-calls"
                     },
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -3227,7 +3236,8 @@
                       "unified": "tool-calls"
                     },
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -3870,7 +3880,8 @@
                       "unified": "tool-calls"
                     },
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -4020,7 +4031,8 @@
                       "unified": "tool-calls"
                     },
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -4211,7 +4223,8 @@
                   "unified": "stop"
                 },
                 "model": "gpt-5.4-nano-2026-03-17",
-                "provider": "openai.responses"
+                "provider": "openai.responses",
+                "served_service_tier": "default"
               },
               "metrics": {
                 "completion_reasoning_tokens": 0,
@@ -4523,7 +4536,8 @@
                       "unified": "stop"
                     },
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -4832,7 +4846,8 @@
                       "unified": "stop"
                     },
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -5157,7 +5172,8 @@
                   "unified": "stop"
                 },
                 "model": "claude-haiku-4-5",
-                "provider": "anthropic.messages"
+                "provider": "anthropic.messages",
+                "served_service_tier": "standard"
               },
               "metrics": {
                 "completion_tokens": 7,
@@ -5478,7 +5494,8 @@
                       "unified": "stop"
                     },
                     "model": "claude-haiku-4-5",
-                    "provider": "anthropic.messages"
+                    "provider": "anthropic.messages",
+                    "served_service_tier": "standard"
                   },
                   "metrics": {
                     "completion_tokens": 7,
@@ -5796,7 +5813,8 @@
                       "unified": "stop"
                     },
                     "model": "claude-haiku-4-5",
-                    "provider": "anthropic.messages"
+                    "provider": "anthropic.messages",
+                    "served_service_tier": "standard"
                   },
                   "metrics": {
                     "completion_tokens": 7,
@@ -6108,7 +6126,8 @@
                       "unified": "stop"
                     },
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -6654,7 +6673,8 @@
                       "unified": "stop"
                     },
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -6847,7 +6867,8 @@
                       "unified": "stop"
                     },
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -7008,7 +7029,8 @@
                           "unified": "stop"
                         },
                         "model": "gpt-5.4-nano-2026-03-17",
-                        "provider": "openai.responses"
+                        "provider": "openai.responses",
+                        "served_service_tier": "default"
                       },
                       "metrics": {
                         "completion_reasoning_tokens": 0,
@@ -7459,7 +7481,8 @@
                           "unified": "stop"
                         },
                         "model": "gpt-5.4-nano-2026-03-17",
-                        "provider": "openai.responses"
+                        "provider": "openai.responses",
+                        "served_service_tier": "default"
                       },
                       "metrics": {
                         "completion_reasoning_tokens": 0,
@@ -7735,7 +7758,8 @@
                           "unified": "tool-calls"
                         },
                         "model": "gpt-5.4-nano-2026-03-17",
-                        "provider": "openai.responses"
+                        "provider": "openai.responses",
+                        "served_service_tier": "default"
                       },
                       "metrics": {
                         "completion_reasoning_tokens": 0,
@@ -8004,7 +8028,8 @@
                           "unified": "tool-calls"
                         },
                         "model": "gpt-5.4-nano-2026-03-17",
-                        "provider": "openai.responses"
+                        "provider": "openai.responses",
+                        "served_service_tier": "default"
                       },
                       "metrics": {
                         "completion_reasoning_tokens": 0,
@@ -8296,7 +8321,8 @@
                           "unified": "stop"
                         },
                         "model": "gpt-5.4-nano-2026-03-17",
-                        "provider": "openai.responses"
+                        "provider": "openai.responses",
+                        "served_service_tier": "default"
                       },
                       "metrics": {
                         "completion_reasoning_tokens": 0,

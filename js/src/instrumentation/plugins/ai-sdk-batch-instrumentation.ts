@@ -1,3 +1,4 @@
+import { aiSDKServiceTierMetadata } from "./ai-sdk-service-tier";
 import { isObject, SpanTypeAttribute } from "../../../util";
 import { SpanComponentsV4 } from "../../../util/span_identifier_v4";
 import { debugLogger } from "../../debug-logger";
@@ -249,7 +250,7 @@ export async function captureAISDKBatchStart(
       args.batch.status ?? "pending",
     );
     for (const request of args.requests) {
-      const data = await aiSDKBatchInput(request);
+      const data = await aiSDKBatchInput(request, context.batch.provider);
       requestSpan(trace, request.id, trace.children.get(request.id)!).log(data);
     }
     return JSON.stringify(context);
@@ -283,7 +284,7 @@ export async function captureAISDKBatchCompletion(
     const trace = await createTrace(context, args.requests, args.status.status);
     if (args.context === undefined) {
       for (const request of args.requests) {
-        const data = await aiSDKBatchInput(request);
+        const data = await aiSDKBatchInput(request, context.batch.provider);
         requestSpan(trace, request.id, trace.children.get(request.id)!).log(
           data,
         );
@@ -340,6 +341,7 @@ export async function captureAISDKBatchCompletion(
             providerMetadata: item.providerMetadata,
           }),
           metadata: {
+            ...aiSDKServiceTierMetadata(item.providerMetadata, "served"),
             status: item.status,
             ...(typeof item.response?.modelId === "string"
               ? { model: item.response.modelId }

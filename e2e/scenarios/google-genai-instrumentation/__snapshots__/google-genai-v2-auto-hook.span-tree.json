@@ -72,6 +72,7 @@
               "metadata": {
                 "maxOutputTokens": 24,
                 "model": "gemini-2.5-flash",
+                "served_service_tier": "standard",
                 "temperature": 0
               },
               "metrics": {
@@ -186,7 +187,8 @@
                 "model": "gemini-2.5-flash-image",
                 "responseModalities": [
                   "IMAGE"
-                ]
+                ],
+                "served_service_tier": "standard"
               },
               "metrics": {
                 "completion_image_tokens": 1290,
@@ -280,7 +282,8 @@
                 "model": "gemini-2.5-flash-image",
                 "responseModalities": [
                   "IMAGE"
-                ]
+                ],
+                "served_service_tier": "standard"
               },
               "metrics": {
                 "completion_image_tokens": 1290,
@@ -416,7 +419,8 @@
                 "model": "gemini-2.5-flash-image",
                 "responseModalities": [
                   "IMAGE"
-                ]
+                ],
+                "served_service_tier": "standard"
               },
               "metrics": {
                 "completion_image_tokens": 1290,
@@ -641,6 +645,7 @@
               "metadata": {
                 "maxOutputTokens": 64,
                 "model": "gemini-2.5-flash",
+                "served_service_tier": "standard",
                 "systemInstruction": "You are a pirate. Always respond in pirate speak.",
                 "temperature": 0
               },
@@ -759,6 +764,7 @@
               "metadata": {
                 "maxOutputTokens": 64,
                 "model": "gemini-2.5-flash",
+                "served_service_tier": "standard",
                 "temperature": 0
               },
               "metrics": {
@@ -963,6 +969,7 @@
                 "interaction_id": "<interaction_id:1>",
                 "model": "gemini-omni-1.1-flash",
                 "provider": "google",
+                "served_service_tier": "standard",
                 "status": "completed"
               },
               "metrics": {
@@ -1052,6 +1059,7 @@
                 "interaction_id": "<interaction_id:1>",
                 "model": "gemini-2.5-flash",
                 "provider": "google",
+                "served_service_tier": "standard",
                 "status": "completed"
               },
               "metrics": {
@@ -1144,6 +1152,7 @@
                 "interaction_id": "<interaction_id:1>",
                 "model": "gemini-2.5-flash",
                 "provider": "google",
+                "served_service_tier": "standard",
                 "status": "completed"
               },
               "metrics": {
@@ -1234,6 +1243,7 @@
                 "interaction_id": "<interaction_id:1>",
                 "model": "gemini-2.5-flash",
                 "provider": "google",
+                "served_service_tier": "standard",
                 "status": "completed"
               },
               "metrics": {
@@ -1324,6 +1334,7 @@
                 "interaction_id": "<interaction_id:1>",
                 "model": "gemini-2.5-flash",
                 "provider": "google",
+                "served_service_tier": "standard",
                 "status": "completed"
               },
               "metrics": {
@@ -1442,6 +1453,7 @@
               "metadata": {
                 "maxOutputTokens": 48,
                 "model": "gemini-2.5-flash",
+                "served_service_tier": "standard",
                 "temperature": 0
               },
               "metrics": {
@@ -1517,6 +1529,7 @@
               "metadata": {
                 "maxOutputTokens": 64,
                 "model": "gemini-2.5-flash",
+                "served_service_tier": "standard",
                 "temperature": 0
               },
               "metrics": {
@@ -1593,6 +1606,7 @@
               "metadata": {
                 "maxOutputTokens": 24,
                 "model": "gemini-2.5-flash",
+                "served_service_tier": "standard",
                 "temperature": 0
               },
               "metrics": {
@@ -1779,6 +1793,7 @@
                 },
                 "maxOutputTokens": 256,
                 "model": "gemini-2.5-flash",
+                "served_service_tier": "standard",
                 "temperature": 0,
                 "tools": [
                   {
@@ -1947,6 +1962,7 @@
                 },
                 "maxOutputTokens": 256,
                 "model": "gemini-2.5-flash",
+                "served_service_tier": "standard",
                 "temperature": 0,
                 "tools": [
                   {
@@ -2061,6 +2077,7 @@
               "metadata": {
                 "maxOutputTokens": 128,
                 "model": "gemini-2.5-flash",
+                "served_service_tier": "standard",
                 "temperature": 0,
                 "toolConfig": {
                   "functionCallingConfig": {
@@ -2208,6 +2225,7 @@
               "metadata": {
                 "maxOutputTokens": 128,
                 "model": "gemini-2.5-flash",
+                "served_service_tier": "standard",
                 "temperature": 0,
                 "toolConfig": {
                   "functionCallingConfig": {

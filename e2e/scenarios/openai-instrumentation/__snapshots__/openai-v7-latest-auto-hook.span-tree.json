@@ -414,6 +414,7 @@
                 "max_tokens": 12,
                 "model": "gpt-4o-mini-2024-07-18",
                 "provider": "openai",
+                "served_service_tier": "default",
                 "temperature": 0
               },
               "metrics": {
@@ -470,6 +471,7 @@
                 "max_tokens": 12,
                 "model": "gpt-4o-mini-2024-07-18",
                 "provider": "openai",
+                "served_service_tier": "default",
                 "temperature": 0
               },
               "metrics": {
@@ -542,6 +544,7 @@
                 "max_tokens": 24,
                 "model": "gpt-4o-mini-2024-07-18",
                 "provider": "openai",
+                "served_service_tier": "default",
                 "temperature": 0
               },
               "metrics": {
@@ -615,6 +618,7 @@
                 "max_tokens": 24,
                 "model": "gpt-4o-mini-2024-07-18",
                 "provider": "openai",
+                "served_service_tier": "default",
                 "temperature": 0
               },
               "metrics": {
@@ -681,6 +685,7 @@
                 "max_tokens": 64,
                 "model": "gpt-4o-mini-2024-07-18",
                 "provider": "openai",
+                "served_service_tier": "default",
                 "temperature": 0,
                 "tool_choice": {
                   "function": {
@@ -762,6 +767,7 @@
                 "max_tokens": 12,
                 "model": "gpt-4o-mini-2024-07-18",
                 "provider": "openai",
+                "served_service_tier": "default",
                 "stream": true,
                 "stream_options": {
                   "include_usage": true
@@ -908,6 +914,7 @@
                 ],
                 "model": "gpt-audio-1.5",
                 "provider": "openai",
+                "served_service_tier": "default",
                 "stream": true,
                 "stream_options": {
                   "include_usage": true
@@ -968,6 +975,7 @@
                 "max_tokens": 24,
                 "model": "gpt-4o-mini-2024-07-18",
                 "provider": "openai",
+                "served_service_tier": "default",
                 "stream": true,
                 "stream_options": {
                   "include_usage": true
@@ -1035,6 +1043,7 @@
                 "max_tokens": 64,
                 "model": "gpt-4o-mini-2024-07-18",
                 "provider": "openai",
+                "served_service_tier": "default",
                 "stream": true,
                 "stream_options": {
                   "include_usage": true
@@ -1336,7 +1345,8 @@
                     }
                   },
                   "type": "json_schema"
-                }
+                },
+                "served_service_tier": "default"
               },
               "metrics": {
                 "completion_accepted_prediction_tokens": 0,
@@ -1390,6 +1400,7 @@
                 "max_tokens": 24,
                 "model": "gpt-4o-mini-2024-07-18",
                 "provider": "openai",
+                "served_service_tier": "default",
                 "stream": true,
                 "stream_options": {
                   "include_usage": true
@@ -2462,6 +2473,7 @@
                   "summary": null
                 },
                 "safety_identifier": null,
+                "served_service_tier": "default",
                 "service_tier": "default",
                 "status": "completed",
                 "store": true,
@@ -2572,6 +2584,7 @@
                   "summary": null
                 },
                 "safety_identifier": null,
+                "served_service_tier": "default",
                 "service_tier": "default",
                 "status": "completed",
                 "store": true,
@@ -2678,6 +2691,7 @@
                   "summary": null
                 },
                 "safety_identifier": null,
+                "served_service_tier": "default",
                 "service_tier": "default",
                 "status": "completed",
                 "store": true,
@@ -2785,6 +2799,7 @@
                   "summary": null
                 },
                 "safety_identifier": null,
+                "served_service_tier": "default",
                 "service_tier": "default",
                 "status": "completed",
                 "store": true,
@@ -2914,6 +2929,7 @@
                   "summary": null
                 },
                 "safety_identifier": null,
+                "served_service_tier": "default",
                 "service_tier": "default",
                 "status": "incomplete",
                 "store": true,
@@ -3024,6 +3040,7 @@
                   "summary": null
                 },
                 "safety_identifier": null,
+                "served_service_tier": "default",
                 "service_tier": "default",
                 "status": "incomplete",
                 "store": true,
@@ -3134,6 +3151,7 @@
                   "summary": null
                 },
                 "safety_identifier": null,
+                "served_service_tier": "default",
                 "service_tier": "default",
                 "status": "completed",
                 "store": true,

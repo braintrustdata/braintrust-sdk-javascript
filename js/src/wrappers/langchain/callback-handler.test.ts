@@ -623,3 +623,59 @@ describe("LangChain capture options", () => {
     });
   });
 });
+
+describe("service tiers", () => {
+  it("captures tiers with content capture disabled and retains stream metadata on errors", async () => {
+    const { handler, parent, span } = createHarness({
+      captureModelInputs: false,
+      captureModelOutputs: false,
+    });
+    await handler.handleChatModelStart(
+      { name: "ChatOpenAI" },
+      [],
+      "tier-run",
+      undefined,
+      { invocation_params: { service_tier: " FLEX " } },
+    );
+    expect(parent.startSpan.mock.calls[0][0].event?.metadata).toMatchObject({
+      requested_service_tier: "flex",
+    });
+    expect(parent.startSpan.mock.calls[0][0].event).not.toHaveProperty("input");
+    await handler.handleLLMNewToken(
+      "",
+      { prompt: 0, completion: 0 },
+      "tier-run",
+      undefined,
+      undefined,
+      {
+        chunk: {
+          message: { response_metadata: { service_tier: " DEFAULT " } },
+        },
+      },
+    );
+    await handler.handleLLMError(new Error("interrupted"), "tier-run");
+    expect(span.log).toHaveBeenCalledWith({
+      metadata: { served_service_tier: "default" },
+    });
+  });
+
+  it.each([
+    { service_tier: " PRIORITY " },
+    { usage: { service_tier: " PRIORITY " } },
+    { usageMetadata: { serviceTier: " PRIORITY " } },
+    { serviceTier: { type: " PRIORITY " } },
+  ])("captures provider response metadata %j", async (metadata) => {
+    const { handler, span } = createHarness({ captureModelOutputs: false });
+    await handler.handleChatModelStart({ name: "model" }, [], "tier-run");
+    await handler.handleLLMEnd(
+      { generations: [[{ message: { response_metadata: metadata } }]] },
+      "tier-run",
+    );
+    expect(span.log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: { served_service_tier: "priority" },
+      }),
+    );
+    expect(span.log.mock.calls.at(-1)?.[0]).not.toHaveProperty("output");
+  });
+});

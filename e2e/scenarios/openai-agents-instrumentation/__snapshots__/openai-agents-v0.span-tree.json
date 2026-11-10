@@ -66,6 +66,7 @@
                           "summary": null
                         },
                         "safety_identifier": null,
+                        "served_service_tier": "default",
                         "service_tier": "default",
                         "status": "completed",
                         "store": true,
@@ -216,6 +217,7 @@
                           "summary": null
                         },
                         "safety_identifier": null,
+                        "served_service_tier": "default",
                         "service_tier": "default",
                         "status": "completed",
                         "store": true,
@@ -369,6 +371,7 @@
                   "summary": null
                 },
                 "safety_identifier": null,
+                "served_service_tier": "default",
                 "service_tier": "default",
                 "status": "completed",
                 "store": true,
@@ -505,6 +508,7 @@
                   "summary": null
                 },
                 "safety_identifier": null,
+                "served_service_tier": "default",
                 "service_tier": "default",
                 "status": "completed",
                 "store": true,

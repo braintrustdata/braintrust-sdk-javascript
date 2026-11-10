@@ -1,3 +1,4 @@
+import { aiSDKServiceTierMetadata } from "../../instrumentation/plugins/ai-sdk-service-tier";
 import { debugLogger } from "../../debug-logger";
 import {
   AI_SDK_TOOL_CALL_ID,
@@ -83,6 +84,7 @@ type OperationState = {
   toolExecutionIds?: Set<string>;
   recordInputs?: boolean;
   recordOutputs?: boolean;
+  modelCallProviderOptions?: unknown;
   tools?: unknown;
   // Tool spans that log their toModelOutput result once the SDK reports it.
   modelOutputToolSpans?: Map<string, Span>;
@@ -398,6 +400,7 @@ export function braintrustAISDKTelemetry(): any {
             }
           : {}),
         metrics: extractTokenMetrics(result),
+        metadata: aiSDKServiceTierMetadata(event.providerMetadata, "served"),
       });
       span.end();
       objectSpans.delete(operationKey);
@@ -645,6 +648,7 @@ export function braintrustAISDKTelemetry(): any {
           providerTools: new Map(),
           recordInputs: event.recordInputs,
           recordOutputs: event.recordOutputs,
+          modelCallProviderOptions: event.providerOptions,
           tools: (event as { tools?: unknown }).tools,
         });
 
@@ -705,6 +709,14 @@ export function braintrustAISDKTelemetry(): any {
       });
     },
 
+    onStepStart(event) {
+      runSafely("onStepStart", () => {
+        const operationKey = operationKeyFromEvent(event);
+        const state = operationKey ? operations.get(operationKey) : undefined;
+        if (state) state.modelCallProviderOptions = event.providerOptions;
+      });
+    },
+
     onLanguageModelCallStart(event) {
       runSafely("onLanguageModelCallStart", () => {
         const operationKey = operationKeyFromEvent(event);
@@ -756,12 +768,20 @@ export function braintrustAISDKTelemetry(): any {
                   input: processedInput,
                 }
               : {}),
-            metadata: workflowAgent
-              ? {
-                  ...metadataFromEvent(event),
-                  ...extractWorkflowMetadataFromCallParams(callInput),
-                }
-              : metadataFromEvent(event),
+            metadata: {
+              ...(workflowAgent
+                ? {
+                    ...metadataFromEvent(event),
+                    ...extractWorkflowMetadataFromCallParams(callInput),
+                  }
+                : metadataFromEvent(event)),
+              ...aiSDKServiceTierMetadata(
+                event.providerOptions ?? state?.modelCallProviderOptions,
+                "requested",
+                event.provider,
+                event.modelId,
+              ),
+            },
           },
         );
         const spanKey = operationKey ?? event.callId;
@@ -870,6 +890,7 @@ export function braintrustAISDKTelemetry(): any {
               }
             : {}),
           metrics: extractTokenMetrics(result),
+          metadata: aiSDKServiceTierMetadata(event.providerMetadata, "served"),
         });
         span.end();
       });
@@ -902,7 +923,15 @@ export function braintrustAISDKTelemetry(): any {
                   },
                 }
               : {}),
-            metadata: metadataFromEvent(event),
+            metadata: {
+              ...metadataFromEvent(event),
+              ...aiSDKServiceTierMetadata(
+                event.providerOptions ?? state?.modelCallProviderOptions,
+                "requested",
+                event.provider,
+                event.modelId,
+              ),
+            },
           },
         );
         objectSpans.set(operationKey ?? event.callId, span);
@@ -1112,6 +1141,16 @@ export function braintrustAISDKTelemetry(): any {
         }
         const operationKey = operationKeyForCallId(callId);
         const state = operationKey ? operations.get(operationKey) : undefined;
+        if (operationKey) {
+          const spans = modelSpans.get(operationKey);
+          const span =
+            spans?.[spans.length - 1] ?? objectSpans.get(operationKey);
+          const metadata = aiSDKServiceTierMetadata(
+            event.chunk?.providerMetadata,
+            "served",
+          );
+          if (span && Object.keys(metadata).length) span.log({ metadata });
+        }
         if (!state || state.firstChunkTime !== undefined) {
           return;
         }

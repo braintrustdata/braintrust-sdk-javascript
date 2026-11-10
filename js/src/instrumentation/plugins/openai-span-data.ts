@@ -1,3 +1,4 @@
+import { serviceTierMetadata } from "../core/service-tier";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Attachment } from "../../logger";
 import {
@@ -33,7 +34,10 @@ function batchMetadata(params: Record<string, unknown>) {
       // Ignore hostile getters in provider input.
     }
   }
-  return metadata;
+  return {
+    ...metadata,
+    ...serviceTierMetadata({ requested: params.service_tier }),
+  };
 }
 
 export function extractOpenAIBatchInput(
@@ -70,7 +74,11 @@ export function extractOpenAIChatInput(params: Record<string, unknown>): {
   const { messages, ...metadata } = params;
   return {
     input: processInputAttachments(messages, isAutoCaptureAttachmentsEnabled()),
-    metadata: { ...metadata, provider: "openai" },
+    metadata: {
+      ...metadata,
+      provider: "openai",
+      ...serviceTierMetadata({ requested: params.service_tier }),
+    },
   };
 }
 
@@ -81,7 +89,11 @@ export function extractOpenAIResponsesInput(params: Record<string, unknown>): {
   const { input, ...metadata } = params;
   return {
     input: processInputAttachments(input, isAutoCaptureAttachmentsEnabled()),
-    metadata: { ...metadata, provider: "openai" },
+    metadata: {
+      ...metadata,
+      provider: "openai",
+      ...serviceTierMetadata({ requested: params.service_tier }),
+    },
   };
 }
 
@@ -92,6 +104,7 @@ export function extractOpenAIResponsesMetadata(
     return undefined;
   }
   const { output: _output, usage: _usage, ...metadata } = result;
+  Object.assign(metadata, serviceTierMetadata({ served: result.service_tier }));
   return Object.keys(metadata).length > 0 ? metadata : undefined;
 }
 

@@ -137,6 +137,8 @@ function summarizeAnthropicPayload(event: CapturedLogEvent): Json {
       [
         "provider",
         "model",
+        "requested_service_tier",
+        "served_service_tier",
         "operation",
         "scenario",
         "stop_reason",

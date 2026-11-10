@@ -85,8 +85,16 @@ export class BraintrustCallbackHandler<
     runId: string,
     parentRunId?: string,
     tags?: string[],
+    fields?: { chunk?: unknown },
   ): Promise<void> {
-    return this.inner.handleLLMNewToken(token, idx, runId, parentRunId, tags);
+    return this.inner.handleLLMNewToken(
+      token,
+      idx,
+      runId,
+      parentRunId,
+      tags,
+      fields,
+    );
   }
 
   handleChatModelStart(

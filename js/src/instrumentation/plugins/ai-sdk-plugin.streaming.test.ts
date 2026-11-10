@@ -858,6 +858,10 @@ describe("AI SDK streaming instrumentation", () => {
           maxOutputTokens: 8,
           messages: params.messages,
           temperature: 0,
+          providerOptions: {
+            openai: { serviceTier: "flex" },
+            anthropic: { serviceTier: "auto" },
+          },
         });
         const output = await this.tools.get_weather.execute({
           location: "Vienna, Austria",
@@ -904,7 +908,7 @@ describe("AI SDK streaming instrumentation", () => {
     const agent = new wrappedWorkflow.WorkflowAgent({
       model: {
         modelId: "mock-workflow-model",
-        provider: "mock-provider",
+        provider: "anthropic.messages",
         doGenerate: async () => ({
           text: "Calling get_weather.",
           usage: {
@@ -946,6 +950,7 @@ describe("AI SDK streaming instrumentation", () => {
     expect(modelSpan).toMatchObject({
       input: { messages: [{ role: "user", content: "Use get_weather." }] },
       metadata: {
+        requested_service_tier: "auto",
         options: {
           maxOutputTokens: 8,
           temperature: 0,

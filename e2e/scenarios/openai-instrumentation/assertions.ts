@@ -1100,7 +1100,15 @@ function summarizeOpenAIPayload(
     input: summarizeInput(event.input as Json),
     metadata: pickMetadata(
       event.row.metadata as Record<string, unknown> | undefined,
-      ["model", "openaiSdkVersion", "operation", "provider", "scenario"],
+      [
+        "model",
+        "openaiSdkVersion",
+        "operation",
+        "provider",
+        "scenario",
+        "requested_service_tier",
+        "served_service_tier",
+      ],
     ),
     metrics: fields.metrics as Json,
     name: name || null,
