@@ -1309,11 +1309,7 @@ function buildAISDKModelSpanArgs(
     {
       name,
       spanAttributes: { type: SpanTypeAttribute.LLM },
-      event: buildAISDKModelStartEvent(
-        params,
-        buildAISDKChildMetadata(model),
-        {},
-      ),
+      event: buildAISDKModelStartEvent(params, model, {}),
     },
     INSTRUMENTATION_NAMES.AI_SDK,
   );
@@ -2467,13 +2463,15 @@ function extractMetadataFromCallParams(
   params: AISDKCallParams,
   self?: unknown,
 ): Record<string, unknown> {
-  const metadata = extractBaseMetadata(params.model, self);
+  const model = params.model ?? resolveModelFromSelf(self);
+  const metadata = extractBaseMetadata(model);
   Object.assign(
     metadata,
     aiSDKServiceTierMetadata(
       params.providerOptions ?? params.experimental_providerMetadata,
       "requested",
-      metadata.provider,
+      typeof model === "string" ? "gateway" : model?.provider,
+      typeof model === "string" ? model : model?.modelId,
     ),
   );
   const tools = serializeAISDKToolsForLogging(
@@ -2697,12 +2695,13 @@ function sanitizeAISDKMetadataValue(value: unknown, depth = 0): unknown {
 
 function buildAISDKModelStartEvent(
   callOptions: AISDKCallParams,
-  baseMetadata: Record<string, unknown>,
+  model: AISDKModel | undefined,
   options: { workflowAgent?: boolean },
 ): {
   input: unknown;
   metadata: Record<string, unknown>;
 } {
+  const baseMetadata = buildAISDKChildMetadata(model);
   if (!options.workflowAgent) {
     return {
       input: processAISDKCallInput(callOptions).input,
@@ -2712,7 +2711,8 @@ function buildAISDKModelStartEvent(
           callOptions.providerOptions ??
             callOptions.experimental_providerMetadata,
           "requested",
-          baseMetadata.provider,
+          typeof model === "string" ? "gateway" : model?.provider,
+          typeof model === "string" ? model : model?.modelId,
         ),
       },
     };
@@ -2722,7 +2722,7 @@ function buildAISDKModelStartEvent(
     input: processAISDKWorkflowAgentModelCallInput(callOptions).input,
     metadata: {
       ...baseMetadata,
-      ...extractWorkflowMetadataFromCallParams(callOptions),
+      ...extractWorkflowMetadataFromCallParams({ ...callOptions, model }),
     },
   };
 }
@@ -2757,7 +2757,7 @@ type AISDKChildTracingOptions = {
 
 type AISDKModelPatchEntry = {
   activeSpanIds: Set<string>;
-  baseMetadata: Record<string, unknown>;
+  model: AISDKLanguageModel;
   childTracingOptions: AISDKChildTracingOptions;
   denyOutputPaths: string[];
   openSpans: Set<Span>;
@@ -2951,7 +2951,7 @@ function prepareAISDKChildTracing(
     };
     const entry: AISDKModelPatchEntry = {
       activeSpanIds: new Set([parentSpan.spanId]),
-      baseMetadata: buildAISDKChildMetadata(resolvedModel),
+      model: resolvedModel,
       childTracingOptions,
       denyOutputPaths,
       openSpans: new Set(),
@@ -3075,13 +3075,9 @@ function prepareAISDKChildTracing(
             spanAttributes: {
               type: SpanTypeAttribute.LLM,
             },
-            event: buildAISDKModelStartEvent(
-              callOptions,
-              activeEntry.baseMetadata,
-              {
-                workflowAgent: activeEntry.childTracingOptions.workflowAgent,
-              },
-            ),
+            event: buildAISDKModelStartEvent(callOptions, activeEntry.model, {
+              workflowAgent: activeEntry.childTracingOptions.workflowAgent,
+            }),
           },
           INSTRUMENTATION_NAMES.AI_SDK,
         ),
@@ -3105,13 +3101,9 @@ function prepareAISDKChildTracing(
               spanAttributes: {
                 type: SpanTypeAttribute.LLM,
               },
-              event: buildAISDKModelStartEvent(
-                callOptions,
-                activeEntry.baseMetadata,
-                {
-                  workflowAgent: activeEntry.childTracingOptions.workflowAgent,
-                },
-              ),
+              event: buildAISDKModelStartEvent(callOptions, activeEntry.model, {
+                workflowAgent: activeEntry.childTracingOptions.workflowAgent,
+              }),
             },
             INSTRUMENTATION_NAMES.AI_SDK,
           ),

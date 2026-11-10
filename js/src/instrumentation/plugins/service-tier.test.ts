@@ -564,3 +564,42 @@ it.each([false, true])(
     ]);
   },
 );
+
+it.each([
+  ["azure.responses", { openai: { serviceTier: "flex" } }, "flex"],
+  [
+    "azure.responses",
+    { azure: { serviceTier: "priority" }, openai: { serviceTier: "flex" } },
+    "priority",
+  ],
+  [
+    "azure.responses",
+    { azure: {}, openai: { serviceTier: "flex" } },
+    undefined,
+  ],
+  [
+    "gateway",
+    { gateway: { serviceTier: "priority" }, openai: { serviceTier: "flex" } },
+    "priority",
+  ],
+  [
+    "gateway",
+    { anthropic: { serviceTier: "auto" }, openai: { serviceTier: "flex" } },
+    "flex",
+  ],
+  ["openai.responses", { gateway: { serviceTier: "priority" } }, undefined],
+])(
+  "uses effective request options for %s: %j",
+  async (provider, providerOptions, requested) => {
+    await aiSDKChannels.modelGenerate.invoke(
+      async () => ({ content: [] }),
+      undefined,
+      [{ providerOptions }],
+      { model: { modelId: "openai/test-model", provider } },
+    );
+    const [row] = (await backgroundLogger.drain()) as Array<{
+      metadata: Record<string, unknown>;
+    }>;
+    expect(row.metadata?.requested_service_tier).toBe(requested);
+  },
+);

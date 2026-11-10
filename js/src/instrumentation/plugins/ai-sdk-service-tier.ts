@@ -8,16 +8,34 @@ export function aiSDKServiceTierMetadata(
   options: unknown,
   direction: "requested" | "served",
   provider?: unknown,
+  modelId?: unknown,
 ): Record<string, string> {
   if (!isObject(options)) return {};
-  const namespace =
+  let namespace =
     typeof provider === "string" ? provider.split(".")[0] : undefined;
+  if (namespace === "amazon-bedrock") namespace = "bedrock";
+  if (direction === "requested" && namespace === "gateway") {
+    const metadata = serviceTierMetadata({
+      requested: isObject(options.gateway)
+        ? options.gateway.serviceTier
+        : undefined,
+    });
+    if (Object.keys(metadata).length) return metadata;
+    namespace =
+      typeof modelId === "string" && modelId.includes("/")
+        ? modelId.split("/")[0]
+        : undefined;
+  }
+  // Azure Responses falls back to OpenAI options only when Azure options are absent.
+  if (
+    direction === "requested" &&
+    namespace === "azure" &&
+    options.azure == null
+  )
+    namespace = "openai";
+  if (direction === "requested" && !namespace) return {};
   for (const name of PROVIDERS) {
-    if (
-      namespace &&
-      (namespace === "amazon-bedrock" ? "bedrock" : namespace) !== name
-    )
-      continue;
+    if (namespace && namespace !== name) continue;
     const value = options[name];
     if (!isObject(value)) continue;
     const tier =

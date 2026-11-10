@@ -399,7 +399,8 @@ span_tree:
     │   │           "sdk_language": "typescript"
     │   │         },
     │   │         "model": "gpt-5.4-nano-2026-03-17",
-    │   │         "provider": "openai.responses"
+    │   │         "provider": "openai.responses",
+    │   │         "served_service_tier": "default"
     │   │       }
     │   │       metrics: {
     │   │         "completion_tokens": 6,
@@ -1717,7 +1718,8 @@ span_tree:
     │       │       "sdk_language": "typescript"
     │       │     },
     │       │     "model": "gpt-5.4-nano-2026-03-17",
-    │       │     "provider": "openai.responses"
+    │       │     "provider": "openai.responses",
+    │       │     "served_service_tier": "default"
     │       │   }
     │       │   metrics: {
     │       │     "completion_tokens": 44,
@@ -3050,7 +3052,8 @@ span_tree:
     │       │       "sdk_language": "typescript"
     │       │     },
     │       │     "model": "gpt-5.4-nano-2026-03-17",
-    │       │     "provider": "openai.responses"
+    │       │     "provider": "openai.responses",
+    │       │     "served_service_tier": "default"
     │       │   }
     │       │   metrics: {
     │       │     "completion_tokens": 44,
@@ -3725,7 +3728,8 @@ span_tree:
     │               "sdk_language": "typescript"
     │             },
     │             "model": "gpt-5.4-nano-2026-03-17",
-    │             "provider": "openai.responses"
+    │             "provider": "openai.responses",
+    │             "served_service_tier": "default"
     │           }
     │           metrics: {
     │             "completion_tokens": 6,
@@ -4048,7 +4052,8 @@ span_tree:
     │               "sdk_language": "typescript"
     │             },
     │             "model": "gpt-5.4-nano-2026-03-17",
-    │             "provider": "openai.responses"
+    │             "provider": "openai.responses",
+    │             "served_service_tier": "default"
     │           }
     │           metrics: {
     │             "completion_tokens": 12,
@@ -4351,7 +4356,8 @@ span_tree:
     │               "sdk_language": "typescript"
     │             },
     │             "model": "gpt-5.4-nano-2026-03-17",
-    │             "provider": "openai.responses"
+    │             "provider": "openai.responses",
+    │             "served_service_tier": "default"
     │           }
     │           metrics: {
     │             "completion_tokens": 12,
@@ -4692,7 +4698,8 @@ span_tree:
     │               "sdk_language": "typescript"
     │             },
     │             "model": "gpt-5.4-nano-2026-03-17",
-    │             "provider": "openai.responses"
+    │             "provider": "openai.responses",
+    │             "served_service_tier": "default"
     │           }
     │           metrics: {
     │             "completion_tokens": 5,
@@ -5860,7 +5867,8 @@ span_tree:
     │       │       "sdk_language": "typescript"
     │       │     },
     │       │     "model": "gpt-5.4-nano-2026-03-17",
-    │       │     "provider": "openai.responses"
+    │       │     "provider": "openai.responses",
+    │       │     "served_service_tier": "default"
     │       │   }
     │       │   metrics: {
     │       │     "completion_tokens": 20,
@@ -6014,7 +6022,8 @@ span_tree:
     │       │       "sdk_language": "typescript"
     │       │     },
     │       │     "model": "gpt-5.4-nano-2026-03-17",
-    │       │     "provider": "openai.responses"
+    │       │     "provider": "openai.responses",
+    │       │     "served_service_tier": "default"
     │       │   }
     │       │   metrics: {
     │       │     "completion_tokens": 20,
@@ -6205,7 +6214,8 @@ span_tree:
     │       │       "sdk_language": "typescript"
     │       │     },
     │       │     "model": "gpt-5.4-nano-2026-03-17",
-    │       │     "provider": "openai.responses"
+    │       │     "provider": "openai.responses",
+    │       │     "served_service_tier": "default"
     │       │   }
     │       │   metrics: {
     │       │     "completion_tokens": 20,
@@ -6433,7 +6443,8 @@ span_tree:
     │       │       "sdk_language": "typescript"
     │       │     },
     │       │     "model": "gpt-5.4-nano-2026-03-17",
-    │       │     "provider": "openai.responses"
+    │       │     "provider": "openai.responses",
+    │       │     "served_service_tier": "default"
     │       │   }
     │       │   metrics: {
     │       │     "completion_tokens": 20,
@@ -7036,7 +7047,8 @@ span_tree:
     │       │       "sdk_language": "typescript"
     │       │     },
     │       │     "model": "gpt-5.4-nano-2026-03-17",
-    │       │     "provider": "openai.responses"
+    │       │     "provider": "openai.responses",
+    │       │     "served_service_tier": "default"
     │       │   }
     │       │   metrics: {
     │       │     "completion_tokens": 15,
@@ -7177,7 +7189,8 @@ span_tree:
     │       │       "sdk_language": "typescript"
     │       │     },
     │       │     "model": "gpt-5.4-nano-2026-03-17",
-    │       │     "provider": "openai.responses"
+    │       │     "provider": "openai.responses",
+    │       │     "served_service_tier": "default"
     │       │   }
     │       │   metrics: {
     │       │     "completion_tokens": 15,
@@ -7783,7 +7796,8 @@ span_tree:
     │       │       "sdk_language": "typescript"
     │       │     },
     │       │     "model": "gpt-5.4-nano-2026-03-17",
-    │       │     "provider": "openai.responses"
+    │       │     "provider": "openai.responses",
+    │       │     "served_service_tier": "default"
     │       │   }
     │       │   metrics: {
     │       │     "completion_tokens": 15,
@@ -7924,7 +7938,8 @@ span_tree:
     │       │       "sdk_language": "typescript"
     │       │     },
     │       │     "model": "gpt-5.4-nano-2026-03-17",
-    │       │     "provider": "openai.responses"
+    │       │     "provider": "openai.responses",
+    │       │     "served_service_tier": "default"
     │       │   }
     │       │   metrics: {
     │       │     "completion_tokens": 15,
@@ -8249,7 +8264,8 @@ span_tree:
     │           "sdk_language": "typescript"
     │         },
     │         "model": "claude-haiku-4-5",
-    │         "provider": "anthropic.messages"
+    │         "provider": "anthropic.messages",
+    │         "served_service_tier": "standard"
     │       }
     │       metrics: {
     │         "completion_tokens": 7,
@@ -8566,7 +8582,8 @@ span_tree:
     │   │           "sdk_language": "typescript"
     │   │         },
     │   │         "model": "claude-haiku-4-5",
-    │   │         "provider": "anthropic.messages"
+    │   │         "provider": "anthropic.messages",
+    │   │         "served_service_tier": "standard"
     │   │       }
     │   │       metrics: {
     │   │         "completion_tokens": 7,
@@ -8878,7 +8895,8 @@ span_tree:
     │               "sdk_language": "typescript"
     │             },
     │             "model": "claude-haiku-4-5",
-    │             "provider": "anthropic.messages"
+    │             "provider": "anthropic.messages",
+    │             "served_service_tier": "standard"
     │           }
     │           metrics: {
     │             "completion_tokens": 7,
@@ -9045,7 +9063,8 @@ span_tree:
     │               "sdk_language": "typescript"
     │             },
     │             "model": "gpt-5.4-nano-2026-03-17",
-    │             "provider": "openai.responses"
+    │             "provider": "openai.responses",
+    │             "served_service_tier": "default"
     │           }
     │           metrics: {
     │             "completion_tokens": 12,
@@ -9210,7 +9229,8 @@ span_tree:
     │               "sdk_language": "typescript"
     │             },
     │             "model": "gpt-5.4-nano-2026-03-17",
-    │             "provider": "openai.responses"
+    │             "provider": "openai.responses",
+    │             "served_service_tier": "default"
     │           }
     │           metrics: {
     │             "completion_tokens": 12,
@@ -9498,7 +9518,8 @@ span_tree:
     │               "sdk_language": "typescript"
     │             },
     │             "model": "gpt-5.4-nano-2026-03-17",
-    │             "provider": "openai.responses"
+    │             "provider": "openai.responses",
+    │             "served_service_tier": "default"
     │           }
     │           metrics: {
     │             "completion_tokens": 6,
@@ -9789,7 +9810,8 @@ span_tree:
     │               "sdk_language": "typescript"
     │             },
     │             "model": "gpt-5.4-nano-2026-03-17",
-    │             "provider": "openai.responses"
+    │             "provider": "openai.responses",
+    │             "served_service_tier": "default"
     │           }
     │           metrics: {
     │             "completion_tokens": 7,
@@ -10706,7 +10728,8 @@ span_tree:
     │       │       "sdk_language": "typescript"
     │       │     },
     │       │     "model": "gpt-5.4-nano-2026-03-17",
-    │       │     "provider": "openai.responses"
+    │       │     "provider": "openai.responses",
+    │       │     "served_service_tier": "default"
     │       │   }
     │       │   metrics: {
     │       │     "completion_tokens": 62,
@@ -10942,7 +10965,8 @@ span_tree:
     │       │       "sdk_language": "typescript"
     │       │     },
     │       │     "model": "gpt-5.4-nano-2026-03-17",
-    │       │     "provider": "openai.responses"
+    │       │     "provider": "openai.responses",
+    │       │     "served_service_tier": "default"
     │       │   }
     │       │   metrics: {
     │       │     "completion_tokens": 24,
@@ -11198,7 +11222,8 @@ span_tree:
     │               "sdk_language": "typescript"
     │             },
     │             "model": "gpt-5.4-nano-2026-03-17",
-    │             "provider": "openai.responses"
+    │             "provider": "openai.responses",
+    │             "served_service_tier": "default"
     │           }
     │           metrics: {
     │             "completion_tokens": 59,
@@ -11954,7 +11979,8 @@ span_tree:
     │   │   │       "sdk_language": "typescript"
     │   │   │     },
     │   │   │     "model": "gpt-5.4-nano-2026-03-17",
-    │   │   │     "provider": "openai.responses"
+    │   │   │     "provider": "openai.responses",
+    │   │   │     "served_service_tier": "default"
     │   │   │   }
     │   │   │   metrics: {
     │   │   │     "completion_tokens": 26,
@@ -12424,7 +12450,8 @@ span_tree:
     │       │       "sdk_language": "typescript"
     │       │     },
     │       │     "model": "gpt-5.4-nano-2026-03-17",
-    │       │     "provider": "openai.responses"
+    │       │     "provider": "openai.responses",
+    │       │     "served_service_tier": "default"
     │       │   }
     │       │   metrics: {
     │       │     "completion_tokens": 17,
@@ -13195,7 +13222,8 @@ span_tree:
         │   │       "sdk_language": "typescript"
         │   │     },
         │   │     "model": "gpt-5.4-nano-2026-03-17",
-        │   │     "provider": "openai.responses"
+        │   │     "provider": "openai.responses",
+        │   │     "served_service_tier": "default"
         │   │   }
         │   │   metrics: {
         │   │     "completion_tokens": 26,
@@ -13665,7 +13693,8 @@ span_tree:
             │       "sdk_language": "typescript"
             │     },
             │     "model": "gpt-5.4-nano-2026-03-17",
-            │     "provider": "openai.responses"
+            │     "provider": "openai.responses",
+            │     "served_service_tier": "default"
             │   }
             │   metrics: {
             │     "completion_tokens": 17,

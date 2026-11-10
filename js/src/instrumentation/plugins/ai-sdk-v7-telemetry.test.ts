@@ -52,6 +52,93 @@ describe("braintrustAISDKTelemetry", () => {
     vi.unstubAllEnvs();
   });
 
+  it.each(["generateText", "streamText", "generateObject"])(
+    "captures %s tiers with content capture disabled and resets them between steps",
+    async (operation) => {
+      const telemetry = braintrustAISDKTelemetry();
+      const event = {
+        callId: "tiers",
+        operationId: `ai.${operation}`,
+        provider: "openai.responses",
+        modelId: "test-model",
+        recordInputs: false,
+        recordOutputs: false,
+      };
+      telemetry.onStart({
+        ...event,
+        providerOptions: { openai: { serviceTier: "flex" } },
+      });
+      for (const [index, requested] of ["priority", undefined].entries()) {
+        telemetry.onStepStart({
+          ...event,
+          providerOptions: requested
+            ? { openai: { serviceTier: requested } }
+            : undefined,
+        });
+        if (operation === "generateObject") telemetry.onObjectStepStart(event);
+        else telemetry.onLanguageModelCallStart(event);
+        const end = {
+          ...event,
+          providerMetadata:
+            index === 0 ? { openai: { serviceTier: " DEFAULT " } } : undefined,
+        };
+        if (operation === "generateObject") telemetry.onObjectStepEnd(end);
+        else telemetry.onLanguageModelCallEnd(end);
+      }
+      telemetry.onEnd(event);
+      const rows = (await backgroundLogger.drain()) as Array<
+        Record<string, any>
+      >;
+      const models = rows.filter((row) => row.span_attributes?.type === "llm");
+      expect(models).toHaveLength(2);
+      expect(models[0].metadata).toMatchObject({
+        requested_service_tier: "priority",
+        served_service_tier: "default",
+      });
+      expect(models[1].metadata).not.toHaveProperty("requested_service_tier");
+      expect(models[1].metadata).not.toHaveProperty("served_service_tier");
+      for (const model of models) {
+        expect(model).not.toHaveProperty("input");
+        expect(model).not.toHaveProperty("output");
+      }
+    },
+  );
+
+  it.each(["onAbort", "onError"])(
+    "retains observed stream tiers on %s",
+    async (ending) => {
+      const telemetry = braintrustAISDKTelemetry();
+      const event = {
+        callId: "tiers",
+        operationId: "ai.streamText",
+        provider: "gateway",
+        modelId: "openai/test-model",
+      };
+      telemetry.onStart({
+        ...event,
+        providerOptions: { gateway: { serviceTier: "flex" } },
+      });
+      telemetry.onLanguageModelCallStart(event);
+      for (const serviceTier of ["auto", "priority", null]) {
+        telemetry.onChunk({
+          chunk: {
+            callId: event.callId,
+            providerMetadata: { openai: { serviceTier } },
+          },
+        });
+      }
+      telemetry[ending]({ ...event, error: new Error("interrupted") });
+      const rows = (await backgroundLogger.drain()) as Array<
+        Record<string, any>
+      >;
+      const model = rows.find((row) => row.span_attributes?.type === "llm");
+      expect(model?.metadata).toMatchObject({
+        requested_service_tier: "flex",
+        served_service_tier: "priority",
+      });
+    },
+  );
+
   it.each(["Decide", "Evaluate"])(
     "captures %s telemetry as one question span",
     async (api) => {

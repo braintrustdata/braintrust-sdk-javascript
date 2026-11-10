@@ -250,7 +250,7 @@ export async function captureAISDKBatchStart(
       args.batch.status ?? "pending",
     );
     for (const request of args.requests) {
-      const data = await aiSDKBatchInput(request);
+      const data = await aiSDKBatchInput(request, context.batch.provider);
       requestSpan(trace, request.id, trace.children.get(request.id)!).log(data);
     }
     return JSON.stringify(context);
@@ -284,7 +284,7 @@ export async function captureAISDKBatchCompletion(
     const trace = await createTrace(context, args.requests, args.status.status);
     if (args.context === undefined) {
       for (const request of args.requests) {
-        const data = await aiSDKBatchInput(request);
+        const data = await aiSDKBatchInput(request, context.batch.provider);
         requestSpan(trace, request.id, trace.children.get(request.id)!).log(
           data,
         );
