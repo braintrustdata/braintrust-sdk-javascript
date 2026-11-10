@@ -5,7 +5,16 @@ The behavior changes below can affect applications even when their code still ty
 
 ## 1. Version support changes
 
-**Node.js:** The minimum supported version is now **22.18.0** for `braintrust` and the Braintrust integration packages.
+**Node.js:** The minimum supported version is now **22.18.0** for these packages:
+
+- `braintrust`
+- `@braintrust/audio`
+- `@braintrust/browser`
+- `@braintrust/deepseek-harness`
+- `@braintrust/otel`
+- `@braintrust/templates-nunjucks-js`
+- `@braintrust/temporal`
+
 This drops support for Node 18, Node 20, Node 21, and Node 22 versions before 22.18.0.
 
 **Browsers and edge runtimes:** SDK builds now target ES2022.
@@ -24,26 +33,23 @@ If you support older runtimes, include the SDK in your application's transpilati
 Importing `braintrust` no longer registers all provider integrations.
 This allows bundlers to remove unused integrations from your application.
 
-For bundler-based auto-instrumentation, add the following import to your application's startup code before making provider calls:
-
-```ts
-import "braintrust/auto";
-```
-
-Keep your Braintrust bundler plugin configured; `braintrust/auto` registers the integrations that handle instrumented calls, but does not transform provider code itself.
-This applies to Vite, Webpack, Rollup, esbuild, and Next.js setups that previously relied on importing `braintrust` to register integrations.
+Keep your Braintrust bundler plugin configured.
+The Vite, Webpack, Rollup, esbuild, and Next.js integrations automatically insert an import of `braintrust/auto` into instrumented provider modules, so no extra startup import is required.
+`braintrust/auto` registers the integrations that handle instrumented calls; the bundler plugin transforms provider code.
 
 The Node.js entrypoints `braintrust/hook.mjs` and `braintrust/apply-auto-instrumentation` already register integrations.
 Manual wrappers such as `wrapOpenAI()` and `wrapAISDK()` register their own integrations when called.
 
 Call `configureInstrumentation()` before loading `braintrust/auto`, the Node.js instrumentation entrypoints, or calling a wrapper.
-When configuring programmatically, use a dynamic import to preserve that order:
+With bundler auto-instrumentation, static provider imports can load the injected `braintrust/auto` before your startup code runs.
+Configuration after any integration has registered is ignored.
+Configure instrumentation in a startup module, then dynamically import the application module that imports and uses provider libraries:
 
 ```ts
 import { configureInstrumentation } from "braintrust/instrumentation";
 
 configureInstrumentation({ integrations: { openai: false } });
-await import("braintrust/auto");
+await import("./app.js");
 ```
 
 ### Logging and flushing
@@ -61,7 +67,8 @@ If you previously used `asyncFlush: false`, call and await `flush()` where you n
 ```
 
 Awaiting a log call or traced function does not wait for its logs to upload.
-Use `logger.flush()` to flush that logger's state, or `flush()` from `braintrust` to flush the default state, including registered OpenTelemetry flush handlers.
+Use `logger.flush()` to flush that logger's state, or `flush()` from `braintrust` to flush the default state.
+For OpenTelemetry spans, also flush your OpenTelemetry provider or processor; these native SDK flush methods do not drain its queue.
 For short-lived processes, await flushing before exiting.
 
 `logger.log()` now always returns a string ID.
@@ -320,12 +327,88 @@ import { braintrustFlueInstrumentation } from "braintrust/instrumentation";
 instrument(braintrustFlueInstrumentation());
 ```
 
-### OpenTelemetry and custom context managers
+### OpenTelemetry
+
+`@braintrust/otel` no longer depends on a specific OpenTelemetry SDK or exporter version.
+It supports OpenTelemetry SDK 1, 2, and 3 through the same package entrypoint.
+Install mutually compatible SDK, processor, and exporter packages for your chosen version; `@opentelemetry/api` remains a peer dependency at `^1.9.0`.
+Update `@braintrust/otel` alongside the core Braintrust SDK.
+
+`BraintrustSpanProcessor` now requires a `processor` instance, and `BraintrustExporter` requires an `exporter` instance.
+They no longer create an OTLP exporter or batch processor internally.
+Move `apiKey`, `apiUrl`, `parent`, and `headers` from their constructors to `braintrustOtlpConfig()`, which synchronously returns the URL and headers for your OTLP/HTTP exporter.
+Replace the internal `_spanProcessor` option with `processor`.
+
+For OpenTelemetry SDK 1 and 2:
+
+```ts
+import { NodeSDK } from "@opentelemetry/sdk-node";
+import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
+import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
+import {
+  BraintrustExporter,
+  BraintrustSpanProcessor,
+  braintrustOtlpConfig,
+} from "@braintrust/otel";
+
+const exporter = new BraintrustExporter({
+  exporter: new OTLPTraceExporter(
+    braintrustOtlpConfig({ parent: "project_name:my-project" }),
+  ),
+});
+const processor = new BraintrustSpanProcessor({
+  processor: new BatchSpanProcessor(exporter),
+});
+const sdk = new NodeSDK({ spanProcessors: [processor] });
+sdk.start();
+```
+
+For OpenTelemetry SDK 3, import `BatchSpanProcessor` from `@opentelemetry/sdk-trace` and construct it with `new BatchSpanProcessor({ exporter })` instead.
+The Braintrust adapter constructors stay the same.
+
+`braintrustOtlpConfig()` requires an API key and an explicit project or experiment through `parent` or `BRAINTRUST_PARENT`, for example `project_name:my-project`, `project_id:<id>`, or `experiment_id:<id>`.
+The API key defaults to `BRAINTRUST_API_KEY`, then the nearest `.env.braintrust` file in Node.js.
+Missing credentials or routing now throw during setup; there is no implicit default project.
+The helper does not create a project or register an OpenTelemetry provider.
+For a plain OTLP pipeline, you can pass its result directly to your exporter without either Braintrust adapter.
+
+Keep `filterAISpans`, `customFilter`, and `environment` on the Braintrust adapters.
+Configure filtering on one adapter to avoid evaluating your filter twice.
+Export customization now runs in `BraintrustExporter`; `BraintrustSpanProcessor` alone does not apply registered span customizers.
+Wrap the transport with `BraintrustExporter` when you use `configureInstrumentation({ spanCustomizers: [...] })`.
+For Next.js Edge, use `OTLPHttpJsonTraceExporter` from `@vercel/otel` as the downstream exporter; it uses `fetch` instead of the `XMLHttpRequest` required by the standard OTel browser exporter.
+
+The application now owns batching, queue limits, export timeouts, and provider shutdown.
+Flush the provider or processor to drain queued spans.
+`BraintrustExporter.forceFlush()` waits for batches already received and flushes its downstream exporter when supported; it cannot drain an upstream processor's queue.
+It no longer batches spans again or forces a transport flush after every export.
+
+Each `BraintrustSpanProcessor` registers its flush callback with Braintrust and removes it on shutdown.
+All registered callbacks run when Braintrust flushes OpenTelemetry spans, including before scorer queries.
+`registerOtelFlush()` now returns an unregister function instead of replacing the previous callback.
+If you use a plain OTLP pipeline without `BraintrustSpanProcessor`, register your provider explicitly so Braintrust can flush it before querying spans:
+
+```ts
+import { registerOtelFlush } from "braintrust/instrumentation";
+
+const unregister = registerOtelFlush(() => provider.forceFlush());
+// During application shutdown:
+unregister();
+await provider.shutdown();
+```
+
+For mixed native Braintrust and OpenTelemetry traces, register your OpenTelemetry provider and context manager before calling `setupOtelCompat()`.
+The bridge now uses public OpenTelemetry context APIs and requires a registered context manager for asynchronous propagation.
+Sampling flags and trace state are preserved across native and OpenTelemetry spans.
+`resetOtelCompat()` restores Braintrust's default context manager.
 
 - `contextFromSpanExport()` from `@braintrust/otel` has been removed.
   Use `contextFromSpan(span)` instead of `contextFromSpanExport(await span.export())`.
   For remote parents, propagate W3C headers.
 - `parentFromHeaders()` now returns `PropagationContext | undefined` instead of an exported span string.
+
+### Custom context managers
+
 - For custom context managers, use `configureContextManager(YourContextManager)` instead of mutating internal state or globals.
   Replace the `BRAINTRUST_CURRENT_SPAN_STORE` symbol property with `getCurrentSpanStore()`.
   Pass `undefined` to `configureContextManager()` to restore the default.
