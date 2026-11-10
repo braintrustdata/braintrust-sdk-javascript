@@ -1,222 +1,153 @@
 # @braintrust/otel
 
-[![npm version](https://img.shields.io/npm/v/%40braintrust%2Fotel.svg)](https://www.npmjs.com/package/@braintrust/otel)
+Connect an application's OpenTelemetry pipeline to Braintrust.
+The application selects and configures its OpenTelemetry SDK, processors, and transport.
+This package depends on the public `@opentelemetry/api` API and the matching Braintrust SDK, with no OpenTelemetry SDK peer dependencies.
 
-SDK for integrating [Braintrust](https://braintrust.dev) with [OpenTelemetry](https://opentelemetry.io/). This package enables you to send OpenTelemetry spans to Braintrust for logging and observability, and provides seamless interoperability between Braintrust and OpenTelemetry tracing contexts.
+## Export with standard OTLP
 
-## Installation
+Use your installed OTLP/HTTP exporter with Braintrust's endpoint and headers:
 
-This package has peer dependencies that you must install alongside it:
+```ts
+import { NodeSDK } from "@opentelemetry/sdk-node";
+import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
+import { braintrustOtlpConfig } from "@braintrust/otel";
 
-```bash
-npm install @braintrust/otel braintrust @opentelemetry/api @opentelemetry/core @opentelemetry/sdk-trace-base @opentelemetry/exporter-trace-otlp-http
-# or
-yarn add @braintrust/otel braintrust @opentelemetry/api @opentelemetry/core @opentelemetry/sdk-trace-base @opentelemetry/exporter-trace-otlp-http
-# or
-pnpm add @braintrust/otel braintrust @opentelemetry/api @opentelemetry/core @opentelemetry/sdk-trace-base @opentelemetry/exporter-trace-otlp-http
+const sdk = new NodeSDK({
+  traceExporter: new OTLPTraceExporter(
+    braintrustOtlpConfig({ parent: "project_name:my-project" }),
+  ),
+});
+sdk.start();
 ```
 
-If you're using additional OpenTelemetry features like context managers, you may also need:
+`braintrustOtlpConfig()` returns `{ url, headers }` synchronously.
+It does not create an exporter, contact Braintrust, register a provider, or create a project.
+The exporter determines the wire encoding and content type.
+Use exporter and SDK versions that are compatible with each other.
 
-```bash
-npm install @opentelemetry/context-async-hooks
+Options:
+
+- `apiKey`: defaults to `BRAINTRUST_API_KEY`, then the nearest `.env.braintrust` file in Node.js.
+- `apiUrl`: defaults to `BRAINTRUST_API_URL`, then `https://api.braintrust.dev`.
+- `parent`: a Braintrust project or experiment identifier, such as `project_name:my-project` or `project_id:<id>`; defaults to `BRAINTRUST_PARENT`.
+- `headers`: additional transport headers.
+  The resolved API key and parent take precedence over authorization and routing headers, including differently cased names.
+
+Missing credentials or parent configuration throw during setup.
+There is no implicit default project.
+
+## Braintrust processors and exporters
+
+Use the adapters when you need Braintrust routing, span origin metadata, AI filtering, or export customization.
+For OTel 3:
+
+```ts
+import { NodeSDK } from "@opentelemetry/sdk-node";
+import { BatchSpanProcessor } from "@opentelemetry/sdk-trace";
+import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
+import {
+  BraintrustExporter,
+  BraintrustSpanProcessor,
+  braintrustOtlpConfig,
+} from "@braintrust/otel";
+
+const exporter = new BraintrustExporter({
+  exporter: new OTLPTraceExporter(
+    braintrustOtlpConfig({ parent: "project_name:my-project" }),
+  ),
+});
+const processor = new BraintrustSpanProcessor({
+  processor: new BatchSpanProcessor({ exporter }),
+  filterAISpans: true,
+});
+const sdk = new NodeSDK({ spanProcessors: [processor] });
+sdk.start();
 ```
 
-## Requirements
+For OTel 1 and 2, import `BatchSpanProcessor` from `@opentelemetry/sdk-trace-base` and construct it with `new BatchSpanProcessor(exporter)`.
+The Braintrust adapters use the same entry point and options for all three SDK lines.
 
-- Node.js >= 16
-- OpenTelemetry API >= 1.9.0
-- OpenTelemetry SDK >= 1.9.0
-- Braintrust >= 0.5.0
+`BraintrustSpanProcessor` accepts a required `processor` instance.
+It adds Braintrust routing from the supplied parent context, propagator baggage, parent span attributes, or active native Braintrust span.
+It adds span origin metadata and optionally filters completed spans before forwarding them.
+It forwards processor lifecycle hooks, including OTel 3’s optional `onEnding` hook.
+It does not create a batch processor or exporter.
 
-This package supports both OpenTelemetry 1.x and 2.x versions.
+`BraintrustExporter` accepts a required `exporter` instance.
+It enriches completed batches, optionally filters them, applies registered Braintrust span customizers, and forwards the resulting batch.
+It does not batch spans again or force a transport flush after every export.
+A processor alone does not apply export customizers; put `BraintrustExporter` around the transport when those customizers are required.
 
-Note: You may run into a known [OpenTelemetry browser bug](https://github.com/open-telemetry/opentelemetry-js/issues/3545) with `@opentelemetry/exporter-trace-otlp-http` < 0.205.0. If you encounter this issue, upgrade the `@opentelemetry/exporter-trace-otlp-http` and related packages to a minimum of:
+Both adapters accept:
 
-- `@opentelemetry/exporter-trace-otlp-http` >= 0.205.0
-- `@opentelemetry/sdk-trace-base` >= 2.1.0
-- `@opentelemetry/api` >= 2.1.0
-- `@opentelemetry/core` >= 2.1.0
+- `filterAISpans`: defaults to `false`.
+  When enabled, only spans with names or attributes starting with `gen_ai.`, `braintrust.`, `llm.`, `ai.`, or `traceloop.` pass.
+  Routing and origin attributes alone do not make a span an AI span.
+  Root spans receive no automatic exemption.
+- `customFilter`: with filtering enabled, return `true` to keep a span, `false` to drop it, or `null`/`undefined` to use the default filter.
+- `environment`: optional `{ type, name }` span origin metadata, otherwise inferred from the runtime environment.
 
-It's **important** that `@opentelemetry/core` and related packages all use the same major version (1.x or 2.x).
+Configure filtering on one adapter to avoid evaluating your filter twice.
+The SDK owns sampling, batching, queue limits, and export timeouts.
+The transport owns serialization and retries.
 
-## Capabilities
+For Next.js Edge, use `OTLPHttpJsonTraceExporter` from `@vercel/otel` as the downstream exporter.
+It uses `fetch`, which the Edge runtime supports.
+The standard OTel browser exporter can require `XMLHttpRequest`.
 
-This integration provides two main capabilities:
+## Context interoperability
 
-1. **Export OpenTelemetry spans to Braintrust**: Use `BraintrustSpanProcessor` to send your OpenTelemetry traces to Braintrust for logging, monitoring, and analysis.
-
-2. **Bidirectional interoperability between Braintrust and OpenTelemetry**: Use `setupOtelCompat()` to enable Braintrust spans and OpenTelemetry spans to work together in the same unified trace. This allows:
-   - OpenTelemetry spans to be children of Braintrust spans
-   - Braintrust spans to be children of OpenTelemetry spans
-   - Both systems share the same trace/span IDs (using OpenTelemetry's format)
-   - Seamless context propagation across service boundaries, regardless of which tracing system each service uses
-
-## Core Components
-
-### `BraintrustSpanProcessor`
-
-A span processor that sends OpenTelemetry spans to Braintrust's telemetry endpoint.
-
-**When to use it**: Add this processor to your OpenTelemetry `TracerProvider` when you want to export OpenTelemetry spans to Braintrust. This is useful when you're already using OpenTelemetry instrumentation and want to leverage Braintrust's logging and observability features.
-
-**Key features**:
-
-- Automatically sends spans to Braintrust using OTLP protocol
-- Optional AI span filtering to reduce noise from non-AI operations
-- Supports custom filtering logic
-- Configurable via options or environment variables
-
-```typescript
-import { BasicTracerProvider } from "@opentelemetry/sdk-trace-base";
-import { trace } from "@opentelemetry/api";
-import { BraintrustSpanProcessor } from "@braintrust/otel";
-
-const provider = new BasicTracerProvider();
-provider.addSpanProcessor(
-  new BraintrustSpanProcessor({
-    apiKey: "your-api-key", // or set BRAINTRUST_API_KEY env var
-    parent: "project_name:my_project", // or set BRAINTRUST_PARENT env var
-    filterAISpans: true, // optional: filter out non-AI spans
-  }),
-);
-
-trace.setGlobalTracerProvider(provider);
-```
-
-**Configuration options**:
-
-- `apiKey` (string, optional): Braintrust API key. Falls back to the `BRAINTRUST_API_KEY` environment variable, then the nearest `.env.braintrust` file in Node.js.
-- `apiUrl` (string, optional): Braintrust API URL. Falls back to `BRAINTRUST_API_URL` environment variable. Defaults to `https://api.braintrust.dev`.
-- `parent` (string, optional): Parent project identifier in format `project_name:my_project` or `project_id:uuid`. Falls back to `BRAINTRUST_PARENT` environment variable.
-- `filterAISpans` (boolean, optional): When true, filters out non-AI spans. Only spans with prefixes like `gen_ai.*`, `llm.*`, `ai.*`, `braintrust.*`, or `traceloop.*` will be sent. Defaults to false.
-- `customFilter` (function, optional): Custom filter function for advanced span filtering logic.
-- `headers` (object, optional): Additional HTTP headers to send with telemetry data.
-
-### `setupOtelCompat()`
-
-Configures Braintrust to use OpenTelemetry's context management and ID generation, enabling bidirectional interoperability.
-
-**When to use it**: Call this function **once at application startup, before creating any Braintrust loggers or OpenTelemetry spans**. This configures Braintrust to integrate with OpenTelemetry tracing contexts and enables:
-
-- **Braintrust spans to appear as children of OpenTelemetry spans**: When you create a Braintrust span inside an OpenTelemetry span context, it automatically becomes a child
-- **OpenTelemetry spans to appear as children of Braintrust spans**: When you create an OpenTelemetry span inside a Braintrust span context, it automatically becomes a child
-- **Unified trace structure**: Both systems use OpenTelemetry-compatible trace and span IDs, so spans from both systems appear in the same trace tree
-- **Distributed tracing**: Proper context propagation across services that use different tracing systems
-
-```typescript
+```ts
 import { setupOtelCompat } from "@braintrust/otel";
-import { initLogger } from "braintrust";
 
-// IMPORTANT: Call setupOtelCompat() before creating any Braintrust loggers or OpenTelemetry spans
+// Register your OTel provider and context manager first.
 setupOtelCompat();
-
-// Now Braintrust will use OpenTelemetry context management
-const logger = initLogger({ projectName: "my_project" });
 ```
 
-**What it does**:
+Native Braintrust spans and OTel spans can then share trace IDs and parent relationships.
+The bridge uses only public OTel context APIs, including for instrumentation store propagation.
+It requires a registered OTel context manager for asynchronous propagation.
+`resetOtelCompat()` restores Braintrust's default context manager.
 
-- Sets Braintrust to use OpenTelemetry's context manager for parent-child span relationships
-- Enables seamless mixing of Braintrust and OpenTelemetry spans in the same trace
+For explicit propagation:
 
-## Distributed Tracing Helpers
+- `contextFromSpan(span)` creates an OTel parent context from a native Braintrust span, including trace identity, trace state, and Braintrust baggage routing.
+- `addParentToBaggage(parent, context?)` returns a context containing Braintrust routing baggage.
+- `addSpanParentToBaggage(span, context?)` copies the span's routing attribute into baggage.
+- `parentFromHeaders(headers)` extracts native Braintrust propagation context from W3C headers.
 
-These utilities enable distributed tracing across services that use different tracing systems (Braintrust and OpenTelemetry).
+Use the returned context with `context.with(...)` or as the explicit parent argument to `tracer.startSpan(...)`.
+These helpers do not replace the active context by themselves.
 
-### `contextFromSpan(span: Span)`
+## Flush and shutdown
 
-Creates an OpenTelemetry context from a Braintrust span using W3C Trace Context.
+Flush the application's provider or processor to drain the SDK's queue.
+`BraintrustExporter.forceFlush()` only waits for batches already received and flushes its downstream exporter when that method is available.
+It cannot flush a queue that belongs to an upstream processor.
 
-**When to use it**: When Braintrust and OpenTelemetry code run in the same process and an OpenTelemetry operation should be a child of a Braintrust span. Across services, propagate the headers returned by `span.inject()` instead.
+Each `BraintrustSpanProcessor` registers its downstream flush with Braintrust and removes its registration during shutdown.
+Multiple processors can be registered at the same time.
+The application owns provider shutdown; adapter shutdown delegates to its downstream instance once.
 
-```typescript
-import { contextFromSpan } from "@braintrust/otel";
-import { context } from "@opentelemetry/api";
+For the plain OTLP configuration path, connect a provider explicitly if Braintrust scorers need to flush OTel spans before querying:
 
-const ctx = contextFromSpan(spanA);
-await context.with(ctx, async () => {
-  // OpenTelemetry spans created here will be children of Service A's span
-  await tracer.startActiveSpan("service_b_operation", async (span) => {
-    // ...
-    span.end();
-  });
-});
+```ts
+import { registerOtelFlush } from "braintrust/instrumentation";
+
+const unregister = registerOtelFlush(() => provider.forceFlush());
+// When the application shuts down:
+unregister();
+await provider.shutdown();
 ```
 
-### `addSpanParentToBaggage(span: Span, ctx?: Context)`
+## Migration
 
-Copies the `braintrust.parent` attribute from an OpenTelemetry span to OpenTelemetry baggage.
+Replace `new BraintrustSpanProcessor({ apiKey, parent })` with an application-owned processor and exporter, as shown above.
+Move credentials, API URL, parent, and custom headers to `braintrustOtlpConfig()`.
+Replace the internal `_spanProcessor` option with the required `processor` option.
+Replace `new BraintrustExporter({ apiKey, parent })` with `new BraintrustExporter({ exporter: ... })`.
+Keep customizers at the exporter boundary and flush the provider or processor instead of relying on the old nested batch processor.
 
-**When to use it**: When you need to propagate Braintrust parent information across service boundaries using OpenTelemetry's propagation mechanism (typically before calling `propagation.inject()`).
-
-```typescript
-import { addSpanParentToBaggage } from "@braintrust/otel";
-import { propagation, context } from "@opentelemetry/api";
-
-tracer.startActiveSpan("service_a", async (span) => {
-  // Copy braintrust.parent to baggage so it propagates
-  const ctx = addSpanParentToBaggage(span);
-
-  // Export headers for downstream service
-  const headers = {};
-  propagation.inject(ctx, headers);
-
-  // Send headers to Service B
-  await fetch("https://service-b/api", { headers });
-
-  span.end();
-});
-```
-
-### `addParentToBaggage(parent: string, ctx?: Context)`
-
-Adds a Braintrust parent identifier directly to OpenTelemetry baggage.
-
-**When to use it**: When you have a Braintrust parent string and want to add it to OpenTelemetry context for propagation.
-
-```typescript
-import { addParentToBaggage } from "@braintrust/otel";
-
-const parent = "project_name:my_project";
-const ctx = addParentToBaggage(parent);
-// Now ctx contains braintrust.parent in baggage
-```
-
-### `parentFromHeaders(headers: Record<string, string>)`
-
-Extracts Braintrust parent information from HTTP headers that contain OpenTelemetry trace context.
-
-**When to use it**: When Service A uses OpenTelemetry and sends trace headers to Service B that uses Braintrust. This allows Service B to create Braintrust spans as children of Service A's span.
-
-```typescript
-import { parentFromHeaders } from "@braintrust/otel";
-import { initLogger } from "braintrust";
-
-// Service B receives headers from Service A (OpenTelemetry)
-const parent = parentFromHeaders(incomingHeaders);
-
-// Create Braintrust span as child of Service A's span
-const logger = initLogger({ projectName: "my_project" });
-await logger.traced(
-  async (span) => {
-    // This span will be a child of Service A's span
-    span.log({ message: "Processing in Service B" });
-  },
-  { name: "service_b_operation", parent },
-);
-```
-
-## Environment Variables
-
-The following environment variables can be used to configure the integration:
-
-- `BRAINTRUST_API_KEY`: Your Braintrust API key (required for `BraintrustSpanProcessor`; in Node.js, this can also be set in the nearest `.env.braintrust` file)
-- `BRAINTRUST_PARENT`: Parent project identifier (e.g., `project_name:my_project`)
-- `BRAINTRUST_API_URL`: Braintrust API endpoint (defaults to `https://api.braintrust.dev`)
-
-## Documentation
-
-- [Braintrust Documentation](https://docs.braintrust.dev)
-- [OpenTelemetry Documentation](https://opentelemetry.io/docs/)
-- [Braintrust OTEL Guide](https://docs.braintrust.dev/integrations/sdk-integrations/opentelemetry/send-traces-and-logs)
+No `/v3` entry point or runtime SDK version detection is required.
+Compatibility tests cover OTel 1, 2, and 3; new SDK versions still require verification of their public span contracts.

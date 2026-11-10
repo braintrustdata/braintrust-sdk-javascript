@@ -2,6 +2,7 @@ import { OtelContextManager } from "./context";
 import { configureContextManager } from "braintrust";
 
 export {
+  braintrustOtlpConfig,
   contextFromSpan,
   addSpanParentToBaggage,
   addParentToBaggage,

@@ -26,10 +26,7 @@ export function createTracerProvider(
   processors: any[],
   config?: any,
 ): any {
-  // Create a test provider to detect which API version we're using
-  const testProvider = new ProviderClass(config || {});
-
-  if (typeof testProvider.addSpanProcessor === "function") {
+  if (typeof ProviderClass.prototype.addSpanProcessor === "function") {
     // OTel 1.x: Has addSpanProcessor method
     const provider = new ProviderClass(config);
     for (const processor of processors) {
@@ -69,8 +66,10 @@ export function getParentSpanId(span: any): string | undefined {
   return undefined;
 }
 
-import path from "path";
-import fs from "fs";
+import path from "node:path";
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+import fs from "node:fs";
 
 /**
  * Detect if we're in v1 or v2 based on the calling directory.

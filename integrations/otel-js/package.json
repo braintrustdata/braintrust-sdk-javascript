@@ -17,10 +17,11 @@
     "check:typings": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
     "watch": "vp pack --watch",
     "clean": "rm -r dist/*",
-    "test": "pnpm test:v1 && pnpm test:v2",
+    "test": "pnpm test:v1 && pnpm test:v2 && pnpm test:v3",
     "test:v1": "cd otel-v1 && pnpm test",
     "test:v2": "cd otel-v2 && pnpm test",
-    "yalc:publish": "yalc publish"
+    "yalc:publish": "yalc publish",
+    "test:v3": "cd otel-v3 && pnpm test"
   },
   "author": "Braintrust Data Inc.",
   "license": "MIT",
@@ -29,31 +30,16 @@
     "@types/node": "^22.15.21",
     "braintrust": "workspace:*",
     "typescript": "5.5.4",
-    "vite-plus": "catalog:"
+    "vite-plus": "catalog:",
+    "@opentelemetry/api": "1.9.0",
+    "@opentelemetry/core": "2.0.0",
+    "@opentelemetry/sdk-trace-base": "2.0.0",
+    "@opentelemetry/exporter-trace-otlp-http": "0.200.0",
+    "@opentelemetry/resources": "2.0.0"
   },
   "peerDependencies": {
-    "@opentelemetry/api": ">=1.9.0",
-    "@opentelemetry/core": ">=1.9.0",
-    "@opentelemetry/exporter-trace-otlp-http": ">=0.35.0",
-    "@opentelemetry/sdk-trace-base": ">=1.9.0",
-    "braintrust": ">=1.0.0-0"
-  },
-  "peerDependenciesMeta": {
-    "braintrust": {
-      "optional": false
-    },
-    "@opentelemetry/api": {
-      "optional": false
-    },
-    "@opentelemetry/exporter-trace-otlp-http": {
-      "optional": false
-    },
-    "@opentelemetry/sdk-trace-base": {
-      "optional": false
-    },
-    "@opentelemetry/core": {
-      "optional": false
-    }
+    "@opentelemetry/api": "^1.9.0",
+    "braintrust": "workspace:^"
   },
   "repository": {
     "type": "git",
@@ -70,5 +56,8 @@
   "engines": {
     "node": ">=22.18.0"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ]
 }

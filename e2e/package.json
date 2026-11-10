@@ -23,6 +23,7 @@
     "typescript": "5.4.4",
     "vitest": "catalog:",
     "zod": "4.3.6",
-    "vite-plus": "catalog:"
+    "vite-plus": "catalog:",
+    "@opentelemetry/exporter-trace-otlp-http": "0.217.0"
   }
 }
