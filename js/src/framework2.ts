@@ -8,8 +8,6 @@ import {
   type FunctionTypeEnumType as FunctionType,
   type IfExistsType as IfExists,
   type SavedFunctionIdType as SavedFunctionId,
-  type PromptBlockDataType as PromptBlockData,
-  type PromptDataType as PromptData,
   ToolFunctionDefinition as toolFunctionDefinitionSchema,
   type ToolFunctionDefinitionType as ToolFunctionDefinition,
   FunctionData as functionDataSchema,
@@ -28,6 +26,7 @@ import type { BaseFnOpts, GenericFunction } from "./framework-types";
 import type { EvalParameters } from "./eval-parameters";
 import {
   promptDefinitionToPromptData,
+  type PromptData,
   type PromptDefinition,
 } from "./prompt-schemas";
 import { zodToJsonSchema, type ZodSchema } from "./zod/utils";
@@ -265,30 +264,13 @@ export class ScorerBuilder {
       });
       this.project.addCodeFunction(scorer);
     } else {
-      const promptBlock: PromptBlockData =
-        "messages" in opts
-          ? {
-              type: "chat",
-              messages: opts.messages,
-            }
-          : {
-              type: "completion",
-              content: opts.prompt,
-            };
       const promptData: PromptData = {
-        prompt: promptBlock,
-        options: {
-          model: opts.model,
-          params: opts.params,
-        },
+        ...promptDefinitionToPromptData(opts),
         parser: {
           type: "llm_classifier",
           use_cot: opts.useCot,
           choice_scores: opts.choiceScores,
         },
-        ...(opts.templateFormat
-          ? { template_format: opts.templateFormat }
-          : {}),
       };
       const codePrompt = new CodePrompt(
         this.project,

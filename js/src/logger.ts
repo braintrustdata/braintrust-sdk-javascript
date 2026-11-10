@@ -94,17 +94,23 @@ import {
   type ChatCompletionOpenAIMessageParamType as OpenAIMessage,
   DatasetSnapshot as datasetSnapshotSchema,
   type DatasetSnapshotType as DatasetSnapshot,
-  PromptData as promptDataSchema,
-  type PromptDataType as PromptData,
-  Prompt as promptSchema,
-  type PromptType as PromptRow,
+  Prompt as generatedPromptSchema,
   type PromptSessionEventType as PromptSessionEvent,
   type RepoInfoType as RepoInfo,
   type ObjectReferenceType as ObjectReference,
-  type PromptBlockDataType as PromptBlockData,
   type ResponseFormatJsonSchemaType as ResponseFormatJsonSchema,
   type ObjectReferenceType,
 } from "./generated_types";
+import {
+  promptDataSchema,
+  type PromptBlockData,
+  type PromptData,
+} from "./prompt-schemas";
+
+const promptSchema = generatedPromptSchema.extend({
+  prompt_data: promptDataSchema.nullish(),
+});
+type PromptRow = z.infer<typeof promptSchema>;
 
 const BRAINTRUST_ATTACHMENT =
   BraintrustAttachmentReferenceSchema.shape.type.value;
@@ -9795,7 +9801,7 @@ export type CompletionPrompt = {
   prompt: string;
 };
 
-export type CompiledPrompt<Flavor extends "chat" | "completion"> =
+export type CompiledPrompt<Flavor extends PromptBlockData["type"]> =
   CompiledPromptParams & {
     span_info?: {
       name?: string;
@@ -9813,8 +9819,10 @@ export type CompiledPrompt<Flavor extends "chat" | "completion"> =
       ? ChatPrompt
       : Flavor extends "completion"
         ? CompletionPrompt
-        : // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-          {});
+        : Pick<
+            Extract<PromptBlockData, { type: "decisions" }>,
+            "input" | "questions"
+          >);
 
 export type DefaultPromptArgs = Partial<
   CompiledPromptParams & AnyModelParam & ChatPrompt & CompletionPrompt
@@ -10156,7 +10164,7 @@ export class Prompt<
    *
    * @param buildArgs Args to forward along to the prompt template.
    */
-  public build<Flavor extends "chat" | "completion" = "chat">(
+  public build<Flavor extends PromptBlockData["type"] = "chat">(
     buildArgs: unknown,
     options: {
       flavor?: Flavor;
@@ -10182,7 +10190,7 @@ export class Prompt<
    * @param buildArgs Args to forward along to the prompt template.
    */
   public async buildWithAttachments<
-    Flavor extends "chat" | "completion" = "chat",
+    Flavor extends PromptBlockData["type"] = "chat",
   >(
     buildArgs: unknown,
     options: {
@@ -10206,7 +10214,7 @@ export class Prompt<
     }) as CompiledPrompt<Flavor>;
   }
 
-  private runBuild<Flavor extends "chat" | "completion">(
+  private runBuild<Flavor extends PromptBlockData["type"]>(
     buildArgs: unknown,
     options: {
       flavor: Flavor;
@@ -10283,19 +10291,21 @@ export class Prompt<
       options: { ...options, templateFormat: resolvedTemplateFormat },
     });
 
-    if (flavor === "chat") {
-      if (renderedPrompt.type !== "chat") {
-        throw new Error(
-          "Prompt is a completion prompt. Use buildCompletion() instead",
-        );
-      }
+    if (renderedPrompt.type !== flavor) {
+      throw new Error(
+        `Prompt is a ${renderedPrompt.type} prompt. Use flavor: '${renderedPrompt.type}' instead`,
+      );
+    }
 
+    const renderedParams = renderPromptParams(params, variables, {
+      strict: options.strict,
+      templateFormat: resolvedTemplateFormat,
+    });
+
+    if (renderedPrompt.type === "chat") {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       return {
-        ...renderPromptParams(params, variables, {
-          strict: options.strict,
-          templateFormat: resolvedTemplateFormat,
-        }),
+        ...renderedParams,
         ...spanInfo,
         messages: renderedPrompt.messages,
         ...(renderedPrompt.tools
@@ -10306,19 +10316,20 @@ export class Prompt<
             }
           : undefined),
       } as CompiledPrompt<Flavor>;
-    } else if (flavor === "completion") {
-      if (renderedPrompt.type !== "completion") {
-        throw new Error(`Prompt is a chat prompt. Use flavor: 'chat' instead`);
-      }
-
+    } else if (renderedPrompt.type === "completion") {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       return {
-        ...renderPromptParams(params, variables, {
-          strict: options.strict,
-          templateFormat: resolvedTemplateFormat,
-        }),
+        ...renderedParams,
         ...spanInfo,
         prompt: renderedPrompt.content,
+      } as CompiledPrompt<Flavor>;
+    } else if (renderedPrompt.type === "decisions") {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      return {
+        ...renderedParams,
+        ...spanInfo,
+        input: renderedPrompt.input,
+        questions: renderedPrompt.questions,
       } as CompiledPrompt<Flavor>;
     } else {
       throw new Error("never!");
@@ -10359,14 +10370,13 @@ export class Prompt<
     };
 
     const templateFormat = parseTemplateFormat(options.templateFormat);
+    const render = (template: string) =>
+      renderTemplateContent(template, variables, escape, {
+        strict: options.strict,
+        templateFormat,
+      });
 
     if (prompt.type === "chat") {
-      const render = (template: string) =>
-        renderTemplateContent(template, variables, escape, {
-          strict: options.strict,
-          templateFormat: templateFormat,
-        });
-
       const baseMessages = (prompt.messages || []).map((m) =>
         renderMessageImpl(render, m, variables),
       );
@@ -10395,14 +10405,65 @@ export class Prompt<
         );
       }
 
-      const content = renderTemplateContent(prompt.content, variables, escape, {
-        strict: options.strict,
-        templateFormat: templateFormat,
-      });
       return {
         type: "completion",
-        content,
+        content: render(prompt.content),
       };
+    } else if (prompt.type === "decisions") {
+      if (options.messages) {
+        throw new Error(
+          "extra messages are not supported for decisions prompts",
+        );
+      }
+
+      let input: typeof prompt.input;
+      if (typeof prompt.input === "string") {
+        input = render(prompt.input);
+      } else {
+        input = prompt.input.map((message) => ({
+          ...message,
+          content:
+            typeof message.content === "string"
+              ? render(message.content)
+              : message.content.map((part) => ({
+                  ...part,
+                  text: render(part.text),
+                })),
+        }));
+      }
+
+      const questions = prompt.questions.map((question) => {
+        const renderedQuestion = { ...question };
+        if (question.name !== undefined) {
+          renderedQuestion.name = render(question.name);
+        }
+        renderedQuestion.instructions = render(question.instructions);
+
+        if (renderedQuestion.type === "choice") {
+          renderedQuestion.choices = renderedQuestion.choices.map((choice) => ({
+            ...choice,
+            value:
+              typeof choice.value === "string"
+                ? render(choice.value)
+                : choice.value,
+            ...(choice.description !== undefined
+              ? { description: render(choice.description) }
+              : {}),
+          }));
+        } else if (renderedQuestion.type === "score") {
+          renderedQuestion.levels = renderedQuestion.levels.map((level) => ({
+            ...level,
+            label: render(level.label),
+            ...(level.description !== undefined
+              ? { description: render(level.description) }
+              : {}),
+          }));
+        }
+
+        return renderedQuestion;
+      });
+
+      return { type: "decisions", input, questions };
     } else {
       const _: never = prompt;
       throw new Error(`Invalid prompt type: ${_}`);

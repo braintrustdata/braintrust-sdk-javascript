@@ -2321,6 +2321,38 @@ describe("prompt and parameters loaders", () => {
     expect(getJson.mock.calls[0][1]).not.toHaveProperty("environment");
   });
 
+  test("loadPrompt accepts saved decisions prompts", async () => {
+    getJson.mockResolvedValue({
+      objects: [
+        {
+          ...promptRow,
+          prompt_data: {
+            options: { model: "decision-model" },
+            prompt: {
+              type: "decisions",
+              input: "{{text}}",
+              questions: [
+                { type: "predicate", instructions: "Is {{text}} a greeting?" },
+              ],
+            },
+          },
+        },
+      ],
+    });
+    const prompt = await loadPrompt({
+      projectName: "test-project",
+      slug: "decisions-prompt",
+      state,
+    });
+    expect(
+      prompt.build({ text: "hello" }, { flavor: "decisions" }),
+    ).toMatchObject({
+      model: "decision-model",
+      input: "hello",
+      questions: [{ type: "predicate", instructions: "Is hello a greeting?" }],
+    });
+  });
+
   test("loadPrompt prefers version over environment for id lookup", async () => {
     getJson.mockResolvedValue(promptRow);
 

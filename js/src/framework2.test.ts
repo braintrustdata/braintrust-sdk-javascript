@@ -19,6 +19,34 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+test("decision scorers preserve questions and classifier settings", () => {
+  const project = projects.create({ name: "test-decision-scorers" });
+  const addPrompt = vi.spyOn(project, "addPrompt");
+  const questions = [
+    { type: "predicate" as const, instructions: "Is {{output}} correct?" },
+  ];
+  project.scorers.create({
+    name: "correctness",
+    model: "decision-model",
+    input: "{{input}}",
+    questions,
+    params: { temperature: 0 },
+    useCot: false,
+    choiceScores: { true: 1, false: 0 },
+    templateFormat: "none",
+  });
+  expect(addPrompt.mock.calls[0][0].prompt).toEqual({
+    prompt: { type: "decisions", input: "{{input}}", questions },
+    options: { model: "decision-model", params: { temperature: 0 } },
+    parser: {
+      type: "llm_classifier",
+      use_cot: false,
+      choice_scores: { true: 1, false: 0 },
+    },
+    template_format: "none",
+  });
+});
+
 function mockProjectRegister() {
   const postJson = vi.fn(async () => ({
     project: {

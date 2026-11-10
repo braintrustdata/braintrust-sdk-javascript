@@ -1,9 +1,9 @@
 import {
-  Function as functionSchema,
-  type FunctionType as FunctionObject,
+  Function as generatedFunctionSchema,
   type SavedFunctionIdType as SavedFunctionId,
   type ToolFunctionDefinitionType as ToolFunctionDefinition,
 } from "../../generated_types";
+import { promptDataSchema } from "../../prompt-schemas";
 import { _internalGetGlobalState } from "../../logger";
 import { loadCLIEnv } from "./bundle";
 import { PullArgs } from "./types";
@@ -21,6 +21,11 @@ import {
   toolFunctionDefinitionSchema,
 } from "../../framework2";
 import pluralize from "pluralize";
+
+const functionSchema = generatedFunctionSchema.extend({
+  prompt_data: promptDataSchema.nullish(),
+});
+type FunctionObject = z.infer<typeof functionSchema>;
 
 export async function pullCommand(args: PullArgs) {
   await loadCLIEnv(args);
@@ -240,10 +245,14 @@ function makeFunctionDefinition({
   }
   const objectType = "prompt";
   const prompt = func.prompt_data.prompt;
-  const promptContents =
-    prompt.type === "completion"
-      ? `prompt: ${doubleQuote(prompt.content)}`
-      : `messages: ${safeStringify(prompt.messages).trimStart()}`;
+  let promptContents: string;
+  if (prompt.type === "completion") {
+    promptContents = `prompt: ${doubleQuote(prompt.content)}`;
+  } else if (prompt.type === "decisions") {
+    promptContents = `input: ${safeStringify(prompt.input).trimStart()},\n  questions: ${safeStringify(prompt.questions).trimStart()}`;
+  } else {
+    promptContents = `messages: ${safeStringify(prompt.messages).trimStart()}`;
+  }
 
   const rawToolsParsed =
     prompt.type === "chat" && prompt.tools && prompt.tools.length > 0

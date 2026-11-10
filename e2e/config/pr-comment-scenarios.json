@@ -20,6 +20,11 @@
     "metadataScenario": "trace-primitives-basic"
   },
   {
+    "scenarioDirName": "prompt-decisions",
+    "label": "Decisions prompt building",
+    "metadataScenario": "prompt-decisions"
+  },
+  {
     "scenarioDirName": "ts-exec-loader",
     "label": "TypeScript loader compatibility",
     "metadataScenario": "ts-exec-loader",
