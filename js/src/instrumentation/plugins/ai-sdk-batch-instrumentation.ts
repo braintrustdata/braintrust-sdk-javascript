@@ -1,3 +1,4 @@
+import { aiSDKServiceTierMetadata } from "./ai-sdk-service-tier";
 import { isObject, SpanTypeAttribute } from "../../../util";
 import { SpanComponentsV4 } from "../../../util/span_identifier_v4";
 import { debugLogger } from "../../debug-logger";
@@ -340,6 +341,7 @@ export async function captureAISDKBatchCompletion(
             providerMetadata: item.providerMetadata,
           }),
           metadata: {
+            ...aiSDKServiceTierMetadata(item.providerMetadata, "served"),
             status: item.status,
             ...(typeof item.response?.modelId === "string"
               ? { model: item.response.modelId }

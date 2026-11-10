@@ -721,6 +721,7 @@
                   "lc": 1,
                   "type": "constructor"
                 },
+                "served_service_tier": "default",
                 "tags": []
               },
               "metrics": {

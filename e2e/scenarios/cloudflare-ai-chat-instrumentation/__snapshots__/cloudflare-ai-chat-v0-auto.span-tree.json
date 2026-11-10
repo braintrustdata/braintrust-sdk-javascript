@@ -124,7 +124,8 @@
                       "unified": "tool-calls"
                     },
                     "model": "gpt-5.4-nano",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -286,7 +287,8 @@
                       "unified": "stop"
                     },
                     "model": "gpt-5.4-nano",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,

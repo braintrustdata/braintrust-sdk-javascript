@@ -1,3 +1,5 @@
+import { serviceTierMetadata } from "../core/service-tier";
+import { aiSDKServiceTierMetadata } from "./ai-sdk-service-tier";
 import { traceAISDKCodeMode } from "./ai-sdk-code-mode";
 import { currentAISDKToolSpan, traceAISDKTool } from "./ai-sdk-tool-tracing";
 import { prepareTypedAttachments } from "../../typed-attachments";
@@ -1424,6 +1426,8 @@ function interceptAISDKModelStream(
       };
 
       const processChunk = (chunk: AISDKModelStreamChunk) => {
+        const tier = aiSDKServiceTierMetadata(chunk.providerMetadata, "served");
+        if (Object.keys(tier).length) span.log({ metadata: tier });
         if (firstChunkTime === undefined && isAISDKContentStreamChunk(chunk)) {
           firstChunkTime = getCurrentUnixTimestamp();
         }
@@ -2464,6 +2468,14 @@ function extractMetadataFromCallParams(
   self?: unknown,
 ): Record<string, unknown> {
   const metadata = extractBaseMetadata(params.model, self);
+  Object.assign(
+    metadata,
+    aiSDKServiceTierMetadata(
+      params.providerOptions ?? params.experimental_providerMetadata,
+      "requested",
+      metadata.provider,
+    ),
+  );
   const tools = serializeAISDKToolsForLogging(
     params.tools ?? resolveToolsFromSelf(self),
   );
@@ -2694,7 +2706,15 @@ function buildAISDKModelStartEvent(
   if (!options.workflowAgent) {
     return {
       input: processAISDKCallInput(callOptions).input,
-      metadata: baseMetadata,
+      metadata: {
+        ...baseMetadata,
+        ...aiSDKServiceTierMetadata(
+          callOptions.providerOptions ??
+            callOptions.experimental_providerMetadata,
+          "requested",
+          baseMetadata.provider,
+        ),
+      },
     };
   }
 
@@ -3162,6 +3182,11 @@ function prepareAISDKChildTracing(
 
         const transformStream = new TransformStream({
           transform(chunk: AISDKModelStreamChunk, controller) {
+            const tier = aiSDKServiceTierMetadata(
+              chunk.providerMetadata,
+              "served",
+            );
+            if (Object.keys(tier).length) span.log({ metadata: tier });
             if (
               firstChunkTime === undefined &&
               isAISDKContentStreamChunk(chunk)
@@ -4137,7 +4162,31 @@ function buildResolvedMetadataPayload(result: AISDKResult): {
   metadata?: Record<string, unknown>;
 } {
   const gatewayInfo = extractGatewayRoutingInfo(result);
-  const metadata: Record<string, unknown> = {};
+  const metadata: Record<string, unknown> = aiSDKServiceTierMetadata(
+    safeSerializableFieldRead(result, "providerMetadata") ??
+      safeSerializableFieldRead(result, "experimental_providerMetadata"),
+    "served",
+  );
+
+  // Older providers keep the served tier only in the raw response body.
+  if (!metadata.served_service_tier) {
+    const response = safeSerializableFieldRead(result, "response");
+    const body = isObject(response) ? response.body : undefined;
+    if (isObject(body)) {
+      Object.assign(
+        metadata,
+        serviceTierMetadata({
+          served:
+            body.service_tier ??
+            (isObject(body.usage) ? body.usage.service_tier : undefined) ??
+            (isObject(body.usageMetadata)
+              ? body.usageMetadata.serviceTier
+              : undefined) ??
+            (isObject(body.serviceTier) ? body.serviceTier.type : undefined),
+        }),
+      );
+    }
+  }
 
   if (gatewayInfo?.provider) {
     metadata.provider = gatewayInfo.provider;

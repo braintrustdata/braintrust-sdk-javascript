@@ -1,3 +1,4 @@
+import { serviceTierMetadata } from "../../instrumentation/core/service-tier";
 import { currentSpan, initLogger, NOOP_SPAN, startSpan } from "../../logger";
 import type { Span } from "../../logger";
 import {
@@ -158,6 +159,7 @@ export class BraintrustLangChainCallbackHandler<
           metadata,
           ...extraParams,
           model: getModelNameFromInvocation(extraParams),
+          ...getServiceTierFromInvocation(extraParams),
         },
       },
     });
@@ -198,7 +200,10 @@ export class BraintrustLangChainCallbackHandler<
       ...(this.options.captureModelOutputs !== false ? { output } : {}),
       metrics,
       tags,
-      metadata: modelName !== undefined ? { model: modelName } : undefined,
+      metadata: {
+        ...(modelName !== undefined ? { model: modelName } : {}),
+        ...getServiceTierFromResponse(output),
+      },
     });
   }
 
@@ -232,6 +237,7 @@ export class BraintrustLangChainCallbackHandler<
           metadata,
           ...extraParams,
           model: getModelNameFromInvocation(extraParams),
+          ...getServiceTierFromInvocation(extraParams),
         },
       },
     });
@@ -435,7 +441,15 @@ export class BraintrustLangChainCallbackHandler<
     runId: string,
     _parentRunId?: string,
     _tags?: string[],
+    fields?: { chunk?: unknown },
   ): Promise<void> {
+    if (isRecord(fields?.chunk)) {
+      const metadata = getServiceTierFromResponse({
+        generations: [[fields.chunk]],
+      });
+      if (Object.keys(metadata).length)
+        this.spans.get(runId)?.log({ metadata });
+    }
     if (!this.firstTokenTimes.has(runId)) {
       const now = Date.now();
       this.firstTokenTimes.set(runId, now);
@@ -504,6 +518,47 @@ function walkGenerations(
     }
   }
   return result;
+}
+
+function getServiceTierFromInvocation(
+  extraParams: Record<string, unknown> | undefined,
+): Record<string, string> {
+  const params = extraParams?.invocation_params;
+  if (!isRecord(params)) return {};
+  const tier = params.service_tier ?? params.serviceTier;
+  return serviceTierMetadata({ requested: isRecord(tier) ? tier.type : tier });
+}
+
+function getServiceTierFromResponse(
+  response: LangChainLLMResult,
+): Record<string, string> {
+  const metadata: Record<string, string> = {};
+  for (const source of [
+    response.llmOutput,
+    ...walkGenerations(response).flatMap((generation) => {
+      const message = generation.message;
+      return [
+        generation.generationInfo,
+        ...(isRecord(message) ? [message.response_metadata] : []),
+      ];
+    }),
+  ]) {
+    if (!isRecord(source)) continue;
+    const usage = isRecord(source.usage) ? source.usage : undefined;
+    const usageMetadata = isRecord(source.usageMetadata)
+      ? source.usageMetadata
+      : undefined;
+    const tier =
+      source.service_tier ??
+      source.serviceTier ??
+      usage?.service_tier ??
+      usageMetadata?.serviceTier;
+    Object.assign(
+      metadata,
+      serviceTierMetadata({ served: isRecord(tier) ? tier.type : tier }),
+    );
+  }
+  return metadata;
 }
 
 function getModelNameFromInvocation(

@@ -37,6 +37,7 @@ const requests: AISDKBatchRequest[] = [
     type: "text",
     model: "test/model",
     messages: [{ role: "user", content: "World" }],
+    providerOptions: { openai: { serviceTier: "flex" } },
   },
 ];
 const results: AISDKBatchItem[] = [
@@ -47,6 +48,7 @@ const results: AISDKBatchItem[] = [
     text: "World!",
     content: [{ type: "text", text: "World!" }],
     finishReason: "stop",
+    providerMetadata: { openai: { serviceTier: "default" } },
     usage: { inputTokens: 5, outputTokens: 2, totalTokens: 7 },
   },
   {
@@ -157,6 +159,10 @@ describe("manual AI SDK batch capture", () => {
     expect(
       children.find((row) => row.metadata.request_id === "two"),
     ).toMatchObject({
+      metadata: {
+        requested_service_tier: "flex",
+        served_service_tier: "default",
+      },
       output: [
         {
           index: 0,

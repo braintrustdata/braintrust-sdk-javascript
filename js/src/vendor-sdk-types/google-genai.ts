@@ -60,6 +60,7 @@ export interface GoogleGenAIGenerateContentParams {
   model: string;
   contents: string | GoogleGenAIContent | GoogleGenAIContent[];
   config?: {
+    serviceTier?: string;
     tools?: {
       functionDeclarations?: Record<string, unknown>[];
       [key: string]: unknown;
@@ -304,6 +305,7 @@ export interface GoogleGenAIGenerateVideosOperation {
 }
 
 export interface GoogleGenAIInteraction {
+  service_tier?: string;
   id?: string;
   created?: string;
   status?: string;
@@ -350,6 +352,7 @@ export interface GoogleGenAIGroundingMetadata {
 }
 
 export interface GoogleGenAIUsageMetadata {
+  serviceTier?: string;
   promptTokenCount?: number;
   candidatesTokenCount?: number;
   totalTokenCount?: number;

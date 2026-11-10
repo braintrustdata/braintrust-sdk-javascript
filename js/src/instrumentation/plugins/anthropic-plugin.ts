@@ -1,3 +1,4 @@
+import { serviceTierMetadata } from "../core/service-tier";
 import type { Span } from "../../logger";
 import {
   Attachment,
@@ -128,7 +129,11 @@ export class AnthropicPlugin extends BasePlugin {
         const metadata = filterFrom(params, ["messages", "system"]);
         return {
           input: processAttachmentsInInput(input),
-          metadata: { ...metadata, provider: "anthropic" },
+          metadata: {
+            ...metadata,
+            provider: "anthropic",
+            ...serviceTierMetadata({ requested: params.service_tier }),
+          },
         };
       },
       extractOutput: (message: AnthropicMessage) => {
@@ -149,8 +154,19 @@ export class AnthropicPlugin extends BasePlugin {
           ),
         );
       },
+      extractChunkMetadata: (event: AnthropicStreamEvent) =>
+        serviceTierMetadata({
+          served:
+            event.type === "message_start"
+              ? event.message?.usage?.service_tier
+              : event.type === "message_delta"
+                ? event.usage?.service_tier
+                : undefined,
+        }),
       extractMetadata: (message: AnthropicMessage) => {
-        const metadata: Record<string, unknown> = {};
+        const metadata: Record<string, unknown> = serviceTierMetadata({
+          served: message?.usage?.service_tier,
+        });
         const metas = ["stop_reason", "stop_sequence"] as const;
         for (const m of metas) {
           if (message?.[m] !== undefined) {
@@ -1416,6 +1432,17 @@ export function aggregateAnthropicStreamChunks(
   let role: string | undefined;
 
   for (const event of chunks) {
+    Object.assign(
+      metadata,
+      serviceTierMetadata({
+        served:
+          event.type === "message_start"
+            ? event.message?.usage?.service_tier
+            : event.type === "message_delta"
+              ? event.usage?.service_tier
+              : undefined,
+      }),
+    );
     switch (event?.type) {
       case "message_start":
         // Collect initial metrics from message

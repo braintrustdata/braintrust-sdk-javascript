@@ -83,6 +83,9 @@ type StreamingChannelSpanConfig<TChannel extends AnyAsyncChannel> =
       startTime?: number,
       endEvent?: AsyncEndOf<TChannel>,
     ) => Record<string, number>;
+    extractChunkMetadata?: (
+      chunk: ChunkOf<TChannel>,
+    ) => Record<string, unknown>;
     aggregateChunks?: (
       chunks: ChunkOf<TChannel>[],
       result?: ResultOf<TChannel>,
@@ -131,6 +134,7 @@ type SyncStreamChannelSpanConfig<TChannel extends AnySyncStreamChannel> =
       input: unknown;
       metadata: unknown;
     };
+    extractChunkMetadata?: (chunk: unknown) => Record<string, unknown>;
     extractFromEvent?: (event: ChunkOf<TChannel>) => {
       output?: unknown;
       metrics?: Record<string, number>;
@@ -441,8 +445,30 @@ export function traceStreamingCall<TChannel extends AnyAsyncChannel>(
         });
       };
 
+      const streamMetadata = new Map<string, unknown>();
       patchStreamIfNeeded(asyncEndEvent.result, {
-        onChunk: () => {
+        onChunk: (chunk) => {
+          if (config.extractChunkMetadata) {
+            let metadata: Record<string, unknown> | undefined;
+            try {
+              metadata = config.extractChunkMetadata(chunk);
+            } catch (error) {
+              debugLogger.error(
+                `Error extracting stream metadata for ${channelName}:`,
+                error,
+              );
+            }
+            if (
+              metadata &&
+              Object.entries(metadata).some(
+                ([key, value]) => streamMetadata.get(key) !== value,
+              )
+            ) {
+              for (const [key, value] of Object.entries(metadata))
+                streamMetadata.set(key, value);
+              span.log({ metadata });
+            }
+          }
           if (firstChunkTime === undefined) {
             firstChunkTime = getCurrentUnixTimestamp();
           }
@@ -697,8 +723,30 @@ export function traceSyncStreamCall<TChannel extends AnyAsyncChannel>(
       }
 
       let first = true;
+      const streamMetadata = new Map<string, unknown>();
 
-      stream.on("chunk", () => {
+      stream.on("chunk", (chunk) => {
+        if (config.extractChunkMetadata) {
+          let metadata: Record<string, unknown> | undefined;
+          try {
+            metadata = config.extractChunkMetadata(chunk);
+          } catch (error) {
+            debugLogger.error(
+              `Error extracting stream metadata for ${channelName}:`,
+              error,
+            );
+          }
+          if (
+            metadata &&
+            Object.entries(metadata).some(
+              ([key, value]) => streamMetadata.get(key) !== value,
+            )
+          ) {
+            for (const [key, value] of Object.entries(metadata))
+              streamMetadata.set(key, value);
+            span.log({ metadata });
+          }
+        }
         if (first) {
           span.log({
             metrics: {

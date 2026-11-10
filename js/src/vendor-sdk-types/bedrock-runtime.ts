@@ -55,7 +55,7 @@ export interface BedrockRuntimeConverseRequest {
   additionalModelResponseFieldPaths?: unknown;
   requestMetadata?: unknown;
   performanceConfig?: unknown;
-  serviceTier?: string;
+  serviceTier?: { type?: string };
   outputConfig?: unknown;
   [key: string]: unknown;
 }
@@ -86,7 +86,7 @@ export interface BedrockRuntimeConverseResponse {
   metrics?: BedrockRuntimeConverseMetrics;
   additionalModelResponseFields?: unknown;
   performanceConfig?: unknown;
-  serviceTier?: string;
+  serviceTier?: { type?: string };
   [key: string]: unknown;
 }
 
@@ -133,7 +133,7 @@ export interface BedrockRuntimeConverseStreamEvent {
     metrics?: BedrockRuntimeConverseMetrics;
     trace?: unknown;
     performanceConfig?: unknown;
-    serviceTier?: string;
+    serviceTier?: { type?: string };
     [key: string]: unknown;
   };
   internalServerException?: BedrockRuntimeStreamException;
