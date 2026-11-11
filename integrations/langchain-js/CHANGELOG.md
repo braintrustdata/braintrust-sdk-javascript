@@ -1,5 +1,15 @@
 # @braintrust/langchain-js
 
+## 0.3.0
+
+### Minor Changes
+
+- feat(instrumentation): Track service tiers (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2768)
+
+### Patch Changes
+
+- Updated dependencies: braintrust@3.44.0
+
 ## 0.2.5
 
 - `@braintrust/langchain-js` is now deprecated. This release marks the last release for this package. (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2383)
