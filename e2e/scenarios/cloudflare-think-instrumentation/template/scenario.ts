@@ -1,4 +1,4 @@
-import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
+import { spawn, type ChildProcess } from "node:child_process";
 import { once } from "node:events";
 import { writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
@@ -104,7 +104,7 @@ function requiredEnv(name: string): string {
   return value;
 }
 
-async function stopChild(child: ChildProcessWithoutNullStreams): Promise<void> {
+async function stopChild(child: ChildProcess): Promise<void> {
   if (child.exitCode !== null) {
     return;
   }

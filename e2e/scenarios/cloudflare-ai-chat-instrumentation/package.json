@@ -6,9 +6,12 @@
     "@ai-sdk/openai": "3.0.7",
     "@ai-sdk/react": "3.0.204",
     "@cloudflare/vite-plugin": "^1.42.1",
-    "agents": "0.20.1",
+    "agents": "0.25.0",
+    "agents-v0-20": "npm:agents@0.20.1",
     "ai": "6.0.37",
     "cloudflare-ai-chat-v0": "npm:@cloudflare/ai-chat@0.9.0",
+    "cloudflare-ai-chat-v0-12": "npm:@cloudflare/ai-chat@0.12.0",
+    "cloudflare-ai-chat-v0-12-latest": "npm:@cloudflare/ai-chat@0.12.2",
     "cloudflare-ai-chat-v0-latest": "npm:@cloudflare/ai-chat@0.9.4",
     "dc-browser": "1.0.4",
     "react": "19.2.4",
@@ -22,6 +25,10 @@
         "cloudflare-ai-chat-v0-latest": {
           "package": "@cloudflare/ai-chat",
           "range": ">=0.9 <0.10.0"
+        },
+        "cloudflare-ai-chat-v0-12-latest": {
+          "package": "@cloudflare/ai-chat",
+          "range": ">=0.12.0 <0.13.0"
         }
       }
     }

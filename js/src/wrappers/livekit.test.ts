@@ -29,3 +29,29 @@ test("wraps ESM namespaces and preserves return identity when wrapped twice", ()
     remove();
   }
 });
+
+test("new sessions hand LiveKit's job context lookup to the job context hook", () => {
+  class AgentSession {}
+  const job = { _redactionEnabled: true };
+  const getJobContext = vi.fn(() => job);
+  const module = {
+    voice: { AgentSession },
+    telemetry: { tracer: {} },
+    getJobContext,
+  };
+  const seen: unknown[] = [];
+  const remove = livekitChannels.jobContext.intercept(
+    (target, receiver, args) => {
+      seen.push(Reflect.apply(target, receiver, args));
+      return Reflect.apply(target, receiver, args);
+    },
+  );
+  try {
+    new (wrapLiveKit(module).voice.AgentSession)();
+    // LiveKit's own redaction looks the context up without requiring one.
+    expect(getJobContext).toHaveBeenCalledWith(false);
+    expect(seen).toEqual([job]);
+  } finally {
+    remove();
+  }
+});

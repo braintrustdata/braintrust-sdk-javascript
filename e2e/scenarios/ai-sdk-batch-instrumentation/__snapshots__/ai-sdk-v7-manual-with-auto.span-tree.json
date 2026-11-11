@@ -40,6 +40,7 @@
                 "provider": "gateway.batch",
                 "reasoning": "none",
                 "request_id": "one",
+                "served_service_tier": "standard",
                 "status": "succeeded",
                 "temperature": 0
               },
@@ -87,6 +88,7 @@
                 "provider": "gateway.batch",
                 "reasoning": "none",
                 "request_id": "two",
+                "served_service_tier": "standard",
                 "status": "succeeded",
                 "temperature": 0
               },

@@ -29,14 +29,20 @@ export interface EveInstrumentationSetupContext {
   readonly frameworkVersion?: string;
 }
 
-export interface EveInstrumentationAttemptScope {
-  readonly attemptId: string;
-  readonly attemptIndex: number;
+export type EveInstrumentationAttemptScope = {
+  readonly functionId?: string;
   readonly rootSessionId?: string;
   readonly sessionId: string;
-  readonly stepIndex: number;
-  readonly turnId: string;
-}
+  // Eve 1.x also runs model calls (for example compaction) outside a turn.
+  readonly turnId?: string;
+} & (
+  | {
+      readonly attemptId: string;
+      readonly attemptIndex: number;
+      readonly stepIndex: number;
+    }
+  | { readonly runId: string; readonly attempt: number }
+);
 
 export interface EveInstrumentationParentLineage {
   readonly callId: string;
@@ -51,6 +57,7 @@ export interface EveInstrumentationTraceContext {
 }
 
 export interface EveInstrumentationUsage {
+  readonly costUsd?: number;
   readonly inputTokenDetails?: {
     readonly cacheReadTokens?: number;
     readonly cacheWriteTokens?: number;
@@ -62,6 +69,7 @@ export interface EveInstrumentationUsage {
 export interface EveInstrumentationModelInput {
   readonly instructions?: unknown;
   readonly messages: readonly unknown[];
+  readonly tools?: readonly unknown[];
 }
 
 export type EveInstrumentationContentPart =
@@ -226,6 +234,70 @@ export type EveInstrumentationToolCallTerminalEvent =
       readonly type: "tool.call.failed";
     };
 
+/** Eve 0.91 uses settled events and identifies attempts by model run. */
+export interface EveInstrumentationTurnSettlementEvent {
+  readonly type: "turn.settled";
+  readonly outcome: "completed" | "failed" | "cancelled";
+  readonly error?: unknown;
+  readonly idempotencyKey: string;
+  readonly sessionId: string;
+  readonly turnId: string;
+}
+
+export type EveInstrumentationModelCallSettledEvent =
+  | (Omit<EveInstrumentationModelCallCompletedEvent, "type"> & {
+      readonly type: "model.call.settled";
+      readonly outcome: "completed";
+    })
+  | (Omit<EveInstrumentationModelCallFailedEvent, "type"> & {
+      readonly type: "model.call.settled";
+      readonly outcome: "failed";
+    });
+
+export interface EveInstrumentationCallRequestedEvent {
+  readonly type: "call.requested";
+  readonly capability: {
+    readonly kind: "tool" | "agent" | "skill" | "control";
+    readonly remote?: true;
+  };
+  readonly callId: string;
+  readonly idempotencyKey: string;
+  readonly input?: unknown;
+  readonly startedAtMs?: number;
+  readonly scope: EveInstrumentationAttemptScope;
+  readonly toolName: string;
+}
+
+export interface EveInstrumentationCallSettledEvent {
+  readonly type: "call.settled";
+  readonly outcome:
+    | "completed"
+    | "failed"
+    | "rejected"
+    | "interrupted"
+    | "abandoned";
+  readonly output?: unknown;
+  readonly error?: unknown;
+  readonly errorCode?: string;
+  readonly acceptedAtMs?: number;
+  readonly completedAtMs?: number;
+  readonly idempotencyKey: string;
+  readonly scope: EveInstrumentationAttemptScope;
+}
+
+export interface EveInstrumentationModelRunTerminalEvent {
+  readonly type: "model.settled" | "model.retried";
+  readonly outcome?:
+    | "completed"
+    | "failed"
+    | "interrupted"
+    | "abandoned"
+    | "cancelled";
+  readonly error?: unknown;
+  readonly idempotencyKey: string;
+  readonly scope: EveInstrumentationAttemptScope;
+}
+
 type EveInstrumentationHandler<TEvent> = (
   event: TEvent,
   context: EveInstrumentationHandlerContext,
@@ -246,6 +318,13 @@ export interface EveInstrumentationDefinition {
         readonly recordOutputs: boolean;
       };
   readonly events: {
+    readonly "call.requested": EveInstrumentationHandler<EveInstrumentationCallRequestedEvent>;
+    readonly "call.settled": EveInstrumentationHandler<EveInstrumentationCallSettledEvent>;
+    readonly "model.call.settled": EveInstrumentationHandler<EveInstrumentationModelCallSettledEvent>;
+    readonly "model.settled": EveInstrumentationHandler<EveInstrumentationModelRunTerminalEvent>;
+    readonly "model.retried": EveInstrumentationHandler<EveInstrumentationModelRunTerminalEvent>;
+    readonly "turn.settled": EveInstrumentationHandler<EveInstrumentationTurnSettlementEvent>;
+
     readonly "tool.call.started": EveInstrumentationHandler<EveInstrumentationToolCallStartedEvent>;
     readonly "tool.call.completed": EveInstrumentationHandler<
       Extract<

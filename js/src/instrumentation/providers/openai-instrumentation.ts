@@ -1,3 +1,4 @@
+import { serviceTierMetadata } from "../core/service-tier";
 import { _internalCaptureAttachmentsEnabled } from "../../logger/core";
 import { processInputAttachments } from "../../wrappers/attachment-utils";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
@@ -144,6 +145,12 @@ export function registerOpenAIInstrumentation(): void {
           name: "Chat Completion",
           type: SpanTypeAttribute.LLM,
           extractInput: ([params]) => extractOpenAIChatInput(params),
+          extractChunkMetadata: (chunk) =>
+            serviceTierMetadata({
+              served: isObject(chunk) ? chunk.service_tier : undefined,
+            }),
+          extractMetadata: (result) =>
+            serviceTierMetadata({ served: result?.service_tier }),
           extractOutput: (result, event) =>
             processChatCompletionOutput(
               result?.choices,
@@ -225,6 +232,12 @@ export function registerOpenAIInstrumentation(): void {
           name: "Chat Completion",
           type: SpanTypeAttribute.LLM,
           extractInput: ([params]) => extractOpenAIChatInput(params),
+          extractChunkMetadata: (chunk) =>
+            serviceTierMetadata({
+              served: isObject(chunk) ? chunk.service_tier : undefined,
+            }),
+          extractMetadata: (result) =>
+            serviceTierMetadata({ served: result?.service_tier }),
           extractOutput: (result, event) =>
             processChatCompletionOutput(
               result?.choices,
@@ -265,6 +278,10 @@ export function registerOpenAIInstrumentation(): void {
           name: "Chat Completion",
           type: SpanTypeAttribute.LLM,
           extractInput: ([params]) => extractOpenAIChatInput(params),
+          extractChunkMetadata: (chunk) =>
+            serviceTierMetadata({
+              served: isObject(chunk) ? chunk.service_tier : undefined,
+            }),
         },
       ),
   );
@@ -325,6 +342,8 @@ export function registerOpenAIInstrumentation(): void {
           name: "openai.responses.create",
           type: SpanTypeAttribute.LLM,
           extractInput: ([params]) => extractOpenAIResponsesInput(params),
+          extractChunkMetadata: (chunk) =>
+            serviceTierMetadata({ served: chunk?.response?.service_tier }),
           extractOutput: (result) => {
             return processImagesInOutput(result?.output);
           },
@@ -367,7 +386,12 @@ export function registerOpenAIInstrumentation(): void {
           extractFromEvent: (event) =>
             TERMINAL_RESPONSE_EVENT_TYPES.has(event.type)
               ? aggregateResponseStreamEvents([event])
-              : {},
+              : {
+                  metadata: serviceTierMetadata({
+                    served: (event as OpenAIResponseStreamEvent).response
+                      ?.service_tier,
+                  }),
+                },
         },
       ),
   );
@@ -390,6 +414,8 @@ export function registerOpenAIInstrumentation(): void {
           name: "openai.responses.parse",
           type: SpanTypeAttribute.LLM,
           extractInput: ([params]) => extractOpenAIResponsesInput(params),
+          extractChunkMetadata: (chunk) =>
+            serviceTierMetadata({ served: chunk?.response?.service_tier }),
           extractOutput: (result) => {
             return processImagesInOutput(result?.output);
           },
@@ -673,11 +699,17 @@ export function aggregateChatCompletionChunks(
 ): {
   output: OpenAIChatChoice[];
   metrics: Record<string, number>;
+  metadata?: Record<string, unknown>;
 } {
+  const metadata: Record<string, unknown> = {};
   const choicesByIndex = new Map<number, AggregatedChatChoice>();
   let metrics: Record<string, number> = {};
 
   for (const chunk of chunks) {
+    Object.assign(
+      metadata,
+      serviceTierMetadata({ served: chunk.service_tier }),
+    );
     if (chunk.usage) {
       metrics = {
         ...metrics,
@@ -802,6 +834,7 @@ export function aggregateChatCompletionChunks(
 
   return {
     metrics,
+    ...(Object.keys(metadata).length ? { metadata } : {}),
     output:
       output.length > 0
         ? output
@@ -835,6 +868,8 @@ export function aggregateResponseStreamEvents(
   let error: string | undefined = undefined;
 
   for (const chunk of chunks) {
+    const tier = serviceTierMetadata({ served: chunk?.response?.service_tier });
+    if (Object.keys(tier).length) metadata = Object.assign({}, metadata, tier);
     if (!chunk?.response || !TERMINAL_RESPONSE_EVENT_TYPES.has(chunk.type)) {
       continue;
     }
@@ -846,7 +881,7 @@ export function aggregateResponseStreamEvents(
 
     const { usage: _usage, output: _output, ...rest } = response;
     if (Object.keys(rest).length > 0) {
-      metadata = rest;
+      metadata = Object.assign({}, metadata, rest);
     }
 
     metrics = parseMetricsFromUsage(response.usage);

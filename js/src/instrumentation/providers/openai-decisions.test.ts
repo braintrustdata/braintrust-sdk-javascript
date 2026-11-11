@@ -114,7 +114,7 @@ describe("OpenAI decisions", () => {
     vi.unstubAllEnvs();
   });
 
-  test("matches the question span contract, preserves input and parent context", async () => {
+  test("matches the decision span contract, preserves input and parent context", async () => {
     const original = Promise.resolve(response);
     const create = vi.fn(() => original);
     const wrapped = wrapOpenAI(client(create));
@@ -133,7 +133,7 @@ describe("OpenAI decisions", () => {
       (span) => span.span_attributes.name === "openai.decisions.create",
     );
     expect(span).toMatchObject({
-      span_attributes: { type: "question" },
+      span_attributes: { type: "decision" },
       span_parents: [parent.span_id],
       input: {
         state: "Charged twice",
@@ -153,9 +153,12 @@ describe("OpenAI decisions", () => {
             id: "urgency",
             type: "score",
             instructions: "How urgent?",
-            criteria: ["low", "high: Urgent"],
+            criteria: [
+              { label: "low" },
+              { label: "high", description: "Urgent" },
+            ],
           },
-          { id: "3", type: "boolean", instructions: "Unanswerable?" },
+          { id: "question_3", type: "boolean", instructions: "Unanswerable?" },
         ],
       },
       output: {
@@ -176,7 +179,7 @@ describe("OpenAI decisions", () => {
             probabilities: { 0: 0.2, 1: 0.8 },
             legend: { 0: "low", 1: "high" },
           },
-          { id: "3", type: "refusal" },
+          { id: "question_3", type: "refusal" },
         ],
       },
       metadata: { model: response.model, provider: "openai" },
@@ -266,13 +269,53 @@ describe("OpenAI decisions", () => {
     const [span] = (await logger.drain()) as any[];
     expect(span.output.answers[0]).toMatchObject({
       id: "__proto__",
-      choice: "true",
-      probabilities: { true: 0.8, '"true"': 0.1, '"__proto__"': 0.1 },
+      choice: "boolean:true",
     });
+    expect(Object.entries(span.output.answers[0].probabilities)).toEqual([
+      ["boolean:true", 0.8],
+      ["true", 0.1],
+      ["__proto__", 0.1],
+    ]);
     expect(Object.keys(span.input.questions[0].criteria)).toEqual([
+      "boolean:true",
       "true",
-      '"true"',
-      '"__proto__"',
+      "__proto__",
+    ]);
+  });
+
+  test("assigns unique IDs and pairs reordered answers by name", async () => {
+    const wrapped = wrapOpenAI(
+      client(async () => ({
+        model: params.model,
+        answers: [
+          { name: null, type: "predicate", probability: 0.1 },
+          { name: "question_1", type: "predicate", probability: 0.2 },
+          { name: "same", type: "predicate", probability: 0.3 },
+          { name: "same", type: "predicate", probability: 0.4 },
+        ],
+      })),
+    );
+    await wrapped.decisions.create({
+      ...params,
+      questions: [
+        { type: "predicate", name: "same", instructions: "First?" },
+        { type: "predicate", instructions: "Second?" },
+        { type: "predicate", name: "same", instructions: "Third?" },
+        { type: "predicate", name: "question_1", instructions: "Fourth?" },
+      ],
+    });
+    const [span] = (await logger.drain()) as any[];
+    expect(span.input.questions.map((q: any) => q.id)).toEqual([
+      "same",
+      "question_1_",
+      "question_2",
+      "question_1",
+    ]);
+    expect(span.output.answers).toEqual([
+      { id: "question_1_", type: "boolean", probability: 0.1 },
+      { id: "question_1", type: "boolean", probability: 0.2 },
+      { id: "same", type: "boolean", probability: 0.3 },
+      { id: "question_2", type: "boolean", probability: 0.4 },
     ]);
   });
 
@@ -359,13 +402,13 @@ describe("OpenAI decisions", () => {
         "duplicate",
         "category",
         "urgency",
-        "3",
+        "question_3",
       ]);
       expect(span.output.answers.map((a: any) => a.id)).toEqual([
         "duplicate",
         "category",
         "urgency",
-        "3",
+        "question_3",
       ]);
     },
   );

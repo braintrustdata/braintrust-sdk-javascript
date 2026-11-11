@@ -28,12 +28,13 @@ import { SpanComponentsV4 } from "../../../util/span_identifier_v4";
 
 configureNode();
 const requests: AISDKBatchRequest[] = [
-  { id: "one", type: "text", model: "test/model", prompt: "Hello" },
+  { id: "one", type: "text", model: "openai/test-model", prompt: "Hello" },
   {
     id: "two",
     type: "text",
-    model: "test/model",
+    model: "openai/test-model",
     messages: [{ role: "user", content: "World" }],
+    providerOptions: { openai: { serviceTier: "flex" } },
   },
 ];
 const results: AISDKBatchItem[] = [
@@ -44,6 +45,7 @@ const results: AISDKBatchItem[] = [
     text: "World!",
     content: [{ type: "text", text: "World!" }],
     finishReason: "stop",
+    providerMetadata: { openai: { serviceTier: "default" } },
     usage: { inputTokens: 5, outputTokens: 2, totalTokens: 7 },
   },
   {
@@ -88,6 +90,37 @@ describe("manual AI SDK batch capture", () => {
     vi.unstubAllEnvs();
     _exportsForTestingOnly.clearTestBackgroundLogger();
   });
+
+  it.each(["anthropic", "gateway"])(
+    "selects only the request provider's tier in %s batches",
+    async (provider) => {
+      const requests: AISDKBatchRequest[] = [
+        {
+          id: "tier-request",
+          type: "text",
+          model: provider === "gateway" ? "anthropic/test-model" : "test-model",
+          prompt: "Hello",
+          providerOptions: {
+            openai: { serviceTier: "flex" },
+            anthropic: { serviceTier: "standard_only" },
+          },
+        },
+      ];
+      await completeAISDKBatchTrace({
+        batch: { ...batch, provider },
+        requests,
+        status: { status: "completed" },
+        results: [
+          { id: "tier-request", type: "text", status: "succeeded", text: "Hi" },
+        ],
+      });
+      const rows = (await background.drain()) as TestRow[];
+      const child = rows.find(
+        (row) => row.span_attributes?.name === "ai.batch.request",
+      );
+      expect(child?.metadata?.requested_service_tier).toBe("standard_only");
+    },
+  );
 
   it("leaves ordinary batch lifecycle calls untouched even with the plugin and wrapAISDK enabled", async () => {
     const stream = new ReadableStream({
@@ -152,6 +185,10 @@ describe("manual AI SDK batch capture", () => {
     expect(
       children.find((row) => row.metadata.request_id === "two"),
     ).toMatchObject({
+      metadata: {
+        requested_service_tier: "flex",
+        served_service_tier: "default",
+      },
       output: [
         {
           index: 0,

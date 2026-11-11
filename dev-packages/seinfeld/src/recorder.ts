@@ -8,6 +8,8 @@ import {
   type ServerResponse,
 } from "node:http";
 import { request as httpsRequest } from "node:https";
+import { connect as http2Connect } from "node:http2";
+import type { Readable } from "node:stream";
 import type { AddressInfo } from "node:net";
 import type {
   BodyPayload,
@@ -15,7 +17,9 @@ import type {
   CassetteEntry,
   CassetteMode,
   RecordedRequest,
+  RecordedResponse,
 } from "./cassette";
+import { trackConnectRequest } from "./internal/connect-request";
 import { AggregateCassetteMissError, CassetteMissError } from "./errors";
 import { applyFilters } from "./normalizer";
 import type { FilterSpec } from "./normalizer";
@@ -35,14 +39,20 @@ import {
   recordRequestDraft,
   recordResponseDraft,
 } from "./http";
-import { encodeBinaryDraft, encodeBody } from "./serializer";
+import { encodeBinaryDraft } from "./serializer";
 import type { CassetteStore } from "./store";
 
 const DEFAULT_EXTERNAL_BLOB_THRESHOLD = 65536;
 
 export type RequestUrlMatcher = string | RegExp;
 export type IgnoredRequestMatcher = RequestUrlMatcher;
-export type StreamingRequestMatcher = RequestUrlMatcher;
+export type StreamingRequestMatcher =
+  | RequestUrlMatcher
+  | {
+      url: RequestUrlMatcher;
+      httpVersion?: "1.1" | "2";
+      requestFraming?: "connect";
+    };
 
 // ---- Internal draft types ------------------------------------------------
 
@@ -86,14 +96,6 @@ function isIgnoredRequest(
   return ignoredRequests.some((matcher) => matchesUrlMatcher(url, matcher));
 }
 
-function isStreamingRequest(
-  url: string,
-  streamingRequests: StreamingRequestMatcher[] | undefined,
-): boolean {
-  if (!streamingRequests || streamingRequests.length === 0) return false;
-  return streamingRequests.some((matcher) => matchesUrlMatcher(url, matcher));
-}
-
 // ---- Per-request handlers -------------------------------------------------
 
 async function handleCassetteRequest(
@@ -130,18 +132,32 @@ async function handleReplayWithoutRequestBody(
   req: IncomingMessage,
   res: ServerResponse,
   upstreamUrl: string,
+  requestFraming?: "connect",
 ): Promise<void> {
   // Some duplex APIs keep the request body open while waiting for response
   // messages. For opted-in URLs, replay can respond immediately because the
   // cassette match is configured to ignore the request body.
+  const tracker =
+    requestFraming === "connect" ? trackConnectRequest(req) : undefined;
+  const onClose = () => tracker?.dispose();
+  res.on("close", onClose);
   req.resume();
-  const response = await handleReplay(ctx, {
-    method: req.method ?? "GET",
-    url: upstreamUrl,
-    headers: headersToRecord(req.headers),
-    body: { kind: "empty" },
-  });
-  await writeFetchResponse(res, response);
+  try {
+    const response = await handleReplay(
+      ctx,
+      {
+        method: req.method ?? "GET",
+        url: upstreamUrl,
+        headers: headersToRecord(req.headers),
+        body: { kind: "empty" },
+      },
+      tracker?.waitFor,
+    );
+    await writeFetchResponse(res, response);
+  } finally {
+    res.off("close", onClose);
+    tracker?.dispose();
+  }
 }
 
 async function handleStreamingRecord(
@@ -149,78 +165,107 @@ async function handleStreamingRecord(
   req: IncomingMessage,
   res: ServerResponse,
   upstreamUrl: string,
+  httpVersion: "1.1" | "2",
+  requestFraming?: "connect",
 ): Promise<void> {
   const upstream = new URL(upstreamUrl);
   const responseChunks: Buffer[] = [];
+  const streamChunks: NonNullable<RecordedResponse["streamChunks"]> = [];
+  const tracker =
+    requestFraming === "connect" ? trackConnectRequest(req) : undefined;
+  let lastChunkAt = performance.now();
   let responseHeaders: IncomingHttpHeaders = {};
   let responseStatus = 502;
   let responseStatusText: string | undefined;
+  const session =
+    httpVersion === "2" ? http2Connect(upstream.origin) : undefined;
 
-  await new Promise<void>((resolve, reject) => {
-    const upstreamReq = (
-      upstream.protocol === "https:" ? httpsRequest : httpRequest
-    )(upstream, {
-      method: req.method,
-      headers: headersForProxy(req.headers),
-    });
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const headers = headersForProxy(req.headers);
+      const upstreamReq = session
+        ? session.request({
+            ...headers,
+            ":method": req.method,
+            ":path": upstream.pathname + upstream.search,
+          })
+        : (upstream.protocol === "https:" ? httpsRequest : httpRequest)(
+            upstream,
+            {
+              method: req.method,
+              headers,
+            },
+          );
 
-    let settled = false;
-    const settle = (err?: unknown) => {
-      if (settled) return;
-      settled = true;
-      if (err) reject(err);
-      else resolve();
-    };
+      let settled = false;
+      const settle = (err?: unknown) => {
+        if (settled) return;
+        settled = true;
+        if (err) reject(err);
+        else resolve();
+      };
+      session?.on("error", settle);
+      req.on("aborted", () => upstreamReq.destroy());
+      req.on("error", (err) => upstreamReq.destroy(err));
+      res.on("close", () => {
+        if (!res.writableEnded) {
+          upstreamReq.destroy();
+          settle(new Error("Streaming cassette client disconnected"));
+        }
+      });
+      upstreamReq.on("error", settle);
 
-    req.on("aborted", () => {
-      upstreamReq.destroy();
-    });
-    req.on("error", (err) => {
-      upstreamReq.destroy(err);
-    });
+      const captureResponse = (stream: Readable) => {
+        // Forward each chunk immediately: bidirectional providers can wait for
+        // tool results before they send the rest of the response.
+        res.writeHead(responseStatus, headersForProxy(responseHeaders));
+        stream.on("data", (chunk) => {
+          const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+          const now = performance.now();
+          streamChunks.push({
+            size: bytes.length,
+            delayMs: Math.round(now - lastChunkAt),
+            ...(tracker ? { requestFrames: tracker.frames } : {}),
+          });
+          lastChunkAt = now;
+          responseChunks.push(bytes);
+        });
+        stream.on("end", () => settle());
+        stream.on("error", settle);
+        stream.pipe(res);
+      };
 
-    upstreamReq.on("error", (err) => {
-      if (!res.headersSent) {
-        res.writeHead(502, { "content-type": "application/json" });
-        res.end(JSON.stringify({ error: err.message }));
+      if ("session" in upstreamReq) {
+        upstreamReq.on("response", (headers) => {
+          responseStatus = Number(headers[":status"] ?? 502);
+          responseHeaders = headersToRecord(headers);
+          captureResponse(upstreamReq);
+        });
+      } else {
+        upstreamReq.on("response", (upstreamRes: IncomingMessage) => {
+          responseHeaders = upstreamRes.headers;
+          responseStatus = upstreamRes.statusCode ?? 502;
+          responseStatusText = upstreamRes.statusMessage;
+          captureResponse(upstreamRes);
+        });
       }
-      settle(err);
+      req.pipe(upstreamReq);
     });
 
-    upstreamReq.on("response", (upstreamRes) => {
-      responseHeaders = upstreamRes.headers;
-      responseStatus = upstreamRes.statusCode ?? 502;
-      responseStatusText = upstreamRes.statusMessage;
-
-      upstreamRes.on("data", (chunk) => {
-        const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
-        responseChunks.push(buffer);
-      });
-      upstreamRes.on("end", () => {
-        settle();
-      });
-      upstreamRes.on("error", (err) => {
-        settle(err);
-      });
+    pushStreamingEntry(ctx, {
+      requestHeaders: req.headers,
+      requestMethod: req.method ?? "GET",
+      responseBody: Buffer.concat(responseChunks),
+      streamChunks,
+      responseHeaders,
+      responseStatus,
+      responseStatusText,
+      upstreamUrl,
     });
-
-    req.pipe(upstreamReq);
-  });
-
-  const capturedResponse = pushStreamingEntry(ctx, {
-    requestHeaders: req.headers,
-    requestMethod: req.method ?? "GET",
-    responseBody: Buffer.concat(responseChunks),
-    responseHeaders,
-    responseStatus,
-    responseStatusText,
-    upstreamUrl,
-  });
-  const response = await buildResponse(capturedResponse, {
-    store: ctx.store,
-    name: ctx.name,
-  });
-  await writeFetchResponse(res, response);
+  } finally {
+    tracker?.dispose();
+    session?.destroy();
+  }
 }
 
 function pushStreamingEntry(
@@ -229,6 +274,7 @@ function pushStreamingEntry(
     requestHeaders: Record<string, number | string | string[] | undefined>;
     requestMethod: string;
     responseBody: Uint8Array;
+    streamChunks: NonNullable<RecordedResponse["streamChunks"]>;
     responseHeaders: Record<string, number | string | string[] | undefined>;
     responseStatus: number;
     responseStatusText?: string;
@@ -242,14 +288,18 @@ function pushStreamingEntry(
     body: { kind: "empty" },
   };
   const captured: RecordedResponseOrDraft = {
+    streamChunks: args.streamChunks,
     status: args.responseStatus,
     ...(args.responseStatusText ? { statusText: args.responseStatusText } : {}),
     headers: headersToRecord(args.responseHeaders),
-    body: bodyFromBytes(
-      args.responseBody,
-      headerValue(args.responseHeaders["content-type"]),
-      ctx.threshold,
-    ),
+    // Preserve wire bytes. Some Connect endpoints label binary protobuf
+    // streams as text/event-stream, which cannot be decoded as UTF-8 SSE.
+    body: args.responseBody.length
+      ? encodeBinaryDraft(
+          args.responseBody,
+          headerValue(args.responseHeaders["content-type"]),
+        )
+      : { kind: "empty" },
   };
 
   pushRecordEntry(ctx, recorded, captured);
@@ -259,6 +309,7 @@ function pushStreamingEntry(
 function handleReplay(
   ctx: CassetteContext,
   recorded: RecordedRequest,
+  waitForRequestFrames?: (count: number) => Promise<void>,
 ): Promise<Response> {
   const filtered = asNormalized(applyFilters(recorded, ctx.filters));
   const matchKey = filtered.matchKey;
@@ -285,7 +336,11 @@ function handleReplay(
     );
   }
 
-  return buildResponse(match.response, { store: ctx.store, name: ctx.name });
+  return buildResponse(match.response, {
+    store: ctx.store,
+    name: ctx.name,
+    waitForRequestFrames,
+  });
 }
 
 async function handleRecord(
@@ -543,13 +598,36 @@ export function createCassetteServer(
       return;
     }
 
-    if (isStreamingRequest(upstreamUrl, ctx.streamingRequests)) {
+    const streamingRequest = ctx.streamingRequests?.find((matcher) =>
+      matchesUrlMatcher(
+        upstreamUrl,
+        typeof matcher === "object" && "url" in matcher ? matcher.url : matcher,
+      ),
+    );
+    if (streamingRequest) {
+      const options =
+        typeof streamingRequest === "object" && "url" in streamingRequest
+          ? streamingRequest
+          : undefined;
       if (ctx.mode === "replay") {
-        await handleReplayWithoutRequestBody(ctx, req, res, upstreamUrl);
+        await handleReplayWithoutRequestBody(
+          ctx,
+          req,
+          res,
+          upstreamUrl,
+          options?.requestFraming,
+        );
         return;
       }
       if (ctx.mode === "record") {
-        await handleStreamingRecord(ctx, req, res, upstreamUrl);
+        await handleStreamingRecord(
+          ctx,
+          req,
+          res,
+          upstreamUrl,
+          options?.httpVersion ?? "1.1",
+          options?.requestFraming,
+        );
         return;
       }
     }
@@ -771,16 +849,6 @@ function headerValue(
 ): string | undefined {
   if (value === undefined) return undefined;
   return Array.isArray(value) ? value[0] : String(value);
-}
-
-function bodyFromBytes(
-  bytes: Uint8Array,
-  contentType: string | undefined,
-  threshold: number | false,
-): BodyOrDraft {
-  return threshold !== false && bytes.length >= threshold
-    ? encodeBinaryDraft(bytes, contentType)
-    : encodeBody(bytes, contentType);
 }
 
 async function writeFetchResponse(

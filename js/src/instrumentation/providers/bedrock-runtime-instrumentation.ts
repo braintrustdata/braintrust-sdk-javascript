@@ -1,3 +1,4 @@
+import { serviceTierMetadata } from "../core/service-tier";
 import type { ReturnOf } from "../core/interceptor-definitions";
 import type { StartOf } from "../core/tracing-types";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
@@ -100,7 +101,12 @@ function extractBedrockRuntimeInput(command: unknown): {
         messages: converseRequest?.messages,
         system: converseRequest?.system,
       }),
-      metadata,
+      metadata: {
+        ...metadata,
+        ...serviceTierMetadata({
+          requested: converseRequest?.serviceTier?.type,
+        }),
+      },
     };
   }
 
@@ -116,7 +122,13 @@ function extractBedrockRuntimeInput(command: unknown): {
       input:
         parseJsonBody(invokeRequest?.body) ??
         summarizeBody(invokeRequest?.body),
-      metadata,
+      metadata: {
+        ...metadata,
+        ...(operation === "invokeModel" ||
+        operation === "invokeModelWithResponseStream"
+          ? serviceTierMetadata({ requested: invokeRequest?.serviceTier })
+          : {}),
+      },
     };
   }
 
@@ -200,6 +212,22 @@ function extractBedrockRuntimeResponseMetadata(
     }
   }
 
+  if (operation === "converse" && isObject(result.serviceTier)) {
+    Object.assign(
+      metadata,
+      serviceTierMetadata({ served: result.serviceTier.type }),
+    );
+  }
+
+  if (
+    operation === "invokeModel" ||
+    operation === "invokeModelWithResponseStream"
+  ) {
+    Object.assign(
+      metadata,
+      serviceTierMetadata({ served: result.serviceTier }),
+    );
+  }
   if (
     operation === "converse" &&
     result.additionalModelResponseFields !== undefined
@@ -347,6 +375,10 @@ function patchBedrockRuntimeStreamingResult(args: {
       operation === "invokeModelWithResponseStream") &&
     isAsyncIterable(args.result.body)
   ) {
+    if (operation === "invokeModelWithResponseStream") {
+      const metadata = serviceTierMetadata({ served: args.result.serviceTier });
+      if (Object.keys(metadata).length) args.span.log({ metadata });
+    }
     patchInvokeModelResponseStream(
       args.result.body as AsyncIterable<BedrockRuntimeResponseStreamEvent>,
       args.span,
@@ -366,6 +398,10 @@ function patchConverseStream(
   let firstChunkTime: number | undefined;
   patchStreamIfNeeded<BedrockRuntimeConverseStreamEvent>(stream, {
     onChunk: (chunk) => {
+      const metadata = serviceTierMetadata({
+        served: chunk.metadata?.serviceTier?.type,
+      });
+      if (Object.keys(metadata).length) span.log({ metadata });
       if (firstChunkTime === undefined && isObject(chunk.contentBlockDelta)) {
         firstChunkTime = getCurrentUnixTimestamp();
       }
@@ -488,6 +524,10 @@ export function aggregateBedrockConverseStreamChunks(
     }
     if (chunk.metadata?.serviceTier !== undefined) {
       metadata.serviceTier = chunk.metadata.serviceTier;
+      Object.assign(
+        metadata,
+        serviceTierMetadata({ served: chunk.metadata.serviceTier?.type }),
+      );
     }
   }
 

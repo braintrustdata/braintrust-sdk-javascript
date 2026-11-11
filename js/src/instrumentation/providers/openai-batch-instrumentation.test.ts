@@ -36,6 +36,7 @@ const chatInput = [
     url: "/v1/chat/completions",
     body: {
       model: "gpt-test",
+      service_tier: "flex",
       messages: [{ role: "user", content: "hi" }],
     },
   },
@@ -331,6 +332,7 @@ describe("OpenAI Batch instrumentation", () => {
                 },
               ],
               model: "gpt-result",
+              service_tier: "default",
               usage: {
                 prompt_tokens: 2,
                 completion_tokens: 3,
@@ -363,7 +365,12 @@ describe("OpenAI Batch instrumentation", () => {
     const rows = (await backgroundLogger.drain()) as Array<Record<string, any>>;
     expect(rows.map((row) => row.id).sort()).toEqual(pendingIds);
     expect(rows.find((row) => row.output !== undefined)).toMatchObject({
-      metadata: { model: "gpt-result", provider: "openai" },
+      metadata: {
+        model: "gpt-result",
+        provider: "openai",
+        requested_service_tier: "flex",
+        served_service_tier: "default",
+      },
       metrics: {
         completion_tokens: 3,
         end: 200,

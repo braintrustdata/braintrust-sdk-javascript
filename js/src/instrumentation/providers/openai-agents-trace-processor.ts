@@ -1,3 +1,4 @@
+import { serviceTierMetadata } from "../core/service-tier";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { SpanTypeAttribute, isObject } from "../../../util/index";
 import {
@@ -88,6 +89,8 @@ function spanNameFromAgents(span: OpenAIAgentsSpan): string {
   }
 
   switch (spanData.type) {
+    case "turn":
+      return "Turn";
     case "generation":
       return "Generation";
     case "response":
@@ -162,11 +165,12 @@ function parseUsageMetrics(usage: unknown): Record<string, number> {
   }
 
   const inputDetails = usage.input_tokens_details;
-  const cachedTokens = getNumberProperty(inputDetails, "cached_tokens");
-  const cacheWriteTokens = getNumberProperty(
-    inputDetails,
-    "cache_write_tokens",
-  );
+  const cachedTokens =
+    getNumberProperty(inputDetails, "cached_tokens") ??
+    getNumberProperty(usage, "cached_input_tokens");
+  const cacheWriteTokens =
+    getNumberProperty(inputDetails, "cache_write_tokens") ??
+    getNumberProperty(usage, "cache_write_input_tokens");
   if (cachedTokens !== undefined) {
     metrics.prompt_cached_tokens = cachedTokens;
   }
@@ -375,6 +379,13 @@ export class OpenAIAgentsTraceProcessor {
     const spanData = span.spanData;
 
     switch (spanData.type) {
+      case "task":
+        return { metrics: parseUsageMetrics(spanData.usage) };
+      case "turn":
+        return {
+          metadata: { turn: spanData.turn, agent_name: spanData.agent_name },
+          metrics: parseUsageMetrics(spanData.usage),
+        };
       case "agent":
         return this.extractAgentLogData(spanData);
       case "response":
@@ -430,7 +441,10 @@ export class OpenAIAgentsTraceProcessor {
       input: processInputAttachments(spanData._input),
       output: processInputAttachments(processImagesInOutput(output)),
       metadata: isObject(response)
-        ? this.omitKeys(response, ["output", "usage"])
+        ? {
+            ...this.omitKeys(response, ["output", "usage"]),
+            ...serviceTierMetadata({ served: response.service_tier }),
+          }
         : {},
       metrics,
     };

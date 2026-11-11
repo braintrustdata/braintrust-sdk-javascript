@@ -28,6 +28,7 @@ export interface AnthropicBetaMessages extends AnthropicMessages {
   toolRunner: (
     params: AnthropicToolRunnerParams,
   ) => AnthropicToolRunner<unknown>;
+  _toolRunnerThread?: (params: AnthropicToolRunnerParams) => unknown;
 }
 
 export interface AnthropicBetaSessions {
@@ -74,11 +75,17 @@ export interface AnthropicToolRunner<TYield>
   extends AsyncIterable<TYield>, PromiseLike<AnthropicMessage> {
   done?: () => Promise<AnthropicMessage>;
   runUntilDone?: () => Promise<AnthropicMessage>;
+  setMessagesParams?: (
+    paramsOrMutator:
+      | AnthropicToolRunnerParams
+      | ((params: AnthropicToolRunnerParams) => AnthropicToolRunnerParams),
+  ) => void;
 }
 
 // Requests
 
 export interface AnthropicCreateParams {
+  service_tier?: string;
   messages: AnthropicInputMessage[];
   system?: string | { type: "text"; text: string }[];
   stream?: boolean;
@@ -190,6 +197,7 @@ export type AnthropicOutputContentBlock =
   | { type: string };
 
 export interface AnthropicUsage {
+  service_tier?: string | null;
   input_tokens: number;
   output_tokens: number;
   cache_read_input_tokens?: number;

@@ -1,3 +1,5 @@
+import type { LangChainCaptureOptions } from "../vendor-sdk-types/langchain";
+
 export type SpanExportData = Record<string, unknown>;
 
 export interface SpanCustomizer {
@@ -117,6 +119,29 @@ export const DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES: number =
   4 * 1024 * 1024;
 
 export interface InstrumentationConfig {
+  /**
+   * Capture settings for automatically injected LangChain/LangGraph handlers.
+   * All fields default to true. Disabled payloads are omitted before copying.
+   * Spans, timing, errors, and metadata remain available.
+   * Configure before initializing the SDK or loading braintrust/hook.mjs.
+   * Use provider instrumentation to capture model payloads and usage when
+   * disabling their capture here.
+   *
+   * @example
+   * // capture-config.mjs, loaded before --import braintrust/hook.mjs
+   * import { configureInstrumentation } from "braintrust/instrumentation";
+   * configureInstrumentation({
+   *   langchain: {
+   *     captureChainInputs: false,
+   *     captureChainOutputs: false,
+   *     captureModelInputs: false,
+   *     captureModelOutputs: false,
+   *     captureModelTokenUsage: false,
+   *   },
+   * });
+   */
+  langchain?: LangChainCaptureOptions;
+
   /**
    * Target attachment payload size in bytes for each segmentable media stream.
    * Defaults to 4 MiB. Must be a positive safe integer.

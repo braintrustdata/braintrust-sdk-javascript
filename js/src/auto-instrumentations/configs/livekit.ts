@@ -58,6 +58,8 @@ const targets: [
     "voice/audio_recognition",
     { className: "AudioRecognition", methodName: "processSTTEvent" },
   ],
+  // LiveKit reads its project redaction setting from the job context.
+  ["jobContext", "job", { functionName: "getJobContext" }],
   // These factories create the async inference workers inside the scoped call.
   // Suppressing here leaves tool execution and other session work instrumented.
   ["inference", "voice/generation", { functionName: "performLLMInference" }],

@@ -31,6 +31,14 @@ test("otel-span-processor-export sends filtered OTLP traces to Braintrust", asyn
       expect(spans.map((span) => span.name)).toContain("gen_ai.completion");
       expect(spans.map((span) => span.name)).not.toContain("root-operation");
       expect(spans[0]?.attributes["gen_ai.system"]).toBe("openai");
+      expect(
+        JSON.parse(String(spans[0]?.attributes["braintrust.metadata"])),
+      ).toEqual({
+        model: "test-model",
+        provider: "openai",
+        requested_service_tier: "flex",
+        served_service_tier: "default",
+      });
 
       expect(
         summarizeRequest(request, {

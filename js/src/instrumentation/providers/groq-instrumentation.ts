@@ -1,3 +1,4 @@
+import { serviceTierMetadata } from "../core/service-tier";
 import {
   SpanTypeAttribute,
   concatUint8Arrays,
@@ -48,10 +49,18 @@ export function registerGroqInstrumentation(): void {
             const { messages, ...metadata } = params;
             return {
               input: processInputAttachments(messages),
-              metadata: { ...metadata, provider: "groq" },
+              metadata: {
+                ...metadata,
+                provider: "groq",
+                ...serviceTierMetadata({ requested: params.service_tier }),
+              },
             };
           },
           extractOutput: (result) => result?.choices,
+          extractMetadata: (result) =>
+            serviceTierMetadata({ served: result?.service_tier }),
+          extractChunkMetadata: (chunk) =>
+            serviceTierMetadata({ served: chunk?.service_tier }),
           extractMetrics: (result, startTime) => {
             const metrics = parseGroqMetrics(result);
             if (startTime) {
@@ -719,6 +728,7 @@ export function aggregateGroqChatCompletionChunks(
 ): {
   metrics: Record<string, number>;
   output: GroqChatCompletion["choices"];
+  metadata?: Record<string, unknown>;
 } {
   const aggregated = aggregateChatCompletionChunks(
     chunks,
@@ -735,6 +745,7 @@ export function aggregateGroqChatCompletionChunks(
   return {
     metrics: aggregated.metrics,
     output: aggregated.output,
+    ...(aggregated.metadata ? { metadata: aggregated.metadata } : {}),
   };
 }
 

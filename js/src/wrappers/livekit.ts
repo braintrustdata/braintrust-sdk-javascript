@@ -109,8 +109,13 @@ export function wrapLiveKit<T extends object>(module: T): T {
     "startActiveSpanSync",
     livekitChannels.startActiveSpanSync,
   );
+  const { getJobContext } = livekit;
   const AgentSession = new Proxy(livekit.voice.AgentSession, {
     construct(target, args, newTarget) {
+      // LiveKit's internals call their own getJobContext, which a module proxy
+      // can't intercept; hand the public export to the plugin instead.
+      if (typeof getJobContext === "function")
+        livekitChannels.jobContext.invoke(getJobContext, livekit, [false], {});
       return wrapSession(
         Reflect.construct(target, args, newTarget) as AgentSession,
       );

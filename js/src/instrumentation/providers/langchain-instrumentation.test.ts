@@ -1,6 +1,11 @@
-import { beforeAll, describe, expect, it } from "vite-plus/test";
-import { registerLangChainInstrumentation } from "./langchain-instrumentation";
+import { beforeAll, describe, expect, it, vi } from "vite-plus/test";
 import { langChainChannels } from "./langchain-interceptors";
+import { registerLangChainInstrumentation } from "./langchain-instrumentation";
+import type {
+  LangChainStartSpanArgs,
+  LangChainEndSpanArgs,
+} from "../../vendor-sdk-types/langchain";
+import { BraintrustLangChainCallbackHandler } from "../../wrappers/langchain/callback-handler";
 
 function createManager(handlers: unknown[] = []) {
   return {
@@ -46,7 +51,13 @@ function createArgumentsObject(...args: unknown[]): IArguments {
 
 describe("registerLangChainInstrumentation", () => {
   beforeAll(() => {
-    registerLangChainInstrumentation();
+    registerLangChainInstrumentation({
+      captureChainInputs: false,
+      captureChainOutputs: false,
+      captureModelInputs: false,
+      captureModelOutputs: false,
+      captureModelTokenUsage: false,
+    });
   });
 
   it("injects a Braintrust callback handler into empty CallbackManager.configure() arguments", () => {
@@ -107,3 +118,42 @@ describe("registerLangChainInstrumentation", () => {
     expect(() => traceConfigureResult({ handlers: [] })).not.toThrow();
   });
 });
+
+it.each(["arguments", "result"] as const)(
+  "applies capture options to the handler injected into %s",
+  async (path) => {
+    let handler: BraintrustLangChainCallbackHandler;
+    {
+      if (path === "arguments") {
+        handler = traceConfigureArguments([])[0][0];
+      } else {
+        const manager = createManager();
+        traceConfigureResult(manager);
+        handler = manager.handlers[0] as BraintrustLangChainCallbackHandler;
+      }
+    }
+    // Observe the boundary before any logger copying happens.
+    const boundary = handler as unknown as {
+      startSpan(args: LangChainStartSpanArgs): void;
+      endSpan(args: LangChainEndSpanArgs): void;
+    };
+    const start = vi.spyOn(boundary, "startSpan").mockImplementation(() => {});
+    const end = vi.spyOn(boundary, "endSpan").mockImplementation(() => {});
+    await handler.handleChainStart({}, { state: "input" }, "chain");
+    await handler.handleChainEnd({ state: "output" }, "chain");
+    await handler.handleChatModelStart({}, [[{ content: "hello" }]], "model");
+    await handler.handleLLMEnd(
+      { llmOutput: { tokenUsage: { totalTokens: 10 } } },
+      "model",
+    );
+    for (const [args] of start.mock.calls) {
+      expect(args).not.toHaveProperty("event.input");
+    }
+    for (const [args] of end.mock.calls) {
+      expect(args).not.toHaveProperty("output");
+      expect(args).not.toHaveProperty("metrics.tokens");
+    }
+    expect(start).toHaveBeenCalledTimes(2);
+    expect(end).toHaveBeenCalledTimes(2);
+  },
+);

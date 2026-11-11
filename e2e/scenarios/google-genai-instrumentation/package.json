@@ -10,7 +10,7 @@
         },
         "google-genai-sdk-v2-latest": {
           "package": "@google/genai",
-          "range": ">=2 <2.9.0"
+          "range": "2"
         }
       }
     }
@@ -19,7 +19,7 @@
     "google-genai-sdk-v1": "npm:@google/genai@1.30.0",
     "google-genai-sdk-v1-latest": "npm:@google/genai@1.52.0",
     "google-genai-sdk-v2": "npm:@google/genai@2.8.0",
-    "google-genai-sdk-v2-latest": "npm:@google/genai@2.8.0"
+    "google-genai-sdk-v2-latest": "npm:@google/genai@2.32.0"
   },
   "pnpm": {
     "overrides": {

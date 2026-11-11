@@ -16,7 +16,9 @@ span_tree:
     │   │   metadata: {
     │   │     "entity_id": "weather-agent",
     │   │     "entity_name": "Weather Agent",
-    │   │     "entity_type": "agent"
+    │   │     "entity_type": "agent",
+    │   │     "model": "mock-model-id",
+    │   │     "provider": "mock-provider"
     │   │   }
     │   │   └── llm: 'mock-model-id' [llm]
     │   │       input: {
@@ -62,6 +64,16 @@ span_tree:
     │   │         "tokens": 30
     │   │       }
     │   │       └── step: 0 [llm]
+    │   │           input: [
+    │   │             {
+    │   │               "content": "Answer weather questions with the provided mock forecast.",
+    │   │               "role": "system"
+    │   │             },
+    │   │             {
+    │   │               "content": "What is the weather in Paris?",
+    │   │               "role": "user"
+    │   │             }
+    │   │           ]
     │   │           output: {
     │   │             "text": "The forecast is sunny.",
     │   │             "toolCalls": []
@@ -76,6 +88,72 @@ span_tree:
     │   │             "prompt_tokens": 10,
     │   │             "tokens": 30
     │   │           }
+    │   │           ├── llm request processor: provider-history-compat [function]
+    │   │           │   input: {
+    │   │           │     "prompt": [
+    │   │           │       {
+    │   │           │         "content": "Answer weather questions with the provided mock forecast.",
+    │   │           │         "role": "system"
+    │   │           │       },
+    │   │           │       {
+    │   │           │         "content": [
+    │   │           │           {
+    │   │           │             "providerOptions": {
+    │   │           │               "mastra": {
+    │   │           │                 "createdAt": 0
+    │   │           │               }
+    │   │           │             },
+    │   │           │             "text": "What is the weather in Paris?",
+    │   │           │             "type": "text"
+    │   │           │           }
+    │   │           │         ],
+    │   │           │         "role": "user"
+    │   │           │       }
+    │   │           │     ],
+    │   │           │     "retryCount": 0,
+    │   │           │     "stepNumber": 0
+    │   │           │   }
+    │   │           │   output: {
+    │   │           │     "shortCircuited": false
+    │   │           │   }
+    │   │           │   metadata: {
+    │   │           │     "entity_id": "provider-history-compat",
+    │   │           │     "entity_name": "Provider History Compat",
+    │   │           │     "entity_type": "input_processor"
+    │   │           │   }
+    │   │           ├── llm request processor: unsupported-file-handler [function]
+    │   │           │   input: {
+    │   │           │     "prompt": [
+    │   │           │       {
+    │   │           │         "content": "Answer weather questions with the provided mock forecast.",
+    │   │           │         "role": "system"
+    │   │           │       },
+    │   │           │       {
+    │   │           │         "content": [
+    │   │           │           {
+    │   │           │             "providerOptions": {
+    │   │           │               "mastra": {
+    │   │           │                 "createdAt": 0
+    │   │           │               }
+    │   │           │             },
+    │   │           │             "text": "What is the weather in Paris?",
+    │   │           │             "type": "text"
+    │   │           │           }
+    │   │           │         ],
+    │   │           │         "role": "user"
+    │   │           │       }
+    │   │           │     ],
+    │   │           │     "retryCount": 0,
+    │   │           │     "stepNumber": 0
+    │   │           │   }
+    │   │           │   output: {
+    │   │           │     "shortCircuited": false
+    │   │           │   }
+    │   │           │   metadata: {
+    │   │           │     "entity_id": "unsupported-file-handler",
+    │   │           │     "entity_name": "Unsupported File Handler",
+    │   │           │     "entity_type": "input_processor"
+    │   │           │   }
     │   │           └── chunk: 'text' [llm]
     │   │               output: {
     │   │                 "text": "The forecast is sunny."
@@ -94,7 +172,9 @@ span_tree:
     │   │   metadata: {
     │   │     "entity_id": "weather-agent",
     │   │     "entity_name": "Weather Agent",
-    │   │     "entity_type": "agent"
+    │   │     "entity_type": "agent",
+    │   │     "model": "mock-model-id",
+    │   │     "provider": "mock-provider"
     │   │   }
     │   │   └── llm: 'mock-model-id' [llm]
     │   │       input: {
@@ -140,6 +220,16 @@ span_tree:
     │   │         "tokens": 30
     │   │       }
     │   │       └── step: 0 [llm]
+    │   │           input: [
+    │   │             {
+    │   │               "content": "Answer weather questions with the provided mock forecast.",
+    │   │               "role": "system"
+    │   │             },
+    │   │             {
+    │   │               "content": "Stream the Paris forecast.",
+    │   │               "role": "user"
+    │   │             }
+    │   │           ]
     │   │           output: {
     │   │             "text": "The forecast is sunny.",
     │   │             "toolCalls": []
@@ -154,6 +244,72 @@ span_tree:
     │   │             "prompt_tokens": 10,
     │   │             "tokens": 30
     │   │           }
+    │   │           ├── llm request processor: provider-history-compat [function]
+    │   │           │   input: {
+    │   │           │     "prompt": [
+    │   │           │       {
+    │   │           │         "content": "Answer weather questions with the provided mock forecast.",
+    │   │           │         "role": "system"
+    │   │           │       },
+    │   │           │       {
+    │   │           │         "content": [
+    │   │           │           {
+    │   │           │             "providerOptions": {
+    │   │           │               "mastra": {
+    │   │           │                 "createdAt": 0
+    │   │           │               }
+    │   │           │             },
+    │   │           │             "text": "Stream the Paris forecast.",
+    │   │           │             "type": "text"
+    │   │           │           }
+    │   │           │         ],
+    │   │           │         "role": "user"
+    │   │           │       }
+    │   │           │     ],
+    │   │           │     "retryCount": 0,
+    │   │           │     "stepNumber": 0
+    │   │           │   }
+    │   │           │   output: {
+    │   │           │     "shortCircuited": false
+    │   │           │   }
+    │   │           │   metadata: {
+    │   │           │     "entity_id": "provider-history-compat",
+    │   │           │     "entity_name": "Provider History Compat",
+    │   │           │     "entity_type": "input_processor"
+    │   │           │   }
+    │   │           ├── llm request processor: unsupported-file-handler [function]
+    │   │           │   input: {
+    │   │           │     "prompt": [
+    │   │           │       {
+    │   │           │         "content": "Answer weather questions with the provided mock forecast.",
+    │   │           │         "role": "system"
+    │   │           │       },
+    │   │           │       {
+    │   │           │         "content": [
+    │   │           │           {
+    │   │           │             "providerOptions": {
+    │   │           │               "mastra": {
+    │   │           │                 "createdAt": 0
+    │   │           │               }
+    │   │           │             },
+    │   │           │             "text": "Stream the Paris forecast.",
+    │   │           │             "type": "text"
+    │   │           │           }
+    │   │           │         ],
+    │   │           │         "role": "user"
+    │   │           │       }
+    │   │           │     ],
+    │   │           │     "retryCount": 0,
+    │   │           │     "stepNumber": 0
+    │   │           │   }
+    │   │           │   output: {
+    │   │           │     "shortCircuited": false
+    │   │           │   }
+    │   │           │   metadata: {
+    │   │           │     "entity_id": "unsupported-file-handler",
+    │   │           │     "entity_name": "Unsupported File Handler",
+    │   │           │     "entity_type": "input_processor"
+    │   │           │   }
     │   │           └── chunk: 'text' [llm]
     │   │               output: {
     │   │                 "text": "The forecast is sunny."

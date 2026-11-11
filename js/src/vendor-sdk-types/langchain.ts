@@ -27,7 +27,23 @@ export type LangChainCallbackManagerConfigureArgs = [
   options?: unknown,
 ];
 
-export type LangChainCallbackHandlerOptions = {
+export interface LangChainCaptureOptions {
+  /** Capture chain inputs, including end/error callback inputs. Defaults to true. */
+  captureChainInputs?: boolean;
+  /** Capture chain outputs. Defaults to true. */
+  captureChainOutputs?: boolean;
+  /** Capture chat messages and LLM prompts. Defaults to true. */
+  captureModelInputs?: boolean;
+  /** Capture chat model and LLM results. Defaults to true. */
+  captureModelOutputs?: boolean;
+  /**
+   * Capture model token usage, including cache and reasoning tokens.
+   * Defaults to true. Does not affect duration or time to first token.
+   */
+  captureModelTokenUsage?: boolean;
+}
+
+export type LangChainCallbackHandlerOptions = LangChainCaptureOptions & {
   debug: boolean;
   excludeMetadataProps: RegExp;
   logger?: Logger | Span;

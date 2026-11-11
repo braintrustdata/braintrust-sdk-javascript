@@ -1,0 +1,832 @@
+{
+  "span_tree": [
+    {
+      "name": "cloudflare-ai-chat-success-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "AIChatAgent.onChatMessage",
+          "type": "task",
+          "children": [
+            {
+              "name": "generateText",
+              "type": "function",
+              "children": [
+                {
+                  "name": "doGenerate",
+                  "type": "llm",
+                  "children": [],
+                  "input": {
+                    "maxOutputTokens": 512,
+                    "prompt": [
+                      {
+                        "content": "Call lookup_weather exactly once with city Vienna. After the tool returns, reply with exactly CLOUDFLARE_AI_CHAT_TOOL_OK and no other text.",
+                        "role": "system"
+                      },
+                      {
+                        "content": [
+                          {
+                            "text": "Look up the weather in Vienna.",
+                            "type": "text"
+                          }
+                        ],
+                        "role": "user"
+                      }
+                    ],
+                    "providerOptions": {
+                      "openai": {
+                        "store": false
+                      }
+                    },
+                    "toolChoice": {
+                      "type": "auto"
+                    },
+                    "tools": [
+                      {
+                        "description": "Return deterministic weather for one city.",
+                        "inputSchema": {
+                          "$schema": "http://json-schema.org/draft-07/schema#",
+                          "additionalProperties": false,
+                          "properties": {
+                            "city": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "city"
+                          ],
+                          "type": "object"
+                        },
+                        "name": "lookup_weather",
+                        "type": "function"
+                      }
+                    ]
+                  },
+                  "output": {
+                    "content": [
+                      {
+                        "input": "{\"city\":\"Vienna\"}",
+                        "providerMetadata": {
+                          "openai": {
+                            "itemId": "<itemId:3>"
+                          }
+                        },
+                        "toolCallId": "<toolCallId:2>",
+                        "toolName": "lookup_weather",
+                        "type": "tool-call"
+                      }
+                    ],
+                    "finishReason": {
+                      "unified": "tool-calls"
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "responseId": "<span:1>",
+                        "serviceTier": "default"
+                      }
+                    },
+                    "response": {
+                      "body": "<omitted>",
+                      "id": "<span:1>",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
+                      "timestamp": "<timestamp>"
+                    },
+                    "usage": {
+                      "inputTokens": {
+                        "cacheRead": 0,
+                        "noCache": 85,
+                        "total": 85
+                      },
+                      "outputTokens": {
+                        "reasoning": 0,
+                        "text": 19,
+                        "total": 19
+                      },
+                      "raw": {
+                        "input_tokens": 85,
+                        "input_tokens_details": {
+                          "cached_tokens": 0
+                        },
+                        "output_tokens": 19,
+                        "output_tokens_details": {
+                          "reasoning_tokens": 0
+                        }
+                      }
+                    },
+                    "warnings": []
+                  },
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "finish_reason": {
+                      "unified": "tool-calls"
+                    },
+                    "model": "gpt-5.4-nano",
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
+                  },
+                  "metrics": {
+                    "completion_reasoning_tokens": 0,
+                    "completion_tokens": 19,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 85,
+                    "reasoning_tokens": 0,
+                    "tokens": 104
+                  }
+                },
+                {
+                  "name": "doGenerate",
+                  "type": "llm",
+                  "children": [],
+                  "input": {
+                    "maxOutputTokens": 512,
+                    "prompt": [
+                      {
+                        "content": "Call lookup_weather exactly once with city Vienna. After the tool returns, reply with exactly CLOUDFLARE_AI_CHAT_TOOL_OK and no other text.",
+                        "role": "system"
+                      },
+                      {
+                        "content": [
+                          {
+                            "text": "Look up the weather in Vienna.",
+                            "type": "text"
+                          }
+                        ],
+                        "role": "user"
+                      },
+                      {
+                        "content": [
+                          {
+                            "input": {
+                              "city": "Vienna"
+                            },
+                            "providerOptions": {
+                              "openai": {
+                                "itemId": "<itemId:2>"
+                              }
+                            },
+                            "toolCallId": "<toolCallId:1>",
+                            "toolName": "lookup_weather",
+                            "type": "tool-call"
+                          }
+                        ],
+                        "role": "assistant"
+                      },
+                      {
+                        "content": [
+                          {
+                            "output": {
+                              "type": "json",
+                              "value": {
+                                "city": "Vienna",
+                                "condition": "sunny",
+                                "marker": "WEATHER_TOOL_EXECUTED"
+                              }
+                            },
+                            "providerOptions": {
+                              "openai": {
+                                "itemId": "<itemId:2>"
+                              }
+                            },
+                            "toolCallId": "<toolCallId:1>",
+                            "toolName": "lookup_weather",
+                            "type": "tool-result"
+                          }
+                        ],
+                        "role": "tool"
+                      }
+                    ],
+                    "providerOptions": {
+                      "openai": {
+                        "store": false
+                      }
+                    },
+                    "toolChoice": {
+                      "type": "auto"
+                    },
+                    "tools": [
+                      {
+                        "description": "Return deterministic weather for one city.",
+                        "inputSchema": {
+                          "$schema": "http://json-schema.org/draft-07/schema#",
+                          "additionalProperties": false,
+                          "properties": {
+                            "city": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "city"
+                          ],
+                          "type": "object"
+                        },
+                        "name": "lookup_weather",
+                        "type": "function"
+                      }
+                    ]
+                  },
+                  "output": {
+                    "content": [
+                      {
+                        "providerMetadata": {
+                          "openai": {
+                            "itemId": "<itemId:2>"
+                          }
+                        },
+                        "text": "CLOUDFLARE_AI_CHAT_TOOL_OK",
+                        "type": "text"
+                      }
+                    ],
+                    "finishReason": {
+                      "unified": "stop"
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "responseId": "<span:1>",
+                        "serviceTier": "default"
+                      }
+                    },
+                    "response": {
+                      "body": "<omitted>",
+                      "id": "<span:1>",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
+                      "timestamp": "<timestamp>"
+                    },
+                    "usage": {
+                      "inputTokens": {
+                        "cacheRead": 0,
+                        "noCache": 135,
+                        "total": 135
+                      },
+                      "outputTokens": {
+                        "reasoning": 0,
+                        "text": 14,
+                        "total": 14
+                      },
+                      "raw": {
+                        "input_tokens": 135,
+                        "input_tokens_details": {
+                          "cached_tokens": 0
+                        },
+                        "output_tokens": 14,
+                        "output_tokens_details": {
+                          "reasoning_tokens": 0
+                        }
+                      }
+                    },
+                    "warnings": []
+                  },
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "finish_reason": {
+                      "unified": "stop"
+                    },
+                    "model": "gpt-5.4-nano",
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
+                  },
+                  "metrics": {
+                    "completion_reasoning_tokens": 0,
+                    "completion_tokens": 14,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 135,
+                    "reasoning_tokens": 0,
+                    "tokens": 149
+                  }
+                },
+                {
+                  "name": "lookup_weather",
+                  "type": "tool",
+                  "children": [],
+                  "input": {
+                    "city": "Vienna"
+                  },
+                  "output": {
+                    "city": "Vienna",
+                    "condition": "sunny",
+                    "marker": "WEATHER_TOOL_EXECUTED"
+                  },
+                  "metadata": {
+                    "toolCallId": "<toolCallId:1>"
+                  }
+                }
+              ],
+              "input": {
+                "maxOutputTokens": 512,
+                "messages": [
+                  {
+                    "content": [
+                      {
+                        "text": "Look up the weather in Vienna.",
+                        "type": "text"
+                      }
+                    ],
+                    "role": "user"
+                  }
+                ],
+                "model": {
+                  "config": {
+                    "fileIdPrefixes": [
+                      "file-"
+                    ],
+                    "provider": "openai.responses"
+                  },
+                  "modelId": "gpt-5.4-nano",
+                  "specificationVersion": "v3",
+                  "supportedUrls": {
+                    "application/pdf": [
+                      {}
+                    ],
+                    "image/*": [
+                      {}
+                    ]
+                  }
+                },
+                "providerOptions": {
+                  "openai": {
+                    "store": false
+                  }
+                },
+                "system": "Call lookup_weather exactly once with city Vienna. After the tool returns, reply with exactly CLOUDFLARE_AI_CHAT_TOOL_OK and no other text.",
+                "tools": {
+                  "lookup_weather": {
+                    "description": "Return deterministic weather for one city.",
+                    "inputSchema": {
+                      "$schema": "http://json-schema.org/draft-07/schema#",
+                      "additionalProperties": false,
+                      "properties": {
+                        "city": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "city"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                }
+              },
+              "output": {
+                "content": [
+                  {
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:4>"
+                      }
+                    },
+                    "text": "CLOUDFLARE_AI_CHAT_TOOL_OK",
+                    "type": "text"
+                  }
+                ],
+                "finishReason": "stop",
+                "output": "CLOUDFLARE_AI_CHAT_TOOL_OK",
+                "providerMetadata": {
+                  "openai": {
+                    "responseId": "<span:5>",
+                    "serviceTier": "default"
+                  }
+                },
+                "response": {
+                  "body": "<omitted>",
+                  "id": "<span:5>",
+                  "messages": [
+                    {
+                      "content": [
+                        {
+                          "input": {
+                            "city": "Vienna"
+                          },
+                          "providerOptions": {
+                            "openai": {
+                              "itemId": "<itemId:2>"
+                            }
+                          },
+                          "toolCallId": "<toolCallId:1>",
+                          "toolName": "lookup_weather",
+                          "type": "tool-call"
+                        }
+                      ],
+                      "role": "assistant"
+                    },
+                    {
+                      "content": [
+                        {
+                          "output": {
+                            "type": "json",
+                            "value": {
+                              "city": "Vienna",
+                              "condition": "sunny",
+                              "marker": "WEATHER_TOOL_EXECUTED"
+                            }
+                          },
+                          "providerOptions": {
+                            "openai": {
+                              "itemId": "<itemId:2>"
+                            }
+                          },
+                          "toolCallId": "<toolCallId:1>",
+                          "toolName": "lookup_weather",
+                          "type": "tool-result"
+                        }
+                      ],
+                      "role": "tool"
+                    },
+                    {
+                      "content": [
+                        {
+                          "providerOptions": {
+                            "openai": {
+                              "itemId": "<itemId:4>"
+                            }
+                          },
+                          "text": "CLOUDFLARE_AI_CHAT_TOOL_OK",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "assistant"
+                    }
+                  ],
+                  "modelId": "gpt-5.4-nano-2026-03-17",
+                  "timestamp": "<timestamp>"
+                },
+                "steps": [
+                  {
+                    "content": [
+                      {
+                        "input": {
+                          "city": "Vienna"
+                        },
+                        "providerMetadata": {
+                          "openai": {
+                            "itemId": "<itemId:2>"
+                          }
+                        },
+                        "toolCallId": "<toolCallId:1>",
+                        "toolName": "lookup_weather",
+                        "type": "tool-call"
+                      },
+                      {
+                        "dynamic": false,
+                        "input": {
+                          "city": "Vienna"
+                        },
+                        "output": {
+                          "city": "Vienna",
+                          "condition": "sunny",
+                          "marker": "WEATHER_TOOL_EXECUTED"
+                        },
+                        "providerMetadata": {
+                          "openai": {
+                            "itemId": "<itemId:2>"
+                          }
+                        },
+                        "toolCallId": "<toolCallId:1>",
+                        "toolName": "lookup_weather",
+                        "type": "tool-result"
+                      }
+                    ],
+                    "finishReason": "tool-calls",
+                    "providerMetadata": {
+                      "openai": {
+                        "responseId": "<span:3>",
+                        "serviceTier": "default"
+                      }
+                    },
+                    "response": {
+                      "body": "<omitted>",
+                      "id": "<span:3>",
+                      "messages": [
+                        {
+                          "content": [
+                            {
+                              "input": {
+                                "city": "Vienna"
+                              },
+                              "providerOptions": {
+                                "openai": {
+                                  "itemId": "<itemId:2>"
+                                }
+                              },
+                              "toolCallId": "<toolCallId:1>",
+                              "toolName": "lookup_weather",
+                              "type": "tool-call"
+                            }
+                          ],
+                          "role": "assistant"
+                        },
+                        {
+                          "content": [
+                            {
+                              "output": {
+                                "type": "json",
+                                "value": {
+                                  "city": "Vienna",
+                                  "condition": "sunny",
+                                  "marker": "WEATHER_TOOL_EXECUTED"
+                                }
+                              },
+                              "providerOptions": {
+                                "openai": {
+                                  "itemId": "<itemId:2>"
+                                }
+                              },
+                              "toolCallId": "<toolCallId:1>",
+                              "toolName": "lookup_weather",
+                              "type": "tool-result"
+                            }
+                          ],
+                          "role": "tool"
+                        }
+                      ],
+                      "modelId": "gpt-5.4-nano-2026-03-17",
+                      "timestamp": "<timestamp>"
+                    },
+                    "usage": {
+                      "cachedInputTokens": 0,
+                      "inputTokenDetails": {
+                        "cacheReadTokens": 0,
+                        "noCacheTokens": 85
+                      },
+                      "inputTokens": 85,
+                      "outputTokenDetails": {
+                        "reasoningTokens": 0,
+                        "textTokens": 19
+                      },
+                      "outputTokens": 19,
+                      "raw": {
+                        "input_tokens": 85,
+                        "input_tokens_details": {
+                          "cached_tokens": 0
+                        },
+                        "output_tokens": 19,
+                        "output_tokens_details": {
+                          "reasoning_tokens": 0
+                        }
+                      },
+                      "reasoningTokens": 0,
+                      "totalTokens": 104
+                    },
+                    "warnings": []
+                  },
+                  {
+                    "content": [
+                      {
+                        "providerMetadata": {
+                          "openai": {
+                            "itemId": "<itemId:4>"
+                          }
+                        },
+                        "text": "CLOUDFLARE_AI_CHAT_TOOL_OK",
+                        "type": "text"
+                      }
+                    ],
+                    "finishReason": "stop",
+                    "providerMetadata": {
+                      "openai": {
+                        "responseId": "<span:5>",
+                        "serviceTier": "default"
+                      }
+                    },
+                    "response": {
+                      "body": "<omitted>",
+                      "id": "<span:5>",
+                      "messages": [
+                        {
+                          "content": [
+                            {
+                              "input": {
+                                "city": "Vienna"
+                              },
+                              "providerOptions": {
+                                "openai": {
+                                  "itemId": "<itemId:2>"
+                                }
+                              },
+                              "toolCallId": "<toolCallId:1>",
+                              "toolName": "lookup_weather",
+                              "type": "tool-call"
+                            }
+                          ],
+                          "role": "assistant"
+                        },
+                        {
+                          "content": [
+                            {
+                              "output": {
+                                "type": "json",
+                                "value": {
+                                  "city": "Vienna",
+                                  "condition": "sunny",
+                                  "marker": "WEATHER_TOOL_EXECUTED"
+                                }
+                              },
+                              "providerOptions": {
+                                "openai": {
+                                  "itemId": "<itemId:2>"
+                                }
+                              },
+                              "toolCallId": "<toolCallId:1>",
+                              "toolName": "lookup_weather",
+                              "type": "tool-result"
+                            }
+                          ],
+                          "role": "tool"
+                        },
+                        {
+                          "content": [
+                            {
+                              "providerOptions": {
+                                "openai": {
+                                  "itemId": "<itemId:4>"
+                                }
+                              },
+                              "text": "CLOUDFLARE_AI_CHAT_TOOL_OK",
+                              "type": "text"
+                            }
+                          ],
+                          "role": "assistant"
+                        }
+                      ],
+                      "modelId": "gpt-5.4-nano-2026-03-17",
+                      "timestamp": "<timestamp>"
+                    },
+                    "usage": {
+                      "cachedInputTokens": 0,
+                      "inputTokenDetails": {
+                        "cacheReadTokens": 0,
+                        "noCacheTokens": 135
+                      },
+                      "inputTokens": 135,
+                      "outputTokenDetails": {
+                        "reasoningTokens": 0,
+                        "textTokens": 14
+                      },
+                      "outputTokens": 14,
+                      "raw": {
+                        "input_tokens": 135,
+                        "input_tokens_details": {
+                          "cached_tokens": 0
+                        },
+                        "output_tokens": 14,
+                        "output_tokens_details": {
+                          "reasoning_tokens": 0
+                        }
+                      },
+                      "reasoningTokens": 0,
+                      "totalTokens": 149
+                    },
+                    "warnings": []
+                  }
+                ],
+                "text": "CLOUDFLARE_AI_CHAT_TOOL_OK",
+                "toolCalls": [],
+                "toolResults": [],
+                "totalUsage": {
+                  "cachedInputTokens": 0,
+                  "inputTokenDetails": {
+                    "cacheReadTokens": 0,
+                    "noCacheTokens": 220
+                  },
+                  "inputTokens": 220,
+                  "outputTokenDetails": {
+                    "reasoningTokens": 0,
+                    "textTokens": 33
+                  },
+                  "outputTokens": 33,
+                  "reasoningTokens": 0,
+                  "totalTokens": 253
+                },
+                "usage": {
+                  "cachedInputTokens": 0,
+                  "inputTokenDetails": {
+                    "cacheReadTokens": 0,
+                    "noCacheTokens": 135
+                  },
+                  "inputTokens": 135,
+                  "outputTokenDetails": {
+                    "reasoningTokens": 0,
+                    "textTokens": 14
+                  },
+                  "outputTokens": 14,
+                  "raw": {
+                    "input_tokens": 135,
+                    "input_tokens_details": {
+                      "cached_tokens": 0
+                    },
+                    "output_tokens": 14,
+                    "output_tokens_details": {
+                      "reasoning_tokens": 0
+                    }
+                  },
+                  "reasoningTokens": 0,
+                  "totalTokens": 149
+                },
+                "warnings": []
+              },
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "model": "gpt-5.4-nano",
+                "provider": "openai.responses",
+                "tools": {
+                  "lookup_weather": {
+                    "description": "Return deterministic weather for one city.",
+                    "inputSchema": {
+                      "$schema": "http://json-schema.org/draft-07/schema#",
+                      "additionalProperties": false,
+                      "properties": {
+                        "city": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "city"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "input": [
+            {
+              "id": "<span:1>",
+              "parts": [
+                {
+                  "text": "Look up the weather in Vienna.",
+                  "type": "text"
+                }
+              ],
+              "role": "user"
+            }
+          ],
+          "output": {
+            "id": "<span:1>",
+            "parts": [
+              {
+                "state": "done",
+                "text": "CLOUDFLARE_AI_CHAT_TOOL_OK",
+                "type": "text"
+              }
+            ],
+            "role": "assistant"
+          }
+        }
+      ],
+      "metadata": {
+        "mode": "auto",
+        "scenario": "cloudflare-ai-chat-instrumentation",
+        "testRunId": "<run:1>"
+      }
+    },
+    {
+      "name": "cloudflare-ai-chat-error-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "AIChatAgent.onChatMessage",
+          "type": "task",
+          "children": [],
+          "input": [
+            {
+              "id": "<span:1>",
+              "parts": [
+                {
+                  "text": "Produce a deterministic streaming error.",
+                  "type": "text"
+                }
+              ],
+              "role": "user"
+            }
+          ],
+          "output": {
+            "id": "<span:1>",
+            "parts": [
+              {
+                "state": "streaming",
+                "text": "partial response",
+                "type": "text"
+              }
+            ],
+            "role": "assistant"
+          },
+          "error": "CLOUDFLARE_AI_CHAT_STREAM_ERROR"
+        }
+      ],
+      "metadata": {
+        "mode": "auto",
+        "scenario": "cloudflare-ai-chat-instrumentation",
+        "testRunId": "<run:1>"
+      }
+    }
+  ]
+}

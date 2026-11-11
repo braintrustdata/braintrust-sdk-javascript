@@ -31,7 +31,8 @@
                   {
                     "providerMetadata": {
                       "openai": {
-                        "itemId": "<itemId:2>"
+                        "itemId": "<itemId:2>",
+                        "phase": "final_answer"
                       }
                     },
                     "text": "PARIS",
@@ -43,40 +44,47 @@
                 },
                 "providerMetadata": {
                   "openai": {
+                    "reasoningContext": "current_turn",
                     "responseId": "<responseId:1>",
                     "serviceTier": "default"
                   }
                 },
                 "response": {
                   "body": "<omitted>",
-                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "modelId": "gpt-5.4-nano-2026-03-17",
                   "timestamp": "<timestamp>"
                 },
                 "usage": {
                   "inputTokens": {
                     "cacheRead": 0,
                     "cacheWrite": 0,
-                    "noCache": 18,
-                    "total": 18
+                    "noCache": 17,
+                    "total": 17
                   },
                   "outputTokens": {
                     "reasoning": 0,
-                    "text": 3,
-                    "total": 3
+                    "text": 6,
+                    "total": 6
                   },
                   "raw": {
-                    "input_tokens": 18,
+                    "input_tokens": 17,
                     "input_tokens_details": {
                       "cache_write_tokens": 0,
                       "cached_tokens": 0
                     },
-                    "output_tokens": 3,
+                    "output_tokens": 6,
                     "output_tokens_details": {
                       "reasoning_tokens": 0
                     }
                   }
                 },
-                "warnings": []
+                "warnings": [
+                  {
+                    "details": "temperature is not supported for reasoning models",
+                    "feature": "temperature",
+                    "type": "unsupported"
+                  }
+                ]
               },
               "metadata": {
                 "braintrust": {
@@ -86,17 +94,18 @@
                 "finish_reason": {
                   "unified": "stop"
                 },
-                "model": "gpt-4o-mini-2024-07-18",
-                "provider": "openai.responses"
+                "model": "gpt-5.4-nano-2026-03-17",
+                "provider": "openai.responses",
+                "served_service_tier": "default"
               },
               "metrics": {
                 "completion_reasoning_tokens": 0,
-                "completion_tokens": 3,
+                "completion_tokens": 6,
                 "prompt_cache_creation_tokens": 0,
                 "prompt_cached_tokens": 0,
-                "prompt_tokens": 18,
+                "prompt_tokens": 17,
                 "reasoning_tokens": 0,
-                "tokens": 21
+                "tokens": 23
               }
             }
           ],
@@ -136,7 +145,8 @@
                       {
                         "providerMetadata": {
                           "openai": {
-                            "itemId": "<itemId:2>"
+                            "itemId": "<itemId:2>",
+                            "phase": "final_answer"
                           }
                         },
                         "text": "PARIS",
@@ -148,40 +158,47 @@
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:1>",
                         "serviceTier": "default"
                       }
                     },
                     "response": {
                       "body": "<omitted>",
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 0,
                         "cacheWrite": 0,
-                        "noCache": 18,
-                        "total": 18
+                        "noCache": 17,
+                        "total": 17
                       },
                       "outputTokens": {
                         "reasoning": 0,
-                        "text": 3,
-                        "total": 3
+                        "text": 6,
+                        "total": 6
                       },
                       "raw": {
-                        "input_tokens": 18,
+                        "input_tokens": 17,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 3,
+                        "output_tokens": 6,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       }
                     },
-                    "warnings": []
+                    "warnings": [
+                      {
+                        "details": "temperature is not supported for reasoning models",
+                        "feature": "temperature",
+                        "type": "unsupported"
+                      }
+                    ]
                   },
                   "metadata": {
                     "braintrust": {
@@ -191,17 +208,18 @@
                     "finish_reason": {
                       "unified": "stop"
                     },
-                    "model": "gpt-4o-mini-2024-07-18",
-                    "provider": "openai.responses"
+                    "model": "gpt-5.4-nano-2026-03-17",
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
-                    "completion_tokens": 3,
+                    "completion_tokens": 6,
                     "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
-                    "prompt_tokens": 18,
+                    "prompt_tokens": 17,
                     "reasoning_tokens": 0,
-                    "tokens": 21
+                    "tokens": 23
                   }
                 }
               ],
@@ -214,7 +232,7 @@
                     ],
                     "provider": "openai.responses"
                   },
-                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "modelId": "gpt-5.4-nano-2026-03-17",
                   "specificationVersion": "v3",
                   "supportedUrls": {
                     "application/pdf": [
@@ -233,7 +251,8 @@
                   {
                     "providerMetadata": {
                       "openai": {
-                        "itemId": "<itemId:1>"
+                        "itemId": "<itemId:1>",
+                        "phase": "final_answer"
                       }
                     },
                     "text": "PARIS",
@@ -244,6 +263,7 @@
                 "output": "PARIS",
                 "providerMetadata": {
                   "openai": {
+                    "reasoningContext": "current_turn",
                     "responseId": "<responseId:2>",
                     "serviceTier": "default"
                   }
@@ -256,7 +276,8 @@
                         {
                           "providerOptions": {
                             "openai": {
-                              "itemId": "<itemId:1>"
+                              "itemId": "<itemId:1>",
+                              "phase": "final_answer"
                             }
                           },
                           "text": "PARIS",
@@ -266,7 +287,7 @@
                       "role": "assistant"
                     }
                   ],
-                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "modelId": "gpt-5.4-nano-2026-03-17",
                   "timestamp": "<timestamp>"
                 },
                 "steps": [
@@ -275,7 +296,8 @@
                       {
                         "providerMetadata": {
                           "openai": {
-                            "itemId": "<itemId:1>"
+                            "itemId": "<itemId:1>",
+                            "phase": "final_answer"
                           }
                         },
                         "text": "PARIS",
@@ -284,11 +306,12 @@
                     ],
                     "finishReason": "stop",
                     "model": {
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "provider": "openai.responses"
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:2>",
                         "serviceTier": "default"
                       }
@@ -301,7 +324,8 @@
                             {
                               "providerOptions": {
                                 "openai": {
-                                  "itemId": "<itemId:1>"
+                                  "itemId": "<itemId:1>",
+                                  "phase": "final_answer"
                                 }
                               },
                               "text": "PARIS",
@@ -311,7 +335,7 @@
                           "role": "assistant"
                         }
                       ],
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "stepNumber": 0,
@@ -320,29 +344,35 @@
                       "inputTokenDetails": {
                         "cacheReadTokens": 0,
                         "cacheWriteTokens": 0,
-                        "noCacheTokens": 18
+                        "noCacheTokens": 17
                       },
-                      "inputTokens": 18,
+                      "inputTokens": 17,
                       "outputTokenDetails": {
                         "reasoningTokens": 0,
-                        "textTokens": 3
+                        "textTokens": 6
                       },
-                      "outputTokens": 3,
+                      "outputTokens": 6,
                       "raw": {
-                        "input_tokens": 18,
+                        "input_tokens": 17,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 3,
+                        "output_tokens": 6,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       },
                       "reasoningTokens": 0,
-                      "totalTokens": 21
+                      "totalTokens": 23
                     },
-                    "warnings": []
+                    "warnings": [
+                      {
+                        "details": "temperature is not supported for reasoning models",
+                        "feature": "temperature",
+                        "type": "unsupported"
+                      }
+                    ]
                   }
                 ],
                 "text": "PARIS",
@@ -353,52 +383,58 @@
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
                     "cacheWriteTokens": 0,
-                    "noCacheTokens": 18
+                    "noCacheTokens": 17
                   },
-                  "inputTokens": 18,
+                  "inputTokens": 17,
                   "outputTokenDetails": {
                     "reasoningTokens": 0,
-                    "textTokens": 3
+                    "textTokens": 6
                   },
-                  "outputTokens": 3,
+                  "outputTokens": 6,
                   "reasoningTokens": 0,
-                  "totalTokens": 21
+                  "totalTokens": 23
                 },
                 "usage": {
                   "cachedInputTokens": 0,
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
                     "cacheWriteTokens": 0,
-                    "noCacheTokens": 18
+                    "noCacheTokens": 17
                   },
-                  "inputTokens": 18,
+                  "inputTokens": 17,
                   "outputTokenDetails": {
                     "reasoningTokens": 0,
-                    "textTokens": 3
+                    "textTokens": 6
                   },
-                  "outputTokens": 3,
+                  "outputTokens": 6,
                   "raw": {
-                    "input_tokens": 18,
+                    "input_tokens": 17,
                     "input_tokens_details": {
                       "cache_write_tokens": 0,
                       "cached_tokens": 0
                     },
-                    "output_tokens": 3,
+                    "output_tokens": 6,
                     "output_tokens_details": {
                       "reasoning_tokens": 0
                     }
                   },
                   "reasoningTokens": 0,
-                  "totalTokens": 21
+                  "totalTokens": 23
                 },
-                "warnings": []
+                "warnings": [
+                  {
+                    "details": "temperature is not supported for reasoning models",
+                    "feature": "temperature",
+                    "type": "unsupported"
+                  }
+                ]
               },
               "metadata": {
                 "braintrust": {
                   "integration_name": "ai-sdk",
                   "sdk_language": "typescript"
                 },
-                "model": "gpt-4o-mini-2024-07-18",
+                "model": "gpt-5.4-nano-2026-03-17",
                 "provider": "openai.responses"
               }
             }
@@ -439,7 +475,8 @@
                       {
                         "providerMetadata": {
                           "openai": {
-                            "itemId": "<itemId:2>"
+                            "itemId": "<itemId:2>",
+                            "phase": "final_answer"
                           }
                         },
                         "text": "PARIS",
@@ -451,40 +488,47 @@
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:1>",
                         "serviceTier": "default"
                       }
                     },
                     "response": {
                       "body": "<omitted>",
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 0,
                         "cacheWrite": 0,
-                        "noCache": 18,
-                        "total": 18
+                        "noCache": 17,
+                        "total": 17
                       },
                       "outputTokens": {
                         "reasoning": 0,
-                        "text": 3,
-                        "total": 3
+                        "text": 6,
+                        "total": 6
                       },
                       "raw": {
-                        "input_tokens": 18,
+                        "input_tokens": 17,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 3,
+                        "output_tokens": 6,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       }
                     },
-                    "warnings": []
+                    "warnings": [
+                      {
+                        "details": "temperature is not supported for reasoning models",
+                        "feature": "temperature",
+                        "type": "unsupported"
+                      }
+                    ]
                   },
                   "metadata": {
                     "braintrust": {
@@ -494,17 +538,18 @@
                     "finish_reason": {
                       "unified": "stop"
                     },
-                    "model": "gpt-4o-mini-2024-07-18",
-                    "provider": "openai.responses"
+                    "model": "gpt-5.4-nano-2026-03-17",
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
-                    "completion_tokens": 3,
+                    "completion_tokens": 6,
                     "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
-                    "prompt_tokens": 18,
+                    "prompt_tokens": 17,
                     "reasoning_tokens": 0,
-                    "tokens": 21
+                    "tokens": 23
                   }
                 }
               ],
@@ -517,7 +562,7 @@
                     ],
                     "provider": "openai.responses"
                   },
-                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "modelId": "gpt-5.4-nano-2026-03-17",
                   "specificationVersion": "v3",
                   "supportedUrls": {
                     "application/pdf": [
@@ -536,7 +581,8 @@
                   {
                     "providerMetadata": {
                       "openai": {
-                        "itemId": "<itemId:1>"
+                        "itemId": "<itemId:1>",
+                        "phase": "final_answer"
                       }
                     },
                     "text": "PARIS",
@@ -547,6 +593,7 @@
                 "output": "PARIS",
                 "providerMetadata": {
                   "openai": {
+                    "reasoningContext": "current_turn",
                     "responseId": "<responseId:2>",
                     "serviceTier": "default"
                   }
@@ -559,7 +606,8 @@
                         {
                           "providerOptions": {
                             "openai": {
-                              "itemId": "<itemId:1>"
+                              "itemId": "<itemId:1>",
+                              "phase": "final_answer"
                             }
                           },
                           "text": "PARIS",
@@ -569,7 +617,7 @@
                       "role": "assistant"
                     }
                   ],
-                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "modelId": "gpt-5.4-nano-2026-03-17",
                   "timestamp": "<timestamp>"
                 },
                 "steps": [
@@ -578,7 +626,8 @@
                       {
                         "providerMetadata": {
                           "openai": {
-                            "itemId": "<itemId:1>"
+                            "itemId": "<itemId:1>",
+                            "phase": "final_answer"
                           }
                         },
                         "text": "PARIS",
@@ -587,11 +636,12 @@
                     ],
                     "finishReason": "stop",
                     "model": {
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "provider": "openai.responses"
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:2>",
                         "serviceTier": "default"
                       }
@@ -604,7 +654,8 @@
                             {
                               "providerOptions": {
                                 "openai": {
-                                  "itemId": "<itemId:1>"
+                                  "itemId": "<itemId:1>",
+                                  "phase": "final_answer"
                                 }
                               },
                               "text": "PARIS",
@@ -614,7 +665,7 @@
                           "role": "assistant"
                         }
                       ],
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "stepNumber": 0,
@@ -623,29 +674,35 @@
                       "inputTokenDetails": {
                         "cacheReadTokens": 0,
                         "cacheWriteTokens": 0,
-                        "noCacheTokens": 18
+                        "noCacheTokens": 17
                       },
-                      "inputTokens": 18,
+                      "inputTokens": 17,
                       "outputTokenDetails": {
                         "reasoningTokens": 0,
-                        "textTokens": 3
+                        "textTokens": 6
                       },
-                      "outputTokens": 3,
+                      "outputTokens": 6,
                       "raw": {
-                        "input_tokens": 18,
+                        "input_tokens": 17,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 3,
+                        "output_tokens": 6,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       },
                       "reasoningTokens": 0,
-                      "totalTokens": 21
+                      "totalTokens": 23
                     },
-                    "warnings": []
+                    "warnings": [
+                      {
+                        "details": "temperature is not supported for reasoning models",
+                        "feature": "temperature",
+                        "type": "unsupported"
+                      }
+                    ]
                   }
                 ],
                 "text": "PARIS",
@@ -656,52 +713,58 @@
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
                     "cacheWriteTokens": 0,
-                    "noCacheTokens": 18
+                    "noCacheTokens": 17
                   },
-                  "inputTokens": 18,
+                  "inputTokens": 17,
                   "outputTokenDetails": {
                     "reasoningTokens": 0,
-                    "textTokens": 3
+                    "textTokens": 6
                   },
-                  "outputTokens": 3,
+                  "outputTokens": 6,
                   "reasoningTokens": 0,
-                  "totalTokens": 21
+                  "totalTokens": 23
                 },
                 "usage": {
                   "cachedInputTokens": 0,
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
                     "cacheWriteTokens": 0,
-                    "noCacheTokens": 18
+                    "noCacheTokens": 17
                   },
-                  "inputTokens": 18,
+                  "inputTokens": 17,
                   "outputTokenDetails": {
                     "reasoningTokens": 0,
-                    "textTokens": 3
+                    "textTokens": 6
                   },
-                  "outputTokens": 3,
+                  "outputTokens": 6,
                   "raw": {
-                    "input_tokens": 18,
+                    "input_tokens": 17,
                     "input_tokens_details": {
                       "cache_write_tokens": 0,
                       "cached_tokens": 0
                     },
-                    "output_tokens": 3,
+                    "output_tokens": 6,
                     "output_tokens_details": {
                       "reasoning_tokens": 0
                     }
                   },
                   "reasoningTokens": 0,
-                  "totalTokens": 21
+                  "totalTokens": 23
                 },
-                "warnings": []
+                "warnings": [
+                  {
+                    "details": "temperature is not supported for reasoning models",
+                    "feature": "temperature",
+                    "type": "unsupported"
+                  }
+                ]
               },
               "metadata": {
                 "braintrust": {
                   "integration_name": "ai-sdk",
                   "sdk_language": "typescript"
                 },
-                "model": "gpt-4o-mini-2024-07-18",
+                "model": "gpt-5.4-nano-2026-03-17",
                 "provider": "openai.responses"
               }
             }
@@ -849,7 +912,8 @@
                       {
                         "providerMetadata": {
                           "openai": {
-                            "itemId": "<itemId:2>"
+                            "itemId": "<itemId:2>",
+                            "phase": "final_answer"
                           }
                         },
                         "text": "{\"answer\":\"4\"}",
@@ -861,40 +925,47 @@
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:1>",
                         "serviceTier": "default"
                       }
                     },
                     "response": {
                       "body": "<omitted>",
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 0,
                         "cacheWrite": 0,
-                        "noCache": 45,
-                        "total": 45
+                        "noCache": 43,
+                        "total": 43
                       },
                       "outputTokens": {
                         "reasoning": 0,
-                        "text": 6,
-                        "total": 6
+                        "text": 12,
+                        "total": 12
                       },
                       "raw": {
-                        "input_tokens": 45,
+                        "input_tokens": 43,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 6,
+                        "output_tokens": 12,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       }
                     },
-                    "warnings": []
+                    "warnings": [
+                      {
+                        "details": "temperature is not supported for reasoning models",
+                        "feature": "temperature",
+                        "type": "unsupported"
+                      }
+                    ]
                   },
                   "metadata": {
                     "braintrust": {
@@ -904,17 +975,18 @@
                     "finish_reason": {
                       "unified": "stop"
                     },
-                    "model": "gpt-4o-mini-2024-07-18",
-                    "provider": "openai.responses"
+                    "model": "gpt-5.4-nano-2026-03-17",
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
-                    "completion_tokens": 6,
+                    "completion_tokens": 12,
                     "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
-                    "prompt_tokens": 45,
+                    "prompt_tokens": 43,
                     "reasoning_tokens": 0,
-                    "tokens": 51
+                    "tokens": 55
                   }
                 }
               ],
@@ -927,7 +999,7 @@
                     ],
                     "provider": "openai.responses"
                   },
-                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "modelId": "gpt-5.4-nano-2026-03-17",
                   "specificationVersion": "v3",
                   "supportedUrls": {
                     "application/pdf": [
@@ -964,7 +1036,8 @@
                   {
                     "providerMetadata": {
                       "openai": {
-                        "itemId": "<itemId:1>"
+                        "itemId": "<itemId:1>",
+                        "phase": "final_answer"
                       }
                     },
                     "text": "{\"answer\":\"4\"}",
@@ -977,6 +1050,7 @@
                 },
                 "providerMetadata": {
                   "openai": {
+                    "reasoningContext": "current_turn",
                     "responseId": "<responseId:2>",
                     "serviceTier": "default"
                   }
@@ -989,7 +1063,8 @@
                         {
                           "providerOptions": {
                             "openai": {
-                              "itemId": "<itemId:1>"
+                              "itemId": "<itemId:1>",
+                              "phase": "final_answer"
                             }
                           },
                           "text": "{\"answer\":\"4\"}",
@@ -999,7 +1074,7 @@
                       "role": "assistant"
                     }
                   ],
-                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "modelId": "gpt-5.4-nano-2026-03-17",
                   "timestamp": "<timestamp>"
                 },
                 "steps": [
@@ -1008,7 +1083,8 @@
                       {
                         "providerMetadata": {
                           "openai": {
-                            "itemId": "<itemId:1>"
+                            "itemId": "<itemId:1>",
+                            "phase": "final_answer"
                           }
                         },
                         "text": "{\"answer\":\"4\"}",
@@ -1017,11 +1093,12 @@
                     ],
                     "finishReason": "stop",
                     "model": {
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "provider": "openai.responses"
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:2>",
                         "serviceTier": "default"
                       }
@@ -1034,7 +1111,8 @@
                             {
                               "providerOptions": {
                                 "openai": {
-                                  "itemId": "<itemId:1>"
+                                  "itemId": "<itemId:1>",
+                                  "phase": "final_answer"
                                 }
                               },
                               "text": "{\"answer\":\"4\"}",
@@ -1044,7 +1122,7 @@
                           "role": "assistant"
                         }
                       ],
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "stepNumber": 0,
@@ -1053,29 +1131,35 @@
                       "inputTokenDetails": {
                         "cacheReadTokens": 0,
                         "cacheWriteTokens": 0,
-                        "noCacheTokens": 45
+                        "noCacheTokens": 43
                       },
-                      "inputTokens": 45,
+                      "inputTokens": 43,
                       "outputTokenDetails": {
                         "reasoningTokens": 0,
-                        "textTokens": 6
+                        "textTokens": 12
                       },
-                      "outputTokens": 6,
+                      "outputTokens": 12,
                       "raw": {
-                        "input_tokens": 45,
+                        "input_tokens": 43,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 6,
+                        "output_tokens": 12,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       },
                       "reasoningTokens": 0,
-                      "totalTokens": 51
+                      "totalTokens": 55
                     },
-                    "warnings": []
+                    "warnings": [
+                      {
+                        "details": "temperature is not supported for reasoning models",
+                        "feature": "temperature",
+                        "type": "unsupported"
+                      }
+                    ]
                   }
                 ],
                 "text": "{\"answer\":\"4\"}",
@@ -1086,52 +1170,58 @@
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
                     "cacheWriteTokens": 0,
-                    "noCacheTokens": 45
+                    "noCacheTokens": 43
                   },
-                  "inputTokens": 45,
+                  "inputTokens": 43,
                   "outputTokenDetails": {
                     "reasoningTokens": 0,
-                    "textTokens": 6
+                    "textTokens": 12
                   },
-                  "outputTokens": 6,
+                  "outputTokens": 12,
                   "reasoningTokens": 0,
-                  "totalTokens": 51
+                  "totalTokens": 55
                 },
                 "usage": {
                   "cachedInputTokens": 0,
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
                     "cacheWriteTokens": 0,
-                    "noCacheTokens": 45
+                    "noCacheTokens": 43
                   },
-                  "inputTokens": 45,
+                  "inputTokens": 43,
                   "outputTokenDetails": {
                     "reasoningTokens": 0,
-                    "textTokens": 6
+                    "textTokens": 12
                   },
-                  "outputTokens": 6,
+                  "outputTokens": 12,
                   "raw": {
-                    "input_tokens": 45,
+                    "input_tokens": 43,
                     "input_tokens_details": {
                       "cache_write_tokens": 0,
                       "cached_tokens": 0
                     },
-                    "output_tokens": 6,
+                    "output_tokens": 12,
                     "output_tokens_details": {
                       "reasoning_tokens": 0
                     }
                   },
                   "reasoningTokens": 0,
-                  "totalTokens": 51
+                  "totalTokens": 55
                 },
-                "warnings": []
+                "warnings": [
+                  {
+                    "details": "temperature is not supported for reasoning models",
+                    "feature": "temperature",
+                    "type": "unsupported"
+                  }
+                ]
               },
               "metadata": {
                 "braintrust": {
                   "integration_name": "ai-sdk",
                   "sdk_language": "typescript"
                 },
-                "model": "gpt-4o-mini-2024-07-18",
+                "model": "gpt-5.4-nano-2026-03-17",
                 "provider": "openai.responses"
               }
             }
@@ -1172,27 +1262,27 @@
                     "finishReason": {
                       "unified": "stop"
                     },
-                    "text": "One, two, three.",
+                    "text": "one 1, two 2, three 3.",
                     "toolCalls": [],
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 0,
                         "cacheWrite": 0,
-                        "noCache": 22,
-                        "total": 22
+                        "noCache": 21,
+                        "total": 21
                       },
                       "outputTokens": {
                         "reasoning": 0,
-                        "text": 7,
-                        "total": 7
+                        "text": 16,
+                        "total": 16
                       },
                       "raw": {
-                        "input_tokens": 22,
+                        "input_tokens": 21,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 7,
+                        "output_tokens": 16,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
@@ -1207,18 +1297,19 @@
                     "finish_reason": {
                       "unified": "stop"
                     },
-                    "model": "gpt-4o-mini-2024-07-18",
-                    "provider": "openai.responses"
+                    "model": "gpt-5.4-nano-2026-03-17",
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
-                    "completion_tokens": 7,
+                    "completion_tokens": 16,
                     "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
-                    "prompt_tokens": 22,
+                    "prompt_tokens": 21,
                     "reasoning_tokens": 0,
                     "time_to_first_token": 0,
-                    "tokens": 29
+                    "tokens": 37
                   }
                 }
               ],
@@ -1231,7 +1322,7 @@
                     ],
                     "provider": "openai.responses"
                   },
-                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "modelId": "gpt-5.4-nano-2026-03-17",
                   "specificationVersion": "v3",
                   "supportedUrls": {
                     "application/pdf": [
@@ -1247,14 +1338,14 @@
               },
               "output": {
                 "finishReason": "stop",
-                "text": "One, two, three."
+                "text": "one 1, two 2, three 3."
               },
               "metadata": {
                 "braintrust": {
                   "integration_name": "ai-sdk",
                   "sdk_language": "typescript"
                 },
-                "model": "gpt-4o-mini-2024-07-18",
+                "model": "gpt-5.4-nano-2026-03-17",
                 "provider": "openai.responses"
               },
               "metrics": {
@@ -1264,6 +1355,165 @@
           ],
           "metadata": {
             "operation": "stream",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ai-sdk-stream-image-file-operation",
+          "children": [
+            {
+              "name": "streamText",
+              "type": "function",
+              "children": [
+                {
+                  "name": "doStream",
+                  "type": "llm",
+                  "children": [],
+                  "input": {
+                    "includeRawChunks": false,
+                    "maxOutputTokens": 16,
+                    "prompt": [
+                      {
+                        "content": [
+                          {
+                            "text": "What color is this image? Answer with one word.",
+                            "type": "text"
+                          },
+                          {
+                            "data": {
+                              "content_type": "image/png",
+                              "filename": "red.png",
+                              "key": "<uuid:1>",
+                              "type": "braintrust_attachment"
+                            },
+                            "filename": "red.png",
+                            "mediaType": "image/png",
+                            "type": "file"
+                          }
+                        ],
+                        "role": "user"
+                      }
+                    ],
+                    "temperature": 0
+                  },
+                  "output": {
+                    "finishReason": {
+                      "unified": "stop"
+                    },
+                    "text": "Red",
+                    "toolCalls": [],
+                    "usage": {
+                      "inputTokens": {
+                        "cacheRead": 0,
+                        "cacheWrite": 0,
+                        "noCache": 19,
+                        "total": 19
+                      },
+                      "outputTokens": {
+                        "reasoning": 0,
+                        "text": 5,
+                        "total": 5
+                      },
+                      "raw": {
+                        "input_tokens": 19,
+                        "input_tokens_details": {
+                          "cache_write_tokens": 0,
+                          "cached_tokens": 0
+                        },
+                        "output_tokens": 5,
+                        "output_tokens_details": {
+                          "reasoning_tokens": 0
+                        }
+                      }
+                    }
+                  },
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "finish_reason": {
+                      "unified": "stop"
+                    },
+                    "model": "gpt-5.4-nano-2026-03-17",
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
+                  },
+                  "metrics": {
+                    "completion_reasoning_tokens": 0,
+                    "completion_tokens": 5,
+                    "prompt_cache_creation_tokens": 0,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 19,
+                    "reasoning_tokens": 0,
+                    "time_to_first_token": 0,
+                    "tokens": 24
+                  }
+                }
+              ],
+              "input": {
+                "maxOutputTokens": 16,
+                "messages": [
+                  {
+                    "content": [
+                      {
+                        "text": "What color is this image? Answer with one word.",
+                        "type": "text"
+                      },
+                      {
+                        "data": {
+                          "content_type": "image/png",
+                          "filename": "red.png",
+                          "key": "<uuid:1>",
+                          "type": "braintrust_attachment"
+                        },
+                        "filename": "red.png",
+                        "mediaType": "image/png",
+                        "type": "file"
+                      }
+                    ],
+                    "role": "user"
+                  }
+                ],
+                "model": {
+                  "config": {
+                    "fileIdPrefixes": [
+                      "file-"
+                    ],
+                    "provider": "openai.responses"
+                  },
+                  "modelId": "gpt-5.4-nano-2026-03-17",
+                  "specificationVersion": "v3",
+                  "supportedUrls": {
+                    "application/pdf": [
+                      {}
+                    ],
+                    "image/*": [
+                      {}
+                    ]
+                  }
+                },
+                "temperature": 0
+              },
+              "output": {
+                "finishReason": "stop",
+                "text": "Red"
+              },
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "model": "gpt-5.4-nano-2026-03-17",
+                "provider": "openai.responses"
+              },
+              "metrics": {
+                "time_to_first_token": 0
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "stream-image-file",
             "testRunId": "<run:1>"
           }
         },
@@ -1329,7 +1579,7 @@
               "output": [
                 {
                   "index": 1,
-                  "relevance_score": 0.06657539
+                  "relevance_score": 0.06664825
                 },
                 {
                   "index": 0,
@@ -1381,6 +1631,11 @@
                         "role": "user"
                       }
                     ],
+                    "providerOptions": {
+                      "openai": {
+                        "store": false
+                      }
+                    },
                     "temperature": 0,
                     "toolChoice": {
                       "type": "required"
@@ -1426,40 +1681,47 @@
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:1>",
                         "serviceTier": "default"
                       }
                     },
                     "response": {
                       "body": "<omitted>",
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 0,
                         "cacheWrite": 0,
-                        "noCache": 94,
-                        "total": 94
+                        "noCache": 90,
+                        "total": 90
                       },
                       "outputTokens": {
                         "reasoning": 0,
-                        "text": 8,
-                        "total": 8
+                        "text": 20,
+                        "total": 20
                       },
                       "raw": {
-                        "input_tokens": 94,
+                        "input_tokens": 90,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 8,
+                        "output_tokens": 20,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       }
                     },
-                    "warnings": []
+                    "warnings": [
+                      {
+                        "details": "temperature is not supported for reasoning models",
+                        "feature": "temperature",
+                        "type": "unsupported"
+                      }
+                    ]
                   },
                   "metadata": {
                     "braintrust": {
@@ -1469,17 +1731,18 @@
                     "finish_reason": {
                       "unified": "tool-calls"
                     },
-                    "model": "gpt-4o-mini-2024-07-18",
-                    "provider": "openai.responses"
+                    "model": "gpt-5.4-nano-2026-03-17",
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
-                    "completion_tokens": 8,
+                    "completion_tokens": 20,
                     "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
-                    "prompt_tokens": 94,
+                    "prompt_tokens": 90,
                     "reasoning_tokens": 0,
-                    "tokens": 102
+                    "tokens": 110
                   }
                 },
                 {
@@ -1552,6 +1815,11 @@
                         "role": "tool"
                       }
                     ],
+                    "providerOptions": {
+                      "openai": {
+                        "store": false
+                      }
+                    },
                     "temperature": 0,
                     "toolChoice": {
                       "type": "required"
@@ -1597,40 +1865,47 @@
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:1>",
                         "serviceTier": "default"
                       }
                     },
                     "response": {
                       "body": "<omitted>",
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 0,
                         "cacheWrite": 0,
-                        "noCache": 133,
-                        "total": 133
+                        "noCache": 138,
+                        "total": 138
                       },
                       "outputTokens": {
                         "reasoning": 0,
-                        "text": 8,
-                        "total": 8
+                        "text": 20,
+                        "total": 20
                       },
                       "raw": {
-                        "input_tokens": 133,
+                        "input_tokens": 138,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 8,
+                        "output_tokens": 20,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       }
                     },
-                    "warnings": []
+                    "warnings": [
+                      {
+                        "details": "temperature is not supported for reasoning models",
+                        "feature": "temperature",
+                        "type": "unsupported"
+                      }
+                    ]
                   },
                   "metadata": {
                     "braintrust": {
@@ -1640,17 +1915,18 @@
                     "finish_reason": {
                       "unified": "tool-calls"
                     },
-                    "model": "gpt-4o-mini-2024-07-18",
-                    "provider": "openai.responses"
+                    "model": "gpt-5.4-nano-2026-03-17",
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
-                    "completion_tokens": 8,
+                    "completion_tokens": 20,
                     "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
-                    "prompt_tokens": 133,
+                    "prompt_tokens": 138,
                     "reasoning_tokens": 0,
-                    "tokens": 141
+                    "tokens": 158
                   }
                 },
                 {
@@ -1760,6 +2036,11 @@
                         "role": "tool"
                       }
                     ],
+                    "providerOptions": {
+                      "openai": {
+                        "store": false
+                      }
+                    },
                     "temperature": 0,
                     "toolChoice": {
                       "type": "required"
@@ -1805,40 +2086,47 @@
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:1>",
                         "serviceTier": "default"
                       }
                     },
                     "response": {
                       "body": "<omitted>",
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 0,
                         "cacheWrite": 0,
-                        "noCache": 172,
-                        "total": 172
+                        "noCache": 186,
+                        "total": 186
                       },
                       "outputTokens": {
                         "reasoning": 0,
-                        "text": 8,
-                        "total": 8
+                        "text": 20,
+                        "total": 20
                       },
                       "raw": {
-                        "input_tokens": 172,
+                        "input_tokens": 186,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 8,
+                        "output_tokens": 20,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       }
                     },
-                    "warnings": []
+                    "warnings": [
+                      {
+                        "details": "temperature is not supported for reasoning models",
+                        "feature": "temperature",
+                        "type": "unsupported"
+                      }
+                    ]
                   },
                   "metadata": {
                     "braintrust": {
@@ -1848,17 +2136,18 @@
                     "finish_reason": {
                       "unified": "tool-calls"
                     },
-                    "model": "gpt-4o-mini-2024-07-18",
-                    "provider": "openai.responses"
+                    "model": "gpt-5.4-nano-2026-03-17",
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
-                    "completion_tokens": 8,
+                    "completion_tokens": 20,
                     "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
-                    "prompt_tokens": 172,
+                    "prompt_tokens": 186,
                     "reasoning_tokens": 0,
-                    "tokens": 180
+                    "tokens": 206
                   }
                 },
                 {
@@ -2005,6 +2294,11 @@
                         "role": "tool"
                       }
                     ],
+                    "providerOptions": {
+                      "openai": {
+                        "store": false
+                      }
+                    },
                     "temperature": 0,
                     "toolChoice": {
                       "type": "required"
@@ -2050,40 +2344,47 @@
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:1>",
                         "serviceTier": "default"
                       }
                     },
                     "response": {
                       "body": "<omitted>",
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 0,
                         "cacheWrite": 0,
-                        "noCache": 211,
-                        "total": 211
+                        "noCache": 234,
+                        "total": 234
                       },
                       "outputTokens": {
                         "reasoning": 0,
-                        "text": 8,
-                        "total": 8
+                        "text": 20,
+                        "total": 20
                       },
                       "raw": {
-                        "input_tokens": 211,
+                        "input_tokens": 234,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 8,
+                        "output_tokens": 20,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       }
                     },
-                    "warnings": []
+                    "warnings": [
+                      {
+                        "details": "temperature is not supported for reasoning models",
+                        "feature": "temperature",
+                        "type": "unsupported"
+                      }
+                    ]
                   },
                   "metadata": {
                     "braintrust": {
@@ -2093,17 +2394,18 @@
                     "finish_reason": {
                       "unified": "tool-calls"
                     },
-                    "model": "gpt-4o-mini-2024-07-18",
-                    "provider": "openai.responses"
+                    "model": "gpt-5.4-nano-2026-03-17",
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
-                    "completion_tokens": 8,
+                    "completion_tokens": 20,
                     "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
-                    "prompt_tokens": 211,
+                    "prompt_tokens": 234,
                     "reasoning_tokens": 0,
-                    "tokens": 219
+                    "tokens": 254
                   }
                 },
                 {
@@ -2128,7 +2430,7 @@
                     ],
                     "provider": "openai.responses"
                   },
-                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "modelId": "gpt-5.4-nano-2026-03-17",
                   "specificationVersion": "v3",
                   "supportedUrls": {
                     "application/pdf": [
@@ -2140,6 +2442,11 @@
                   }
                 },
                 "prompt": "Use the get_weather tool for Paris, France. If you do not call the tool, the answer is invalid.",
+                "providerOptions": {
+                  "openai": {
+                    "store": false
+                  }
+                },
                 "system": "You must inspect live weather via the provided get_weather tool before responding.",
                 "temperature": 0,
                 "toolChoice": "required",
@@ -2197,6 +2504,7 @@
                 "finishReason": "tool-calls",
                 "providerMetadata": {
                   "openai": {
+                    "reasoningContext": "current_turn",
                     "responseId": "<responseId:12>",
                     "serviceTier": "default"
                   }
@@ -2353,7 +2661,7 @@
                       "role": "tool"
                     }
                   ],
-                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "modelId": "gpt-5.4-nano-2026-03-17",
                   "timestamp": "<timestamp>"
                 },
                 "steps": [
@@ -2390,11 +2698,12 @@
                     ],
                     "finishReason": "tool-calls",
                     "model": {
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "provider": "openai.responses"
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:3>",
                         "serviceTier": "default"
                       }
@@ -2440,7 +2749,7 @@
                           "role": "tool"
                         }
                       ],
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "stepNumber": 0,
@@ -2449,29 +2758,35 @@
                       "inputTokenDetails": {
                         "cacheReadTokens": 0,
                         "cacheWriteTokens": 0,
-                        "noCacheTokens": 94
+                        "noCacheTokens": 90
                       },
-                      "inputTokens": 94,
+                      "inputTokens": 90,
                       "outputTokenDetails": {
                         "reasoningTokens": 0,
-                        "textTokens": 8
+                        "textTokens": 20
                       },
-                      "outputTokens": 8,
+                      "outputTokens": 20,
                       "raw": {
-                        "input_tokens": 94,
+                        "input_tokens": 90,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 8,
+                        "output_tokens": 20,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       },
                       "reasoningTokens": 0,
-                      "totalTokens": 102
+                      "totalTokens": 110
                     },
-                    "warnings": []
+                    "warnings": [
+                      {
+                        "details": "temperature is not supported for reasoning models",
+                        "feature": "temperature",
+                        "type": "unsupported"
+                      }
+                    ]
                   },
                   {
                     "content": [
@@ -2506,11 +2821,12 @@
                     ],
                     "finishReason": "tool-calls",
                     "model": {
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "provider": "openai.responses"
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:6>",
                         "serviceTier": "default"
                       }
@@ -2593,7 +2909,7 @@
                           "role": "tool"
                         }
                       ],
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "stepNumber": 1,
@@ -2602,29 +2918,35 @@
                       "inputTokenDetails": {
                         "cacheReadTokens": 0,
                         "cacheWriteTokens": 0,
-                        "noCacheTokens": 133
+                        "noCacheTokens": 138
                       },
-                      "inputTokens": 133,
+                      "inputTokens": 138,
                       "outputTokenDetails": {
                         "reasoningTokens": 0,
-                        "textTokens": 8
+                        "textTokens": 20
                       },
-                      "outputTokens": 8,
+                      "outputTokens": 20,
                       "raw": {
-                        "input_tokens": 133,
+                        "input_tokens": 138,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 8,
+                        "output_tokens": 20,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       },
                       "reasoningTokens": 0,
-                      "totalTokens": 141
+                      "totalTokens": 158
                     },
-                    "warnings": []
+                    "warnings": [
+                      {
+                        "details": "temperature is not supported for reasoning models",
+                        "feature": "temperature",
+                        "type": "unsupported"
+                      }
+                    ]
                   },
                   {
                     "content": [
@@ -2659,11 +2981,12 @@
                     ],
                     "finishReason": "tool-calls",
                     "model": {
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "provider": "openai.responses"
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:9>",
                         "serviceTier": "default"
                       }
@@ -2783,7 +3106,7 @@
                           "role": "tool"
                         }
                       ],
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "stepNumber": 2,
@@ -2792,29 +3115,35 @@
                       "inputTokenDetails": {
                         "cacheReadTokens": 0,
                         "cacheWriteTokens": 0,
-                        "noCacheTokens": 172
+                        "noCacheTokens": 186
                       },
-                      "inputTokens": 172,
+                      "inputTokens": 186,
                       "outputTokenDetails": {
                         "reasoningTokens": 0,
-                        "textTokens": 8
+                        "textTokens": 20
                       },
-                      "outputTokens": 8,
+                      "outputTokens": 20,
                       "raw": {
-                        "input_tokens": 172,
+                        "input_tokens": 186,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 8,
+                        "output_tokens": 20,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       },
                       "reasoningTokens": 0,
-                      "totalTokens": 180
+                      "totalTokens": 206
                     },
-                    "warnings": []
+                    "warnings": [
+                      {
+                        "details": "temperature is not supported for reasoning models",
+                        "feature": "temperature",
+                        "type": "unsupported"
+                      }
+                    ]
                   },
                   {
                     "content": [
@@ -2849,11 +3178,12 @@
                     ],
                     "finishReason": "tool-calls",
                     "model": {
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "provider": "openai.responses"
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:12>",
                         "serviceTier": "default"
                       }
@@ -3010,7 +3340,7 @@
                           "role": "tool"
                         }
                       ],
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "stepNumber": 3,
@@ -3019,29 +3349,35 @@
                       "inputTokenDetails": {
                         "cacheReadTokens": 0,
                         "cacheWriteTokens": 0,
-                        "noCacheTokens": 211
+                        "noCacheTokens": 234
                       },
-                      "inputTokens": 211,
+                      "inputTokens": 234,
                       "outputTokenDetails": {
                         "reasoningTokens": 0,
-                        "textTokens": 8
+                        "textTokens": 20
                       },
-                      "outputTokens": 8,
+                      "outputTokens": 20,
                       "raw": {
-                        "input_tokens": 211,
+                        "input_tokens": 234,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 8,
+                        "output_tokens": 20,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       },
                       "reasoningTokens": 0,
-                      "totalTokens": 219
+                      "totalTokens": 254
                     },
-                    "warnings": []
+                    "warnings": [
+                      {
+                        "details": "temperature is not supported for reasoning models",
+                        "feature": "temperature",
+                        "type": "unsupported"
+                      }
+                    ]
                   }
                 ],
                 "text": "",
@@ -3082,52 +3418,58 @@
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
                     "cacheWriteTokens": 0,
-                    "noCacheTokens": 610
+                    "noCacheTokens": 648
                   },
-                  "inputTokens": 610,
+                  "inputTokens": 648,
                   "outputTokenDetails": {
                     "reasoningTokens": 0,
-                    "textTokens": 32
+                    "textTokens": 80
                   },
-                  "outputTokens": 32,
+                  "outputTokens": 80,
                   "reasoningTokens": 0,
-                  "totalTokens": 642
+                  "totalTokens": 728
                 },
                 "usage": {
                   "cachedInputTokens": 0,
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
                     "cacheWriteTokens": 0,
-                    "noCacheTokens": 211
+                    "noCacheTokens": 234
                   },
-                  "inputTokens": 211,
+                  "inputTokens": 234,
                   "outputTokenDetails": {
                     "reasoningTokens": 0,
-                    "textTokens": 8
+                    "textTokens": 20
                   },
-                  "outputTokens": 8,
+                  "outputTokens": 20,
                   "raw": {
-                    "input_tokens": 211,
+                    "input_tokens": 234,
                     "input_tokens_details": {
                       "cache_write_tokens": 0,
                       "cached_tokens": 0
                     },
-                    "output_tokens": 8,
+                    "output_tokens": 20,
                     "output_tokens_details": {
                       "reasoning_tokens": 0
                     }
                   },
                   "reasoningTokens": 0,
-                  "totalTokens": 219
+                  "totalTokens": 254
                 },
-                "warnings": []
+                "warnings": [
+                  {
+                    "details": "temperature is not supported for reasoning models",
+                    "feature": "temperature",
+                    "type": "unsupported"
+                  }
+                ]
               },
               "metadata": {
                 "braintrust": {
                   "integration_name": "ai-sdk",
                   "sdk_language": "typescript"
                 },
-                "model": "gpt-4o-mini-2024-07-18",
+                "model": "gpt-5.4-nano-2026-03-17",
                 "provider": "openai.responses",
                 "tools": {
                   "get_weather": {
@@ -3222,40 +3564,47 @@
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:1>",
                         "serviceTier": "default"
                       }
                     },
                     "response": {
                       "body": "<omitted>",
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 0,
                         "cacheWrite": 0,
-                        "noCache": 61,
-                        "total": 61
+                        "noCache": 56,
+                        "total": 56
                       },
                       "outputTokens": {
                         "reasoning": 0,
-                        "text": 2,
-                        "total": 2
+                        "text": 15,
+                        "total": 15
                       },
                       "raw": {
-                        "input_tokens": 61,
+                        "input_tokens": 56,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 2,
+                        "output_tokens": 15,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       }
                     },
-                    "warnings": []
+                    "warnings": [
+                      {
+                        "details": "temperature is not supported for reasoning models",
+                        "feature": "temperature",
+                        "type": "unsupported"
+                      }
+                    ]
                   },
                   "metadata": {
                     "braintrust": {
@@ -3265,17 +3614,18 @@
                     "finish_reason": {
                       "unified": "tool-calls"
                     },
-                    "model": "gpt-4o-mini-2024-07-18",
-                    "provider": "openai.responses"
+                    "model": "gpt-5.4-nano-2026-03-17",
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
-                    "completion_tokens": 2,
+                    "completion_tokens": 15,
                     "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
-                    "prompt_tokens": 61,
+                    "prompt_tokens": 56,
                     "reasoning_tokens": 0,
-                    "tokens": 63
+                    "tokens": 71
                   }
                 },
                 {
@@ -3384,40 +3734,47 @@
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:1>",
                         "serviceTier": "default"
                       }
                     },
                     "response": {
                       "body": "<omitted>",
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 0,
                         "cacheWrite": 0,
-                        "noCache": 87,
-                        "total": 87
+                        "noCache": 91,
+                        "total": 91
                       },
                       "outputTokens": {
                         "reasoning": 0,
-                        "text": 2,
-                        "total": 2
+                        "text": 15,
+                        "total": 15
                       },
                       "raw": {
-                        "input_tokens": 87,
+                        "input_tokens": 91,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 2,
+                        "output_tokens": 15,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       }
                     },
-                    "warnings": []
+                    "warnings": [
+                      {
+                        "details": "temperature is not supported for reasoning models",
+                        "feature": "temperature",
+                        "type": "unsupported"
+                      }
+                    ]
                   },
                   "metadata": {
                     "braintrust": {
@@ -3427,17 +3784,18 @@
                     "finish_reason": {
                       "unified": "tool-calls"
                     },
-                    "model": "gpt-4o-mini-2024-07-18",
-                    "provider": "openai.responses"
+                    "model": "gpt-5.4-nano-2026-03-17",
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
-                    "completion_tokens": 2,
+                    "completion_tokens": 15,
                     "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
-                    "prompt_tokens": 87,
+                    "prompt_tokens": 91,
                     "reasoning_tokens": 0,
-                    "tokens": 89
+                    "tokens": 106
                   }
                 },
                 {
@@ -3462,7 +3820,7 @@
                     ],
                     "provider": "openai.responses"
                   },
-                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "modelId": "gpt-5.4-nano-2026-03-17",
                   "specificationVersion": "v3",
                   "supportedUrls": {
                     "application/pdf": [
@@ -3526,6 +3884,7 @@
                 "finishReason": "tool-calls",
                 "providerMetadata": {
                   "openai": {
+                    "reasoningContext": "current_turn",
                     "responseId": "<responseId:6>",
                     "serviceTier": "default"
                   }
@@ -3604,7 +3963,7 @@
                       "role": "tool"
                     }
                   ],
-                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "modelId": "gpt-5.4-nano-2026-03-17",
                   "timestamp": "<timestamp>"
                 },
                 "steps": [
@@ -3640,11 +3999,12 @@
                     ],
                     "finishReason": "tool-calls",
                     "model": {
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "provider": "openai.responses"
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:3>",
                         "serviceTier": "default"
                       }
@@ -3688,7 +4048,7 @@
                           "role": "tool"
                         }
                       ],
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "stepNumber": 0,
@@ -3697,29 +4057,35 @@
                       "inputTokenDetails": {
                         "cacheReadTokens": 0,
                         "cacheWriteTokens": 0,
-                        "noCacheTokens": 61
+                        "noCacheTokens": 56
                       },
-                      "inputTokens": 61,
+                      "inputTokens": 56,
                       "outputTokenDetails": {
                         "reasoningTokens": 0,
-                        "textTokens": 2
+                        "textTokens": 15
                       },
-                      "outputTokens": 2,
+                      "outputTokens": 15,
                       "raw": {
-                        "input_tokens": 61,
+                        "input_tokens": 56,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 2,
+                        "output_tokens": 15,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       },
                       "reasoningTokens": 0,
-                      "totalTokens": 63
+                      "totalTokens": 71
                     },
-                    "warnings": []
+                    "warnings": [
+                      {
+                        "details": "temperature is not supported for reasoning models",
+                        "feature": "temperature",
+                        "type": "unsupported"
+                      }
+                    ]
                   },
                   {
                     "content": [
@@ -3753,11 +4119,12 @@
                     ],
                     "finishReason": "tool-calls",
                     "model": {
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "provider": "openai.responses"
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:6>",
                         "serviceTier": "default"
                       }
@@ -3836,7 +4203,7 @@
                           "role": "tool"
                         }
                       ],
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "stepNumber": 1,
@@ -3845,29 +4212,35 @@
                       "inputTokenDetails": {
                         "cacheReadTokens": 0,
                         "cacheWriteTokens": 0,
-                        "noCacheTokens": 87
+                        "noCacheTokens": 91
                       },
-                      "inputTokens": 87,
+                      "inputTokens": 91,
                       "outputTokenDetails": {
                         "reasoningTokens": 0,
-                        "textTokens": 2
+                        "textTokens": 15
                       },
-                      "outputTokens": 2,
+                      "outputTokens": 15,
                       "raw": {
-                        "input_tokens": 87,
+                        "input_tokens": 91,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 2,
+                        "output_tokens": 15,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       },
                       "reasoningTokens": 0,
-                      "totalTokens": 89
+                      "totalTokens": 106
                     },
-                    "warnings": []
+                    "warnings": [
+                      {
+                        "details": "temperature is not supported for reasoning models",
+                        "feature": "temperature",
+                        "type": "unsupported"
+                      }
+                    ]
                   }
                 ],
                 "text": "",
@@ -3907,52 +4280,58 @@
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
                     "cacheWriteTokens": 0,
-                    "noCacheTokens": 148
+                    "noCacheTokens": 147
                   },
-                  "inputTokens": 148,
+                  "inputTokens": 147,
                   "outputTokenDetails": {
                     "reasoningTokens": 0,
-                    "textTokens": 4
+                    "textTokens": 30
                   },
-                  "outputTokens": 4,
+                  "outputTokens": 30,
                   "reasoningTokens": 0,
-                  "totalTokens": 152
+                  "totalTokens": 177
                 },
                 "usage": {
                   "cachedInputTokens": 0,
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
                     "cacheWriteTokens": 0,
-                    "noCacheTokens": 87
+                    "noCacheTokens": 91
                   },
-                  "inputTokens": 87,
+                  "inputTokens": 91,
                   "outputTokenDetails": {
                     "reasoningTokens": 0,
-                    "textTokens": 2
+                    "textTokens": 15
                   },
-                  "outputTokens": 2,
+                  "outputTokens": 15,
                   "raw": {
-                    "input_tokens": 87,
+                    "input_tokens": 91,
                     "input_tokens_details": {
                       "cache_write_tokens": 0,
                       "cached_tokens": 0
                     },
-                    "output_tokens": 2,
+                    "output_tokens": 15,
                     "output_tokens_details": {
                       "reasoning_tokens": 0
                     }
                   },
                   "reasoningTokens": 0,
-                  "totalTokens": 89
+                  "totalTokens": 106
                 },
-                "warnings": []
+                "warnings": [
+                  {
+                    "details": "temperature is not supported for reasoning models",
+                    "feature": "temperature",
+                    "type": "unsupported"
+                  }
+                ]
               },
               "metadata": {
                 "braintrust": {
                   "integration_name": "ai-sdk",
                   "sdk_language": "typescript"
                 },
-                "model": "gpt-4o-mini-2024-07-18",
+                "model": "gpt-5.4-nano-2026-03-17",
                 "provider": "openai.responses",
                 "tools": {
                   "lookup_signups": {
@@ -4043,21 +4422,21 @@
                       "inputTokens": {
                         "cacheRead": 0,
                         "cacheWrite": 0,
-                        "noCache": 61,
-                        "total": 61
+                        "noCache": 56,
+                        "total": 56
                       },
                       "outputTokens": {
                         "reasoning": 0,
-                        "text": 2,
-                        "total": 2
+                        "text": 15,
+                        "total": 15
                       },
                       "raw": {
-                        "input_tokens": 61,
+                        "input_tokens": 56,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 2,
+                        "output_tokens": 15,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
@@ -4072,18 +4451,19 @@
                     "finish_reason": {
                       "unified": "tool-calls"
                     },
-                    "model": "gpt-4o-mini-2024-07-18",
-                    "provider": "openai.responses"
+                    "model": "gpt-5.4-nano-2026-03-17",
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
-                    "completion_tokens": 2,
+                    "completion_tokens": 15,
                     "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
-                    "prompt_tokens": 61,
+                    "prompt_tokens": 56,
                     "reasoning_tokens": 0,
                     "time_to_first_token": 0,
-                    "tokens": 63
+                    "tokens": 71
                   }
                 },
                 {
@@ -4196,21 +4576,21 @@
                       "inputTokens": {
                         "cacheRead": 0,
                         "cacheWrite": 0,
-                        "noCache": 87,
-                        "total": 87
+                        "noCache": 91,
+                        "total": 91
                       },
                       "outputTokens": {
                         "reasoning": 0,
-                        "text": 2,
-                        "total": 2
+                        "text": 15,
+                        "total": 15
                       },
                       "raw": {
-                        "input_tokens": 87,
+                        "input_tokens": 91,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 2,
+                        "output_tokens": 15,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
@@ -4225,18 +4605,19 @@
                     "finish_reason": {
                       "unified": "tool-calls"
                     },
-                    "model": "gpt-4o-mini-2024-07-18",
-                    "provider": "openai.responses"
+                    "model": "gpt-5.4-nano-2026-03-17",
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
-                    "completion_tokens": 2,
+                    "completion_tokens": 15,
                     "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
-                    "prompt_tokens": 87,
+                    "prompt_tokens": 91,
                     "reasoning_tokens": 0,
                     "time_to_first_token": 0,
-                    "tokens": 89
+                    "tokens": 106
                   }
                 },
                 {
@@ -4261,7 +4642,7 @@
                     ],
                     "provider": "openai.responses"
                   },
-                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "modelId": "gpt-5.4-nano-2026-03-17",
                   "specificationVersion": "v3",
                   "supportedUrls": {
                     "application/pdf": [
@@ -4301,7 +4682,7 @@
                   "integration_name": "ai-sdk",
                   "sdk_language": "typescript"
                 },
-                "model": "gpt-4o-mini-2024-07-18",
+                "model": "gpt-5.4-nano-2026-03-17",
                 "provider": "openai.responses",
                 "tools": {
                   "lookup_signups": {
@@ -4361,7 +4742,8 @@
                       {
                         "providerMetadata": {
                           "openai": {
-                            "itemId": "<itemId:2>"
+                            "itemId": "<itemId:2>",
+                            "phase": "final_answer"
                           }
                         },
                         "text": "CACHE_OK",
@@ -4373,40 +4755,47 @@
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:1>",
                         "serviceTier": "default"
                       }
                     },
                     "response": {
                       "body": "<omitted>",
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "usage": {
                       "inputTokens": {
-                        "cacheRead": 3456,
+                        "cacheRead": 2816,
                         "cacheWrite": 0,
-                        "noCache": 161,
-                        "total": 3617
+                        "noCache": 800,
+                        "total": 3616
                       },
                       "outputTokens": {
                         "reasoning": 0,
-                        "text": 3,
-                        "total": 3
+                        "text": 6,
+                        "total": 6
                       },
                       "raw": {
-                        "input_tokens": 3617,
+                        "input_tokens": 3616,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
-                          "cached_tokens": 3456
+                          "cached_tokens": 2816
                         },
-                        "output_tokens": 3,
+                        "output_tokens": 6,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       }
                     },
-                    "warnings": []
+                    "warnings": [
+                      {
+                        "details": "temperature is not supported for reasoning models",
+                        "feature": "temperature",
+                        "type": "unsupported"
+                      }
+                    ]
                   },
                   "metadata": {
                     "braintrust": {
@@ -4416,17 +4805,18 @@
                     "finish_reason": {
                       "unified": "stop"
                     },
-                    "model": "gpt-4o-mini-2024-07-18",
-                    "provider": "openai.responses"
+                    "model": "gpt-5.4-nano-2026-03-17",
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
-                    "completion_tokens": 3,
+                    "completion_tokens": 6,
                     "prompt_cache_creation_tokens": 0,
-                    "prompt_cached_tokens": 3456,
-                    "prompt_tokens": 3617,
+                    "prompt_cached_tokens": 2816,
+                    "prompt_tokens": 3616,
                     "reasoning_tokens": 0,
-                    "tokens": 3620
+                    "tokens": 3622
                   }
                 }
               ],
@@ -4439,7 +4829,7 @@
                     ],
                     "provider": "openai.responses"
                   },
-                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "modelId": "gpt-5.4-nano-2026-03-17",
                   "specificationVersion": "v3",
                   "supportedUrls": {
                     "application/pdf": [
@@ -4463,7 +4853,8 @@
                   {
                     "providerMetadata": {
                       "openai": {
-                        "itemId": "<itemId:1>"
+                        "itemId": "<itemId:1>",
+                        "phase": "final_answer"
                       }
                     },
                     "text": "CACHE_OK",
@@ -4474,6 +4865,7 @@
                 "output": "CACHE_OK",
                 "providerMetadata": {
                   "openai": {
+                    "reasoningContext": "current_turn",
                     "responseId": "<responseId:2>",
                     "serviceTier": "default"
                   }
@@ -4486,7 +4878,8 @@
                         {
                           "providerOptions": {
                             "openai": {
-                              "itemId": "<itemId:1>"
+                              "itemId": "<itemId:1>",
+                              "phase": "final_answer"
                             }
                           },
                           "text": "CACHE_OK",
@@ -4496,7 +4889,7 @@
                       "role": "assistant"
                     }
                   ],
-                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "modelId": "gpt-5.4-nano-2026-03-17",
                   "timestamp": "<timestamp>"
                 },
                 "steps": [
@@ -4505,7 +4898,8 @@
                       {
                         "providerMetadata": {
                           "openai": {
-                            "itemId": "<itemId:1>"
+                            "itemId": "<itemId:1>",
+                            "phase": "final_answer"
                           }
                         },
                         "text": "CACHE_OK",
@@ -4514,11 +4908,12 @@
                     ],
                     "finishReason": "stop",
                     "model": {
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "provider": "openai.responses"
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:2>",
                         "serviceTier": "default"
                       }
@@ -4531,7 +4926,8 @@
                             {
                               "providerOptions": {
                                 "openai": {
-                                  "itemId": "<itemId:1>"
+                                  "itemId": "<itemId:1>",
+                                  "phase": "final_answer"
                                 }
                               },
                               "text": "CACHE_OK",
@@ -4541,94 +4937,106 @@
                           "role": "assistant"
                         }
                       ],
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "stepNumber": 0,
                     "usage": {
-                      "cachedInputTokens": 3456,
+                      "cachedInputTokens": 2816,
                       "inputTokenDetails": {
-                        "cacheReadTokens": 3456,
+                        "cacheReadTokens": 2816,
                         "cacheWriteTokens": 0,
-                        "noCacheTokens": 161
+                        "noCacheTokens": 800
                       },
-                      "inputTokens": 3617,
+                      "inputTokens": 3616,
                       "outputTokenDetails": {
                         "reasoningTokens": 0,
-                        "textTokens": 3
+                        "textTokens": 6
                       },
-                      "outputTokens": 3,
+                      "outputTokens": 6,
                       "raw": {
-                        "input_tokens": 3617,
+                        "input_tokens": 3616,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
-                          "cached_tokens": 3456
+                          "cached_tokens": 2816
                         },
-                        "output_tokens": 3,
+                        "output_tokens": 6,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       },
                       "reasoningTokens": 0,
-                      "totalTokens": 3620
+                      "totalTokens": 3622
                     },
-                    "warnings": []
+                    "warnings": [
+                      {
+                        "details": "temperature is not supported for reasoning models",
+                        "feature": "temperature",
+                        "type": "unsupported"
+                      }
+                    ]
                   }
                 ],
                 "text": "CACHE_OK",
                 "toolCalls": [],
                 "toolResults": [],
                 "totalUsage": {
-                  "cachedInputTokens": 3456,
+                  "cachedInputTokens": 2816,
                   "inputTokenDetails": {
-                    "cacheReadTokens": 3456,
+                    "cacheReadTokens": 2816,
                     "cacheWriteTokens": 0,
-                    "noCacheTokens": 161
+                    "noCacheTokens": 800
                   },
-                  "inputTokens": 3617,
+                  "inputTokens": 3616,
                   "outputTokenDetails": {
                     "reasoningTokens": 0,
-                    "textTokens": 3
+                    "textTokens": 6
                   },
-                  "outputTokens": 3,
+                  "outputTokens": 6,
                   "reasoningTokens": 0,
-                  "totalTokens": 3620
+                  "totalTokens": 3622
                 },
                 "usage": {
-                  "cachedInputTokens": 3456,
+                  "cachedInputTokens": 2816,
                   "inputTokenDetails": {
-                    "cacheReadTokens": 3456,
+                    "cacheReadTokens": 2816,
                     "cacheWriteTokens": 0,
-                    "noCacheTokens": 161
+                    "noCacheTokens": 800
                   },
-                  "inputTokens": 3617,
+                  "inputTokens": 3616,
                   "outputTokenDetails": {
                     "reasoningTokens": 0,
-                    "textTokens": 3
+                    "textTokens": 6
                   },
-                  "outputTokens": 3,
+                  "outputTokens": 6,
                   "raw": {
-                    "input_tokens": 3617,
+                    "input_tokens": 3616,
                     "input_tokens_details": {
                       "cache_write_tokens": 0,
-                      "cached_tokens": 3456
+                      "cached_tokens": 2816
                     },
-                    "output_tokens": 3,
+                    "output_tokens": 6,
                     "output_tokens_details": {
                       "reasoning_tokens": 0
                     }
                   },
                   "reasoningTokens": 0,
-                  "totalTokens": 3620
+                  "totalTokens": 3622
                 },
-                "warnings": []
+                "warnings": [
+                  {
+                    "details": "temperature is not supported for reasoning models",
+                    "feature": "temperature",
+                    "type": "unsupported"
+                  }
+                ]
               },
               "metadata": {
                 "braintrust": {
                   "integration_name": "ai-sdk",
                   "sdk_language": "typescript"
                 },
-                "model": "gpt-4o-mini-2024-07-18",
+                "model": "gpt-5.4-nano-2026-03-17",
                 "provider": "openai.responses"
               }
             },
@@ -4665,7 +5073,8 @@
                       {
                         "providerMetadata": {
                           "openai": {
-                            "itemId": "<itemId:2>"
+                            "itemId": "<itemId:2>",
+                            "phase": "final_answer"
                           }
                         },
                         "text": "CACHE_OK",
@@ -4677,40 +5086,47 @@
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:1>",
                         "serviceTier": "default"
                       }
                     },
                     "response": {
                       "body": "<omitted>",
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "usage": {
                       "inputTokens": {
-                        "cacheRead": 3456,
+                        "cacheRead": 2816,
                         "cacheWrite": 0,
-                        "noCache": 161,
-                        "total": 3617
+                        "noCache": 800,
+                        "total": 3616
                       },
                       "outputTokens": {
                         "reasoning": 0,
-                        "text": 3,
-                        "total": 3
+                        "text": 6,
+                        "total": 6
                       },
                       "raw": {
-                        "input_tokens": 3617,
+                        "input_tokens": 3616,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
-                          "cached_tokens": 3456
+                          "cached_tokens": 2816
                         },
-                        "output_tokens": 3,
+                        "output_tokens": 6,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       }
                     },
-                    "warnings": []
+                    "warnings": [
+                      {
+                        "details": "temperature is not supported for reasoning models",
+                        "feature": "temperature",
+                        "type": "unsupported"
+                      }
+                    ]
                   },
                   "metadata": {
                     "braintrust": {
@@ -4720,17 +5136,18 @@
                     "finish_reason": {
                       "unified": "stop"
                     },
-                    "model": "gpt-4o-mini-2024-07-18",
-                    "provider": "openai.responses"
+                    "model": "gpt-5.4-nano-2026-03-17",
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
-                    "completion_tokens": 3,
+                    "completion_tokens": 6,
                     "prompt_cache_creation_tokens": 0,
-                    "prompt_cached_tokens": 3456,
-                    "prompt_tokens": 3617,
+                    "prompt_cached_tokens": 2816,
+                    "prompt_tokens": 3616,
                     "reasoning_tokens": 0,
-                    "tokens": 3620
+                    "tokens": 3622
                   }
                 }
               ],
@@ -4743,7 +5160,7 @@
                     ],
                     "provider": "openai.responses"
                   },
-                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "modelId": "gpt-5.4-nano-2026-03-17",
                   "specificationVersion": "v3",
                   "supportedUrls": {
                     "application/pdf": [
@@ -4767,7 +5184,8 @@
                   {
                     "providerMetadata": {
                       "openai": {
-                        "itemId": "<itemId:1>"
+                        "itemId": "<itemId:1>",
+                        "phase": "final_answer"
                       }
                     },
                     "text": "CACHE_OK",
@@ -4778,6 +5196,7 @@
                 "output": "CACHE_OK",
                 "providerMetadata": {
                   "openai": {
+                    "reasoningContext": "current_turn",
                     "responseId": "<responseId:2>",
                     "serviceTier": "default"
                   }
@@ -4790,7 +5209,8 @@
                         {
                           "providerOptions": {
                             "openai": {
-                              "itemId": "<itemId:1>"
+                              "itemId": "<itemId:1>",
+                              "phase": "final_answer"
                             }
                           },
                           "text": "CACHE_OK",
@@ -4800,7 +5220,7 @@
                       "role": "assistant"
                     }
                   ],
-                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "modelId": "gpt-5.4-nano-2026-03-17",
                   "timestamp": "<timestamp>"
                 },
                 "steps": [
@@ -4809,7 +5229,8 @@
                       {
                         "providerMetadata": {
                           "openai": {
-                            "itemId": "<itemId:1>"
+                            "itemId": "<itemId:1>",
+                            "phase": "final_answer"
                           }
                         },
                         "text": "CACHE_OK",
@@ -4818,11 +5239,12 @@
                     ],
                     "finishReason": "stop",
                     "model": {
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "provider": "openai.responses"
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:2>",
                         "serviceTier": "default"
                       }
@@ -4835,7 +5257,8 @@
                             {
                               "providerOptions": {
                                 "openai": {
-                                  "itemId": "<itemId:1>"
+                                  "itemId": "<itemId:1>",
+                                  "phase": "final_answer"
                                 }
                               },
                               "text": "CACHE_OK",
@@ -4845,94 +5268,106 @@
                           "role": "assistant"
                         }
                       ],
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "stepNumber": 0,
                     "usage": {
-                      "cachedInputTokens": 3456,
+                      "cachedInputTokens": 2816,
                       "inputTokenDetails": {
-                        "cacheReadTokens": 3456,
+                        "cacheReadTokens": 2816,
                         "cacheWriteTokens": 0,
-                        "noCacheTokens": 161
+                        "noCacheTokens": 800
                       },
-                      "inputTokens": 3617,
+                      "inputTokens": 3616,
                       "outputTokenDetails": {
                         "reasoningTokens": 0,
-                        "textTokens": 3
+                        "textTokens": 6
                       },
-                      "outputTokens": 3,
+                      "outputTokens": 6,
                       "raw": {
-                        "input_tokens": 3617,
+                        "input_tokens": 3616,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
-                          "cached_tokens": 3456
+                          "cached_tokens": 2816
                         },
-                        "output_tokens": 3,
+                        "output_tokens": 6,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       },
                       "reasoningTokens": 0,
-                      "totalTokens": 3620
+                      "totalTokens": 3622
                     },
-                    "warnings": []
+                    "warnings": [
+                      {
+                        "details": "temperature is not supported for reasoning models",
+                        "feature": "temperature",
+                        "type": "unsupported"
+                      }
+                    ]
                   }
                 ],
                 "text": "CACHE_OK",
                 "toolCalls": [],
                 "toolResults": [],
                 "totalUsage": {
-                  "cachedInputTokens": 3456,
+                  "cachedInputTokens": 2816,
                   "inputTokenDetails": {
-                    "cacheReadTokens": 3456,
+                    "cacheReadTokens": 2816,
                     "cacheWriteTokens": 0,
-                    "noCacheTokens": 161
+                    "noCacheTokens": 800
                   },
-                  "inputTokens": 3617,
+                  "inputTokens": 3616,
                   "outputTokenDetails": {
                     "reasoningTokens": 0,
-                    "textTokens": 3
+                    "textTokens": 6
                   },
-                  "outputTokens": 3,
+                  "outputTokens": 6,
                   "reasoningTokens": 0,
-                  "totalTokens": 3620
+                  "totalTokens": 3622
                 },
                 "usage": {
-                  "cachedInputTokens": 3456,
+                  "cachedInputTokens": 2816,
                   "inputTokenDetails": {
-                    "cacheReadTokens": 3456,
+                    "cacheReadTokens": 2816,
                     "cacheWriteTokens": 0,
-                    "noCacheTokens": 161
+                    "noCacheTokens": 800
                   },
-                  "inputTokens": 3617,
+                  "inputTokens": 3616,
                   "outputTokenDetails": {
                     "reasoningTokens": 0,
-                    "textTokens": 3
+                    "textTokens": 6
                   },
-                  "outputTokens": 3,
+                  "outputTokens": 6,
                   "raw": {
-                    "input_tokens": 3617,
+                    "input_tokens": 3616,
                     "input_tokens_details": {
                       "cache_write_tokens": 0,
-                      "cached_tokens": 3456
+                      "cached_tokens": 2816
                     },
-                    "output_tokens": 3,
+                    "output_tokens": 6,
                     "output_tokens_details": {
                       "reasoning_tokens": 0
                     }
                   },
                   "reasoningTokens": 0,
-                  "totalTokens": 3620
+                  "totalTokens": 3622
                 },
-                "warnings": []
+                "warnings": [
+                  {
+                    "details": "temperature is not supported for reasoning models",
+                    "feature": "temperature",
+                    "type": "unsupported"
+                  }
+                ]
               },
               "metadata": {
                 "braintrust": {
                   "integration_name": "ai-sdk",
                   "sdk_language": "typescript"
                 },
-                "model": "gpt-4o-mini-2024-07-18",
+                "model": "gpt-5.4-nano-2026-03-17",
                 "provider": "openai.responses"
               }
             }
@@ -5003,7 +5438,8 @@
                           "inference_geo": "not_available",
                           "input_tokens": 3,
                           "output_tokens": 7,
-                          "service_tier": "standard"
+                          "service_tier": "standard",
+                          "speed": "standard"
                         }
                       }
                     },
@@ -5031,7 +5467,8 @@
                         "inference_geo": "not_available",
                         "input_tokens": 3,
                         "output_tokens": 7,
-                        "service_tier": "standard"
+                        "service_tier": "standard",
+                        "speed": "standard"
                       }
                     },
                     "warnings": []
@@ -5046,7 +5483,8 @@
                       "unified": "stop"
                     },
                     "model": "claude-haiku-4-5",
-                    "provider": "anthropic.messages"
+                    "provider": "anthropic.messages",
+                    "served_service_tier": "standard"
                   },
                   "metrics": {
                     "completion_tokens": 7,
@@ -5113,7 +5551,8 @@
                       "inference_geo": "not_available",
                       "input_tokens": 3,
                       "output_tokens": 7,
-                      "service_tier": "standard"
+                      "service_tier": "standard",
+                      "speed": "standard"
                     }
                   }
                 },
@@ -5163,7 +5602,8 @@
                           "inference_geo": "not_available",
                           "input_tokens": 3,
                           "output_tokens": 7,
-                          "service_tier": "standard"
+                          "service_tier": "standard",
+                          "speed": "standard"
                         }
                       }
                     },
@@ -5205,7 +5645,8 @@
                         "inference_geo": "not_available",
                         "input_tokens": 3,
                         "output_tokens": 7,
-                        "service_tier": "standard"
+                        "service_tier": "standard",
+                        "speed": "standard"
                       },
                       "totalTokens": 4526
                     },
@@ -5247,7 +5688,8 @@
                     "inference_geo": "not_available",
                     "input_tokens": 3,
                     "output_tokens": 7,
-                    "service_tier": "standard"
+                    "service_tier": "standard",
+                    "speed": "standard"
                   },
                   "totalTokens": 4526
                 },
@@ -5320,7 +5762,8 @@
                           "inference_geo": "not_available",
                           "input_tokens": 3,
                           "output_tokens": 7,
-                          "service_tier": "standard"
+                          "service_tier": "standard",
+                          "speed": "standard"
                         }
                       }
                     },
@@ -5348,7 +5791,8 @@
                         "inference_geo": "not_available",
                         "input_tokens": 3,
                         "output_tokens": 7,
-                        "service_tier": "standard"
+                        "service_tier": "standard",
+                        "speed": "standard"
                       }
                     },
                     "warnings": []
@@ -5363,7 +5807,8 @@
                       "unified": "stop"
                     },
                     "model": "claude-haiku-4-5",
-                    "provider": "anthropic.messages"
+                    "provider": "anthropic.messages",
+                    "served_service_tier": "standard"
                   },
                   "metrics": {
                     "completion_tokens": 7,
@@ -5430,7 +5875,8 @@
                       "inference_geo": "not_available",
                       "input_tokens": 3,
                       "output_tokens": 7,
-                      "service_tier": "standard"
+                      "service_tier": "standard",
+                      "speed": "standard"
                     }
                   }
                 },
@@ -5480,7 +5926,8 @@
                           "inference_geo": "not_available",
                           "input_tokens": 3,
                           "output_tokens": 7,
-                          "service_tier": "standard"
+                          "service_tier": "standard",
+                          "speed": "standard"
                         }
                       }
                     },
@@ -5522,7 +5969,8 @@
                         "inference_geo": "not_available",
                         "input_tokens": 3,
                         "output_tokens": 7,
-                        "service_tier": "standard"
+                        "service_tier": "standard",
+                        "speed": "standard"
                       },
                       "totalTokens": 4526
                     },
@@ -5564,7 +6012,8 @@
                     "inference_geo": "not_available",
                     "input_tokens": 3,
                     "output_tokens": 7,
-                    "service_tier": "standard"
+                    "service_tier": "standard",
+                    "speed": "standard"
                   },
                   "totalTokens": 4526
                 },
@@ -5616,7 +6065,8 @@
                       {
                         "providerMetadata": {
                           "openai": {
-                            "itemId": "<itemId:2>"
+                            "itemId": "<itemId:2>",
+                            "phase": "final_answer"
                           }
                         },
                         "text": "DENIED",
@@ -5628,40 +6078,47 @@
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:1>",
                         "serviceTier": "default"
                       }
                     },
                     "response": {
                       "body": "<omitted>",
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 0,
                         "cacheWrite": 0,
-                        "noCache": 17,
-                        "total": 17
+                        "noCache": 16,
+                        "total": 16
                       },
                       "outputTokens": {
                         "reasoning": 0,
-                        "text": 3,
-                        "total": 3
+                        "text": 6,
+                        "total": 6
                       },
                       "raw": {
-                        "input_tokens": 17,
+                        "input_tokens": 16,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 3,
+                        "output_tokens": 6,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       }
                     },
-                    "warnings": []
+                    "warnings": [
+                      {
+                        "details": "temperature is not supported for reasoning models",
+                        "feature": "temperature",
+                        "type": "unsupported"
+                      }
+                    ]
                   },
                   "metadata": {
                     "braintrust": {
@@ -5671,17 +6128,18 @@
                     "finish_reason": {
                       "unified": "stop"
                     },
-                    "model": "gpt-4o-mini-2024-07-18",
-                    "provider": "openai.responses"
+                    "model": "gpt-5.4-nano-2026-03-17",
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
-                    "completion_tokens": 3,
+                    "completion_tokens": 6,
                     "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
-                    "prompt_tokens": 17,
+                    "prompt_tokens": 16,
                     "reasoning_tokens": 0,
-                    "tokens": 20
+                    "tokens": 22
                   }
                 }
               ],
@@ -5694,7 +6152,7 @@
                     ],
                     "provider": "openai.responses"
                   },
-                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "modelId": "gpt-5.4-nano-2026-03-17",
                   "specificationVersion": "v3",
                   "supportedUrls": {
                     "application/pdf": [
@@ -5713,7 +6171,8 @@
                   {
                     "providerMetadata": {
                       "openai": {
-                        "itemId": "<itemId:1>"
+                        "itemId": "<itemId:1>",
+                        "phase": "final_answer"
                       }
                     },
                     "text": "DENIED",
@@ -5724,6 +6183,7 @@
                 "output": "DENIED",
                 "providerMetadata": {
                   "openai": {
+                    "reasoningContext": "current_turn",
                     "responseId": "<responseId:2>",
                     "serviceTier": "default"
                   }
@@ -5742,12 +6202,12 @@
                       }
                     ],
                     "max_output_tokens": 24,
-                    "model": "gpt-4o-mini-2024-07-18",
-                    "temperature": 0
+                    "model": "gpt-5.4-nano-2026-03-17"
                   }
                 },
                 "response": {
                   "body": {
+                    "access_programs": null,
                     "background": false,
                     "billing": {
                       "payer": "developer"
@@ -5756,12 +6216,15 @@
                     "created_at": 0,
                     "error": null,
                     "frequency_penalty": 0,
+                    "image": {
+                      "context_compression": "disabled"
+                    },
                     "incomplete_details": null,
                     "instructions": null,
                     "max_output_tokens": 24,
                     "max_tool_calls": null,
                     "metadata": {},
-                    "model": "gpt-4o-mini-2024-07-18",
+                    "model": "gpt-5.4-nano-2026-03-17",
                     "moderation": null,
                     "object": "response",
                     "output": [
@@ -5774,6 +6237,7 @@
                             "type": "output_text"
                           }
                         ],
+                        "phase": "final_answer",
                         "role": "assistant",
                         "status": "completed",
                         "type": "message"
@@ -5784,15 +6248,16 @@
                     "previous_response_id": null,
                     "prompt_cache_retention": "in_memory",
                     "reasoning": {
-                      "context": null,
-                      "effort": null,
+                      "context": "current_turn",
+                      "effort": "none",
+                      "mode": "standard",
                       "summary": null
                     },
                     "safety_identifier": null,
                     "service_tier": "default",
                     "status": "completed",
-                    "store": true,
-                    "temperature": 0,
+                    "store": false,
+                    "temperature": 1,
                     "text": {
                       "format": {
                         "type": "text"
@@ -5820,19 +6285,19 @@
                     },
                     "tools": [],
                     "top_logprobs": 0,
-                    "top_p": 1,
+                    "top_p": 0.98,
                     "truncation": "disabled",
                     "usage": {
-                      "input_tokens": 17,
+                      "input_tokens": 16,
                       "input_tokens_details": {
                         "cache_write_tokens": 0,
                         "cached_tokens": 0
                       },
-                      "output_tokens": 3,
+                      "output_tokens": 6,
                       "output_tokens_details": {
                         "reasoning_tokens": 0
                       },
-                      "total_tokens": 20
+                      "total_tokens": 22
                     },
                     "user": null
                   },
@@ -5842,7 +6307,8 @@
                         {
                           "providerOptions": {
                             "openai": {
-                              "itemId": "<itemId:1>"
+                              "itemId": "<itemId:1>",
+                              "phase": "final_answer"
                             }
                           },
                           "text": "DENIED",
@@ -5852,7 +6318,7 @@
                       "role": "assistant"
                     }
                   ],
-                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "modelId": "gpt-5.4-nano-2026-03-17",
                   "timestamp": "<timestamp>"
                 },
                 "steps": [
@@ -5861,7 +6327,8 @@
                       {
                         "providerMetadata": {
                           "openai": {
-                            "itemId": "<itemId:1>"
+                            "itemId": "<itemId:1>",
+                            "phase": "final_answer"
                           }
                         },
                         "text": "DENIED",
@@ -5870,11 +6337,12 @@
                     ],
                     "finishReason": "stop",
                     "model": {
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "provider": "openai.responses"
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:2>",
                         "serviceTier": "default"
                       }
@@ -5893,12 +6361,12 @@
                           }
                         ],
                         "max_output_tokens": 24,
-                        "model": "gpt-4o-mini-2024-07-18",
-                        "temperature": 0
+                        "model": "gpt-5.4-nano-2026-03-17"
                       }
                     },
                     "response": {
                       "body": {
+                        "access_programs": null,
                         "background": false,
                         "billing": {
                           "payer": "developer"
@@ -5907,12 +6375,15 @@
                         "created_at": 0,
                         "error": null,
                         "frequency_penalty": 0,
+                        "image": {
+                          "context_compression": "disabled"
+                        },
                         "incomplete_details": null,
                         "instructions": null,
                         "max_output_tokens": 24,
                         "max_tool_calls": null,
                         "metadata": {},
-                        "model": "gpt-4o-mini-2024-07-18",
+                        "model": "gpt-5.4-nano-2026-03-17",
                         "moderation": null,
                         "object": "response",
                         "output": [
@@ -5925,6 +6396,7 @@
                                 "type": "output_text"
                               }
                             ],
+                            "phase": "final_answer",
                             "role": "assistant",
                             "status": "completed",
                             "type": "message"
@@ -5935,15 +6407,16 @@
                         "previous_response_id": null,
                         "prompt_cache_retention": "in_memory",
                         "reasoning": {
-                          "context": null,
-                          "effort": null,
+                          "context": "current_turn",
+                          "effort": "none",
+                          "mode": "standard",
                           "summary": null
                         },
                         "safety_identifier": null,
                         "service_tier": "default",
                         "status": "completed",
-                        "store": true,
-                        "temperature": 0,
+                        "store": false,
+                        "temperature": 1,
                         "text": {
                           "format": {
                             "type": "text"
@@ -5971,19 +6444,19 @@
                         },
                         "tools": [],
                         "top_logprobs": 0,
-                        "top_p": 1,
+                        "top_p": 0.98,
                         "truncation": "disabled",
                         "usage": {
-                          "input_tokens": 17,
+                          "input_tokens": 16,
                           "input_tokens_details": {
                             "cache_write_tokens": 0,
                             "cached_tokens": 0
                           },
-                          "output_tokens": 3,
+                          "output_tokens": 6,
                           "output_tokens_details": {
                             "reasoning_tokens": 0
                           },
-                          "total_tokens": 20
+                          "total_tokens": 22
                         },
                         "user": null
                       },
@@ -5993,7 +6466,8 @@
                             {
                               "providerOptions": {
                                 "openai": {
-                                  "itemId": "<itemId:1>"
+                                  "itemId": "<itemId:1>",
+                                  "phase": "final_answer"
                                 }
                               },
                               "text": "DENIED",
@@ -6003,7 +6477,7 @@
                           "role": "assistant"
                         }
                       ],
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "stepNumber": 0,
@@ -6012,29 +6486,35 @@
                       "inputTokenDetails": {
                         "cacheReadTokens": 0,
                         "cacheWriteTokens": 0,
-                        "noCacheTokens": 17
+                        "noCacheTokens": 16
                       },
-                      "inputTokens": 17,
+                      "inputTokens": 16,
                       "outputTokenDetails": {
                         "reasoningTokens": 0,
-                        "textTokens": 3
+                        "textTokens": 6
                       },
-                      "outputTokens": 3,
+                      "outputTokens": 6,
                       "raw": {
-                        "input_tokens": 17,
+                        "input_tokens": 16,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 3,
+                        "output_tokens": 6,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       },
                       "reasoningTokens": 0,
-                      "totalTokens": 20
+                      "totalTokens": 22
                     },
-                    "warnings": []
+                    "warnings": [
+                      {
+                        "details": "temperature is not supported for reasoning models",
+                        "feature": "temperature",
+                        "type": "unsupported"
+                      }
+                    ]
                   }
                 ],
                 "text": "<omitted>",
@@ -6045,52 +6525,58 @@
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
                     "cacheWriteTokens": 0,
-                    "noCacheTokens": 17
+                    "noCacheTokens": 16
                   },
-                  "inputTokens": 17,
+                  "inputTokens": 16,
                   "outputTokenDetails": {
                     "reasoningTokens": 0,
-                    "textTokens": 3
+                    "textTokens": 6
                   },
-                  "outputTokens": 3,
+                  "outputTokens": 6,
                   "reasoningTokens": 0,
-                  "totalTokens": 20
+                  "totalTokens": 22
                 },
                 "usage": {
                   "cachedInputTokens": 0,
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
                     "cacheWriteTokens": 0,
-                    "noCacheTokens": 17
+                    "noCacheTokens": 16
                   },
-                  "inputTokens": 17,
+                  "inputTokens": 16,
                   "outputTokenDetails": {
                     "reasoningTokens": 0,
-                    "textTokens": 3
+                    "textTokens": 6
                   },
-                  "outputTokens": 3,
+                  "outputTokens": 6,
                   "raw": {
-                    "input_tokens": 17,
+                    "input_tokens": 16,
                     "input_tokens_details": {
                       "cache_write_tokens": 0,
                       "cached_tokens": 0
                     },
-                    "output_tokens": 3,
+                    "output_tokens": 6,
                     "output_tokens_details": {
                       "reasoning_tokens": 0
                     }
                   },
                   "reasoningTokens": 0,
-                  "totalTokens": 20
+                  "totalTokens": 22
                 },
-                "warnings": []
+                "warnings": [
+                  {
+                    "details": "temperature is not supported for reasoning models",
+                    "feature": "temperature",
+                    "type": "unsupported"
+                  }
+                ]
               },
               "metadata": {
                 "braintrust": {
                   "integration_name": "ai-sdk",
                   "sdk_language": "typescript"
                 },
-                "model": "gpt-4o-mini-2024-07-18",
+                "model": "gpt-5.4-nano-2026-03-17",
                 "provider": "openai.responses"
               }
             }
@@ -6147,7 +6633,8 @@
                       {
                         "providerMetadata": {
                           "openai": {
-                            "itemId": "<itemId:2>"
+                            "itemId": "<itemId:2>",
+                            "phase": "final_answer"
                           }
                         },
                         "text": "{\"city\":\"Paris\"}",
@@ -6159,40 +6646,47 @@
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:1>",
                         "serviceTier": "default"
                       }
                     },
                     "response": {
                       "body": "<omitted>",
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 0,
                         "cacheWrite": 0,
-                        "noCache": 38,
-                        "total": 38
+                        "noCache": 36,
+                        "total": 36
                       },
                       "outputTokens": {
                         "reasoning": 0,
-                        "text": 6,
-                        "total": 6
+                        "text": 12,
+                        "total": 12
                       },
                       "raw": {
-                        "input_tokens": 38,
+                        "input_tokens": 36,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 6,
+                        "output_tokens": 12,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       }
                     },
-                    "warnings": []
+                    "warnings": [
+                      {
+                        "details": "temperature is not supported for reasoning models",
+                        "feature": "temperature",
+                        "type": "unsupported"
+                      }
+                    ]
                   },
                   "metadata": {
                     "braintrust": {
@@ -6202,17 +6696,18 @@
                     "finish_reason": {
                       "unified": "stop"
                     },
-                    "model": "gpt-4o-mini-2024-07-18",
-                    "provider": "openai.responses"
+                    "model": "gpt-5.4-nano-2026-03-17",
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
-                    "completion_tokens": 6,
+                    "completion_tokens": 12,
                     "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
-                    "prompt_tokens": 38,
+                    "prompt_tokens": 36,
                     "reasoning_tokens": 0,
-                    "tokens": 44
+                    "tokens": 48
                   }
                 }
               ],
@@ -6225,7 +6720,7 @@
                     ],
                     "provider": "openai.responses"
                   },
-                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "modelId": "gpt-5.4-nano-2026-03-17",
                   "specificationVersion": "v3",
                   "supportedUrls": {
                     "application/pdf": [
@@ -6259,13 +6754,14 @@
                 },
                 "providerMetadata": {
                   "openai": {
+                    "reasoningContext": "current_turn",
                     "responseId": "<responseId:1>",
                     "serviceTier": "default"
                   }
                 },
                 "response": {
                   "body": "<omitted>",
-                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "modelId": "gpt-5.4-nano-2026-03-17",
                   "timestamp": "<timestamp>"
                 },
                 "usage": {
@@ -6273,36 +6769,42 @@
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
                     "cacheWriteTokens": 0,
-                    "noCacheTokens": 38
+                    "noCacheTokens": 36
                   },
-                  "inputTokens": 38,
+                  "inputTokens": 36,
                   "outputTokenDetails": {
                     "reasoningTokens": 0,
-                    "textTokens": 6
+                    "textTokens": 12
                   },
-                  "outputTokens": 6,
+                  "outputTokens": 12,
                   "raw": {
-                    "input_tokens": 38,
+                    "input_tokens": 36,
                     "input_tokens_details": {
                       "cache_write_tokens": 0,
                       "cached_tokens": 0
                     },
-                    "output_tokens": 6,
+                    "output_tokens": 12,
                     "output_tokens_details": {
                       "reasoning_tokens": 0
                     }
                   },
                   "reasoningTokens": 0,
-                  "totalTokens": 44
+                  "totalTokens": 48
                 },
-                "warnings": []
+                "warnings": [
+                  {
+                    "details": "temperature is not supported for reasoning models",
+                    "feature": "temperature",
+                    "type": "unsupported"
+                  }
+                ]
               },
               "metadata": {
                 "braintrust": {
                   "integration_name": "ai-sdk",
                   "sdk_language": "typescript"
                 },
-                "model": "gpt-4o-mini-2024-07-18",
+                "model": "gpt-5.4-nano-2026-03-17",
                 "provider": "openai.responses"
               }
             }
@@ -6365,21 +6867,21 @@
                       "inputTokens": {
                         "cacheRead": 0,
                         "cacheWrite": 0,
-                        "noCache": 38,
-                        "total": 38
+                        "noCache": 36,
+                        "total": 36
                       },
                       "outputTokens": {
                         "reasoning": 0,
-                        "text": 6,
-                        "total": 6
+                        "text": 12,
+                        "total": 12
                       },
                       "raw": {
-                        "input_tokens": 38,
+                        "input_tokens": 36,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 6,
+                        "output_tokens": 12,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
@@ -6394,18 +6896,19 @@
                     "finish_reason": {
                       "unified": "stop"
                     },
-                    "model": "gpt-4o-mini-2024-07-18",
-                    "provider": "openai.responses"
+                    "model": "gpt-5.4-nano-2026-03-17",
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
-                    "completion_tokens": 6,
+                    "completion_tokens": 12,
                     "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
-                    "prompt_tokens": 38,
+                    "prompt_tokens": 36,
                     "reasoning_tokens": 0,
                     "time_to_first_token": 0,
-                    "tokens": 44
+                    "tokens": 48
                   }
                 }
               ],
@@ -6418,7 +6921,7 @@
                     ],
                     "provider": "openai.responses"
                   },
-                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "modelId": "gpt-5.4-nano-2026-03-17",
                   "specificationVersion": "v3",
                   "supportedUrls": {
                     "application/pdf": [
@@ -6456,7 +6959,7 @@
                   "integration_name": "ai-sdk",
                   "sdk_language": "typescript"
                 },
-                "model": "gpt-4o-mini-2024-07-18",
+                "model": "gpt-5.4-nano-2026-03-17",
                 "provider": "openai.responses"
               },
               "metrics": {
@@ -6499,7 +7002,8 @@
                       {
                         "providerMetadata": {
                           "openai": {
-                            "itemId": "<itemId:2>"
+                            "itemId": "<itemId:2>",
+                            "phase": "final_answer"
                           }
                         },
                         "text": "HELLO",
@@ -6511,34 +7015,35 @@
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:1>",
                         "serviceTier": "default"
                       }
                     },
                     "response": {
                       "body": "<omitted>",
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 0,
                         "cacheWrite": 0,
-                        "noCache": 16,
-                        "total": 16
+                        "noCache": 15,
+                        "total": 15
                       },
                       "outputTokens": {
                         "reasoning": 0,
-                        "text": 3,
-                        "total": 3
+                        "text": 6,
+                        "total": 6
                       },
                       "raw": {
-                        "input_tokens": 16,
+                        "input_tokens": 15,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 3,
+                        "output_tokens": 6,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
@@ -6554,17 +7059,18 @@
                     "finish_reason": {
                       "unified": "stop"
                     },
-                    "model": "gpt-4o-mini-2024-07-18",
-                    "provider": "openai.responses"
+                    "model": "gpt-5.4-nano-2026-03-17",
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
-                    "completion_tokens": 3,
+                    "completion_tokens": 6,
                     "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
-                    "prompt_tokens": 16,
+                    "prompt_tokens": 15,
                     "reasoning_tokens": 0,
-                    "tokens": 19
+                    "tokens": 21
                   }
                 }
               ],
@@ -6583,7 +7089,7 @@
                     ],
                     "provider": "openai.responses"
                   },
-                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "modelId": "gpt-5.4-nano-2026-03-17",
                   "specificationVersion": "v3",
                   "supportedUrls": {
                     "application/pdf": [
@@ -6601,7 +7107,8 @@
                   {
                     "providerMetadata": {
                       "openai": {
-                        "itemId": "<itemId:1>"
+                        "itemId": "<itemId:1>",
+                        "phase": "final_answer"
                       }
                     },
                     "text": "HELLO",
@@ -6612,6 +7119,7 @@
                 "output": "HELLO",
                 "providerMetadata": {
                   "openai": {
+                    "reasoningContext": "current_turn",
                     "responseId": "<responseId:2>",
                     "serviceTier": "default"
                   }
@@ -6624,7 +7132,8 @@
                         {
                           "providerOptions": {
                             "openai": {
-                              "itemId": "<itemId:1>"
+                              "itemId": "<itemId:1>",
+                              "phase": "final_answer"
                             }
                           },
                           "text": "HELLO",
@@ -6634,7 +7143,7 @@
                       "role": "assistant"
                     }
                   ],
-                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "modelId": "gpt-5.4-nano-2026-03-17",
                   "timestamp": "<timestamp>"
                 },
                 "steps": [
@@ -6643,7 +7152,8 @@
                       {
                         "providerMetadata": {
                           "openai": {
-                            "itemId": "<itemId:1>"
+                            "itemId": "<itemId:1>",
+                            "phase": "final_answer"
                           }
                         },
                         "text": "HELLO",
@@ -6652,11 +7162,12 @@
                     ],
                     "finishReason": "stop",
                     "model": {
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "provider": "openai.responses"
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:2>",
                         "serviceTier": "default"
                       }
@@ -6669,7 +7180,8 @@
                             {
                               "providerOptions": {
                                 "openai": {
-                                  "itemId": "<itemId:1>"
+                                  "itemId": "<itemId:1>",
+                                  "phase": "final_answer"
                                 }
                               },
                               "text": "HELLO",
@@ -6679,7 +7191,7 @@
                           "role": "assistant"
                         }
                       ],
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "stepNumber": 0,
@@ -6688,27 +7200,27 @@
                       "inputTokenDetails": {
                         "cacheReadTokens": 0,
                         "cacheWriteTokens": 0,
-                        "noCacheTokens": 16
+                        "noCacheTokens": 15
                       },
-                      "inputTokens": 16,
+                      "inputTokens": 15,
                       "outputTokenDetails": {
                         "reasoningTokens": 0,
-                        "textTokens": 3
+                        "textTokens": 6
                       },
-                      "outputTokens": 3,
+                      "outputTokens": 6,
                       "raw": {
-                        "input_tokens": 16,
+                        "input_tokens": 15,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 3,
+                        "output_tokens": 6,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       },
                       "reasoningTokens": 0,
-                      "totalTokens": 19
+                      "totalTokens": 21
                     },
                     "warnings": []
                   }
@@ -6721,43 +7233,43 @@
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
                     "cacheWriteTokens": 0,
-                    "noCacheTokens": 16
+                    "noCacheTokens": 15
                   },
-                  "inputTokens": 16,
+                  "inputTokens": 15,
                   "outputTokenDetails": {
                     "reasoningTokens": 0,
-                    "textTokens": 3
+                    "textTokens": 6
                   },
-                  "outputTokens": 3,
+                  "outputTokens": 6,
                   "reasoningTokens": 0,
-                  "totalTokens": 19
+                  "totalTokens": 21
                 },
                 "usage": {
                   "cachedInputTokens": 0,
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
                     "cacheWriteTokens": 0,
-                    "noCacheTokens": 16
+                    "noCacheTokens": 15
                   },
-                  "inputTokens": 16,
+                  "inputTokens": 15,
                   "outputTokenDetails": {
                     "reasoningTokens": 0,
-                    "textTokens": 3
+                    "textTokens": 6
                   },
-                  "outputTokens": 3,
+                  "outputTokens": 6,
                   "raw": {
-                    "input_tokens": 16,
+                    "input_tokens": 15,
                     "input_tokens_details": {
                       "cache_write_tokens": 0,
                       "cached_tokens": 0
                     },
-                    "output_tokens": 3,
+                    "output_tokens": 6,
                     "output_tokens_details": {
                       "reasoning_tokens": 0
                     }
                   },
                   "reasoningTokens": 0,
-                  "totalTokens": 19
+                  "totalTokens": 21
                 },
                 "warnings": []
               },
@@ -6766,7 +7278,7 @@
                   "integration_name": "ai-sdk",
                   "sdk_language": "typescript"
                 },
-                "model": "gpt-4o-mini-2024-07-18",
+                "model": "gpt-5.4-nano-2026-03-17",
                 "provider": "openai.responses"
               }
             }
@@ -6812,21 +7324,21 @@
                       "inputTokens": {
                         "cacheRead": 0,
                         "cacheWrite": 0,
-                        "noCache": 17,
-                        "total": 17
+                        "noCache": 16,
+                        "total": 16
                       },
                       "outputTokens": {
                         "reasoning": 0,
-                        "text": 4,
-                        "total": 4
+                        "text": 7,
+                        "total": 7
                       },
                       "raw": {
-                        "input_tokens": 17,
+                        "input_tokens": 16,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 4,
+                        "output_tokens": 7,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
@@ -6841,18 +7353,19 @@
                     "finish_reason": {
                       "unified": "stop"
                     },
-                    "model": "gpt-4o-mini-2024-07-18",
-                    "provider": "openai.responses"
+                    "model": "gpt-5.4-nano-2026-03-17",
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
-                    "completion_tokens": 4,
+                    "completion_tokens": 7,
                     "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
-                    "prompt_tokens": 17,
+                    "prompt_tokens": 16,
                     "reasoning_tokens": 0,
                     "time_to_first_token": 0,
-                    "tokens": 21
+                    "tokens": 23
                   }
                 }
               ],
@@ -6871,7 +7384,7 @@
                     ],
                     "provider": "openai.responses"
                   },
-                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "modelId": "gpt-5.4-nano-2026-03-17",
                   "specificationVersion": "v3",
                   "supportedUrls": {
                     "application/pdf": [
@@ -6893,7 +7406,7 @@
                   "integration_name": "ai-sdk",
                   "sdk_language": "typescript"
                 },
-                "model": "gpt-4o-mini-2024-07-18",
+                "model": "gpt-5.4-nano-2026-03-17",
                 "provider": "openai.responses"
               },
               "metrics": {
@@ -6952,6 +7465,11 @@
                         "role": "user"
                       }
                     ],
+                    "providerOptions": {
+                      "openai": {
+                        "store": false
+                      }
+                    },
                     "temperature": 0,
                     "toolChoice": {
                       "type": "auto"
@@ -7037,40 +7555,47 @@
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:1>",
                         "serviceTier": "default"
                       }
                     },
                     "response": {
                       "body": "<omitted>",
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 0,
                         "cacheWrite": 0,
-                        "noCache": 173,
-                        "total": 173
+                        "noCache": 180,
+                        "total": 180
                       },
                       "outputTokens": {
                         "reasoning": 0,
-                        "text": 59,
-                        "total": 59
+                        "text": 62,
+                        "total": 62
                       },
                       "raw": {
-                        "input_tokens": 173,
+                        "input_tokens": 180,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 59,
+                        "output_tokens": 62,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       }
                     },
-                    "warnings": []
+                    "warnings": [
+                      {
+                        "details": "temperature is not supported for reasoning models",
+                        "feature": "temperature",
+                        "type": "unsupported"
+                      }
+                    ]
                   },
                   "metadata": {
                     "braintrust": {
@@ -7080,17 +7605,18 @@
                     "finish_reason": {
                       "unified": "tool-calls"
                     },
-                    "model": "gpt-4o-mini-2024-07-18",
-                    "provider": "openai.responses"
+                    "model": "gpt-5.4-nano-2026-03-17",
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
-                    "completion_tokens": 59,
+                    "completion_tokens": 62,
                     "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
-                    "prompt_tokens": 173,
+                    "prompt_tokens": 180,
                     "reasoning_tokens": 0,
-                    "tokens": 232
+                    "tokens": 242
                   }
                 },
                 {
@@ -7224,6 +7750,11 @@
                         "role": "tool"
                       }
                     ],
+                    "providerOptions": {
+                      "openai": {
+                        "store": false
+                      }
+                    },
                     "temperature": 0,
                     "toolChoice": {
                       "type": "auto"
@@ -7298,40 +7829,47 @@
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:1>",
                         "serviceTier": "default"
                       }
                     },
                     "response": {
                       "body": "<omitted>",
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 0,
                         "cacheWrite": 0,
-                        "noCache": 260,
-                        "total": 260
+                        "noCache": 295,
+                        "total": 295
                       },
                       "outputTokens": {
                         "reasoning": 0,
-                        "text": 21,
-                        "total": 21
+                        "text": 24,
+                        "total": 24
                       },
                       "raw": {
-                        "input_tokens": 260,
+                        "input_tokens": 295,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 21,
+                        "output_tokens": 24,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       }
                     },
-                    "warnings": []
+                    "warnings": [
+                      {
+                        "details": "temperature is not supported for reasoning models",
+                        "feature": "temperature",
+                        "type": "unsupported"
+                      }
+                    ]
                   },
                   "metadata": {
                     "braintrust": {
@@ -7341,17 +7879,18 @@
                     "finish_reason": {
                       "unified": "tool-calls"
                     },
-                    "model": "gpt-4o-mini-2024-07-18",
-                    "provider": "openai.responses"
+                    "model": "gpt-5.4-nano-2026-03-17",
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
-                    "completion_tokens": 21,
+                    "completion_tokens": 24,
                     "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
-                    "prompt_tokens": 260,
+                    "prompt_tokens": 295,
                     "reasoning_tokens": 0,
-                    "tokens": 281
+                    "tokens": 319
                   }
                 },
                 {
@@ -7510,6 +8049,11 @@
                         "role": "tool"
                       }
                     ],
+                    "providerOptions": {
+                      "openai": {
+                        "store": false
+                      }
+                    },
                     "temperature": 0,
                     "toolChoice": {
                       "type": "auto"
@@ -7570,10 +8114,11 @@
                       {
                         "providerMetadata": {
                           "openai": {
-                            "itemId": "<itemId:2>"
+                            "itemId": "<itemId:2>",
+                            "phase": "final_answer"
                           }
                         },
-                        "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A**. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+                        "text": "- StoreA laptop price: **$999**\n- StoreB laptop price: **$1,099**\n- Cheaper price: **$999** (StoreA)\n\nApplied discount code **SAVE20** to $999 → **$799.20** discounted total.",
                         "type": "text"
                       }
                     ],
@@ -7582,21 +8127,22 @@
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:1>",
                         "serviceTier": "default"
                       }
                     },
                     "response": {
                       "body": "<omitted>",
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 0,
                         "cacheWrite": 0,
-                        "noCache": 305,
-                        "total": 305
+                        "noCache": 349,
+                        "total": 349
                       },
                       "outputTokens": {
                         "reasoning": 0,
@@ -7604,7 +8150,7 @@
                         "total": 59
                       },
                       "raw": {
-                        "input_tokens": 305,
+                        "input_tokens": 349,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
@@ -7615,7 +8161,13 @@
                         }
                       }
                     },
-                    "warnings": []
+                    "warnings": [
+                      {
+                        "details": "temperature is not supported for reasoning models",
+                        "feature": "temperature",
+                        "type": "unsupported"
+                      }
+                    ]
                   },
                   "metadata": {
                     "braintrust": {
@@ -7625,17 +8177,18 @@
                     "finish_reason": {
                       "unified": "stop"
                     },
-                    "model": "gpt-4o-mini-2024-07-18",
-                    "provider": "openai.responses"
+                    "model": "gpt-5.4-nano-2026-03-17",
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
                     "completion_tokens": 59,
                     "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
-                    "prompt_tokens": 305,
+                    "prompt_tokens": 349,
                     "reasoning_tokens": 0,
-                    "tokens": 364
+                    "tokens": 408
                   }
                 }
               ],
@@ -7663,7 +8216,7 @@
                     ],
                     "provider": "openai.responses"
                   },
-                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "modelId": "gpt-5.4-nano-2026-03-17",
                   "specificationVersion": "v3",
                   "supportedUrls": {
                     "application/pdf": [
@@ -7672,6 +8225,11 @@
                     "image/*": [
                       {}
                     ]
+                  }
+                },
+                "providerOptions": {
+                  "openai": {
+                    "store": false
                   }
                 },
                 "temperature": 0,
@@ -7727,17 +8285,19 @@
                   {
                     "providerMetadata": {
                       "openai": {
-                        "itemId": "<itemId:9>"
+                        "itemId": "<itemId:9>",
+                        "phase": "final_answer"
                       }
                     },
-                    "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A**. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+                    "text": "- StoreA laptop price: **$999**\n- StoreB laptop price: **$1,099**\n- Cheaper price: **$999** (StoreA)\n\nApplied discount code **SAVE20** to $999 → **$799.20** discounted total.",
                     "type": "text"
                   }
                 ],
                 "finishReason": "stop",
-                "output": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A**. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+                "output": "- StoreA laptop price: **$999**\n- StoreB laptop price: **$1,099**\n- Cheaper price: **$999** (StoreA)\n\nApplied discount code **SAVE20** to $999 → **$799.20** discounted total.",
                 "providerMetadata": {
                   "openai": {
+                    "reasoningContext": "current_turn",
                     "responseId": "<responseId:10>",
                     "serviceTier": "default"
                   }
@@ -7854,17 +8414,18 @@
                         {
                           "providerOptions": {
                             "openai": {
-                              "itemId": "<itemId:9>"
+                              "itemId": "<itemId:9>",
+                              "phase": "final_answer"
                             }
                           },
-                          "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A**. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+                          "text": "- StoreA laptop price: **$999**\n- StoreB laptop price: **$1,099**\n- Cheaper price: **$999** (StoreA)\n\nApplied discount code **SAVE20** to $999 → **$799.20** discounted total.",
                           "type": "text"
                         }
                       ],
                       "role": "assistant"
                     }
                   ],
-                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "modelId": "gpt-5.4-nano-2026-03-17",
                   "timestamp": "<timestamp>"
                 },
                 "steps": [
@@ -7933,11 +8494,12 @@
                     ],
                     "finishReason": "tool-calls",
                     "model": {
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "provider": "openai.responses"
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:5>",
                         "serviceTier": "default"
                       }
@@ -8012,7 +8574,7 @@
                           "role": "tool"
                         }
                       ],
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "stepNumber": 0,
@@ -8021,29 +8583,35 @@
                       "inputTokenDetails": {
                         "cacheReadTokens": 0,
                         "cacheWriteTokens": 0,
-                        "noCacheTokens": 173
+                        "noCacheTokens": 180
                       },
-                      "inputTokens": 173,
+                      "inputTokens": 180,
                       "outputTokenDetails": {
                         "reasoningTokens": 0,
-                        "textTokens": 59
+                        "textTokens": 62
                       },
-                      "outputTokens": 59,
+                      "outputTokens": 62,
                       "raw": {
-                        "input_tokens": 173,
+                        "input_tokens": 180,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 59,
+                        "output_tokens": 62,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       },
                       "reasoningTokens": 0,
-                      "totalTokens": 232
+                      "totalTokens": 242
                     },
-                    "warnings": []
+                    "warnings": [
+                      {
+                        "details": "temperature is not supported for reasoning models",
+                        "feature": "temperature",
+                        "type": "unsupported"
+                      }
+                    ]
                   },
                   {
                     "content": [
@@ -8080,11 +8648,12 @@
                     ],
                     "finishReason": "tool-calls",
                     "model": {
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "provider": "openai.responses"
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:8>",
                         "serviceTier": "default"
                       }
@@ -8197,7 +8766,7 @@
                           "role": "tool"
                         }
                       ],
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "stepNumber": 1,
@@ -8206,49 +8775,57 @@
                       "inputTokenDetails": {
                         "cacheReadTokens": 0,
                         "cacheWriteTokens": 0,
-                        "noCacheTokens": 260
+                        "noCacheTokens": 295
                       },
-                      "inputTokens": 260,
+                      "inputTokens": 295,
                       "outputTokenDetails": {
                         "reasoningTokens": 0,
-                        "textTokens": 21
+                        "textTokens": 24
                       },
-                      "outputTokens": 21,
+                      "outputTokens": 24,
                       "raw": {
-                        "input_tokens": 260,
+                        "input_tokens": 295,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 21,
+                        "output_tokens": 24,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       },
                       "reasoningTokens": 0,
-                      "totalTokens": 281
+                      "totalTokens": 319
                     },
-                    "warnings": []
+                    "warnings": [
+                      {
+                        "details": "temperature is not supported for reasoning models",
+                        "feature": "temperature",
+                        "type": "unsupported"
+                      }
+                    ]
                   },
                   {
                     "content": [
                       {
                         "providerMetadata": {
                           "openai": {
-                            "itemId": "<itemId:9>"
+                            "itemId": "<itemId:9>",
+                            "phase": "final_answer"
                           }
                         },
-                        "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A**. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+                        "text": "- StoreA laptop price: **$999**\n- StoreB laptop price: **$1,099**\n- Cheaper price: **$999** (StoreA)\n\nApplied discount code **SAVE20** to $999 → **$799.20** discounted total.",
                         "type": "text"
                       }
                     ],
                     "finishReason": "stop",
                     "model": {
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "provider": "openai.responses"
                     },
                     "providerMetadata": {
                       "openai": {
+                        "reasoningContext": "current_turn",
                         "responseId": "<responseId:10>",
                         "serviceTier": "default"
                       }
@@ -8365,17 +8942,18 @@
                             {
                               "providerOptions": {
                                 "openai": {
-                                  "itemId": "<itemId:9>"
+                                  "itemId": "<itemId:9>",
+                                  "phase": "final_answer"
                                 }
                               },
-                              "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A**. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+                              "text": "- StoreA laptop price: **$999**\n- StoreB laptop price: **$1,099**\n- Cheaper price: **$999** (StoreA)\n\nApplied discount code **SAVE20** to $999 → **$799.20** discounted total.",
                               "type": "text"
                             }
                           ],
                           "role": "assistant"
                         }
                       ],
-                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "modelId": "gpt-5.4-nano-2026-03-17",
                       "timestamp": "<timestamp>"
                     },
                     "stepNumber": 2,
@@ -8384,16 +8962,16 @@
                       "inputTokenDetails": {
                         "cacheReadTokens": 0,
                         "cacheWriteTokens": 0,
-                        "noCacheTokens": 305
+                        "noCacheTokens": 349
                       },
-                      "inputTokens": 305,
+                      "inputTokens": 349,
                       "outputTokenDetails": {
                         "reasoningTokens": 0,
                         "textTokens": 59
                       },
                       "outputTokens": 59,
                       "raw": {
-                        "input_tokens": 305,
+                        "input_tokens": 349,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
@@ -8404,12 +8982,18 @@
                         }
                       },
                       "reasoningTokens": 0,
-                      "totalTokens": 364
+                      "totalTokens": 408
                     },
-                    "warnings": []
+                    "warnings": [
+                      {
+                        "details": "temperature is not supported for reasoning models",
+                        "feature": "temperature",
+                        "type": "unsupported"
+                      }
+                    ]
                   }
                 ],
-                "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A**. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+                "text": "- StoreA laptop price: **$999**\n- StoreB laptop price: **$1,099**\n- Cheaper price: **$999** (StoreA)\n\nApplied discount code **SAVE20** to $999 → **$799.20** discounted total.",
                 "toolCalls": [],
                 "toolResults": [],
                 "totalUsage": {
@@ -8417,32 +9001,32 @@
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
                     "cacheWriteTokens": 0,
-                    "noCacheTokens": 738
+                    "noCacheTokens": 824
                   },
-                  "inputTokens": 738,
+                  "inputTokens": 824,
                   "outputTokenDetails": {
                     "reasoningTokens": 0,
-                    "textTokens": 139
+                    "textTokens": 145
                   },
-                  "outputTokens": 139,
+                  "outputTokens": 145,
                   "reasoningTokens": 0,
-                  "totalTokens": 877
+                  "totalTokens": 969
                 },
                 "usage": {
                   "cachedInputTokens": 0,
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
                     "cacheWriteTokens": 0,
-                    "noCacheTokens": 305
+                    "noCacheTokens": 349
                   },
-                  "inputTokens": 305,
+                  "inputTokens": 349,
                   "outputTokenDetails": {
                     "reasoningTokens": 0,
                     "textTokens": 59
                   },
                   "outputTokens": 59,
                   "raw": {
-                    "input_tokens": 305,
+                    "input_tokens": 349,
                     "input_tokens_details": {
                       "cache_write_tokens": 0,
                       "cached_tokens": 0
@@ -8453,16 +9037,22 @@
                     }
                   },
                   "reasoningTokens": 0,
-                  "totalTokens": 364
+                  "totalTokens": 408
                 },
-                "warnings": []
+                "warnings": [
+                  {
+                    "details": "temperature is not supported for reasoning models",
+                    "feature": "temperature",
+                    "type": "unsupported"
+                  }
+                ]
               },
               "metadata": {
                 "braintrust": {
                   "integration_name": "ai-sdk",
                   "sdk_language": "typescript"
                 },
-                "model": "gpt-4o-mini-2024-07-18",
+                "model": "gpt-5.4-nano-2026-03-17",
                 "provider": "openai.responses",
                 "tools": {
                   "apply_discount": {

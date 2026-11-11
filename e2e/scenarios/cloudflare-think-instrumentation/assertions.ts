@@ -110,13 +110,14 @@ export function defineCloudflareThinkAssertions(options: {
         }
         expect(task?.metrics?.prompt_tokens).toBe(
           modelSpans.reduce(
-            (total, span) => total + (span.metrics?.prompt_tokens ?? 0),
+            (total, span) => total + (span.metrics?.prompt_tokens as number),
             0,
           ),
         );
         expect(task?.metrics?.completion_tokens).toBe(
           modelSpans.reduce(
-            (total, span) => total + (span.metrics?.completion_tokens ?? 0),
+            (total, span) =>
+              total + (span.metrics?.completion_tokens as number),
             0,
           ),
         );
@@ -159,6 +160,6 @@ function expectPositiveTokenMetrics(
   expect(metrics?.prompt_tokens).toBeGreaterThan(0);
   expect(metrics?.completion_tokens).toBeGreaterThan(0);
   expect(metrics?.tokens).toBe(
-    (metrics?.prompt_tokens ?? 0) + (metrics?.completion_tokens ?? 0),
+    (metrics?.prompt_tokens as number) + (metrics?.completion_tokens as number),
   );
 }

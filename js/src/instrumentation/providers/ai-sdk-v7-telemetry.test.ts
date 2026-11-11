@@ -23,7 +23,10 @@ import {
 } from "../../wrappers/ai-sdk/workflow-agent-context";
 import { BRAINTRUST_AI_SDK_V7_OPERATION_KEY as AI_SDK_V7_OPERATION_KEY } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
 import { runWithAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
-import { processAISDKDecisionInput } from "./ai-sdk-instrumentation";
+import {
+  processAISDKCallInput,
+  processAISDKDecisionInput,
+} from "./ai-sdk-instrumentation";
 
 try {
   configureNode();
@@ -52,6 +55,93 @@ describe("braintrustAISDKTelemetry", () => {
     _exportsForTestingOnly.clearTestBackgroundLogger();
     vi.unstubAllEnvs();
   });
+
+  it.each(["generateText", "streamText", "generateObject"])(
+    "captures %s tiers with content capture disabled and resets them between steps",
+    async (operation) => {
+      const telemetry = braintrustAISDKTelemetry();
+      const event = {
+        callId: "tiers",
+        operationId: `ai.${operation}`,
+        provider: "openai.responses",
+        modelId: "test-model",
+        recordInputs: false,
+        recordOutputs: false,
+      };
+      telemetry.onStart({
+        ...event,
+        providerOptions: { openai: { serviceTier: "flex" } },
+      });
+      for (const [index, requested] of ["priority", undefined].entries()) {
+        telemetry.onStepStart({
+          ...event,
+          providerOptions: requested
+            ? { openai: { serviceTier: requested } }
+            : undefined,
+        });
+        if (operation === "generateObject") telemetry.onObjectStepStart(event);
+        else telemetry.onLanguageModelCallStart(event);
+        const end = {
+          ...event,
+          providerMetadata:
+            index === 0 ? { openai: { serviceTier: " DEFAULT " } } : undefined,
+        };
+        if (operation === "generateObject") telemetry.onObjectStepEnd(end);
+        else telemetry.onLanguageModelCallEnd(end);
+      }
+      telemetry.onEnd(event);
+      const rows = (await backgroundLogger.drain()) as Array<
+        Record<string, any>
+      >;
+      const models = rows.filter((row) => row.span_attributes?.type === "llm");
+      expect(models).toHaveLength(2);
+      expect(models[0].metadata).toMatchObject({
+        requested_service_tier: "priority",
+        served_service_tier: "default",
+      });
+      expect(models[1].metadata).not.toHaveProperty("requested_service_tier");
+      expect(models[1].metadata).not.toHaveProperty("served_service_tier");
+      for (const model of models) {
+        expect(model).not.toHaveProperty("input");
+        expect(model).not.toHaveProperty("output");
+      }
+    },
+  );
+
+  it.each(["onAbort", "onError"])(
+    "retains observed stream tiers on %s",
+    async (ending) => {
+      const telemetry = braintrustAISDKTelemetry();
+      const event = {
+        callId: "tiers",
+        operationId: "ai.streamText",
+        provider: "gateway",
+        modelId: "openai/test-model",
+      };
+      telemetry.onStart({
+        ...event,
+        providerOptions: { gateway: { serviceTier: "flex" } },
+      });
+      telemetry.onLanguageModelCallStart(event);
+      for (const serviceTier of ["auto", "priority", null]) {
+        telemetry.onChunk({
+          chunk: {
+            callId: event.callId,
+            providerMetadata: { openai: { serviceTier } },
+          },
+        });
+      }
+      telemetry[ending]({ ...event, error: new Error("interrupted") });
+      const rows = (await backgroundLogger.drain()) as Array<
+        Record<string, any>
+      >;
+      const model = rows.find((row) => row.span_attributes?.type === "llm");
+      expect(model?.metadata).toMatchObject({
+        requested_service_tier: "flex",
+        served_service_tier: "priority",
+      });
+    },
+  );
 
   it.each(["Decide", "Evaluate"])(
     "captures %s telemetry as one question span",
@@ -168,6 +258,42 @@ describe("braintrustAISDKTelemetry", () => {
     });
     expect(failure).not.toHaveProperty("output");
   });
+
+  it.each([false, true])(
+    "applies the capture policy to tagged file data (%s)",
+    (captureAttachments) => {
+      vi.stubEnv(
+        "BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS",
+        String(captureAttachments),
+      );
+      const file = {
+        type: "file",
+        mediaType: "image/png",
+        data: { type: "data", data: new Uint8Array([1, 2]) },
+      };
+      const references = [
+        {
+          ...file,
+          data: { type: "url", url: "https://example.com/image.png" },
+        },
+        { ...file, data: { type: "file-id", fileId: "file-123" } },
+      ];
+      const result = processAISDKCallInput({
+        messages: [{ role: "user", content: [file, ...references] }],
+      });
+      expect(result.input).toHaveProperty("messages.0.content", [
+        {
+          type: "file",
+          mediaType: "image/png",
+          ...(captureAttachments
+            ? { data: { type: "data", data: expect.any(Attachment) } }
+            : {}),
+        },
+        ...references,
+      ]);
+      expect(file.data.data).toEqual(new Uint8Array([1, 2]));
+    },
+  );
 
   it("omits decision file bytes by default and preserves remote references", () => {
     vi.stubEnv("BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS", "false");
@@ -329,6 +455,99 @@ describe("braintrustAISDKTelemetry", () => {
       expect(search?.metrics).not.toHaveProperty("duration_ms");
     },
   );
+
+  it.each(["before", "after"])(
+    "does not duplicate provider tools when model telemetry arrives %s execution end",
+    async (order) => {
+      const telemetry = braintrustAISDKTelemetry();
+      const toolCall = {
+        type: "tool-call",
+        providerExecuted: true,
+        toolCallId: "shared-tool",
+        toolName: "bash",
+        input: { command: "printf OK" },
+      };
+      const toolOutput = {
+        ...toolCall,
+        type: "tool-result",
+        output: { exitCode: 0, output: "OK" },
+      };
+      for (const callId of ["first", "second"]) {
+        telemetry.onStart({ callId, operationId: "ai.harness" });
+        telemetry.onLanguageModelCallStart({ callId });
+        telemetry.onToolExecutionStart({ callId, toolCall });
+        if (order === "after") {
+          telemetry.onToolExecutionEnd({ callId, toolCall, toolOutput });
+        }
+        telemetry.onLanguageModelCallEnd({
+          callId,
+          content: [toolCall, toolOutput],
+        });
+        if (order === "before") {
+          telemetry.onToolExecutionEnd({ callId, toolCall, toolOutput });
+        }
+        telemetry.onEnd({ callId, operationId: "ai.harness" });
+      }
+      const spans = (await backgroundLogger.drain()) as Array<
+        Record<string, any>
+      >;
+      const tools = spans.filter(
+        (span) => span.span_attributes?.type === "tool",
+      );
+      expect(tools).toHaveLength(2);
+      expect(tools[0].span_parents).not.toEqual(tools[1].span_parents);
+      for (const tool of tools) {
+        expect(tool).toMatchObject({
+          input: toolCall.input,
+          output: toolOutput.output,
+          metadata: { toolCallId: "shared-tool", toolName: "bash" },
+          metrics: { start: expect.any(Number), end: expect.any(Number) },
+        });
+      }
+    },
+  );
+
+  it("keeps a provider tool's execution span when it finishes in a continuation", async () => {
+    const telemetry = braintrustAISDKTelemetry();
+    const toolCall = {
+      type: "tool-call",
+      providerExecuted: true,
+      toolCallId: "continued-tool",
+      toolName: "bash",
+      input: { command: "printf OK" },
+    };
+    const toolOutput = {
+      ...toolCall,
+      type: "tool-result",
+      output: { exitCode: 0, output: "OK" },
+    };
+    telemetry.onStart({ callId: "suspended", operationId: "ai.harness" });
+    telemetry.onLanguageModelCallStart({ callId: "suspended" });
+    telemetry.onToolExecutionStart({ callId: "suspended", toolCall });
+    telemetry.onLanguageModelCallEnd({
+      callId: "suspended",
+      content: [toolCall],
+    });
+    telemetry.onEnd({ callId: "suspended", operationId: "ai.harness" });
+    telemetry.onStart({ callId: "continued", operationId: "ai.harness" });
+    telemetry.onLanguageModelCallStart({ callId: "continued" });
+    telemetry.onToolExecutionEnd({ callId: "continued", toolCall, toolOutput });
+    telemetry.onLanguageModelCallEnd({
+      callId: "continued",
+      content: [toolOutput],
+    });
+    telemetry.onEnd({ callId: "continued", operationId: "ai.harness" });
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    const tools = spans.filter((span) => span.span_attributes?.type === "tool");
+    expect(tools).toHaveLength(1);
+    expect(tools[0]).toMatchObject({
+      input: toolCall.input,
+      output: toolOutput.output,
+      metrics: { start: expect.any(Number), end: expect.any(Number) },
+    });
+  });
 
   it("correlates deferred provider results across overlapping operations", async () => {
     const telemetry = braintrustAISDKTelemetry();

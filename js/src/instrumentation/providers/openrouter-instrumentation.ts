@@ -1,3 +1,4 @@
+import { serviceTierMetadata } from "../core/service-tier";
 import { INSTRUMENTATION_NAMES } from "../../span-origin";
 import { toLoggedError } from "../core";
 import {
@@ -30,6 +31,7 @@ class OpenRouterInstrumentationConsumer {
   public register(): void {
     this.subscribeToOpenRouterChannels();
   }
+
   private subscribeToOpenRouterChannels(): void {
     openRouterChannels.chatSend.intercept(
       (target, receiver, args, additional) =>
@@ -70,6 +72,14 @@ class OpenRouterInstrumentationConsumer {
               }
               return metrics;
             },
+            extractMetadata: (result) =>
+              serviceTierMetadata({
+                served: result?.serviceTier ?? result?.service_tier,
+              }),
+            extractChunkMetadata: (chunk) =>
+              serviceTierMetadata({
+                served: chunk?.serviceTier ?? chunk?.service_tier,
+              }),
             aggregateChunks: aggregateOpenRouterChatChunks,
           },
         ),
@@ -210,6 +220,11 @@ class OpenRouterInstrumentationConsumer {
               }
               return metrics;
             },
+            extractChunkMetadata: (chunk) =>
+              serviceTierMetadata({
+                served:
+                  chunk?.response?.serviceTier ?? chunk?.response?.service_tier,
+              }),
             aggregateChunks: aggregateOpenRouterResponseStreamEvents,
           },
         ),
@@ -605,6 +620,9 @@ function buildOpenRouterMetadata(
     ...(httpReferer !== undefined ? { httpReferer } : {}),
     ...(xTitle !== undefined ? { xTitle } : {}),
     provider: normalizedModel.provider || "openrouter",
+    ...serviceTierMetadata({
+      requested: metadata.serviceTier ?? metadata.service_tier,
+    }),
   };
 }
 
@@ -672,6 +690,9 @@ function extractOpenRouterResponseMetadata(
   const usageMetadata = extractOpenRouterUsageMetadata(usage);
   const combined = {
     ...rest,
+    ...serviceTierMetadata({
+      served: result.serviceTier ?? result.service_tier,
+    }),
     ...(normalizedModel.model !== undefined
       ? { model: normalizedModel.model }
       : {}),
@@ -830,7 +851,9 @@ export function aggregateOpenRouterChatChunks(
 ): {
   output: OpenRouterChatChoice[];
   metrics: Record<string, number>;
+  metadata?: Record<string, unknown>;
 } {
+  const metadata: Record<string, unknown> = {};
   let role: string | undefined;
   let content = "";
   let reasoning = "";
@@ -853,6 +876,12 @@ export function aggregateOpenRouterChatChunks(
   let metrics: Record<string, number> = {};
 
   for (const chunk of chunks) {
+    Object.assign(
+      metadata,
+      serviceTierMetadata({
+        served: chunk?.serviceTier ?? chunk?.service_tier,
+      }),
+    );
     metrics = {
       ...metrics,
       ...parseOpenRouterMetricsFromUsage(chunk?.usage),
@@ -995,6 +1024,7 @@ export function aggregateOpenRouterChatChunks(
       },
     ],
     metrics,
+    ...(Object.keys(metadata).length ? { metadata } : {}),
   };
 }
 
@@ -1006,6 +1036,7 @@ export function aggregateOpenRouterResponseStreamEvents(
   metadata?: Record<string, unknown>;
 } {
   let finalResponse: OpenRouterResponse | undefined;
+  const metadata: Record<string, unknown> = {};
 
   for (const chunk of chunks) {
     const response = chunk?.response;
@@ -1013,6 +1044,12 @@ export function aggregateOpenRouterResponseStreamEvents(
       continue;
     }
 
+    Object.assign(
+      metadata,
+      serviceTierMetadata({
+        served: response.serviceTier ?? response.service_tier,
+      }),
+    );
     if (
       chunk.type === "response.completed" ||
       chunk.type === "response.incomplete" ||
@@ -1026,15 +1063,15 @@ export function aggregateOpenRouterResponseStreamEvents(
     return {
       output: undefined,
       metrics: {},
+      ...(Object.keys(metadata).length ? { metadata } : {}),
     };
   }
 
+  Object.assign(metadata, extractOpenRouterResponseMetadata(finalResponse));
   return {
     output: extractOpenRouterResponseOutput(finalResponse),
     metrics: parseOpenRouterMetricsFromUsage(finalResponse.usage),
-    ...(extractOpenRouterResponseMetadata(finalResponse)
-      ? { metadata: extractOpenRouterResponseMetadata(finalResponse) }
-      : {}),
+    ...(Object.keys(metadata).length ? { metadata } : {}),
   };
 }
 
@@ -1551,7 +1588,6 @@ export { parseOpenRouterMetricsFromUsage };
 let openRouterInstrumentationConsumer:
   | OpenRouterInstrumentationConsumer
   | undefined;
-
 export function registerOpenRouterInstrumentation(): void {
   openRouterInstrumentationConsumer ??= new OpenRouterInstrumentationConsumer();
   openRouterInstrumentationConsumer.register();

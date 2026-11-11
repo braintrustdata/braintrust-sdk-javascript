@@ -1,3 +1,4 @@
+import { serviceTierMetadata } from "../core/service-tier";
 import { uint8ArrayToBase64 } from "../../../util/bytes";
 import { debugLogger } from "../../debug-logger";
 import {
@@ -268,14 +269,38 @@ class GoogleGenAIInstrumentationConsumer {
         });
       };
       runInstrumentation(() => prepare(event));
-      const result = Reflect.apply(target, receiver, args);
+      const failed = (error: unknown) => {
+        const streamEvent = event as GenerateContentStreamEvent;
+        const span = startBaseSpan(
+          withSpanInstrumentationName(
+            {
+              name: "generate_content_stream",
+              spanAttributes: { type: SpanTypeAttribute.LLM },
+              event: {
+                input: streamEvent.googleGenAIInput,
+                metadata: streamEvent.googleGenAIMetadata,
+              },
+            },
+            INSTRUMENTATION_NAMES.GOOGLE_GENAI,
+          ),
+        );
+        span.log({ error });
+        span.end();
+      };
+      let result;
+      try {
+        result = Reflect.apply(target, receiver, args);
+      } catch (error) {
+        runInstrumentation(() => failed(error));
+        throw error;
+      }
       return observeResult(
         result,
         (value) => {
           Object.assign(event, { result: value });
           resolved(event);
         },
-        () => {},
+        failed,
       );
     });
   }
@@ -447,7 +472,11 @@ class GoogleGenAIInstrumentationConsumer {
                 ? serializeVideoInteractionInput(params)
                 : serializeInteractionInput(params),
               metadata: isVideoInteractionCreate(params)
-                ? { model: params.model, provider: "google" }
+                ? {
+                    model: params.model,
+                    provider: "google",
+                    ...serviceTierMetadata({ requested: params.service_tier }),
+                  }
                 : extractInteractionMetadata(params),
             }),
             extractOutput: (result, event) =>
@@ -459,6 +488,8 @@ class GoogleGenAIInstrumentationConsumer {
               extractInteractionResponseMetadata(result),
             extractMetrics: (result, startTime) =>
               cleanMetrics(extractInteractionMetrics(result, startTime)),
+            extractChunkMetadata: (event) =>
+              serviceTierMetadata({ served: event.interaction?.service_tier }),
             aggregateChunks: (chunks, _result, _event, startTime) =>
               aggregateInteractionEvents(chunks, startTime),
           },
@@ -654,6 +685,7 @@ function patchGoogleGenAIStreamingResult(args: {
   const chunks: GoogleGenAIGenerateContentResponse[] = [];
   let firstTokenTime: number | null = null;
   let finalized = false;
+  let servedServiceTier: string | undefined;
   let span: Span | null = null;
   const requestStartTime = startTime ?? getCurrentUnixTimestamp();
 
@@ -782,6 +814,16 @@ function patchGoogleGenAIStreamingResult(args: {
           )) as IteratorResult<GoogleGenAIGenerateContentResponse>;
 
           if (!nextResult.done && nextResult.value) {
+            const tier = serviceTierMetadata({
+              served: nextResult.value.usageMetadata?.serviceTier,
+            });
+            if (
+              tier.served_service_tier &&
+              tier.served_service_tier !== servedServiceTier
+            ) {
+              servedServiceTier = tier.served_service_tier;
+              ensureSpan().log({ metadata: tier });
+            }
             if (firstTokenTime === null) {
               firstTokenTime = getCurrentUnixTimestamp();
             }
@@ -1319,7 +1361,10 @@ function serializeInteractionInput(
 function extractInteractionMetadata(
   params: GoogleGenAIInteractionCreateParams,
 ): Record<string, unknown> {
-  const metadata: Record<string, unknown> = { provider: "google" };
+  const metadata: Record<string, unknown> = {
+    provider: "google",
+    ...serviceTierMetadata({ requested: params.service_tier }),
+  };
 
   for (const key of [
     "model",
@@ -1772,6 +1817,11 @@ function extractGenerateContentMetadata(
     }
   }
 
+  Object.assign(
+    metadata,
+    serviceTierMetadata({ requested: params.config?.serviceTier }),
+  );
+
   const tools = serializeGenerateContentTools(params);
   if (tools) {
     metadata.tools = tools;
@@ -1868,7 +1918,9 @@ function extractInteractionResponseMetadata(
     return undefined;
   }
 
-  const metadata: Record<string, unknown> = {};
+  const metadata: Record<string, unknown> = serviceTierMetadata({
+    served: responseDict.service_tier,
+  });
   if (typeof responseDict.id === "string") {
     metadata.interaction_id = responseDict.id;
   }
@@ -2191,6 +2243,7 @@ function aggregateInteractionEvents(
     metrics.duration = end - startTime;
   }
 
+  const metadata: Record<string, unknown> = {};
   let latestInteraction: Record<string, unknown> | undefined;
   let latestUsage: GoogleGenAIInteractionUsage | undefined;
   let status: string | undefined;
@@ -2209,6 +2262,10 @@ function aggregateInteractionEvents(
     }
 
     const interaction = tryToDict(event.interaction);
+    Object.assign(
+      metadata,
+      serviceTierMetadata({ served: interaction?.service_tier }),
+    );
     if (interaction) {
       latestInteraction = serializeInteractionValue(interaction) as Record<
         string,
@@ -2269,7 +2326,6 @@ function aggregateInteractionEvents(
     output.steps = compactSteps;
   }
 
-  const metadata: Record<string, unknown> = {};
   if (typeof output.id === "string") {
     metadata.interaction_id = output.id;
   }
@@ -2389,6 +2445,12 @@ function extractResponseMetadata(
   }
 
   const metadata: Record<string, unknown> = {};
+  Object.assign(
+    metadata,
+    serviceTierMetadata({
+      served: tryToDict(responseDict.usageMetadata)?.serviceTier,
+    }),
+  );
   const responseGroundingMetadata = responseDict.groundingMetadata;
   const candidateGroundingMetadata: unknown[] = [];
 

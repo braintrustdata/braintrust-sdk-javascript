@@ -1,3 +1,4 @@
+import { serviceTierMetadata } from "../core/service-tier";
 import { debugLogger } from "../../debug-logger";
 import {
   _internalStartSpanWithInitialMerge,
@@ -553,7 +554,14 @@ async function completeBatchResult(
           (context.endpoint === "/v1/chat/completions"
             ? read(responseBody, "choices")
             : processImagesInOutput(read(responseBody, "output"))),
-        ...(typeof model === "string" ? { metadata: { model } } : {}),
+        metadata: {
+          ...(typeof model === "string" ? { model } : {}),
+          ...(context.endpoint !== "/v1/embeddings"
+            ? serviceTierMetadata({
+                served: read(responseBody, "service_tier"),
+              })
+            : {}),
+        },
         metrics:
           context.endpoint === "/v1/embeddings"
             ? Object.fromEntries(

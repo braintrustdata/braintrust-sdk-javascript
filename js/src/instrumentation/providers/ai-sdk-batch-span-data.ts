@@ -1,3 +1,4 @@
+import { aiSDKServiceTierMetadata } from "./ai-sdk-service-tier";
 import { isObject } from "../../../util";
 import type { AISDKMessage } from "../../vendor-sdk-types/ai-sdk-common";
 import type {
@@ -81,7 +82,10 @@ function batchMessages(messages: AISDKMessage[]): Record<string, unknown>[] {
   });
 }
 
-export async function aiSDKBatchInput(request: AISDKBatchRequest): Promise<{
+export async function aiSDKBatchInput(
+  request: AISDKBatchRequest,
+  provider: string,
+): Promise<{
   input: Record<string, unknown>[];
   metadata: Record<string, unknown>;
 }> {
@@ -105,7 +109,12 @@ export async function aiSDKBatchInput(request: AISDKBatchRequest): Promise<{
     messages.push({ role: "user", content: params.prompt });
   else if (Array.isArray(params.prompt)) messages.push(...params.prompt);
   else if (params.messages) messages.push(...params.messages);
-  const metadata: Record<string, unknown> = {};
+  const metadata: Record<string, unknown> = aiSDKServiceTierMetadata(
+    request.providerOptions,
+    "requested",
+    provider,
+    request.model,
+  );
   // Explicit allowlist of generation settings. Provider options and transport
   // fields must never be copied onto a span.
   for (const [source, destination] of [

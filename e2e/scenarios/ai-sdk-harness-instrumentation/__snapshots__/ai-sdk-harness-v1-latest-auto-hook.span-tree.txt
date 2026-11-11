@@ -8,7 +8,7 @@ span_tree:
 │     "response": {
 │       "id": "<span:1>",
 │       "messages": [],
-│       "modelId": "shared-harness-session",
+│       "modelId": "",
 │       "timestamp": "<timestamp>"
 │     },
 │     "totalUsage": {
@@ -99,12 +99,56 @@ span_tree:
 │   }
 │   ├── harness [function]
 │   │   input: {
+│   │     "activeTools": [
+│   │       "bash",
+│   │       "webSearch"
+│   │     ],
 │   │     "maxRetries": 0,
 │   │     "messages": [
 │   │       {
 │   │         "role": "user"
 │   │       }
-│   │     ]
+│   │     ],
+│   │     "tools": {
+│   │       "bash": {
+│   │         "commonName": "bash",
+│   │         "description": "Execute a shell command",
+│   │         "inputSchema": {
+│   │           "$schema": "http://json-schema.org/draft-07/schema#",
+│   │           "additionalProperties": false,
+│   │           "properties": {
+│   │             "command": {
+│   │               "type": "string"
+│   │             }
+│   │           },
+│   │           "required": [
+│   │             "command"
+│   │           ],
+│   │           "type": "object"
+│   │         },
+│   │         "nativeName": "shell",
+│   │         "toolUseKind": "bash"
+│   │       },
+│   │       "webSearch": {
+│   │         "commonName": "webSearch",
+│   │         "description": "Search the web",
+│   │         "inputSchema": {
+│   │           "$schema": "http://json-schema.org/draft-07/schema#",
+│   │           "additionalProperties": false,
+│   │           "properties": {
+│   │             "query": {
+│   │               "type": "string"
+│   │             }
+│   │           },
+│   │           "required": [
+│   │             "query"
+│   │           ],
+│   │           "type": "object"
+│   │         },
+│   │         "nativeName": "web_search",
+│   │         "toolUseKind": "readonly"
+│   │       }
+│   │     }
 │   │   }
 │   │   metadata: {
 │   │     "braintrust": {
@@ -128,12 +172,52 @@ span_tree:
 │   │       }
 │   └── harness [function]
 │       input: {
+│         "activeTools": [
+│           "bash",
+│           "webSearch"
+│         ],
 │         "maxRetries": 0,
-│         "messages": [
-│           {
-│             "role": "user"
+│         "messages": [],
+│         "tools": {
+│           "bash": {
+│             "commonName": "bash",
+│             "description": "Execute a shell command",
+│             "inputSchema": {
+│               "$schema": "http://json-schema.org/draft-07/schema#",
+│               "additionalProperties": false,
+│               "properties": {
+│                 "command": {
+│                   "type": "string"
+│                 }
+│               },
+│               "required": [
+│                 "command"
+│               ],
+│               "type": "object"
+│             },
+│             "nativeName": "shell",
+│             "toolUseKind": "bash"
+│           },
+│           "webSearch": {
+│             "commonName": "webSearch",
+│             "description": "Search the web",
+│             "inputSchema": {
+│               "$schema": "http://json-schema.org/draft-07/schema#",
+│               "additionalProperties": false,
+│               "properties": {
+│                 "query": {
+│                   "type": "string"
+│                 }
+│               },
+│               "required": [
+│                 "query"
+│               ],
+│               "type": "object"
+│             },
+│             "nativeName": "web_search",
+│             "toolUseKind": "readonly"
 │           }
-│         ]
+│         }
 │       }
 │       output: {
 │         "finishReason": "stop",
@@ -168,7 +252,8 @@ span_tree:
 │           },
 │           "outputTokens": 202,
 │           "totalTokens": 22587
-│         }
+│         },
+│         "warnings": []
 │       }
 │       metadata: {
 │         "braintrust": {
@@ -178,11 +263,7 @@ span_tree:
 │       }
 │       └── doGenerate [llm]
 │           input: {
-│             "messages": [
-│               {
-│                 "role": "user"
-│               }
-│             ]
+│             "messages": []
 │           }
 │           output: {
 │             "finishReason": "stop",
@@ -288,12 +369,56 @@ span_tree:
     }
     ├── harness [function]
     │   input: {
+    │     "activeTools": [
+    │       "bash",
+    │       "webSearch"
+    │     ],
     │     "maxRetries": 0,
     │     "messages": [
     │       {
     │         "role": "user"
     │       }
-    │     ]
+    │     ],
+    │     "tools": {
+    │       "bash": {
+    │         "commonName": "bash",
+    │         "description": "Execute a shell command",
+    │         "inputSchema": {
+    │           "$schema": "http://json-schema.org/draft-07/schema#",
+    │           "additionalProperties": false,
+    │           "properties": {
+    │             "command": {
+    │               "type": "string"
+    │             }
+    │           },
+    │           "required": [
+    │             "command"
+    │           ],
+    │           "type": "object"
+    │         },
+    │         "nativeName": "shell",
+    │         "toolUseKind": "bash"
+    │       },
+    │       "webSearch": {
+    │         "commonName": "webSearch",
+    │         "description": "Search the web",
+    │         "inputSchema": {
+    │           "$schema": "http://json-schema.org/draft-07/schema#",
+    │           "additionalProperties": false,
+    │           "properties": {
+    │             "query": {
+    │               "type": "string"
+    │             }
+    │           },
+    │           "required": [
+    │             "query"
+    │           ],
+    │           "type": "object"
+    │         },
+    │         "nativeName": "web_search",
+    │         "toolUseKind": "readonly"
+    │       }
+    │     }
     │   }
     │   metadata: {
     │     "braintrust": {
@@ -317,12 +442,52 @@ span_tree:
     │       }
     └── harness [function]
         input: {
+          "activeTools": [
+            "bash",
+            "webSearch"
+          ],
           "maxRetries": 0,
-          "messages": [
-            {
-              "role": "user"
+          "messages": [],
+          "tools": {
+            "bash": {
+              "commonName": "bash",
+              "description": "Execute a shell command",
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "command": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "command"
+                ],
+                "type": "object"
+              },
+              "nativeName": "shell",
+              "toolUseKind": "bash"
+            },
+            "webSearch": {
+              "commonName": "webSearch",
+              "description": "Search the web",
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "query": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "query"
+                ],
+                "type": "object"
+              },
+              "nativeName": "web_search",
+              "toolUseKind": "readonly"
             }
-          ]
+          }
         }
         output: {
           "finishReason": "stop",
@@ -357,7 +522,8 @@ span_tree:
             },
             "outputTokens": 188,
             "totalTokens": 22544
-          }
+          },
+          "warnings": []
         }
         metadata: {
           "braintrust": {
@@ -367,11 +533,7 @@ span_tree:
         }
         └── doGenerate [llm]
             input: {
-              "messages": [
-                {
-                  "role": "user"
-                }
-              ]
+              "messages": []
             }
             output: {
               "finishReason": "stop",

@@ -97,9 +97,14 @@ describe("braintrustEveInstrumentation", () => {
       "action.completed",
       "action.failed",
       "action.started",
+      "call.requested",
+      "call.settled",
       "model.call.completed",
       "model.call.failed",
+      "model.call.settled",
       "model.call.started",
+      "model.retried",
+      "model.settled",
       "step.attempt.completed",
       "step.attempt.failed",
       "tool.call.completed",
@@ -108,6 +113,7 @@ describe("braintrustEveInstrumentation", () => {
       "turn.cancelled",
       "turn.completed",
       "turn.failed",
+      "turn.settled",
       "turn.started",
     ]);
   });
@@ -1526,4 +1532,170 @@ describe("braintrustEveInstrumentation", () => {
       expect(step?.error).toContain("attempt exploded");
     }
   });
+  it.each([
+    ["turn-0", false],
+    ["turn-0", true],
+    [undefined, false],
+    [undefined, true],
+  ] as const)(
+    "traces modern Eve events with turn %s and replacement %s",
+    async (turnId, replaceProvider) => {
+      const provider = braintrustEveInstrumentation();
+      const scope: EveInstrumentationAttemptScope = {
+        sessionId: "session-root",
+        runId: "run-0",
+        attempt: 0,
+        turnId,
+      };
+      const context = providerContext();
+      await provider.events["model.call.started"](
+        {
+          type: "model.call.started",
+          idempotencyKey: "modern-model",
+          scope,
+          model: { modelId: "gpt-5.4-mini", provider: "openai.responses" },
+          input: {
+            messages: [{ role: "user", content: "hello" }],
+            tools: [
+              {
+                type: "function",
+                name: "lookup",
+                inputSchema: { type: "object" },
+              },
+            ],
+          },
+        },
+        context,
+      );
+      const terminal = replaceProvider
+        ? braintrustEveInstrumentation()
+        : provider;
+      await terminal.events["model.call.settled"](
+        {
+          type: "model.call.settled",
+          outcome: "completed",
+          idempotencyKey: "modern-model",
+          scope,
+          finishReason: "stop",
+          content: [{ type: "text", text: "hello" }],
+          usage: { inputTokens: 2, outputTokens: 3, costUsd: 0.01 },
+        },
+        context,
+      );
+      const toolContext = providerContext();
+      await provider.events["call.requested"](
+        {
+          type: "call.requested",
+          idempotencyKey: "modern-tool",
+          callId: "modern-tool",
+          toolName: "lookup",
+          capability: { kind: "tool" },
+          scope,
+          input: { query: "hello" },
+        },
+        toolContext,
+      );
+      await terminal.events["call.settled"](
+        {
+          type: "call.settled",
+          outcome: "completed",
+          idempotencyKey: "modern-tool",
+          scope,
+          output: { found: true },
+        },
+        toolContext,
+      );
+      await terminal.events["call.settled"](
+        {
+          type: "call.settled",
+          outcome: "failed",
+          idempotencyKey: "modern-tool",
+          scope,
+          error: new Error("stale failure"),
+        },
+        toolContext,
+      );
+      const spans = (await backgroundLogger.drain()) as Array<
+        Record<string, any>
+      >;
+      const model = spans.find(
+        (span) => span.span_attributes?.name === "eve.step",
+      );
+      const tool = spans.find(
+        (span) => span.span_attributes?.name === "lookup",
+      );
+      expect(model?.metrics).toMatchObject({
+        prompt_tokens: 2,
+        completion_tokens: 3,
+        tokens: 5,
+        estimated_cost: 0.01,
+        end: expect.any(Number),
+      });
+      expect(model?.metadata.tools).toEqual([
+        {
+          type: "function",
+          function: { name: "lookup", parameters: { type: "object" } },
+        },
+      ]);
+      expect(tool?.input).toEqual({ query: "hello" });
+      expect(tool?.output).toEqual({ found: true });
+      expect(tool).not.toHaveProperty("error");
+      expect(tool?.metrics.end).toEqual(expect.any(Number));
+      if (!turnId) {
+        expect(model?.root_span_id).toBe(model?.span_id);
+        expect(model?.span_parents ?? []).toEqual([]);
+        expect(tool?.root_span_id).toBe(tool?.span_id);
+        expect(tool?.span_parents ?? []).toEqual([]);
+        expect(spans).toHaveLength(2);
+      }
+    },
+  );
+
+  it.each(["model.retried", "model.settled"] as const)(
+    "closes only the matching modern attempt on %s",
+    async (type) => {
+      const provider = braintrustEveInstrumentation();
+      const scope: EveInstrumentationAttemptScope = {
+        sessionId: "session-root",
+        runId: "run-0",
+        attempt: 0,
+      };
+      await provider.events["model.call.started"](
+        {
+          type: "model.call.started",
+          idempotencyKey: "attempt-0",
+          scope,
+          model: { modelId: "test", provider: "openai" },
+        },
+        providerContext(),
+      );
+      await provider.events["model.call.started"](
+        {
+          type: "model.call.started",
+          idempotencyKey: "attempt-1",
+          scope: { ...scope, attempt: 1 },
+          model: { modelId: "test", provider: "openai" },
+        },
+        providerContext(),
+      );
+      await provider.events[type](
+        {
+          type,
+          idempotencyKey: "run-end",
+          scope,
+          outcome: "failed",
+          error: new Error("attempt failed"),
+        },
+        providerContext(),
+      );
+      const spans = (await backgroundLogger.drain()) as Array<
+        Record<string, any>
+      >;
+      expect(spans).toHaveLength(2);
+      expect(spans.filter((span) => span.metrics?.end)).toHaveLength(1);
+      expect(spans.find((span) => span.metrics?.end)?.error).toContain(
+        "attempt failed",
+      );
+    },
+  );
 });

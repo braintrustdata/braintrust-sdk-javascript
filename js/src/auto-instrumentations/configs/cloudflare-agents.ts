@@ -16,4 +16,17 @@ export const cloudflareAgentsConfigs: InstrumentationConfig[] = [
       methodName: "runAgentTool",
     },
   },
+  {
+    channelName: cloudflareAgentsChannels.runAgentTool.channelName,
+    module: {
+      name: "agents",
+      versionRange: ">=0.32.0 <0.33.0",
+      // Agent moved from the entrypoint into a hashed shared chunk in 0.32.
+      filePath: "dist/src-*.js",
+    },
+    functionQuery: {
+      className: "Agent",
+      methodName: "runAgentTool",
+    },
+  },
 ];

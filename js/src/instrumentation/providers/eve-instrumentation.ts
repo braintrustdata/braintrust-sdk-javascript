@@ -24,6 +24,7 @@ import {
   getExtensionFromMediaType,
 } from "../../wrappers/attachment-utils";
 import type {
+  EveInstrumentationAttemptScope,
   EveInstrumentationToolCallStartedEvent,
   EveInstrumentationToolCallTerminalEvent,
   EveInstrumentationActionCompletedEvent,
@@ -106,6 +107,84 @@ export function braintrustEveInstrumentation(
       recordOutputs: true,
     }),
     events: {
+      "call.requested": (event, context) =>
+        bridge.handle(
+          {
+            ...event,
+            type: "tool.call.started",
+            kind:
+              event.capability.kind === "skill"
+                ? "load-skill"
+                : event.capability.kind === "agent"
+                  ? event.capability.remote
+                    ? "remote-agent-call"
+                    : "subagent-call"
+                  : "tool-call",
+          },
+          context,
+        ),
+      "call.settled": (event, context) =>
+        bridge.handle(
+          event.outcome === "completed"
+            ? {
+                ...event,
+                type: "tool.call.completed",
+                outcome: "completed",
+                output: { type: "result", output: event.output },
+              }
+            : {
+                ...event,
+                type: "tool.call.failed",
+                outcome:
+                  event.outcome === "interrupted" ? "abandoned" : event.outcome,
+              },
+          context,
+        ),
+      "model.call.settled": (event, context) =>
+        bridge.handle(
+          event.outcome === "completed"
+            ? { ...event, type: "model.call.completed" }
+            : { ...event, type: "model.call.failed" },
+          context,
+        ),
+      "model.settled": (event, context) =>
+        bridge.handle(
+          {
+            idempotencyKey: event.idempotencyKey,
+            scope: event.scope,
+            error: event.error,
+            type:
+              event.outcome === "failed"
+                ? "step.attempt.failed"
+                : "step.attempt.completed",
+          },
+          context,
+        ),
+      "model.retried": (event, context) =>
+        bridge.handle(
+          {
+            ...event,
+            type: "step.attempt.failed",
+          },
+          context,
+        ),
+      "turn.settled": (event, context) =>
+        bridge.handle(
+          {
+            idempotencyKey: event.idempotencyKey,
+            sessionId: event.sessionId,
+            turnId: event.turnId,
+            error: event.error,
+            type:
+              event.outcome === "failed"
+                ? "turn.failed"
+                : event.outcome === "cancelled"
+                  ? "turn.cancelled"
+                  : "turn.completed",
+          },
+          context,
+        ),
+
       "tool.call.started": (event, context) => bridge.handle(event, context),
       "tool.call.completed": (event, context) => bridge.handle(event, context),
       "tool.call.failed": (event, context) => bridge.handle(event, context),
@@ -184,6 +263,9 @@ class EveBridge {
   });
   private turnsStartingByKey = new Map<string, Promise<TurnState>>();
   private openModelsByAttempt = new Map<string, Map<string, EveSpan>>();
+  private settledOperations = new LRUCache<string, true>({
+    max: MAX_EVE_CACHE_ENTRIES,
+  });
   private turnMetricContributionsByKey = new Map<
     string,
     Record<string, Record<string, number>>
@@ -196,6 +278,7 @@ class EveBridge {
     context: EveInstrumentationHandlerContext,
   ): Promise<void> {
     try {
+      if (this.settledOperations.get(event.idempotencyKey)) return;
       switch (event.type) {
         case "turn.started":
           await this.getOrStartTurn(event, context);
@@ -205,9 +288,11 @@ class EveBridge {
           return;
         case "model.call.completed":
           await this.handleModelCallCompleted(event, context);
+          this.settledOperations.set(event.idempotencyKey, true);
           return;
         case "model.call.failed":
           await this.handleModelCallFailed(event, context);
+          this.settledOperations.set(event.idempotencyKey, true);
           return;
         case "step.attempt.completed":
         case "step.attempt.failed":
@@ -222,11 +307,13 @@ class EveBridge {
           if (this.useLegacyActions) return;
         case "action.completed":
           await this.handleActionCompleted(event, context);
+          this.settledOperations.set(event.idempotencyKey, true);
           return;
         case "tool.call.failed":
           if (this.useLegacyActions) return;
         case "action.failed":
           await this.handleActionFailed(event, context);
+          this.settledOperations.set(event.idempotencyKey, true);
           return;
         case "turn.cancelled":
         case "turn.completed":
@@ -246,11 +333,28 @@ class EveBridge {
     context: EveInstrumentationHandlerContext,
   ): Promise<void> {
     const turn = await this.turnForScope(event.scope, context);
+    const tools = event.input?.tools?.filter(isObject).map((tool) =>
+      tool.type === "function"
+        ? {
+            type: "function",
+            function: {
+              name: tool.name,
+              description: tool.description,
+              parameters: tool.inputSchema,
+              strict: tool.strict,
+            },
+          }
+        : { type: tool.type, id: tool.id, name: tool.name, args: tool.args },
+    );
     const metadata = {
       ...this.metadata(event.scope.sessionId),
+      ...(tools?.length ? { tools } : {}),
       ...modelMetadata(event.model.modelId, event.model.provider),
     };
-    const input = capturedModelInput(event.input, turn.captureAttachments);
+    const input = capturedModelInput(
+      event.input,
+      turn?.captureAttachments ?? _internalCaptureAttachmentsEnabled(),
+    );
     const ids = await generateEveIds("step", event.idempotencyKey);
     const span = await this.startEveSpan(context, {
       event: {
@@ -259,16 +363,16 @@ class EveBridge {
         metadata,
       },
       name: "eve.step",
-      [CAPTURE_ATTACHMENTS]: turn.captureAttachments,
-      parentSpanIds: {
-        rootSpanId: turn.rootSpanId,
-        spanId: turn.spanId,
-      },
+      [CAPTURE_ATTACHMENTS]:
+        turn?.captureAttachments ?? _internalCaptureAttachmentsEnabled(),
+      parentSpanIds: turn
+        ? { rootSpanId: turn.rootSpanId, spanId: turn.spanId }
+        : { rootSpanId: ids.spanId, parentSpanIds: [] },
       spanAttributes: { type: SpanTypeAttribute.LLM },
       spanId: ids.spanId,
     });
     const reference = readSpanReference(context.state.get());
-    if (reference !== undefined) {
+    if (reference !== undefined && turn) {
       context.state.set({
         ...reference,
         turnMetricContributions:
@@ -276,11 +380,11 @@ class EveBridge {
       });
     }
     const openModels =
-      this.openModelsByAttempt.get(event.scope.attemptId) ?? new Map();
+      this.openModelsByAttempt.get(attemptKey(event.scope)) ?? new Map();
     openModels.set(event.idempotencyKey, span);
-    this.openModelsByAttempt.set(event.scope.attemptId, openModels);
+    this.openModelsByAttempt.set(attemptKey(event.scope), openModels);
 
-    if (input !== undefined && !turn.inputRecorded) {
+    if (turn && input !== undefined && !turn.inputRecorded) {
       const initialInput = initialTurnInput(input);
       if (initialInput !== undefined) {
         turn.inputRecorded = true;
@@ -294,17 +398,19 @@ class EveBridge {
     context: EveInstrumentationHandlerContext,
   ): Promise<void> {
     const turn = await this.turnForScope(event.scope, context);
-    this.restoreTurnMetricContributions(turn.key, context.state.get());
+    if (turn)
+      this.restoreTurnMetricContributions(turn.key, context.state.get());
     const span = await this.resumeModelSpan(event, context, turn);
     const metrics = usageMetrics(event.usage);
     const output = modelOutput(event.finishReason, event.content);
     span.log({ metrics, output });
     span.end();
-    this.closeOpenModel(event.scope.attemptId, event.idempotencyKey);
+    this.closeOpenModel(attemptKey(event.scope), event.idempotencyKey);
     this.updateTurnMetrics(turn, event.idempotencyKey, metrics);
 
     const finalOutput = finalText(event.content);
     if (
+      turn &&
       finalOutput !== undefined &&
       normalizedFinishReason(event.finishReason) !== "tool_calls"
     ) {
@@ -320,7 +426,7 @@ class EveBridge {
     const span = await this.resumeModelSpan(event, context, turn);
     span.log({ error: toError(event.error, "Eve model call failed") });
     span.end();
-    this.closeOpenModel(event.scope.attemptId, event.idempotencyKey);
+    this.closeOpenModel(attemptKey(event.scope), event.idempotencyKey);
   }
 
   private handleStepAttemptTerminal(
@@ -328,7 +434,7 @@ class EveBridge {
       | EveInstrumentationStepAttemptCompletedEvent
       | EveInstrumentationStepAttemptFailedEvent,
   ): void {
-    const openModels = this.openModelsByAttempt.get(event.scope.attemptId);
+    const openModels = this.openModelsByAttempt.get(attemptKey(event.scope));
     if (openModels === undefined) {
       return;
     }
@@ -340,7 +446,7 @@ class EveBridge {
       }
       span.end();
     }
-    this.openModelsByAttempt.delete(event.scope.attemptId);
+    this.openModelsByAttempt.delete(attemptKey(event.scope));
   }
 
   private async handleActionStarted(
@@ -350,12 +456,13 @@ class EveBridge {
     context: EveInstrumentationHandlerContext,
   ): Promise<void> {
     const turn = await this.turnForScope(event.scope, context);
-    const metadata = turn.metadata;
+    const metadata = turn?.metadata ?? this.metadata(event.scope.sessionId);
     const input = event.input;
     const ids = await generateEveIds(
       "action",
       event.scope.sessionId,
-      event.scope.turnId,
+      event.scope.turnId ??
+        ("runId" in event.scope ? event.scope.runId : event.scope.sessionId),
       event.callId,
     );
     await this.startEveSpan(context, {
@@ -365,21 +472,30 @@ class EveBridge {
         metadata,
       },
       name: event.type === "tool.call.started" ? event.toolName : event.name,
-      [CAPTURE_ATTACHMENTS]: turn.captureAttachments,
-      parentSpanIds: {
-        rootSpanId: turn.rootSpanId,
-        spanId:
-          event.type === "tool.call.started" && event.parentCallId
-            ? (
-                await generateEveIds(
-                  "action",
-                  event.scope.sessionId,
-                  event.scope.turnId,
-                  event.parentCallId,
-                )
-              ).spanId
-            : turn.spanId,
-      },
+      ...(event.type === "tool.call.started" && event.startedAtMs !== undefined
+        ? { startTime: event.startedAtMs / 1000 }
+        : {}),
+      [CAPTURE_ATTACHMENTS]:
+        turn?.captureAttachments ?? _internalCaptureAttachmentsEnabled(),
+      parentSpanIds: turn
+        ? {
+            rootSpanId: turn.rootSpanId,
+            spanId:
+              event.type === "tool.call.started" && event.parentCallId
+                ? (
+                    await generateEveIds(
+                      "action",
+                      event.scope.sessionId,
+                      event.scope.turnId ??
+                        ("runId" in event.scope
+                          ? event.scope.runId
+                          : event.scope.sessionId),
+                      event.parentCallId,
+                    )
+                  ).spanId
+                : turn.spanId,
+          }
+        : { rootSpanId: ids.spanId, parentSpanIds: [] },
       spanAttributes: { type: SpanTypeAttribute.TOOL },
       spanId: ids.spanId,
     });
@@ -638,7 +754,8 @@ class EveBridge {
   private async turnForScope(
     scope: EveInstrumentationModelCallStartedEvent["scope"],
     context: EveInstrumentationHandlerContext,
-  ): Promise<TurnState> {
+  ): Promise<TurnState | undefined> {
+    if (!scope.turnId) return undefined;
     const key = turnKey(scope.sessionId, scope.turnId);
     const existing = this.turnsByKey.get(key);
     if (existing !== undefined) {
@@ -710,10 +827,11 @@ class EveBridge {
   }
 
   private updateTurnMetrics(
-    turn: TurnState,
+    turn: TurnState | undefined,
     idempotencyKey: string,
     metrics: Record<string, number>,
   ): void {
+    if (!turn) return;
     const contributions = {
       ...(this.turnMetricContributionsByKey.get(turn.key) ?? {}),
       [idempotencyKey]: metrics,
@@ -741,7 +859,7 @@ class EveBridge {
       | EveInstrumentationModelCallCompletedEvent
       | EveInstrumentationModelCallFailedEvent,
     context: EveInstrumentationHandlerContext,
-    turn: TurnState,
+    turn: TurnState | undefined,
   ): Promise<EveSpan> {
     const ids = await generateEveIds("step", event.idempotencyKey);
     return await this.startEveSpan(context, {
@@ -750,11 +868,11 @@ class EveBridge {
         metadata: this.metadata(event.scope.sessionId),
       },
       name: "eve.step",
-      [CAPTURE_ATTACHMENTS]: turn.captureAttachments,
-      parentSpanIds: {
-        rootSpanId: turn.rootSpanId,
-        spanId: turn.spanId,
-      },
+      [CAPTURE_ATTACHMENTS]:
+        turn?.captureAttachments ?? _internalCaptureAttachmentsEnabled(),
+      parentSpanIds: turn
+        ? { rootSpanId: turn.rootSpanId, spanId: turn.spanId }
+        : { rootSpanId: ids.spanId, parentSpanIds: [] },
       spanAttributes: { type: SpanTypeAttribute.LLM },
       spanId: ids.spanId,
     });
@@ -776,17 +894,21 @@ class EveBridge {
     const ids = await generateEveIds(
       "action",
       event.scope.sessionId,
-      event.scope.turnId,
+      event.scope.turnId ??
+        ("runId" in event.scope ? event.scope.runId : event.scope.sessionId),
       callId,
     );
     return await this.startEveSpan(context, {
-      event: { id: ids.rowId, metadata: turn.metadata },
-      name: "eve.action",
-      [CAPTURE_ATTACHMENTS]: turn.captureAttachments,
-      parentSpanIds: {
-        rootSpanId: turn.rootSpanId,
-        spanId: turn.spanId,
+      event: {
+        id: ids.rowId,
+        metadata: turn?.metadata ?? this.metadata(event.scope.sessionId),
       },
+      name: "eve.action",
+      [CAPTURE_ATTACHMENTS]:
+        turn?.captureAttachments ?? _internalCaptureAttachmentsEnabled(),
+      parentSpanIds: turn
+        ? { rootSpanId: turn.rootSpanId, spanId: turn.spanId }
+        : { rootSpanId: ids.spanId, parentSpanIds: [] },
       spanAttributes: { type: SpanTypeAttribute.TOOL },
       spanId: ids.spanId,
     });
@@ -1190,6 +1312,7 @@ function normalizedFinishReason(finishReason: string): string {
 }
 
 function usageMetrics(usage: EveInstrumentationUsage): Record<string, number> {
+  const cost = validMetric(usage.costUsd);
   const inputTokens = validMetric(usage.inputTokens);
   const outputTokens = validMetric(usage.outputTokens);
   const cacheReadTokens = validMetric(usage.inputTokenDetails?.cacheReadTokens);
@@ -1197,6 +1320,7 @@ function usageMetrics(usage: EveInstrumentationUsage): Record<string, number> {
     usage.inputTokenDetails?.cacheWriteTokens,
   );
   return {
+    ...(cost === undefined ? {} : { estimated_cost: cost }),
     ...(inputTokens === undefined ? {} : { prompt_tokens: inputTokens }),
     ...(outputTokens === undefined ? {} : { completion_tokens: outputTokens }),
     ...(inputTokens === undefined || outputTokens === undefined
@@ -1321,4 +1445,10 @@ async function deterministicEveId(...parts: string[]): Promise<string> {
     "-" +
     hex.slice(20)
   );
+}
+
+function attemptKey(scope: EveInstrumentationAttemptScope): string {
+  return "attemptId" in scope
+    ? scope.attemptId
+    : JSON.stringify([scope.sessionId, scope.runId, scope.attempt]);
 }

@@ -16,6 +16,10 @@ export interface AgentSession {
 export interface AgentActivity {
   agent?: Agent;
   agentSession: AgentSession;
+  /** The VAD in use: the agent's own, else the session's (LiveKit provides a default). */
+  vad?: unknown;
+  /** How LiveKit detects turns; "stt" lets the STT provider's speech events drive them. */
+  turnDetectionMode?: string;
   audioRecognition?: AudioRecognition;
   currentSpeech?: SpeechHandle;
 }
@@ -34,6 +38,8 @@ export interface SpeechEvent {
     confidence?: number;
     language?: string;
     startTime?: number;
+    /** A diarizing STT's label for the voice, scoped to its input. */
+    speakerId?: string | null;
   }[];
   requestId?: string;
   createdAt?: number;
@@ -52,6 +58,8 @@ export interface PlaybackFinishedEvent {
   synchronizedTranscript?: string;
 }
 export interface AudioOutput {
+  /** Whether LiveKit can pause playout on this sink (and those it forwards to). */
+  readonly canPause?: boolean;
   captureFrame(frame: AudioFrame): Promise<void>;
   flush(): void;
   clearBuffer(): void;
@@ -80,10 +88,17 @@ export interface ChatMessage {
   role?: string;
   textContent?: string;
   interrupted?: boolean;
-  metrics?: { startedSpeakingAt?: number };
+  /** LiveKit's metrics report, in seconds; a user message's turn timing. */
+  metrics?: {
+    startedSpeakingAt?: number;
+    stoppedSpeakingAt?: number;
+    onUserTurnCompletedDelay?: number;
+  };
 }
 
 export interface LiveKitSpan {
+  /** OTel SDK spans' attributes, including those span processors set at start. */
+  attributes?: Record<string, unknown>;
   isRecording(): boolean;
   spanContext(): { spanId: string };
   setAttribute(key: string, value: unknown): this;
@@ -125,10 +140,17 @@ export interface FunctionTool {
 }
 export interface PipelineOptions {
   span: LiveKitSpan;
+  /** The user message this reply answers, when a user turn prompted it. */
+  newMessage?: ChatMessage;
   toolCtx?: { functionTools: Record<string, FunctionTool> };
   modelSettings?: { toolChoice?: unknown };
+}
+/** LiveKit's per-job context; it carries the LiveKit Cloud project's redaction setting. */
+export interface JobContext {
+  _redactionEnabled?: boolean;
 }
 export interface LiveKitModule {
   voice: { AgentSession: new (...args: unknown[]) => AgentSession };
   telemetry: { tracer: LiveKitTracer };
+  getJobContext?: (required?: boolean) => JobContext | undefined;
 }

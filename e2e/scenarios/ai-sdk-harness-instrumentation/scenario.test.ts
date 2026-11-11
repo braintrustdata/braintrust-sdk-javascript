@@ -49,7 +49,7 @@ const scenarios = await Promise.all(
   })),
 );
 
-describe("HarnessAgent instrumentation variants", { concurrent: false }, () => {
+describe("HarnessAgent instrumentation variants", () => {
   test(
     "preserves a turn across a real subprocess handoff",
     { timeout: TIMEOUT_MS },
@@ -166,6 +166,8 @@ describe("HarnessAgent instrumentation variants", { concurrent: false }, () => {
                 originalScenarioDir,
               };
               const env = {
+                // An ambient gateway key must not bypass the OpenAI cassette.
+                AI_GATEWAY_API_KEY: "unused-harness-e2e-gateway-key",
                 AI_SDK_HARNESS_CODEX_PACKAGE_NAME: scenario.codexDependencyName,
                 AI_SDK_HARNESS_PACKAGE_NAME: scenario.dependencyName,
               };
@@ -261,17 +263,31 @@ describe("HarnessAgent instrumentation variants", { concurrent: false }, () => {
               }
 
               const generateBashSpan = bashSpans.find((span) =>
-                String(span.input).includes("/workspace/generate-started"),
+                JSON.stringify(span.input).includes(
+                  "/workspace/generate-started",
+                ),
               );
               const streamBashSpan = bashSpans.find((span) =>
-                String(span.input).includes("/workspace/stream-started"),
+                JSON.stringify(span.input).includes(
+                  "/workspace/stream-started",
+                ),
               );
-              expect(generateBashSpan?.input).toBe(
-                '{"command":"/bin/bash -lc \'touch /workspace/generate-started; sleep 5; printf GENERATE_OK\'"}',
-              );
-              expect(streamBashSpan?.input).toBe(
-                '{"command":"/bin/bash -lc \'touch /workspace/stream-started; sleep 5; printf STREAM_OK\'"}',
-              );
+              // Newer Harness versions parse tool arguments before reporting them.
+              for (const [toolSpan, command] of [
+                [
+                  generateBashSpan,
+                  "/bin/bash -lc 'touch /workspace/generate-started; sleep 5; printf GENERATE_OK'",
+                ],
+                [
+                  streamBashSpan,
+                  "/bin/bash -lc 'touch /workspace/stream-started; sleep 5; printf STREAM_OK'",
+                ],
+              ] as const) {
+                const input = toolSpan?.input;
+                expect(
+                  typeof input === "string" ? JSON.parse(input) : input,
+                ).toEqual({ command });
+              }
               expect(generateBashSpan?.span.rootId).toBe(
                 turnsByName["HarnessAgent.generate"]?.span.rootId,
               );
@@ -305,6 +321,7 @@ describe("HarnessAgent instrumentation variants", { concurrent: false }, () => {
                   );
                 expect(operations).toHaveLength(2);
                 for (const operation of operations) {
+                  expect(operation.span.id).toEqual(expect.any(String));
                   expect(operation.span.parentIds).toEqual([turn?.span.id]);
                 }
                 expect(
@@ -313,14 +330,14 @@ describe("HarnessAgent instrumentation variants", { concurrent: false }, () => {
                 const modelSpans = findAllSpans(events, "doGenerate").filter(
                   (span) =>
                     operations.some((operation) =>
-                      span.span.parentIds.includes(operation.span.id),
+                      span.span.parentIds.includes(operation.span.id!),
                     ),
                 );
                 expect(modelSpans).toHaveLength(2);
                 for (const operation of operations) {
                   expect(
                     modelSpans.filter((span) =>
-                      span.span.parentIds.includes(operation.span.id),
+                      span.span.parentIds.includes(operation.span.id!),
                     ),
                   ).toHaveLength(1);
                 }

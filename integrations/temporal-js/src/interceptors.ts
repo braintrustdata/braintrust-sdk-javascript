@@ -59,7 +59,7 @@ class BraintrustActivityInterceptor implements ActivityInboundCallsInterceptor {
     next: Next<ActivityInboundCallsInterceptor, "execute">,
   ): Promise<unknown> {
     const info = this.ctx.info;
-    const runId = info.workflowExecution.runId;
+    const runId = info.workflowExecution?.runId;
 
     // Prefer the live workflow span on the same worker, then fall back to the
     // W3C context propagated through Temporal headers.
@@ -67,7 +67,8 @@ class BraintrustActivityInterceptor implements ActivityInboundCallsInterceptor {
 
     // Check if we have the workflow span export locally (same worker as workflow)
     parent =
-      getWorkflowTraceContext(runId) ?? deserializeTraceContext(input.headers);
+      (runId ? getWorkflowTraceContext(runId) : undefined) ??
+      deserializeTraceContext(input.headers);
 
     const span = braintrust.startSpan({
       [Symbol.for("braintrust.spanInstrumentationName")]: "temporal",
@@ -78,7 +79,7 @@ class BraintrustActivityInterceptor implements ActivityInboundCallsInterceptor {
         metadata: {
           "temporal.activity_type": info.activityType,
           "temporal.activity_id": info.activityId,
-          "temporal.workflow_id": info.workflowExecution.workflowId,
+          "temporal.workflow_id": info.workflowExecution?.workflowId,
           "temporal.workflow_run_id": runId,
         },
       },

@@ -1,3 +1,4 @@
+import { serviceTierMetadata } from "../../instrumentation/core/service-tier";
 import {
   currentSpan,
   initLogger,
@@ -34,6 +35,7 @@ export class BraintrustLangChainCallbackHandler {
   constructor(options?: Partial<LangChainCallbackHandlerOptions>) {
     this.parent = options?.parent;
     this.options = {
+      ...options,
       debug: options?.debug ?? false,
       excludeMetadataProps:
         options?.excludeMetadataProps ??
@@ -149,7 +151,9 @@ export class BraintrustLangChainCallbackHandler {
       name: runName ?? getSerializedName(llm) ?? "LLM",
       type: "llm",
       event: {
-        input: prompts,
+        ...(this.options.captureModelInputs !== false
+          ? { input: prompts }
+          : {}),
         tags,
         metadata: {
           serialized: llm,
@@ -157,6 +161,7 @@ export class BraintrustLangChainCallbackHandler {
           metadata,
           ...extraParams,
           model: getModelNameFromInvocation(extraParams),
+          ...getServiceTierFromInvocation(extraParams),
         },
       },
     });
@@ -177,7 +182,10 @@ export class BraintrustLangChainCallbackHandler {
     parentRunId?: string,
     tags?: string[],
   ): Promise<void> {
-    const metrics = getMetricsFromResponse(output);
+    const metrics =
+      this.options.captureModelTokenUsage !== false
+        ? getMetricsFromResponse(output)
+        : {};
     const modelName = getModelNameFromResponse(output);
     const ttft = this.ttftMs.get(runId);
     if (ttft !== undefined) {
@@ -191,10 +199,13 @@ export class BraintrustLangChainCallbackHandler {
     this.endSpan({
       runId,
       parentRunId,
-      output,
+      ...(this.options.captureModelOutputs !== false ? { output } : {}),
       metrics,
       tags,
-      metadata: modelName !== undefined ? { model: modelName } : undefined,
+      metadata: {
+        ...(modelName !== undefined ? { model: modelName } : {}),
+        ...getServiceTierFromResponse(output),
+      },
     });
   }
 
@@ -218,7 +229,9 @@ export class BraintrustLangChainCallbackHandler {
       name: runName ?? getSerializedName(llm) ?? "Chat Model",
       type: "llm",
       event: {
-        input: messages,
+        ...(this.options.captureModelInputs !== false
+          ? { input: messages }
+          : {}),
         tags,
         metadata: {
           serialized: llm,
@@ -226,6 +239,7 @@ export class BraintrustLangChainCallbackHandler {
           metadata,
           ...extraParams,
           model: getModelNameFromInvocation(extraParams),
+          ...getServiceTierFromInvocation(extraParams),
         },
       },
     });
@@ -251,7 +265,7 @@ export class BraintrustLangChainCallbackHandler {
       parentRunId,
       name: runName ?? getSerializedName(chain) ?? "Chain",
       event: {
-        input: inputs,
+        ...(this.options.captureChainInputs !== false ? { input: inputs } : {}),
         tags,
         metadata: {
           serialized: chain,
@@ -272,7 +286,11 @@ export class BraintrustLangChainCallbackHandler {
       inputs?: Record<string, unknown>;
     },
   ): Promise<void> {
-    this.endSpan({ runId, parentRunId, error: err, tags, metadata: kwargs });
+    const metadata = { ...kwargs };
+    if (this.options.captureChainInputs === false) {
+      delete metadata.inputs;
+    }
+    this.endSpan({ runId, parentRunId, error: err, tags, metadata });
   }
 
   async handleChainEnd(
@@ -282,12 +300,18 @@ export class BraintrustLangChainCallbackHandler {
     tags?: string[],
     kwargs?: { inputs?: Record<string, unknown> },
   ): Promise<void> {
+    const metadata = { ...kwargs };
+    if (this.options.captureChainInputs === false) {
+      delete metadata.inputs;
+    }
     this.endSpan({
       runId,
       parentRunId,
       tags,
-      output: outputs,
-      metadata: { ...kwargs },
+      ...(this.options.captureChainOutputs !== false
+        ? { output: outputs }
+        : {}),
+      metadata,
     });
   }
 
@@ -361,7 +385,12 @@ export class BraintrustLangChainCallbackHandler {
     parentRunId?: string,
     tags?: string[],
   ): Promise<void> {
-    this.endSpan({ runId, parentRunId, output: action, tags });
+    this.endSpan({
+      runId,
+      parentRunId,
+      ...(this.options.captureChainOutputs !== false ? { output: action } : {}),
+      tags,
+    });
   }
 
   async handleRetrieverStart(
@@ -414,7 +443,15 @@ export class BraintrustLangChainCallbackHandler {
     runId: string,
     _parentRunId?: string,
     _tags?: string[],
+    fields?: { chunk?: unknown },
   ): Promise<void> {
+    if (isRecord(fields?.chunk)) {
+      const metadata = getServiceTierFromResponse({
+        generations: [[fields.chunk]],
+      });
+      if (Object.keys(metadata).length)
+        this.spans.get(runId)?.log({ metadata });
+    }
     if (!this.firstTokenTimes.has(runId)) {
       const now = Date.now();
       this.firstTokenTimes.set(runId, now);
@@ -483,6 +520,47 @@ function walkGenerations(
     }
   }
   return result;
+}
+
+function getServiceTierFromInvocation(
+  extraParams: Record<string, unknown> | undefined,
+): Record<string, string> {
+  const params = extraParams?.invocation_params;
+  if (!isRecord(params)) return {};
+  const tier = params.service_tier ?? params.serviceTier;
+  return serviceTierMetadata({ requested: isRecord(tier) ? tier.type : tier });
+}
+
+function getServiceTierFromResponse(
+  response: LangChainLLMResult,
+): Record<string, string> {
+  const metadata: Record<string, string> = {};
+  for (const source of [
+    response.llmOutput,
+    ...walkGenerations(response).flatMap((generation) => {
+      const message = generation.message;
+      return [
+        generation.generationInfo,
+        ...(isRecord(message) ? [message.response_metadata] : []),
+      ];
+    }),
+  ]) {
+    if (!isRecord(source)) continue;
+    const usage = isRecord(source.usage) ? source.usage : undefined;
+    const usageMetadata = isRecord(source.usageMetadata)
+      ? source.usageMetadata
+      : undefined;
+    const tier =
+      source.service_tier ??
+      source.serviceTier ??
+      usage?.service_tier ??
+      usageMetadata?.serviceTier;
+    Object.assign(
+      metadata,
+      serviceTierMetadata({ served: isRecord(tier) ? tier.type : tier }),
+    );
+  }
+  return metadata;
 }
 
 function getModelNameFromInvocation(

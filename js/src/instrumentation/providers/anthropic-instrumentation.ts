@@ -1,3 +1,4 @@
+import { serviceTierMetadata } from "../core/service-tier";
 import type { Span } from "../../logger/core";
 import { omitMediaData } from "../../wrappers/attachment-utils";
 import { toLoggedError } from "../core";
@@ -127,7 +128,11 @@ class AnthropicInstrumentationConsumer {
         const metadata = filterFrom(params, ["messages", "system"]);
         return {
           input: processAttachmentsInInput(input),
-          metadata: { ...metadata, provider: "anthropic" },
+          metadata: {
+            ...metadata,
+            provider: "anthropic",
+            ...serviceTierMetadata({ requested: params.service_tier }),
+          },
         };
       },
       extractOutput: (message: AnthropicMessage) => {
@@ -148,8 +153,19 @@ class AnthropicInstrumentationConsumer {
           ),
         );
       },
+      extractChunkMetadata: (event: AnthropicStreamEvent) =>
+        serviceTierMetadata({
+          served:
+            event.type === "message_start"
+              ? event.message?.usage?.service_tier
+              : event.type === "message_delta"
+                ? event.usage?.service_tier
+                : undefined,
+        }),
       extractMetadata: (message: AnthropicMessage) => {
-        const metadata: Record<string, unknown> = {};
+        const metadata: Record<string, unknown> = serviceTierMetadata({
+          served: message?.usage?.service_tier,
+        });
         const metas = ["stop_reason", "stop_sequence"] as const;
         for (const m of metas) {
           if (message?.[m] !== undefined) {
@@ -240,6 +256,9 @@ class AnthropicInstrumentationConsumer {
         } satisfies AnthropicToolRunnerState;
 
         states.set(event as object, state);
+        // SDK v1 exposes runner.params as a copy. Wrap tools before construction.
+        event.arguments = [...event.arguments];
+        event.arguments[0] = wrapAnthropicToolRunnerTools(params, state);
       };
       const returned = (
         event: ChannelMessage<typeof anthropicChannels.betaMessagesToolRunner>,
@@ -268,7 +287,7 @@ class AnthropicInstrumentationConsumer {
       runInstrumentation(() => prepare(event));
       let result;
       try {
-        result = Reflect.apply(target, receiver, args);
+        result = Reflect.apply(target, receiver, event.arguments);
       } catch (error) {
         Object.assign(event, { error });
         runInstrumentation(() => failed(event));
@@ -955,14 +974,17 @@ function getAnthropicToolRunnerInput(args: unknown[]): unknown {
 function wrapAnthropicToolRunnerTools(
   params: AnthropicToolRunnerParams,
   state: AnthropicToolRunnerState,
-): void {
+): AnthropicToolRunnerParams {
   if (!Array.isArray(params.tools)) {
-    return;
+    return params;
   }
 
-  params.tools = params.tools.map((tool, index) =>
-    wrapAnthropicToolRunnerTool(tool, index, state),
-  );
+  return {
+    ...params,
+    tools: params.tools.map((tool, index) =>
+      wrapAnthropicToolRunnerTool(tool, index, state),
+    ),
+  };
 }
 
 function wrapAnthropicToolRunnerTool(
@@ -1050,46 +1072,24 @@ function wrapAnthropicToolRunnerTool(
   return wrappedTool;
 }
 
-function getAnthropicToolRunnerParams(
-  runnerRecord: Record<string, unknown>,
-): AnthropicToolRunnerParams | undefined {
-  const params = Reflect.get(runnerRecord, "params");
-  return params && typeof params === "object"
-    ? (params as AnthropicToolRunnerParams)
-    : undefined;
-}
-
-function ensureAnthropicToolRunnerToolsWrapped(
-  runnerRecord: Record<string, unknown>,
-  state: AnthropicToolRunnerState,
-): void {
-  const params = getAnthropicToolRunnerParams(runnerRecord);
-  if (params) {
-    wrapAnthropicToolRunnerTools(params, state);
-  }
-}
-
 function wrapAnthropicToolRunnerSetMessagesParams(
-  runnerRecord: Record<string, unknown>,
+  runner: AnthropicToolRunner<unknown>,
   state: AnthropicToolRunnerState,
 ): void {
-  const setMessagesParams = Reflect.get(runnerRecord, "setMessagesParams");
+  const setMessagesParams = runner.setMessagesParams;
   if (typeof setMessagesParams !== "function") {
     return;
   }
 
-  Reflect.set(
-    runnerRecord,
-    "setMessagesParams",
-    function patchedSetMessagesParams(this: unknown, ...args: unknown[]) {
-      const result = Reflect.apply(setMessagesParams, this, args);
-      const nextParams = getAnthropicToolRunnerParams(runnerRecord);
-      if (nextParams) {
-        wrapAnthropicToolRunnerTools(nextParams, state);
-      }
-      return result;
-    },
-  );
+  runner.setMessagesParams = function (paramsOrMutator) {
+    return setMessagesParams.call(
+      this,
+      typeof paramsOrMutator === "function"
+        ? (params) =>
+            wrapAnthropicToolRunnerTools(paramsOrMutator(params), state)
+        : wrapAnthropicToolRunnerTools(paramsOrMutator, state),
+    );
+  };
 }
 
 function isAnthropicMessage(value: unknown): value is AnthropicMessage {
@@ -1255,7 +1255,6 @@ function wrapAnthropicToolRunnerPromiseMethod(
   }
 
   runnerRecord[methodName] = async (...args: unknown[]) => {
-    ensureAnthropicToolRunnerToolsWrapped(runnerRecord, state);
     return await withCurrent(state.span, async () => {
       try {
         const message = (await (
@@ -1288,7 +1287,6 @@ function patchAnthropicToolRunner(args: {
     return;
   }
 
-  ensureAnthropicToolRunnerToolsWrapped(runnerRecord, state);
   wrapAnthropicToolRunnerSetMessagesParams(runnerRecord, state);
   wrapAnthropicToolRunnerPromiseMethod(runnerRecord, "done", state);
   wrapAnthropicToolRunnerPromiseMethod(runnerRecord, "runUntilDone", state);
@@ -1308,7 +1306,6 @@ function patchAnthropicToolRunner(args: {
     return {
       async next(value?: unknown) {
         try {
-          ensureAnthropicToolRunnerToolsWrapped(runnerRecord, state);
           const result = await withCurrent(state.span, () =>
             value === undefined
               ? iterator.next()
@@ -1345,7 +1342,6 @@ function patchAnthropicToolRunner(args: {
 
       async return(value?: unknown) {
         try {
-          ensureAnthropicToolRunnerToolsWrapped(runnerRecord, state);
           const result =
             typeof iterator.return === "function"
               ? await withCurrent(state.span, () => iterator.return!(value))
@@ -1417,6 +1413,17 @@ export function aggregateAnthropicStreamChunks(
   let role: string | undefined;
 
   for (const event of chunks) {
+    Object.assign(
+      metadata,
+      serviceTierMetadata({
+        served:
+          event.type === "message_start"
+            ? event.message?.usage?.service_tier
+            : event.type === "message_delta"
+              ? event.usage?.service_tier
+              : undefined,
+      }),
+    );
     switch (event?.type) {
       case "message_start":
         // Collect initial metrics from message
