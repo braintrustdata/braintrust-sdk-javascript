@@ -68,6 +68,18 @@ export const MISTRAL_SCENARIO_SPECS = [
     snapshotName: "mistral-v2-latest",
     wrapperEntry: "scenario.ts",
   }),
+  createMistralScenarioSpec({
+    autoEntry: "scenario.mjs",
+    dependencyName: "mistral-sdk-v3",
+    snapshotName: "mistral-v3",
+    wrapperEntry: "scenario.ts",
+  }),
+  createMistralScenarioSpec({
+    autoEntry: "scenario.mjs",
+    dependencyName: "mistral-sdk-v3-latest",
+    snapshotName: "mistral-v3-latest",
+    wrapperEntry: "scenario.ts",
+  }),
 ];
 
 function nonEmptyString(value) {

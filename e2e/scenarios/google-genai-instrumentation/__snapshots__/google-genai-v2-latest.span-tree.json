@@ -66,6 +66,7 @@
               "metadata": {
                 "maxOutputTokens": 24,
                 "model": "gemini-2.5-flash",
+                "served_service_tier": "standard",
                 "temperature": 0
               },
               "metrics": {
@@ -74,12 +75,22 @@
                 "duration": 0,
                 "prompt_tokens": 6,
                 "tokens": 26
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "operation": "generate",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -170,7 +181,8 @@
                 "model": "gemini-2.5-flash-image",
                 "responseModalities": [
                   "IMAGE"
-                ]
+                ],
+                "served_service_tier": "standard"
               },
               "metrics": {
                 "completion_image_tokens": 1290,
@@ -178,12 +190,22 @@
                 "duration": 0,
                 "prompt_tokens": 13,
                 "tokens": 1303
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "operation": "image-generate",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -254,7 +276,8 @@
                 "model": "gemini-2.5-flash-image",
                 "responseModalities": [
                   "IMAGE"
-                ]
+                ],
+                "served_service_tier": "standard"
               },
               "metrics": {
                 "completion_image_tokens": 1290,
@@ -263,12 +286,22 @@
                 "prompt_tokens": 13,
                 "time_to_first_token": 0,
                 "tokens": 1303
+              },
+              "context": {
+                "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+                "caller_functionname": "collectAsync",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "operation": "image-generate-stream",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -380,7 +413,8 @@
                 "model": "gemini-2.5-flash-image",
                 "responseModalities": [
                   "IMAGE"
-                ]
+                ],
+                "served_service_tier": "standard"
               },
               "metrics": {
                 "completion_image_tokens": 1290,
@@ -388,12 +422,22 @@
                 "duration": 0,
                 "prompt_tokens": 279,
                 "tokens": 1569
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "operation": "native-image-edit",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -430,12 +474,22 @@
                 "model": "imagen-3.0-capability-001",
                 "provider": "google"
               },
-              "error": "This method is only supported by the Gemini Enterprise Agent Platform (previously known as Vertex AI)."
+              "error": "This method is only supported by the Gemini Enterprise Agent Platform (previously known as Vertex AI).",
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
+              }
             }
           ],
           "metadata": {
             "operation": "edit-image",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -460,12 +514,22 @@
               "metadata": {
                 "model": "veo-3.1-lite-generate-preview",
                 "provider": "google"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "operation": "generate-videos",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -488,12 +552,22 @@
                 "model": "imagen-4.0-fast-generate-001",
                 "provider": "google"
               },
-              "error": "{\"error\":{\"code\":404,\"message\":\"models/imagen-4.0-fast-generate-001 is not found for API version v1beta, or is not supported for predict. Call ModelService.ListModels to see the list of available models and their supported methods.\",\"status\":\"NOT_FOUND\"}}"
+              "error": "This method is only supported by the Gemini Enterprise Agent Platform (previously known as Vertex AI).",
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
+              }
             }
           ],
           "metadata": {
             "operation": "legacy-image-generate",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -565,6 +639,7 @@
               "metadata": {
                 "maxOutputTokens": 64,
                 "model": "gemini-2.5-flash",
+                "served_service_tier": "standard",
                 "systemInstruction": "You are a pirate. Always respond in pirate speak.",
                 "temperature": 0
               },
@@ -574,12 +649,22 @@
                 "duration": 0,
                 "prompt_tokens": 19,
                 "tokens": 79
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "operation": "system-instruction",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -673,6 +758,7 @@
               "metadata": {
                 "maxOutputTokens": 64,
                 "model": "gemini-2.5-flash",
+                "served_service_tier": "standard",
                 "temperature": 0
               },
               "metrics": {
@@ -681,12 +767,22 @@
                 "duration": 0,
                 "prompt_tokens": 28,
                 "tokens": 66
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "operation": "multi-turn",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -709,12 +805,22 @@
               "metadata": {
                 "model": "gemini-embedding-001",
                 "provider": "google"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "operation": "embed",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -804,12 +910,22 @@
                 "prompt_audio_tokens": 45,
                 "prompt_tokens": 699,
                 "tokens": 699
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "operation": "multimodal-embed",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -847,6 +963,7 @@
                 "interaction_id": "<interaction_id:1>",
                 "model": "gemini-omni-1.1-flash",
                 "provider": "google",
+                "served_service_tier": "standard",
                 "status": "completed"
               },
               "metrics": {
@@ -862,6 +979,11 @@
           "metadata": {
             "operation": "video-generate",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -884,11 +1006,31 @@
                 "model": "gemini-2.5-flash"
               },
               "output": {
+                "continuation_ids": [
+                  "v1_ChdkQXlrYXJIYktjbWpfdU1QaFpiei1BNBIXZEF5a2FySGJLY21qX3VNUGhaYnotQTQ"
+                ],
                 "created": "<timestamp>",
                 "id": "<span:1>",
                 "model": "gemini-2.5-flash",
                 "object": "interaction",
                 "output_text": "ROME",
+                "sdkHttpResponse": {
+                  "headers": {
+                    "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+                    "connection": "keep-alive",
+                    "content-type": "application/json",
+                    "date": "<timestamp>",
+                    "keep-alive": "timeout=5",
+                    "server": "scaffolding on HTTPServer2",
+                    "server-timing": "<server-timing>",
+                    "transfer-encoding": "chunked",
+                    "vary": "Origin, X-Origin, Referer",
+                    "x-content-type-options": "nosniff",
+                    "x-frame-options": "SAMEORIGIN",
+                    "x-xss-protection": "0"
+                  },
+                  "responseInternal": {}
+                },
                 "service_tier": "standard",
                 "status": "completed",
                 "steps": [
@@ -908,6 +1050,7 @@
                 ],
                 "updated": "<timestamp>",
                 "usage": {
+                  "initial_input_tokens": 7,
                   "input_tokens_by_modality": [
                     {
                       "modality": "text",
@@ -931,6 +1074,7 @@
                 "interaction_id": "<interaction_id:1>",
                 "model": "gemini-2.5-flash",
                 "provider": "google",
+                "served_service_tier": "standard",
                 "status": "completed"
               },
               "metrics": {
@@ -946,6 +1090,11 @@
           "metadata": {
             "operation": "interaction",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -1018,6 +1167,7 @@
                 "interaction_id": "<interaction_id:1>",
                 "model": "gemini-2.5-flash",
                 "provider": "google",
+                "served_service_tier": "standard",
                 "status": "completed"
               },
               "metrics": {
@@ -1034,6 +1184,11 @@
           "metadata": {
             "operation": "interaction-stream",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -1056,11 +1211,31 @@
                 "model": "gemini-2.5-flash"
               },
               "output": {
+                "continuation_ids": [
+                  "v1_ChdlQXlrYXRHSkh0M1BfdU1QdWI2TjJBNBIXZUF5a2F0R0pIdDNQX3VNUHViNk4yQTQ"
+                ],
                 "created": "<timestamp>",
                 "id": "<span:1>",
                 "model": "gemini-2.5-flash",
                 "object": "interaction",
                 "output_text": "Hi Amir! Nice to meet you. How can I help you today?",
+                "sdkHttpResponse": {
+                  "headers": {
+                    "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+                    "connection": "keep-alive",
+                    "content-type": "application/json",
+                    "date": "<timestamp>",
+                    "keep-alive": "timeout=5",
+                    "server": "scaffolding on HTTPServer2",
+                    "server-timing": "<server-timing>",
+                    "transfer-encoding": "chunked",
+                    "vary": "Origin, X-Origin, Referer",
+                    "x-content-type-options": "nosniff",
+                    "x-frame-options": "SAMEORIGIN",
+                    "x-xss-protection": "0"
+                  },
+                  "responseInternal": {}
+                },
                 "service_tier": "standard",
                 "status": "completed",
                 "steps": [
@@ -1080,6 +1255,7 @@
                 ],
                 "updated": "<timestamp>",
                 "usage": {
+                  "initial_input_tokens": 8,
                   "input_tokens_by_modality": [
                     {
                       "modality": "text",
@@ -1103,6 +1279,7 @@
                 "interaction_id": "<interaction_id:1>",
                 "model": "gemini-2.5-flash",
                 "provider": "google",
+                "served_service_tier": "standard",
                 "status": "completed"
               },
               "metrics": {
@@ -1118,6 +1295,11 @@
           "metadata": {
             "operation": "interaction-stateful-first",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -1141,11 +1323,31 @@
                 "previous_interaction_id": "<previous_interaction_id:1>"
               },
               "output": {
+                "continuation_ids": [
+                  "v1_ChdlQXlrYXRHSkh0M1BfdU1QdWI2TjJBNBIXZVF5a2F2X09OWU9UX3VNUHpyWFk4UUU"
+                ],
                 "created": "<timestamp>",
                 "id": "<span:1>",
                 "model": "gemini-2.5-flash",
                 "object": "interaction",
                 "output_text": "AMIR",
+                "sdkHttpResponse": {
+                  "headers": {
+                    "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+                    "connection": "keep-alive",
+                    "content-type": "application/json",
+                    "date": "<timestamp>",
+                    "keep-alive": "timeout=5",
+                    "server": "scaffolding on HTTPServer2",
+                    "server-timing": "<server-timing>",
+                    "transfer-encoding": "chunked",
+                    "vary": "Origin, X-Origin, Referer",
+                    "x-content-type-options": "nosniff",
+                    "x-frame-options": "SAMEORIGIN",
+                    "x-xss-protection": "0"
+                  },
+                  "responseInternal": {}
+                },
                 "service_tier": "standard",
                 "status": "completed",
                 "steps": [
@@ -1165,6 +1367,7 @@
                 ],
                 "updated": "<timestamp>",
                 "usage": {
+                  "initial_input_tokens": 36,
                   "input_tokens_by_modality": [
                     {
                       "modality": "text",
@@ -1188,6 +1391,7 @@
                 "interaction_id": "<interaction_id:1>",
                 "model": "gemini-2.5-flash",
                 "provider": "google",
+                "served_service_tier": "standard",
                 "status": "completed"
               },
               "metrics": {
@@ -1203,6 +1407,11 @@
           "metadata": {
             "operation": "interaction-stateful-second",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -1211,6 +1420,11 @@
           "metadata": {
             "operation": "interaction-background",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -1296,6 +1510,7 @@
               "metadata": {
                 "maxOutputTokens": 48,
                 "model": "gemini-2.5-flash",
+                "served_service_tier": "standard",
                 "temperature": 0
               },
               "metrics": {
@@ -1304,12 +1519,22 @@
                 "duration": 0,
                 "prompt_tokens": 268,
                 "tokens": 312
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "operation": "attachment",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -1336,12 +1561,22 @@
               },
               "metrics": {
                 "duration": 0
+              },
+              "context": {
+                "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+                "caller_functionname": "collectAsync",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "operation": "stream",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -1393,6 +1628,7 @@
               "metadata": {
                 "maxOutputTokens": 24,
                 "model": "gemini-2.5-flash",
+                "served_service_tier": "standard",
                 "temperature": 0
               },
               "metrics": {
@@ -1402,12 +1638,22 @@
                 "prompt_tokens": 7,
                 "time_to_first_token": 0,
                 "tokens": 27
+              },
+              "context": {
+                "caller_filename": "<repo>/e2e/scenarios/google-genai-instrumentation/scenario.impl.mjs",
+                "caller_functionname": "<anonymous>",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "operation": "stream-return",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -1541,6 +1787,7 @@
                 },
                 "maxOutputTokens": 256,
                 "model": "gemini-2.5-flash",
+                "served_service_tier": "standard",
                 "temperature": 0,
                 "tools": [
                   {
@@ -1554,12 +1801,22 @@
                 "duration": 0,
                 "prompt_tokens": 121,
                 "tokens": 388
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "operation": "grounded-generate",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -1699,6 +1956,7 @@
                 },
                 "maxOutputTokens": 256,
                 "model": "gemini-2.5-flash",
+                "served_service_tier": "standard",
                 "temperature": 0,
                 "tools": [
                   {
@@ -1713,12 +1971,22 @@
                 "prompt_tokens": 93,
                 "time_to_first_token": 0,
                 "tokens": 363
+              },
+              "context": {
+                "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+                "caller_functionname": "collectAsync",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "operation": "grounded-stream",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -1803,6 +2071,7 @@
               "metadata": {
                 "maxOutputTokens": 128,
                 "model": "gemini-2.5-flash",
+                "served_service_tier": "standard",
                 "temperature": 0,
                 "toolConfig": {
                   "functionCallingConfig": {
@@ -1841,12 +2110,22 @@
                 "duration": 0,
                 "prompt_tokens": 65,
                 "tokens": 164
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "operation": "tool",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
@@ -1940,6 +2219,7 @@
               "metadata": {
                 "maxOutputTokens": 128,
                 "model": "gemini-2.5-flash",
+                "served_service_tier": "standard",
                 "temperature": 0,
                 "toolConfig": {
                   "functionCallingConfig": {
@@ -1995,18 +2275,33 @@
                 "duration": 0,
                 "prompt_tokens": 110,
                 "tokens": 207
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "operation": "multi-tool",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         }
       ],
       "metadata": {
         "scenario": "google-genai-instrumentation",
         "testRunId": "<run:1>"
+      },
+      "context": {
+        "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+        "caller_functionname": "runTracedScenario",
+        "caller_lineno": 0
       }
     }
   ]

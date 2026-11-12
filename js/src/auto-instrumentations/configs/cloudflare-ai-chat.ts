@@ -1,7 +1,7 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
 import { cloudflareAIChatChannels } from "../../instrumentation/providers/cloudflare-ai-chat-interceptors";
 
-const cloudflareAIChatVersionRange = ">=0.9.0 <0.10.0";
+const cloudflareAIChatVersionRange = ">=0.9.0 <0.10.0 || >=0.12.0 <0.13.0";
 
 export const cloudflareAIChatConfigs: InstrumentationConfig[] = [
   {

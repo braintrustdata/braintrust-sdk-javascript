@@ -13,6 +13,43 @@ import { googleGenAIChannels } from "../../instrumentation/providers/google-gena
  * "orchestrion:google-genai:models.generateContent"
  */
 export const googleGenAIConfigs: InstrumentationConfig[] = [
+  ...["dist/node/index.mjs", "dist/node/index.cjs", "dist/web/index.mjs"].map(
+    (filePath): InstrumentationConfig => ({
+      channelName: googleGenAIChannels.decisionsCreate.channelName,
+      module: { name: "@google/genai", versionRange: ">=3.2.0", filePath },
+      functionQuery: {
+        className: "GeminiNextGenDecisions",
+        methodName: "create",
+      },
+    }),
+  ),
+  // ADK's CommonJS modules load the GenAI CommonJS entrypoint. Capture the
+  // underlying model calls as well as the enclosing ADK runner and agents.
+  {
+    channelName: googleGenAIChannels.generateContent.channelName,
+    module: {
+      name: "@google/genai",
+      versionRange: ">=1.0.0",
+      filePath: "dist/node/index.cjs",
+    },
+    functionQuery: {
+      className: "Models",
+      methodName: "generateContentInternal",
+    },
+  },
+  {
+    channelName: googleGenAIChannels.generateContentStream.channelName,
+    module: {
+      name: "@google/genai",
+      versionRange: ">=1.0.0",
+      filePath: "dist/node/index.cjs",
+    },
+    functionQuery: {
+      className: "Models",
+      methodName: "generateContentStreamInternal",
+    },
+  },
+
   // Models.generateContentInternal - The actual class method (Node.js entry point)
   // Note: generateContent is an arrow function property that calls this internal method
   {
@@ -133,11 +170,27 @@ export const googleGenAIConfigs: InstrumentationConfig[] = [
     channelName: googleGenAIChannels.interactionsCreate.channelName,
     module: {
       name: "@google/genai",
-      versionRange: ">=1.33.0",
+      versionRange: ">=1.33.0 <2.9.0",
       filePath: "dist/node/index.mjs",
     },
     functionQuery: {
       className: "BaseInteractions",
+      methodName: "create",
+    },
+  },
+
+  // SDK 2.9 replaced BaseInteractions with the public Interactions bridge.
+  // Trace the bridge once, including streaming and automatic continuation,
+  // rather than its underlying HTTP requests.
+  {
+    channelName: googleGenAIChannels.interactionsCreate.channelName,
+    module: {
+      name: "@google/genai",
+      versionRange: ">=2.9.0",
+      filePath: "dist/node/index.mjs",
+    },
+    functionQuery: {
+      className: "GeminiNextGenInteractions",
       methodName: "create",
     },
   },

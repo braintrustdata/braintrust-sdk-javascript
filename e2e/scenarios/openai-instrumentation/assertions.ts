@@ -268,7 +268,7 @@ const OPERATION_SPECS: readonly OperationSpec[] = [
             : mode === "images-disabled"
               ? undefined
               : "[redacted]";
-        expect(span?.span.type).toBe("question");
+        expect(span?.span.type).toBe("decision");
         expect(span?.input).toEqual({
           state: [
             {
@@ -321,7 +321,7 @@ const OPERATION_SPECS: readonly OperationSpec[] = [
     testName:
       "captures typed questions, answers, and usage for decisions.create()",
     validate: (span) => {
-      expect(span?.span.type).toBe("question");
+      expect(span?.span.type).toBe("decision");
       expect(span?.input).toMatchObject({
         state: "I was charged twice. Please refund the duplicate charge today.",
         questions: [
@@ -337,7 +337,10 @@ const OPERATION_SPECS: readonly OperationSpec[] = [
           {
             id: "urgency",
             type: "score",
-            criteria: ["routine: Can wait", "urgent: Needs attention today"],
+            criteria: [
+              { label: "routine", description: "Can wait" },
+              { label: "urgent", description: "Needs attention today" },
+            ],
           },
         ],
       });
@@ -378,7 +381,7 @@ const OPERATION_SPECS: readonly OperationSpec[] = [
     operation: "decisions-raw",
     testName: "captures unnamed decisions while preserving raw response access",
     validate: (span) => {
-      expect(span?.span.type).toBe("question");
+      expect(span?.span.type).toBe("decision");
       expect(span?.input).toMatchObject({
         state: [
           {
@@ -393,7 +396,7 @@ const OPERATION_SPECS: readonly OperationSpec[] = [
         ],
         questions: [
           {
-            id: "0",
+            id: "question_0",
             type: "boolean",
             instructions: "Is this feedback positive?",
           },
@@ -401,7 +404,11 @@ const OPERATION_SPECS: readonly OperationSpec[] = [
       });
       expect(span?.output).toMatchObject({
         answers: [
-          { id: "0", type: "boolean", probability: expect.any(Number) },
+          {
+            id: "question_0",
+            type: "boolean",
+            probability: expect.any(Number),
+          },
         ],
       });
       expect(span?.row.metadata).toMatchObject({ model: "gpt-6-luna" });
@@ -1100,7 +1107,15 @@ function summarizeOpenAIPayload(
     input: summarizeInput(event.input as Json),
     metadata: pickMetadata(
       event.row.metadata as Record<string, unknown> | undefined,
-      ["model", "openaiSdkVersion", "operation", "provider", "scenario"],
+      [
+        "model",
+        "openaiSdkVersion",
+        "operation",
+        "provider",
+        "scenario",
+        "requested_service_tier",
+        "served_service_tier",
+      ],
     ),
     metrics: fields.metrics as Json,
     name: name || null,

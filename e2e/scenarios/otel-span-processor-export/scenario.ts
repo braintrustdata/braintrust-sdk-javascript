@@ -37,6 +37,15 @@ async function main() {
   const rootContext = trace.setSpan(context.active(), rootSpan);
   const aiSpan = tracer.startSpan("gen_ai.completion", undefined, rootContext);
   aiSpan.setAttribute("gen_ai.system", "openai");
+  aiSpan.setAttribute(
+    "braintrust.metadata",
+    JSON.stringify({
+      model: "test-model",
+      provider: "openai",
+      requested_service_tier: "flex",
+      served_service_tier: "default",
+    }),
+  );
   aiSpan.end();
   rootSpan.end();
 

@@ -1,0 +1,822 @@
+span_tree:
+└── Think.runTurn [task]
+    input: [
+      {
+        "content": "You are a deterministic weather-test agent. You must call lookup_weather exactly once with Vienna before answering. After the tool result, reply with exactly: \"Vienna is sunny and 21°C.\"\n\nYou are running inside a Think agent.\n\nCapabilities available in this turn:\n- You can inspect and edit the agent workspace using the available file tools.\n- Use the tools exposed in this turn when they materially improve accuracy or let you act on the user's request. Treat tool descriptions and schemas as the source of truth.\n- Some tools may call server code, browser/client code, MCP servers, extensions, or delegated agents. Use them according to their descriptions.\n- Do not claim access to capabilities that are not exposed as tools in this turn.",
+        "role": "system"
+      },
+      {
+        "content": [
+          {
+            "text": "What is the weather in Vienna?",
+            "type": "text"
+          }
+        ],
+        "role": "user"
+      }
+    ]
+    output: {
+      "content": "Vienna is sunny and 21°C.",
+      "role": "assistant"
+    }
+    metadata: {
+      "braintrust": {
+        "integration_name": "cloudflare-think",
+        "sdk_language": "typescript"
+      },
+      "cloudflare_think.version": "0.23.0",
+      "functionId": "TestThink",
+      "model": "gpt-5-nano",
+      "provider": "openai.chat"
+    }
+    metrics: {
+      "completion_tokens": 426,
+      "prompt_cached_tokens": 1024,
+      "prompt_tokens": 2341,
+      "time_to_first_token": 0,
+      "tokens": 2767
+    }
+    ├── doStream [llm]
+    │   input: {
+    │     "instructions": "You are a deterministic weather-test agent. You must call lookup_weather exactly once with Vienna before answering. After the tool result, reply with exactly: \"Vienna is sunny and 21°C.\"\n\nYou are running inside a Think agent.\n\nCapabilities available in this turn:\n- You can inspect and edit the agent workspace using the available file tools.\n- Use the tools exposed in this turn when they materially improve accuracy or let you act on the user's request. Treat tool descriptions and schemas as the source of truth.\n- Some tools may call server code, browser/client code, MCP servers, extensions, or delegated agents. Use them according to their descriptions.\n- Do not claim access to capabilities that are not exposed as tools in this turn.",
+    │     "messages": [
+    │       {
+    │         "content": [
+    │           {
+    │             "text": "What is the weather in Vienna?",
+    │             "type": "text"
+    │           }
+    │         ],
+    │         "role": "user"
+    │       }
+    │     ],
+    │     "model": {
+    │       "modelId": "gpt-5-nano",
+    │       "provider": "openai.chat"
+    │     },
+    │     "tools": [
+    │       {
+    │         "description": "Read a workspace file. Images and PDFs are passed to capable models. Text output is capped at 2000 lines or 256KB and includes line and byte continuations when truncated.",
+    │         "inputSchema": {
+    │           "$schema": "http://json-schema.org/draft-07/schema#",
+    │           "additionalProperties": false,
+    │           "properties": {
+    │             "byteOffset": {
+    │               "description": "Byte continuation returned by a previous read. Pass it with offset to avoid rescanning.",
+    │               "maximum": 9007199254740991,
+    │               "minimum": 0,
+    │               "type": "integer"
+    │             },
+    │             "limit": {
+    │               "description": "Maximum number of lines to read",
+    │               "maximum": 9007199254740991,
+    │               "minimum": 1,
+    │               "type": "integer"
+    │             },
+    │             "offset": {
+    │               "description": "Line number to start reading from (1-indexed)",
+    │               "maximum": 9007199254740991,
+    │               "minimum": 1,
+    │               "type": "integer"
+    │             },
+    │             "path": {
+    │               "description": "Path to the file to read",
+    │               "type": "string"
+    │             }
+    │           },
+    │           "required": [
+    │             "path"
+    │           ],
+    │           "type": "object"
+    │         },
+    │         "name": "read",
+    │         "type": "function"
+    │       },
+    │       {
+    │         "description": "List entries in a workspace directory with file sizes and modification times. The result defaults to 200 entries; use limit and offset to page through large directories.",
+    │         "inputSchema": {
+    │           "$schema": "http://json-schema.org/draft-07/schema#",
+    │           "additionalProperties": false,
+    │           "properties": {
+    │             "limit": {
+    │               "description": "Maximum entries to return. Defaults to 200.",
+    │               "maximum": 1000,
+    │               "minimum": 1,
+    │               "type": "integer"
+    │             },
+    │             "offset": {
+    │               "description": "Number of entries to skip in name order.",
+    │               "maximum": 9007199254740991,
+    │               "minimum": 0,
+    │               "type": "integer"
+    │             },
+    │             "path": {
+    │               "description": "Absolute directory path to list, e.g. /workspace/src.",
+    │               "type": "string"
+    │             }
+    │           },
+    │           "required": [
+    │             "path"
+    │           ],
+    │           "type": "object"
+    │         },
+    │         "name": "ls",
+    │         "type": "function"
+    │       },
+    │       {
+    │         "description": "Find files and directories matching a glob. * stays within one path segment, ** crosses directories, and ? matches one character.",
+    │         "inputSchema": {
+    │           "$schema": "http://json-schema.org/draft-07/schema#",
+    │           "additionalProperties": false,
+    │           "properties": {
+    │             "exclude": {
+    │               "anyOf": [
+    │                 {
+    │                   "type": "string"
+    │                 },
+    │                 {
+    │                   "items": "[Object]",
+    │                   "type": "array"
+    │                 }
+    │               ],
+    │               "description": "Glob patterns to leave out, for example [\"node_modules/**\", \"**/.git/**\"]. An excluded directory is skipped along with everything below it."
+    │             },
+    │             "limit": {
+    │               "maximum": 1000,
+    │               "minimum": 1,
+    │               "type": "integer"
+    │             },
+    │             "offset": {
+    │               "maximum": 9007199254740991,
+    │               "minimum": 0,
+    │               "type": "integer"
+    │             },
+    │             "path": {
+    │               "default": "/workspace",
+    │               "description": "Absolute directory to search.",
+    │               "type": "string"
+    │             },
+    │             "pattern": {
+    │               "description": "Glob pattern relative to path, for example \"**/*.ts\" or \"src/?.js\".",
+    │               "type": "string"
+    │             }
+    │           },
+    │           "required": [
+    │             "pattern"
+    │           ],
+    │           "type": "object"
+    │         },
+    │         "name": "find",
+    │         "type": "function"
+    │       },
+    │       {
+    │         "description": "Search workspace text with a literal string or regular expression. Results include paths and line numbers and can include surrounding lines.",
+    │         "inputSchema": {
+    │           "$schema": "http://json-schema.org/draft-07/schema#",
+    │           "additionalProperties": false,
+    │           "properties": {
+    │             "context": {
+    │               "maximum": 10,
+    │               "minimum": 0,
+    │               "type": "integer"
+    │             },
+    │             "exclude": {
+    │               "anyOf": [
+    │                 {
+    │                   "type": "string"
+    │                 },
+    │                 {
+    │                   "items": "[Object]",
+    │                   "type": "array"
+    │                 }
+    │               ],
+    │               "description": "Glob patterns to leave out, for example [\"node_modules/**\", \"**/.git/**\"]. An excluded directory is skipped along with everything below it."
+    │             },
+    │             "ignoreCase": {
+    │               "description": "Ignore letter case.",
+    │               "type": "boolean"
+    │             },
+    │             "include": {
+    │               "anyOf": [
+    │                 {
+    │                   "type": "string"
+    │                 },
+    │                 {
+    │                   "items": "[Object]",
+    │                   "type": "array"
+    │                 }
+    │               ],
+    │               "description": "Glob relative to path that limits searched files, for example \"**/*.ts\" or [\"**/*.ts\", \"**/*.md\"]."
+    │             },
+    │             "limit": {
+    │               "maximum": 1000,
+    │               "minimum": 1,
+    │               "type": "integer"
+    │             },
+    │             "offset": {
+    │               "maximum": 9007199254740991,
+    │               "minimum": 0,
+    │               "type": "integer"
+    │             },
+    │             "path": {
+    │               "default": "/workspace",
+    │               "description": "Absolute file or directory to search.",
+    │               "type": "string"
+    │             },
+    │             "query": {
+    │               "description": "Literal string or regular expression to search for.",
+    │               "type": "string"
+    │             },
+    │             "regex": {
+    │               "description": "Interpret query as a regular expression.",
+    │               "type": "boolean"
+    │             }
+    │           },
+    │           "required": [
+    │             "query"
+    │           ],
+    │           "type": "object"
+    │         },
+    │         "name": "grep",
+    │         "type": "function"
+    │       },
+    │       {
+    │         "description": "Write content to a file. Overwrites any existing file at the path.",
+    │         "inputSchema": {
+    │           "$schema": "http://json-schema.org/draft-07/schema#",
+    │           "additionalProperties": false,
+    │           "properties": {
+    │             "content": {
+    │               "description": "File content",
+    │               "type": "string"
+    │             },
+    │             "path": {
+    │               "description": "Absolute path, e.g. /workspace/main.zig",
+    │               "type": "string"
+    │             }
+    │           },
+    │           "required": [
+    │             "path",
+    │             "content"
+    │           ],
+    │           "type": "object"
+    │         },
+    │         "name": "write",
+    │         "type": "function"
+    │       },
+    │       {
+    │         "description": "Edit a single file using exact text replacement. Every edits[].oldText must match a unique, non-overlapping region of the original file. If two changes touch the same block, merge them into one edit.",
+    │         "inputSchema": {
+    │           "$schema": "http://json-schema.org/draft-07/schema#",
+    │           "additionalProperties": false,
+    │           "properties": {
+    │             "edits": {
+    │               "description": "One or more targeted replacements. Each edit is matched against the original file, not incrementally. Do not include overlapping or nested edits.",
+    │               "items": {
+    │                 "additionalProperties": false,
+    │                 "properties": {
+    │                   "newText": "[Object]",
+    │                   "oldText": "[Object]"
+    │                 },
+    │                 "required": [
+    │                   "oldText",
+    │                   "newText"
+    │                 ],
+    │                 "type": "object"
+    │               },
+    │               "type": "array"
+    │             },
+    │             "path": {
+    │               "description": "Path to the file to edit",
+    │               "type": "string"
+    │             }
+    │           },
+    │           "required": [
+    │             "path",
+    │             "edits"
+    │           ],
+    │           "type": "object"
+    │         },
+    │         "name": "edit",
+    │         "type": "function"
+    │       },
+    │       {
+    │         "description": "Delete a file or directory. Set recursive to true to remove a non-empty directory.",
+    │         "inputSchema": {
+    │           "$schema": "http://json-schema.org/draft-07/schema#",
+    │           "additionalProperties": false,
+    │           "properties": {
+    │             "path": {
+    │               "description": "Absolute path to the file or directory to delete.",
+    │               "type": "string"
+    │             },
+    │             "recursive": {
+    │               "description": "Remove a directory and all of its contents. Defaults to false.",
+    │               "type": "boolean"
+    │             }
+    │           },
+    │           "required": [
+    │             "path"
+    │           ],
+    │           "type": "object"
+    │         },
+    │         "name": "delete",
+    │         "type": "function"
+    │       },
+    │       {
+    │         "description": "Get deterministic weather for a city.",
+    │         "inputSchema": {
+    │           "$schema": "http://json-schema.org/draft-07/schema#",
+    │           "additionalProperties": false,
+    │           "properties": {
+    │             "city": {
+    │               "type": "string"
+    │             }
+    │           },
+    │           "required": [
+    │             "city"
+    │           ],
+    │           "type": "object"
+    │         },
+    │         "name": "lookup_weather",
+    │         "type": "function"
+    │       }
+    │     ]
+    │   }
+    │   output: {
+    │     "content": [
+    │       {
+    │         "input": {
+    │           "city": "Vienna"
+    │         },
+    │         "toolCallId": "<toolCallId:2>",
+    │         "toolName": "lookup_weather",
+    │         "type": "tool-call"
+    │       }
+    │     ],
+    │     "finishReason": "tool-calls",
+    │     "providerMetadata": {
+    │       "openai": {
+    │         "acceptedPredictionTokens": 0,
+    │         "rejectedPredictionTokens": 0
+    │       }
+    │     },
+    │     "response": {
+    │       "id": "<span:1>"
+    │     },
+    │     "usage": {
+    │       "inputTokenDetails": {
+    │         "cacheReadTokens": 0,
+    │         "noCacheTokens": 1148
+    │       },
+    │       "inputTokens": 1148,
+    │       "outputTokenDetails": {
+    │         "reasoningTokens": 256,
+    │         "textTokens": 24
+    │       },
+    │       "outputTokens": 280,
+    │       "raw": {
+    │         "completion_tokens": 280,
+    │         "completion_tokens_details": {
+    │           "accepted_prediction_tokens": 0,
+    │           "reasoning_tokens": 256,
+    │           "rejected_prediction_tokens": 0
+    │         },
+    │         "prompt_tokens": 1148,
+    │         "prompt_tokens_details": {
+    │           "cached_tokens": 0
+    │         },
+    │         "total_tokens": 1428
+    │       },
+    │       "totalTokens": 1428
+    │     }
+    │   }
+    │   metadata: {
+    │     "braintrust": {
+    │       "integration_name": "ai-sdk",
+    │       "sdk_language": "typescript"
+    │     },
+    │     "functionId": "TestThink",
+    │     "model": "gpt-5-nano",
+    │     "provider": "openai.chat"
+    │   }
+    │   metrics: {
+    │     "completion_tokens": 280,
+    │     "prompt_cached_tokens": 0,
+    │     "prompt_tokens": 1148,
+    │     "tokens": 1428
+    │   }
+    ├── lookup_weather [tool]
+    │   input: {
+    │     "city": "Vienna"
+    │   }
+    │   output: {
+    │     "city": "Vienna",
+    │     "condition": "sunny",
+    │     "degreesC": 21
+    │   }
+    │   metadata: {
+    │     "braintrust": {
+    │       "integration_name": "ai-sdk",
+    │       "sdk_language": "typescript"
+    │     },
+    │     "toolCallId": "<toolCallId:1>",
+    │     "toolName": "lookup_weather"
+    │   }
+    └── doStream [llm]
+        input: {
+          "instructions": "You are a deterministic weather-test agent. You must call lookup_weather exactly once with Vienna before answering. After the tool result, reply with exactly: \"Vienna is sunny and 21°C.\"\n\nYou are running inside a Think agent.\n\nCapabilities available in this turn:\n- You can inspect and edit the agent workspace using the available file tools.\n- Use the tools exposed in this turn when they materially improve accuracy or let you act on the user's request. Treat tool descriptions and schemas as the source of truth.\n- Some tools may call server code, browser/client code, MCP servers, extensions, or delegated agents. Use them according to their descriptions.\n- Do not claim access to capabilities that are not exposed as tools in this turn.",
+          "messages": [
+            {
+              "content": [
+                {
+                  "text": "What is the weather in Vienna?",
+                  "type": "text"
+                }
+              ],
+              "role": "user"
+            },
+            {
+              "content": [
+                {
+                  "input": {
+                    "city": "Vienna"
+                  },
+                  "toolCallId": "<toolCallId:1>",
+                  "toolName": "lookup_weather",
+                  "type": "tool-call"
+                }
+              ],
+              "role": "assistant"
+            },
+            {
+              "content": [
+                {
+                  "output": {
+                    "type": "json",
+                    "value": {
+                      "city": "Vienna",
+                      "condition": "sunny",
+                      "degreesC": 21
+                    }
+                  },
+                  "toolCallId": "<toolCallId:1>",
+                  "toolName": "lookup_weather",
+                  "type": "tool-result"
+                }
+              ],
+              "role": "tool"
+            }
+          ],
+          "model": {
+            "modelId": "gpt-5-nano",
+            "provider": "openai.chat"
+          },
+          "tools": [
+            {
+              "description": "Read a workspace file. Images and PDFs are passed to capable models. Text output is capped at 2000 lines or 256KB and includes line and byte continuations when truncated.",
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "byteOffset": {
+                    "description": "Byte continuation returned by a previous read. Pass it with offset to avoid rescanning.",
+                    "maximum": 9007199254740991,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "limit": {
+                    "description": "Maximum number of lines to read",
+                    "maximum": 9007199254740991,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "offset": {
+                    "description": "Line number to start reading from (1-indexed)",
+                    "maximum": 9007199254740991,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "path": {
+                    "description": "Path to the file to read",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "type": "object"
+              },
+              "name": "read",
+              "type": "function"
+            },
+            {
+              "description": "List entries in a workspace directory with file sizes and modification times. The result defaults to 200 entries; use limit and offset to page through large directories.",
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "limit": {
+                    "description": "Maximum entries to return. Defaults to 200.",
+                    "maximum": 1000,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "offset": {
+                    "description": "Number of entries to skip in name order.",
+                    "maximum": 9007199254740991,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "path": {
+                    "description": "Absolute directory path to list, e.g. /workspace/src.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "type": "object"
+              },
+              "name": "ls",
+              "type": "function"
+            },
+            {
+              "description": "Find files and directories matching a glob. * stays within one path segment, ** crosses directories, and ? matches one character.",
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "exclude": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "items": "[Object]",
+                        "type": "array"
+                      }
+                    ],
+                    "description": "Glob patterns to leave out, for example [\"node_modules/**\", \"**/.git/**\"]. An excluded directory is skipped along with everything below it."
+                  },
+                  "limit": {
+                    "maximum": 1000,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "offset": {
+                    "maximum": 9007199254740991,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "path": {
+                    "default": "/workspace",
+                    "description": "Absolute directory to search.",
+                    "type": "string"
+                  },
+                  "pattern": {
+                    "description": "Glob pattern relative to path, for example \"**/*.ts\" or \"src/?.js\".",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "pattern"
+                ],
+                "type": "object"
+              },
+              "name": "find",
+              "type": "function"
+            },
+            {
+              "description": "Search workspace text with a literal string or regular expression. Results include paths and line numbers and can include surrounding lines.",
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "context": {
+                    "maximum": 10,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "exclude": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "items": "[Object]",
+                        "type": "array"
+                      }
+                    ],
+                    "description": "Glob patterns to leave out, for example [\"node_modules/**\", \"**/.git/**\"]. An excluded directory is skipped along with everything below it."
+                  },
+                  "ignoreCase": {
+                    "description": "Ignore letter case.",
+                    "type": "boolean"
+                  },
+                  "include": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "items": "[Object]",
+                        "type": "array"
+                      }
+                    ],
+                    "description": "Glob relative to path that limits searched files, for example \"**/*.ts\" or [\"**/*.ts\", \"**/*.md\"]."
+                  },
+                  "limit": {
+                    "maximum": 1000,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "offset": {
+                    "maximum": 9007199254740991,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "path": {
+                    "default": "/workspace",
+                    "description": "Absolute file or directory to search.",
+                    "type": "string"
+                  },
+                  "query": {
+                    "description": "Literal string or regular expression to search for.",
+                    "type": "string"
+                  },
+                  "regex": {
+                    "description": "Interpret query as a regular expression.",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "query"
+                ],
+                "type": "object"
+              },
+              "name": "grep",
+              "type": "function"
+            },
+            {
+              "description": "Write content to a file. Overwrites any existing file at the path.",
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "content": {
+                    "description": "File content",
+                    "type": "string"
+                  },
+                  "path": {
+                    "description": "Absolute path, e.g. /workspace/main.zig",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path",
+                  "content"
+                ],
+                "type": "object"
+              },
+              "name": "write",
+              "type": "function"
+            },
+            {
+              "description": "Edit a single file using exact text replacement. Every edits[].oldText must match a unique, non-overlapping region of the original file. If two changes touch the same block, merge them into one edit.",
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "edits": {
+                    "description": "One or more targeted replacements. Each edit is matched against the original file, not incrementally. Do not include overlapping or nested edits.",
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "newText": "[Object]",
+                        "oldText": "[Object]"
+                      },
+                      "required": [
+                        "oldText",
+                        "newText"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "path": {
+                    "description": "Path to the file to edit",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path",
+                  "edits"
+                ],
+                "type": "object"
+              },
+              "name": "edit",
+              "type": "function"
+            },
+            {
+              "description": "Delete a file or directory. Set recursive to true to remove a non-empty directory.",
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "path": {
+                    "description": "Absolute path to the file or directory to delete.",
+                    "type": "string"
+                  },
+                  "recursive": {
+                    "description": "Remove a directory and all of its contents. Defaults to false.",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "type": "object"
+              },
+              "name": "delete",
+              "type": "function"
+            },
+            {
+              "description": "Get deterministic weather for a city.",
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "city": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "city"
+                ],
+                "type": "object"
+              },
+              "name": "lookup_weather",
+              "type": "function"
+            }
+          ]
+        }
+        output: {
+          "content": [
+            {
+              "text": "Vienna is sunny and 21°C.",
+              "type": "text"
+            }
+          ],
+          "finishReason": "stop",
+          "providerMetadata": {
+            "openai": {
+              "acceptedPredictionTokens": 0,
+              "rejectedPredictionTokens": 0
+            }
+          },
+          "response": {
+            "id": "<span:1>"
+          },
+          "usage": {
+            "inputTokenDetails": {
+              "cacheReadTokens": 1024,
+              "noCacheTokens": 169
+            },
+            "inputTokens": 1193,
+            "outputTokenDetails": {
+              "reasoningTokens": 128,
+              "textTokens": 18
+            },
+            "outputTokens": 146,
+            "raw": {
+              "completion_tokens": 146,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "reasoning_tokens": 128,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens": 1193,
+              "prompt_tokens_details": {
+                "cached_tokens": 1024
+              },
+              "total_tokens": 1339
+            },
+            "totalTokens": 1339
+          }
+        }
+        metadata: {
+          "braintrust": {
+            "integration_name": "ai-sdk",
+            "sdk_language": "typescript"
+          },
+          "functionId": "TestThink",
+          "model": "gpt-5-nano",
+          "provider": "openai.chat"
+        }
+        metrics: {
+          "completion_tokens": 146,
+          "prompt_cached_tokens": 1024,
+          "prompt_tokens": 1193,
+          "tokens": 1339
+        }

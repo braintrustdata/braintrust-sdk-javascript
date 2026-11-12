@@ -24,14 +24,20 @@ export default defineAgent({
   ...(process.env.EVE_EXPERIMENTAL_INSTRUMENTATION_PROVIDERS === "1"
     ? { experimental: { instrumentationProviders: true } }
     : {}),
-  model: defineDynamic({
-    ...(providerInstrumentation ? {} : { fallback: dynamicModel }),
-    events: {
-      "step.started": () =>
-        providerInstrumentation
-          ? { model: dynamicModel, modelContextWindowTokens: 32_768 }
-          : dynamicModel,
-    },
-  } as never),
+  model: defineDynamic(
+    // Eve 0.91 resolves dynamic values from a function of the session.
+    (Number(process.env.EVE_VERSION?.split(".")[0]) >= 1 ||
+    Number(process.env.EVE_VERSION?.split(".")[1]) >= 91
+      ? () => ({ model: dynamicModel, modelContextWindowTokens: 32_768 })
+      : {
+          ...(providerInstrumentation ? {} : { fallback: dynamicModel }),
+          events: {
+            "step.started": () =>
+              providerInstrumentation
+                ? { model: dynamicModel, modelContextWindowTokens: 32_768 }
+                : dynamicModel,
+          },
+        }) as never,
+  ),
   ...(providerInstrumentation ? {} : { modelContextWindowTokens: 32_768 }),
 } as never);

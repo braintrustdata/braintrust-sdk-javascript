@@ -163,7 +163,7 @@ export async function runAISDKCodeMode(mode, packageName) {
     await root("generation", async () => {
       const code = namespace.experimental_codeModeTool();
       const result = await ai.generateText({
-        model: openai("gpt-4.1-nano"),
+        model: openai("gpt-5.4-nano-2026-03-17"),
         tools: { code, host },
         experimental_toolCallers: { host: ["code", "AI_SDK_DIRECT_TOOL_CALL"] },
         toolChoice: { type: "tool", toolName: "code" },
@@ -173,7 +173,7 @@ export async function runAISDKCodeMode(mode, packageName) {
       });
       assert.deepEqual(result.toolResults[0].output, { value: 12 });
       const direct = await ai.generateText({
-        model: openai("gpt-4.1-nano"),
+        model: openai("gpt-5.4-nano-2026-03-17"),
         tools: { host },
         toolChoice: { type: "tool", toolName: "host" },
         prompt: "Call host with value 8.",

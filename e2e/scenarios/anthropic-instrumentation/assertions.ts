@@ -18,6 +18,7 @@ import { ROOT_NAME, SCENARIO_NAME } from "./scenario.impl.mjs";
 type RunAnthropicScenario = (harness: {
   runNodeScenarioDir: (options: {
     entry?: string;
+    env?: Record<string, string>;
     nodeArgs: string[];
     runContext?: ScenarioRunContext;
     scenarioDir: string;
@@ -25,6 +26,7 @@ type RunAnthropicScenario = (harness: {
   }) => Promise<unknown>;
   runScenarioDir: (options: {
     entry?: string;
+    env?: Record<string, string>;
     runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
@@ -135,6 +137,8 @@ function summarizeAnthropicPayload(event: CapturedLogEvent): Json {
       [
         "provider",
         "model",
+        "requested_service_tier",
+        "served_service_tier",
         "operation",
         "scenario",
         "stop_reason",
@@ -217,6 +221,9 @@ function summarizeAnthropicPayload(event: CapturedLogEvent): Json {
         content?:
           | string
           | Array<{
+              type?: string;
+              content?: string;
+              tool_use_id?: string;
               source?: {
                 data?: {
                   type?: string;

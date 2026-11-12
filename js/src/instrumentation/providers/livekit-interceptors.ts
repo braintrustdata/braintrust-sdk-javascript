@@ -54,4 +54,7 @@ export const livekitChannels = defineInterceptor("@livekit/agents", {
   stt: channel<[SpeechEvent], void>({
     channelName: "recognition.stt",
   }),
+  jobContext: channel<[boolean?], unknown>({
+    channelName: "job.context",
+  }),
 });

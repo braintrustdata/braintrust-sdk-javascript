@@ -10,42 +10,57 @@ import { defineCloudflareThinkAssertions } from "./assertions";
 
 const originalScenarioDir = resolveScenarioDir(import.meta.url);
 const TIMEOUT_MS = 300_000;
-const variants = [];
+const variants: {
+  aiMajor: 6 | 7;
+  agentsPackageName: string;
+  dependencyName: string;
+  label: string;
+  scenarioDir: string;
+  variantKey: string;
+  version: string;
+}[] = [];
 
-for (const [aiMajor, minor] of [
-  [6, 13],
-  [7, 20],
+for (const { manifest, aiMajor, agentsPackageName, dependencies } of [
+  {
+    manifest: "ai6",
+    aiMajor: 6,
+    agentsPackageName: "agents-v0-17",
+    dependencies: ["cloudflare-think-v0-13", "cloudflare-think-v0-13-latest"],
+  },
+  {
+    manifest: "ai7",
+    aiMajor: 7,
+    agentsPackageName: "agents",
+    dependencies: ["cloudflare-think-v0-20", "cloudflare-think-v0-20-1"],
+  },
+  {
+    manifest: "ai7-latest",
+    aiMajor: 7,
+    agentsPackageName: "agents",
+    dependencies: ["cloudflare-think-v0-latest"],
+  },
 ] as const) {
   const sourceDir = path.resolve(
     originalScenarioDir,
-    `../../.bt-tmp/generated-scenarios/cloudflare-think-ai${aiMajor}`,
+    `../../.bt-tmp/generated-scenarios/cloudflare-think-${manifest}`,
   );
   await fs.rm(sourceDir, { recursive: true, force: true });
   await fs.mkdir(sourceDir, { recursive: true });
   await fs.cp(path.join(originalScenarioDir, "template"), sourceDir, {
     recursive: true,
   });
-  await fs.cp(
-    path.join(originalScenarioDir, "versions", `ai${aiMajor}`),
-    sourceDir,
-    { recursive: true },
-  );
-  for (const lane of [
-    "pinned",
-    "latest",
-    ...(minor === 20 ? ["0.20.1"] : []),
-  ]) {
+  await fs.cp(path.join(originalScenarioDir, "versions", manifest), sourceDir, {
+    recursive: true,
+  });
+  for (const dependencyName of dependencies) {
     // Each concurrently running variant writes its own .dev.vars and Worker
     // storage. Share the dependency cache, but not the application directory.
     const scenarioDir = await prepareScenarioDir({ scenarioDir: sourceDir });
-    const dependencyName = `cloudflare-think-v0-${minor}${
-      lane === "latest" ? "-latest" : lane === "0.20.1" ? "-1" : ""
-    }`;
     variants.push({
       aiMajor,
-      agentsPackageName: minor === 13 ? "agents-v0-17" : "agents",
+      agentsPackageName,
       dependencyName,
-      label: `0.${minor} ${lane} / AI SDK ${aiMajor}`,
+      label: `${dependencyName} / AI SDK ${aiMajor}`,
       scenarioDir,
       variantKey: `${dependencyName}-ai${aiMajor}`,
       version: await readInstalledPackageVersion(scenarioDir, dependencyName),

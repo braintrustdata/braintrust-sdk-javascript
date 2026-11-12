@@ -61,6 +61,22 @@
       {
         "variantKey": "cloudflare-agents-v0-17-latest",
         "label": "v0.17 latest"
+      },
+      {
+        "variantKey": "cloudflare-agents-v0-32",
+        "label": "v0.32 pinned"
+      },
+      {
+        "variantKey": "cloudflare-agents-v0-32-latest",
+        "label": "v0.32 latest"
+      },
+      {
+        "variantKey": "cloudflare-agents-v0-33",
+        "label": "v0.33 pinned"
+      },
+      {
+        "variantKey": "cloudflare-agents-v0-33-latest",
+        "label": "v0.33 latest"
       }
     ]
   },
@@ -184,6 +200,14 @@
       {
         "variantKey": "cloudflare-ai-chat-v0-latest",
         "label": "v0.9 latest"
+      },
+      {
+        "variantKey": "cloudflare-ai-chat-v0-12",
+        "label": "v0.12 pinned"
+      },
+      {
+        "variantKey": "cloudflare-ai-chat-v0-12-latest",
+        "label": "v0.12 latest"
       }
     ]
   },
@@ -217,11 +241,11 @@
         ]
       },
       {
-        "variantKey": "cloudflare-think-v0-20-latest-ai7",
-        "label": "v0.20 latest / AI SDK 7",
+        "variantKey": "cloudflare-think-v0-latest-ai7",
+        "label": "v0 latest / AI SDK 7",
         "variantKeys": [
-          "cloudflare-think-v0-20-latest-ai7-manual",
-          "cloudflare-think-v0-20-latest-ai7-auto"
+          "cloudflare-think-v0-latest-ai7-manual",
+          "cloudflare-think-v0-latest-ai7-auto"
         ]
       },
       {
@@ -276,6 +300,14 @@
       {
         "variantKey": "anthropic-v0-latest",
         "label": "v0 latest"
+      },
+      {
+        "variantKey": "anthropic-v1",
+        "label": "v1 pinned"
+      },
+      {
+        "variantKey": "anthropic-v1-latest",
+        "label": "v1 latest"
       }
     ]
   },
@@ -330,6 +362,14 @@
       {
         "variantKey": "google-adk-v1-latest",
         "label": "v1 latest"
+      },
+      {
+        "variantKey": "google-adk-v2",
+        "label": "v2 pinned"
+      },
+      {
+        "variantKey": "google-adk-v2-latest",
+        "label": "v2 latest"
       }
     ]
   },
@@ -353,6 +393,21 @@
       {
         "variantKey": "google-genai-v2-latest",
         "label": "v2 latest"
+      }
+    ]
+  },
+  {
+    "scenarioDirName": "google-genai-decisions-instrumentation",
+    "label": "Google GenAI Decisions Instrumentation",
+    "metadataScenario": "google-genai-decisions-instrumentation",
+    "variants": [
+      {
+        "variantKey": "google-genai-decisions-v3",
+        "label": "v3 pinned"
+      },
+      {
+        "variantKey": "google-genai-decisions-v3-latest",
+        "label": "v3 latest"
       }
     ]
   },
@@ -536,6 +591,14 @@
       {
         "variantKey": "mistral-v2-latest",
         "label": "v2 latest"
+      },
+      {
+        "variantKey": "mistral-v3",
+        "label": "v3 pinned"
+      },
+      {
+        "variantKey": "mistral-v3-latest",
+        "label": "v3 latest"
       }
     ]
   },
@@ -597,10 +660,22 @@
     "label": "MCP Handler Instrumentation",
     "metadataScenario": "mcp-handler-instrumentation",
     "variants": [
-      { "variantKey": "mcp-handler-v1", "label": "v1 pinned" },
-      { "variantKey": "mcp-handler-v1-latest", "label": "v1 latest" },
-      { "variantKey": "mcp-handler-v2", "label": "v2 pinned" },
-      { "variantKey": "mcp-handler-v2-latest", "label": "v2 latest" }
+      {
+        "variantKey": "mcp-handler-v1",
+        "label": "v1 pinned"
+      },
+      {
+        "variantKey": "mcp-handler-v1-latest",
+        "label": "v1 latest"
+      },
+      {
+        "variantKey": "mcp-handler-v2",
+        "label": "v2 pinned"
+      },
+      {
+        "variantKey": "mcp-handler-v2-latest",
+        "label": "v2 latest"
+      }
     ]
   },
   {
@@ -841,6 +916,14 @@
       {
         "variantKey": "eve-v0-latest",
         "label": "v0 latest"
+      },
+      {
+        "variantKey": "eve-v1",
+        "label": "v1 pinned"
+      },
+      {
+        "variantKey": "eve-v1-latest",
+        "label": "v1 latest"
       }
     ]
   },
@@ -993,6 +1076,14 @@
       {
         "variantKey": "langgraph-sdk-v1-latest",
         "label": "v1 latest"
+      },
+      {
+        "variantKey": "langgraph-sdk-v2",
+        "label": "v2 pinned"
+      },
+      {
+        "variantKey": "langgraph-sdk-v2-latest",
+        "label": "v2 latest"
       }
     ]
   },

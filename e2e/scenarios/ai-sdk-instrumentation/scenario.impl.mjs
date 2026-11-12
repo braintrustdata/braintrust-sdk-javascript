@@ -8,6 +8,11 @@ import {
 
 export const ROOT_NAME = "ai-sdk-instrumentation-root";
 export const SCENARIO_NAME = "ai-sdk-instrumentation";
+const OPENAI_MODEL = "gpt-5.4-nano-2026-03-17";
+// A valid 32x32 solid red PNG.
+const RED_PIXEL_PNG_BASE64 =
+  "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKElEQVR4nO3NsQ0AAAzCMP5/un0CNkuZ41wybXsHAAAAAAAAAAAAxR4yw/wuPL6QkAAAAABJRU5ErkJggg==";
+
 export const AI_SDK_SCENARIO_TIMEOUT_MS = 120_000;
 const CACHE_PROMPT_PREFIX = "braintrust cache prefix ".repeat(900).trim();
 const OPENAI_CACHE_KEY = "braintrust-ai-sdk-e2e-cache";
@@ -535,7 +540,6 @@ async function runAISDKInstrumentationScenario(
     cohereBaseURL && options.createCohere
       ? options.createCohere({ baseURL: cohereBaseURL })
       : options.cohere;
-  const openaiModel = openai("gpt-4o-mini-2024-07-18");
   const anthropicModel = anthropic?.("claude-haiku-4-5");
   const openaiEmbeddingModel = openai.textEmbeddingModel(
     "text-embedding-3-small",
@@ -545,6 +549,16 @@ async function runAISDKInstrumentationScenario(
       ? cohere.reranking("rerank-v3.5")
       : undefined;
   const sdkMajorVersion = parseMajorVersion(options.sdkVersion);
+  // AI SDK v3's OpenAI provider sends `max_tokens`, which GPT-5 models reject.
+  const openaiModel = openai(
+    sdkMajorVersion >= 4 ? OPENAI_MODEL : "gpt-4o-mini-2024-07-18",
+  );
+  // Send prior tool items inline instead of referencing stored responses, so
+  // multi-step tool calls also record against Zero Data Retention orgs.
+  const inlineToolItemsOptions =
+    sdkMajorVersion >= 5
+      ? { providerOptions: { openai: { store: false } } }
+      : {};
   const supportsRichInputScenarios = sdkMajorVersion >= 5;
   const supportsDenyOutputOverrideScenario =
     options.supportsDenyOutputOverrideScenario ?? supportsRichInputScenarios;
@@ -619,7 +633,7 @@ async function runAISDKInstrumentationScenario(
             `provider-tool-${operation}`,
             async () => {
               const result = await instrumentedAI[operation]({
-                model: openai.responses("gpt-4.1-mini"),
+                model: openai.responses(OPENAI_MODEL),
                 prompt:
                   "Search the web for the official Braintrust website. Reply with its URL only.",
                 tools: {
@@ -682,8 +696,7 @@ async function runAISDKInstrumentationScenario(
           },
         );
         if (supportsDecide) {
-          const png =
-            "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKElEQVR4nO3NsQ0AAAzCMP5/un0CNkuZ41wybXsHAAAAAAAAAAAAxR4yw/wuPL6QkAAAAABJRU5ErkJggg==";
+          const png = RED_PIXEL_PNG_BASE64;
           for (const method of [
             "experimental_decide",
             "experimental_evaluate",
@@ -842,6 +855,47 @@ async function runAISDKInstrumentationScenario(
         }
       });
 
+      if (sdkMajorVersion >= 5) {
+        await runOperation(
+          "ai-sdk-stream-image-file-operation",
+          "stream-image-file",
+          async () => {
+            const bytes = new Uint8Array(
+              Buffer.from(RED_PIXEL_PNG_BASE64, "base64"),
+            );
+            const result = await instrumentedAI.streamText({
+              model: openaiModel,
+              messages: [
+                {
+                  role: "user",
+                  content: [
+                    {
+                      type: "text",
+                      text: "What color is this image? Answer with one word.",
+                    },
+                    {
+                      type: "file",
+                      mediaType: "image/png",
+                      filename: "red.png",
+                      // AI SDK v7 tags inline bytes as `{ type: "data", data }`
+                      // (`SharedV4FileData`); older versions take raw bytes.
+                      data:
+                        sdkMajorVersion >= 7
+                          ? { type: "data", data: bytes }
+                          : bytes,
+                    },
+                  ],
+                },
+              ],
+              temperature: 0,
+              ...tokenLimit(options.maxTokensKey, 16),
+            });
+            for await (const _chunk of result.textStream) {
+            }
+          },
+        );
+      }
+
       await runOperation("ai-sdk-embed-operation", "embed", async () => {
         await instrumentedAI.embed({
           model: openaiEmbeddingModel,
@@ -897,6 +951,7 @@ async function runAISDKInstrumentationScenario(
             get_weather: createWeatherTool(options.ai, options.toolSchemaKey),
           },
           ...tokenLimit(options.maxTokensKey, 128),
+          ...inlineToolItemsOptions,
         };
 
         if (options.supportsToolExecution) {
@@ -1141,6 +1196,7 @@ async function runAISDKInstrumentationScenario(
                 },
                 stopWhen: options.ai.stepCountIs(6),
                 temperature: 0,
+                ...inlineToolItemsOptions,
               });
 
               await agent.generate({

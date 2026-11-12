@@ -2,10 +2,7 @@ import { beforeAll, describe, expect, test } from "vite-plus/test";
 import type { Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
-import {
-  withScenarioHarness,
-  type ScenarioRunContext,
-} from "../../helpers/scenario-harness";
+import { withScenarioHarness } from "../../helpers/scenario-harness";
 import {
   matchSpanTreeSnapshot,
   spanTreeFields,
@@ -19,21 +16,7 @@ import {
   SCENARIO_NAME,
 } from "./scenario.impl.mjs";
 
-type RunGoogleADKScenario = (harness: {
-  runNodeScenarioDir: (options: {
-    entry: string;
-    nodeArgs: string[];
-    runContext?: ScenarioRunContext;
-    scenarioDir: string;
-    timeoutMs: number;
-  }) => Promise<unknown>;
-  runScenarioDir: (options: {
-    entry: string;
-    runContext?: ScenarioRunContext;
-    scenarioDir: string;
-    timeoutMs: number;
-  }) => Promise<unknown>;
-}) => Promise<void>;
+type RunGoogleADKScenario = Parameters<typeof withScenarioHarness>[0];
 
 const VOLATILE_ADK_METRIC_KEYS = new Set([
   "completion_reasoning_tokens",
@@ -138,7 +121,7 @@ function hasOptionalADKTaskOutput(event: CapturedLogEvent): boolean {
   return (
     event.span.type === "task" &&
     (event.span.name === "Google ADK Runner" ||
-      event.span.name?.startsWith("Agent:"))
+      (event.span.name?.startsWith("Agent:") ?? false))
   );
 }
 
@@ -308,7 +291,9 @@ export function defineGoogleADKInstrumentationAssertions(options: {
       const runnerSpan = events.find(
         (e) =>
           e.span.name === "Google ADK Runner" &&
-          e.row.metadata?.["google_adk.session_id"] === "test-session-1",
+          (e.row.metadata as Record<string, unknown> | undefined)?.[
+            "google_adk.session_id"
+          ] === "test-session-1",
       );
       const agentSpan = events.find(
         (e) => e.span.name === "Agent: weather_agent" && e.span.type === "task",

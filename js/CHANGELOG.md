@@ -1,5 +1,50 @@
 # braintrust
 
+## 3.44.0
+
+### Minor Changes
+
+- feat: Bump support for eve (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2749)
+- feat: Bump support for mastra (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2747)
+- feat: Bump support for openai agents (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2746)
+- feat: Bump support for openrouter sdk (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2759)
+- feat(langchain): Add capture controls (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2763)
+- feat: Support eve 1.0.0 (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2764)
+- feat(instrumentation): Track service tiers (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2768)
+
+### Patch Changes
+
+- fix(ai-sdk): log AI SDK v7 inline file data as attachments (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2752)
+- fix(deps): Upgrade minimatch from v10 to v11 (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2770)
+
+## 3.43.0
+
+### Minor Changes
+
+- feat: Add `fastmcp` tracing (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2695)
+- feat: Bump support for cloudflare agents (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2732)
+- feat: Bump support for cloudflare ai chat (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2737)
+- feat: Bump support for cloudflare think (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2739)
+- feat: Bump support for cursor SDK (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2742)
+- feat: Bump support for google adk (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2734)
+- feat: Bump support for google genai (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2740)
+- feat: Bump support for langgraph (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2736)
+- feat: Bump support for mistral (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2735)
+- feat(livekit): Trace LiveKit voice sessions with audio schema v3 Thanks @delner! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2726)
+- feat: Add `mcp-handler` tracing (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2696)
+
+### Patch Changes
+
+- feat: Bump support for ai sdk harness (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2738)
+- deps: Bump support for anthropic SDK (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2733)
+- feat: Bump support for langsmith (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2741)
+- docs(functions): clarify where invoke metadata reaches code functions (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2731)
+- fix(dev): honor max_concurrency from remote eval requests, capped by the evaluator's maxConcurrency Thanks @paultancre-bt! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2730)
+- fix(cursor): improve automatic and manual sdk tracing (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2698)
+- fix: preserve UTF-8 in logged ReadableStream byte chunks Thanks @diadkoshmek! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2701)
+- fix(openai): align Decisions spans with Python SDK Thanks @ankrgyl! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2723)
+- fix(livekit): Respect LiveKit's PII and project redaction settings Thanks @delner! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2724)
+
 ## 3.42.0
 
 ### Minor Changes

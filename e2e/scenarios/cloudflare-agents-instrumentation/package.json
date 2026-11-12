@@ -8,6 +8,14 @@
         "agents-v0-17-latest": {
           "package": "agents",
           "range": ">=0.17.0 <0.18.0"
+        },
+        "agents-v0-32-latest": {
+          "package": "agents",
+          "range": ">=0.32.0 <0.33.0"
+        },
+        "agents-v0-33-latest": {
+          "package": "agents",
+          "range": ">=0.33.0 <0.34.0"
         }
       }
     }
@@ -17,6 +25,10 @@
     "@cloudflare/workers-types": "5.20260719.1",
     "agents-v0-17": "npm:agents@0.17.0",
     "agents-v0-17-latest": "npm:agents@0.17.4",
+    "agents-v0-32": "npm:agents@0.32.0",
+    "agents-v0-32-latest": "npm:agents@0.32.0",
+    "agents-v0-33": "npm:agents@0.33.0",
+    "agents-v0-33-latest": "npm:agents@0.33.0",
     "ai": "6.0.82",
     "dc-browser": "1.0.4",
     "react": "19.2.3",

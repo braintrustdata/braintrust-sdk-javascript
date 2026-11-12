@@ -1,6 +1,8 @@
 import { channel, defineInterceptor } from "../core/interceptor-definitions";
 
 import type {
+  GoogleGenAIDecisionCreateParams,
+  GoogleGenAIDecisionResponse,
   GoogleGenAIEditImageParams,
   GoogleGenAIEditImageResponse,
   GoogleGenAIEmbedContentParams,
@@ -64,6 +66,12 @@ export const googleGenAIChannels = defineInterceptor("@google/genai", {
   }),
   httpResponseJson: channel<[], PromiseLike<GoogleGenAIEmbedContentResponse>>({
     channelName: "httpResponse.json",
+  }),
+  decisionsCreate: channel<
+    [GoogleGenAIDecisionCreateParams, Record<string, unknown>?],
+    PromiseLike<GoogleGenAIDecisionResponse>
+  >({
+    channelName: "decisions.create",
   }),
   interactionsCreate: channel<
     [GoogleGenAIInteractionCreateParams, Record<string, unknown>?],

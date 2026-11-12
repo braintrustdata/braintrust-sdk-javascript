@@ -1,0 +1,1401 @@
+{
+  "span_tree": [
+    {
+      "name": "anthropic-instrumentation-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "anthropic-create-operation",
+          "children": [
+            {
+              "name": "anthropic.messages.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Reply with exactly OK.",
+                  "role": "user"
+                }
+              ],
+              "output": {
+                "content": [
+                  {
+                    "text": "OK",
+                    "type": "text"
+                  }
+                ],
+                "role": "assistant"
+              },
+              "metadata": {
+                "max_tokens": 24,
+                "model": "claude-haiku-4-5",
+                "provider": "anthropic",
+                "served_service_tier": "standard",
+                "stop_reason": "end_turn",
+                "stop_sequence": null
+              },
+              "metrics": {
+                "completion_tokens": 4,
+                "prompt_cache_creation_1h_tokens": 0,
+                "prompt_cache_creation_5m_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 12,
+                "time_to_first_token": 0,
+                "tokens": 16
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "create",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-system-blocks-operation",
+          "children": [
+            {
+              "name": "anthropic.messages.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": [
+                    {
+                      "text": "translate to english",
+                      "type": "text"
+                    },
+                    {
+                      "text": "remove all punctuation",
+                      "type": "text"
+                    },
+                    {
+                      "text": "only the answer no other text",
+                      "type": "text"
+                    }
+                  ],
+                  "role": "system"
+                },
+                {
+                  "content": "Bonjour mon ami!",
+                  "role": "user"
+                }
+              ],
+              "output": {
+                "content": [
+                  {
+                    "text": "Hello my friend",
+                    "type": "text"
+                  }
+                ],
+                "role": "assistant"
+              },
+              "metadata": {
+                "max_tokens": 24,
+                "model": "claude-haiku-4-5",
+                "provider": "anthropic",
+                "served_service_tier": "standard",
+                "stop_reason": "end_turn",
+                "stop_sequence": null
+              },
+              "metrics": {
+                "completion_tokens": 6,
+                "prompt_cache_creation_1h_tokens": 0,
+                "prompt_cache_creation_5m_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 30,
+                "time_to_first_token": 0,
+                "tokens": 36
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "system-blocks",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-create-with-response-operation",
+          "children": [
+            {
+              "name": "anthropic.messages.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Reply with exactly WITH_RESPONSE.",
+                  "role": "user"
+                }
+              ],
+              "output": {
+                "content": [
+                  {
+                    "text": "WITH_RESPONSE",
+                    "type": "text"
+                  }
+                ],
+                "role": "assistant"
+              },
+              "metadata": {
+                "max_tokens": 24,
+                "model": "claude-haiku-4-5",
+                "provider": "anthropic",
+                "served_service_tier": "standard",
+                "stop_reason": "end_turn",
+                "stop_sequence": null
+              },
+              "metrics": {
+                "completion_tokens": 7,
+                "prompt_cache_creation_1h_tokens": 0,
+                "prompt_cache_creation_5m_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 15,
+                "time_to_first_token": 0,
+                "tokens": 22
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "create-with-response",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-attachment-operation",
+          "children": [
+            {
+              "name": "anthropic.messages.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": [
+                    {
+                      "text": "Describe the attached image in one short sentence.",
+                      "type": "text"
+                    },
+                    {
+                      "source": {
+                        "data": {
+                          "content_type": "image/png",
+                          "filename": "image.png",
+                          "key": "<uuid:1>",
+                          "type": "braintrust_attachment"
+                        },
+                        "media_type": "image/png",
+                        "type": "base64"
+                      },
+                      "type": "image"
+                    }
+                  ],
+                  "role": "user"
+                }
+              ],
+              "output": {
+                "content": [
+                  {
+                    "text": "A majestic sailing ship navigates through a dramatic storm with towering waves and lightning-filled skies.",
+                    "type": "text"
+                  }
+                ],
+                "role": "assistant"
+              },
+              "metadata": {
+                "max_tokens": 32,
+                "model": "claude-haiku-4-5",
+                "provider": "anthropic",
+                "served_service_tier": "standard",
+                "stop_reason": "end_turn",
+                "stop_sequence": null
+              },
+              "metrics": {
+                "completion_tokens": 26,
+                "prompt_cache_creation_1h_tokens": 0,
+                "prompt_cache_creation_5m_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 1389,
+                "time_to_first_token": 0,
+                "tokens": 1415
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "attachment",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-stream-operation",
+          "children": [
+            {
+              "name": "anthropic.messages.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Count from 1 to 3 and include the words one two three.",
+                  "role": "user"
+                }
+              ],
+              "output": "1. one\n2. two\n3. three",
+              "metadata": {
+                "container": null,
+                "max_tokens": 32,
+                "model": "claude-haiku-4-5",
+                "provider": "anthropic",
+                "served_service_tier": "standard",
+                "stop_details": null,
+                "stop_reason": "end_turn",
+                "stop_sequence": null,
+                "stream": true
+              },
+              "metrics": {
+                "completion_tokens": 15,
+                "prompt_cache_creation_1h_tokens": 0,
+                "prompt_cache_creation_5m_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 24,
+                "time_to_first_token": 0,
+                "tokens": 39
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "stream",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-stream-with-response-operation",
+          "children": [
+            {
+              "name": "anthropic.messages.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Count from 1 to 3 and include the words one two three.",
+                  "role": "user"
+                }
+              ],
+              "output": "1. one\n2. two\n3. three",
+              "metadata": {
+                "container": null,
+                "max_tokens": 32,
+                "model": "claude-haiku-4-5",
+                "provider": "anthropic",
+                "served_service_tier": "standard",
+                "stop_details": null,
+                "stop_reason": "end_turn",
+                "stop_sequence": null,
+                "stream": true
+              },
+              "metrics": {
+                "completion_tokens": 15,
+                "prompt_cache_creation_1h_tokens": 0,
+                "prompt_cache_creation_5m_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 24,
+                "time_to_first_token": 0,
+                "tokens": 39
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "stream-with-response",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-stream-tool-operation",
+          "children": [
+            {
+              "name": "anthropic.messages.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Use the get_weather tool for Paris, France. Do not answer from memory.",
+                  "role": "user"
+                }
+              ],
+              "output": {
+                "content": [
+                  {
+                    "id": "<span:1>",
+                    "input": {
+                      "location": "Paris, France"
+                    },
+                    "name": "get_weather",
+                    "type": "tool_use"
+                  }
+                ],
+                "role": "assistant"
+              },
+              "metadata": {
+                "container": null,
+                "max_tokens": 128,
+                "model": "claude-haiku-4-5",
+                "provider": "anthropic",
+                "served_service_tier": "standard",
+                "stop_details": null,
+                "stop_reason": "tool_use",
+                "stop_sequence": null,
+                "stream": true,
+                "tool_choice": {
+                  "disable_parallel_tool_use": true,
+                  "name": "get_weather",
+                  "type": "tool"
+                },
+                "tools": [
+                  {
+                    "description": "Get the current weather in a given location",
+                    "input_schema": {
+                      "properties": {
+                        "location": {
+                          "description": "The city and state or city and country",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "location"
+                      ],
+                      "type": "object"
+                    },
+                    "name": "get_weather"
+                  }
+                ]
+              },
+              "metrics": {
+                "completion_tokens": 26,
+                "prompt_cache_creation_1h_tokens": 0,
+                "prompt_cache_creation_5m_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 687,
+                "time_to_first_token": 0,
+                "tokens": 713
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "stream-tool",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-tool-operation",
+          "children": [
+            {
+              "name": "anthropic.messages.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Use the get_weather tool for Paris, France. Do not answer from memory.",
+                  "role": "user"
+                }
+              ],
+              "output": {
+                "content": [
+                  {
+                    "caller": {
+                      "type": "direct"
+                    },
+                    "id": "<span:1>",
+                    "input": {
+                      "location": "Paris, France"
+                    },
+                    "name": "get_weather",
+                    "type": "tool_use"
+                  }
+                ],
+                "role": "assistant"
+              },
+              "metadata": {
+                "max_tokens": 128,
+                "model": "claude-haiku-4-5",
+                "provider": "anthropic",
+                "served_service_tier": "standard",
+                "stop_reason": "tool_use",
+                "stop_sequence": null,
+                "tools": [
+                  {
+                    "description": "Get the current weather in a given location",
+                    "input_schema": {
+                      "properties": {
+                        "location": {
+                          "description": "The city and state or city and country",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "location"
+                      ],
+                      "type": "object"
+                    },
+                    "name": "get_weather"
+                  }
+                ]
+              },
+              "metrics": {
+                "completion_tokens": 56,
+                "prompt_cache_creation_1h_tokens": 0,
+                "prompt_cache_creation_5m_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 589,
+                "time_to_first_token": 0,
+                "tokens": 645
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "tool",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-server-tool-use-operation",
+          "children": [
+            {
+              "name": "anthropic.messages.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Use web_search to find one recent AI SDK release headline and return one short sentence.",
+                  "role": "user"
+                }
+              ],
+              "output": {
+                "content": [
+                  {
+                    "id": "<span:1>",
+                    "input": {
+                      "query": "AI SDK release 2026"
+                    },
+                    "name": "web_search",
+                    "type": "server_tool_use"
+                  },
+                  {
+                    "caller": {
+                      "type": "direct"
+                    },
+                    "content": [
+                      {
+                        "encrypted_content": "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",
+                        "page_age": "122 days ago",
+                        "title": "Azure SDK Release (May 2026) - Azure SDK Blog",
+                        "type": "web_search_result",
+                        "url": "https://devblogs.microsoft.com/azure-sdk/azure-sdk-release-may-2026/"
+                      },
+                      {
+                        "encrypted_content": "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",
+                        "page_age": null,
+                        "title": "Release Notes",
+                        "type": "web_search_result",
+                        "url": "https://sap.github.io/ai-sdk/docs/js/release-notes"
+                      },
+                      {
+                        "encrypted_content": "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",
+                        "page_age": "149 days ago",
+                        "title": "AI Agent Frameworks (2026 Update): 8 SDKs Compared + the Claude Agent SDK Primitive Reference",
+                        "type": "web_search_result",
+                        "url": "https://www.morphllm.com/ai-agent-framework"
+                      },
+                      {
+                        "encrypted_content": "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",
+                        "page_age": null,
+                        "title": "Aluminium OS",
+                        "type": "web_search_result",
+                        "url": "https://en.wikipedia.org/wiki/Aluminium_OS"
+                      },
+                      {
+                        "encrypted_content": "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",
+                        "page_age": null,
+                        "title": "Android 17",
+                        "type": "web_search_result",
+                        "url": "https://en.wikipedia.org/wiki/Android_17"
+                      },
+                      {
+                        "encrypted_content": "EtcNCioIFRgCIiQyNzc5NjY2OC03MzUxLTQwYWMtYWNjNC0wMjRhZWU4OTk1YTUSDMM42pHHn7QO1qllwxoMFia2EF0OAH5i9EnQIjCSjyBa50e4zgimOb4PE9HrT1p5Le3N48twHK5E6mcqeTnn3orxnu6Ka1KJ5zuL8Koq2gzahNDHUqyKhtAwe4nArW7YHvXVmFZMYGZ6qMIF0m6tjpUdV97hgNj2Snku4qRZWaw1hte4tJzM4dEoYLEfycXrl/rlbNP2d3U5x820tEJw2Nj8c8bXnZX3TdsbjXHClzWnuGefRZYDO9adAhQuayhYy1+sDFRL0eR4zH7OrUkE9NTsBS/ELcwa0NugbyGdbzTzz063cW6TBkFwHoql0EoxiBaZNl72A9de5Is8QpHIqkHVa+SIsdqvCXH1/1ier0KEUSn6d/HfDY3RjaafAjOC0j6S/3LVwXDnptQAhJZGzSkDB8gAP7C2XT7VRPdMtta56PWuEGVsbvxiKe6r5m2TqLAHkrXnTZ00rHP104l7NQaq93sskyFgLcxcbURVsUSnIPwV05MSd1bmeKuTAhyZNRjg3uExlMS50HaLr3nR3IOZwvNAQlWPtn7jThRac7JZGljPuyMfbaRiw4vw8XVkPbvwq0wr+tfW0fCokWVMHJ8lmPiJJXPDNkXQHQSl+5srHQKeU9Xs51ruZ4EJ4974ZXeZeS+IwWNIWpXwDw9U6vTHF8361WXryrtYmaaJCWxz7TiDF3OOZXIDt7oniECgxD62bcrjZWzSlPIoJAjS9eDPMtvPfVcA6xT2YXhDFSTlrqLXpk4ZkjLOcRGr2/cV9g2P/BuiCULgM555hdCWmdtRU6G+fB1liOcqXzdfr6sg4f+ySg/92LSklgr2UKscCGG/x43zx7gvWQHbtTs2hDEGNjBudyDaxFGBANpyFnNmafJaOF4rSIJAasfkBdWAqjoEUJCeqsG2wLW3ggFloIn9BCIjmqoLFGWFECQ2LJACCCWEPHJrCB7hNdiYh7+V3kpCuNHs4hVXHUgve/hquDmRd7mWex8ooALrv3SvTKbTX7+6weNx75N8RAehTikuH0rPZ8wWftstPumMtDkmGv/wGdU3RpUmRkrbFnm3dGa0qnLT6X7MHAoz5Yj3kmEdkOfxeOAxKHKcRLuypymXt6vc5uR8S8hqZuR1Y1vtyMrCh/TBZnm7ByDUU1zrXMCR7HFvXpxh4xXKDX7akxVqwg5SnWDx08o7wpowICeVEoA6X5DivRkFFsYXkqL9eOtCFrRBVi+Dl11PtHNbuXdn/4K6pjqgUAqsgw60FCcN2ZIIPrjqXFEqv64UTx5XI61DnMWma6uODpXweNrJCdmYBcQZV2dBYvneE7A+ut7THZhR1UENNKgUmIrWUPhjH7Hd2TM0dQp3X+PZA0rgvrohedh+nD8gIrAFiXfkB/2ik9Gpx4sytozE/iJZXWtOvgPRzXXA71eih8SyAaqQK/3eZj6FB0WSzKCe0dVGIAPq3fyNeqf1TbuIi5ZPuQOtAzkcXOOqotdvxqQerVGHZz3QveDd0wZGTPaKPfyt/JSMnzYP3LLYKqmhig+uo4NcM730VviEuYo+FbE5+1V/wJ9EqHgXoM0GudbcSkditOPbXT/quClVFUEzaSpKwUA4MpV3sZmt2Vb94/V70gb+dn7bdiD1/pn/9AsAlb1FTiIBUP3up1ffqlwawdCTaFrwdLcSLTFpSQ16a64Ck5TOHDQ/++rBLYm8w0I9b7WUiaYOBmRKYxIYgfZoDWYtLAxStNXIb0fEoFl79U3YddBlQ/njQ8QTU1eZf5GmIKd0I+Ann8Et2VIkMQs7BsYZ/Ivg8o2nEfPCZpkSgU0SwyP5XjFlZLgorY7RAA2zA7SHdupDaOgkr67YGlC/3BhnUnCSg36Ak8dE8b0qrfXtLwURI+civva8Pf2nqqR0LiWYa09Kjp7XkA3wU7vcuckdH47qxAeFUtAIBtMMQolxzwKffGOrPvinQpeeZTpRcYk19ib/CsFNlDIusSO5SjcsMJeZGKu2KFPELG0OOnmkU1H7H4M5+2RxgJQxLm6Ugc65QX1ZXAr1zWjNK313Jp57FHSiyGg1cFSrNgokHbzSunEXd4QFf54PnlUGjEG9M3GR9d2PjsXqFb9koHdDJ45russBAkpXh9rCTdNwxQoy4b2Uk/HeK7MIuWK0cz65nZ0qh5Ly06BON4kYLhLJk0KX7MASVTOt5n2L4lNP8Ain2dpr5VMKyHbwMUA5x+3X+h+EhrOSMxNsGTT1KriwRpitLIy7OYnvr7YjddWVsx+NB1RayxwtQVCfn+wxugqyDP8YAw==",
+                        "page_age": "6 days ago",
+                        "title": "Vercel AI SDK Updates by Vercel - October 2026 - Releasebot",
+                        "type": "web_search_result",
+                        "url": "https://releasebot.io/updates/vercel/vercel-ai"
+                      },
+                      {
+                        "encrypted_content": "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",
+                        "page_age": "7 days ago",
+                        "title": "Vercel Release Notes - October 2026 Latest Updates - Releasebot",
+                        "type": "web_search_result",
+                        "url": "https://releasebot.io/updates/vercel"
+                      },
+                      {
+                        "encrypted_content": "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",
+                        "page_age": "120 days ago",
+                        "title": "The 9 Best AI Agent Frameworks in 2026 (We Tested Every Single One)",
+                        "type": "web_search_result",
+                        "url": "https://www.agentmail.to/blog/best-ai-agent-frameworks-2026"
+                      },
+                      {
+                        "encrypted_content": "EuwHCioIFRgCIiQyNzc5NjY2OC03MzUxLTQwYWMtYWNjNC0wMjRhZWU4OTk1YTUSDBz8Vz5WiHXnMefK5RoMJiGRTiezvHqzKfF7IjBbeFC7TpaiZETv8GWGX6ycmSjfijLxGvRSSpS2K+144fux+DklSM4F3WbCu8PkFgQq7wZyDPhb4gFz/VXZsiPaCF8i2SLJnsf0yknAvpXPeQKyrZoH7VVBeNs8zB5drxrjhmYfH8YfF3I3BjVfOVIaibWLjLZEiRIMu5I20CxPCS4w1CmvXolfguhw1RKmjNXwFEpNisA1rxZ/hLW0Kr0ravluengtVGyQQrQDDch8kR2GnII31LRS4XIajcC5h1sd87p37fxKvOxAJCDmoqhyMtk1t6T+bY77V/jUXzav0zNlSwc1W+jFiuNhZlsqbQN20iE1G4KPJPNfti9ZknEhP97Hy+rLujsWp/dumMLqfffLdof0y7c/34PbgD2P+mBUkCUliUEQ8iYQ/Ql9BJAdbz0Kp2GFb2WhluW2h7AZ3TAGEuN38IlXI/JQ4KsqRdFV8andD/HLPJKktB2q+wwDaJuXExjiaO2/Jkv33srWfjkAKeqeIxo98pfB+4M8WIv9uzlMM+Jh1Xz8UoI2txwlphuAEbBJwIsrJsuCKGNjqJQHsG0jKo/hqXc0iu7toBWW/aJYoLgaVQ7Uv6r3WmOv+eYI0W/0g5MBxOr4BSedSYqewZ003lyqlClLJuf9zahLFEmJMIq1td9Wmw6A5GYBV58OXCZAp2+BERW3utY7YPmhueVkiOtDaiV0kDNjDXUut6WVwZbwg4blGwfPyTwby+m89utSSSCdcncCw1PoFxgOt/DCaNro/QGyLr7HEsZSt4snw0tBI8jxye9FRcfd3GNh+ffsnLb+h3U9dlvzX1ujnqiwJoKVlLJKXIaEnT1N5gAB87658sJBQ1eczD7ErPTN/U8bqpjKmkJOHfM0A1eZFDMSN08KBEbmtYEaIJt+mopTWpWKd9/9m5yK2/hgjAqHkmyO5wi5CiKm2wdscN3JtuqSmuf0jxI7x3E2ahDdWoHoVu8hhKT20Ng2/xj/DZ0KbGNaIQZyc4/dke/KAwPkkkxySsMt/Gos34Z6yyGQT8R6EZa+A+aK2UncjhWjSrYygPQM6AlovSW7FnU/JGslqAboT/AoPsfXKh+ygiRFFc1pDV8fdKMos2fOX0hGV6Ybd0UgCc5o5pQIjsjVK3pw1fgvvA/c6EYTXy5RocH72KvI6sb8YVY2L86hEb21FlgI0P2PHkcfOgFdIWC2Gq+3TIPnIWez17KRDKIFwkTCNQ7tkfyzV5TOkno/npVJyGAYAw==",
+                        "page_age": "132 days ago",
+                        "title": "Vercel on X: \"AI SDK 7 is here. This release sets the foundation for agents and AI platforms in production: approvals, durability, telemetry, and more.\" / X",
+                        "type": "web_search_result",
+                        "url": "https://x.com/vercel/status/2070155382488764566"
+                      }
+                    ],
+                    "tool_use_id": "srvtoolu_01VBvpYEGQZvRq71sRy4PDkr",
+                    "type": "web_search_tool_result"
+                  },
+                  {
+                    "citations": [
+                      {
+                        "cited_text": "AI SDK 7 is here. This release sets the foundation for agents and AI platforms in production: approvals, durability, telemetry, and more.\n\n",
+                        "encrypted_index": "EpEBCioIFRgCIiQyNzc5NjY2OC03MzUxLTQwYWMtYWNjNC0wMjRhZWU4OTk1YTUSDGpYJGCG5yXGw1meoBoM4hIApvrUr3pK4UGcIjDrMQuOFm0j4SqEw2eFwmI6TEbUEJnku1LVXsLNjz17p4893VcWPQcJtfkapbYuhekqFWYVFWk7AxSIT2oq9V2lYdioL8Q1RxgE",
+                        "title": "Vercel on X: \"AI SDK 7 is here. This release sets the foundation for agents and AI platforms in production: approvals, durability, telemetry, and more.\" / X",
+                        "type": "web_search_result_location",
+                        "url": "https://x.com/vercel/status/2070155382488764566"
+                      }
+                    ],
+                    "text": "Vercel's AI SDK 7 was released to set the foundation for agents and AI platforms in production with approvals, durability, and telemetry features.",
+                    "type": "text"
+                  }
+                ],
+                "role": "assistant"
+              },
+              "metadata": {
+                "max_tokens": 256,
+                "model": "claude-sonnet-4-5-20250929",
+                "provider": "anthropic",
+                "served_service_tier": "standard",
+                "stop_reason": "end_turn",
+                "stop_sequence": null,
+                "tool_choice": {
+                  "name": "web_search",
+                  "type": "tool"
+                },
+                "tools": [
+                  {
+                    "max_uses": 1,
+                    "name": "web_search",
+                    "type": "web_search_20250305"
+                  }
+                ]
+              },
+              "metrics": {
+                "completion_tokens": 96,
+                "prompt_cache_creation_1h_tokens": 0,
+                "prompt_cache_creation_5m_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 11472,
+                "server_tool_use_web_fetch_requests": 0,
+                "server_tool_use_web_search_requests": 1,
+                "time_to_first_token": 0,
+                "tokens": 11568
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "server-tool-use",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-stream-thinking-operation",
+          "children": [
+            {
+              "name": "anthropic.messages.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "What is 2+2? Reply with the number only.",
+                  "role": "user"
+                }
+              ],
+              "output": {
+                "content": [
+                  {
+                    "signature": "",
+                    "thinking": "The user is asking for 2+2, which equals 4. They want only the number as a reply.",
+                    "type": "thinking"
+                  },
+                  {
+                    "text": "4",
+                    "type": "text"
+                  }
+                ],
+                "role": "assistant"
+              },
+              "metadata": {
+                "container": null,
+                "max_tokens": 2048,
+                "model": "claude-sonnet-4-5-20250929",
+                "provider": "anthropic",
+                "served_service_tier": "standard",
+                "stop_details": null,
+                "stop_reason": "end_turn",
+                "stop_sequence": null,
+                "stream": true,
+                "thinking": {
+                  "budget_tokens": 1024,
+                  "type": "enabled"
+                }
+              },
+              "metrics": {
+                "completion_reasoning_tokens": 29,
+                "completion_tokens": 36,
+                "prompt_cache_creation_1h_tokens": 0,
+                "prompt_cache_creation_5m_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 49,
+                "time_to_first_token": 0,
+                "tokens": 85
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "stream-thinking",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-beta-create-operation",
+          "children": [
+            {
+              "name": "anthropic.messages.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Reply with exactly BETA.",
+                  "role": "user"
+                }
+              ],
+              "output": {
+                "content": [
+                  {
+                    "text": "BETA",
+                    "type": "text"
+                  }
+                ],
+                "role": "assistant"
+              },
+              "metadata": {
+                "max_tokens": 24,
+                "model": "claude-haiku-4-5",
+                "provider": "anthropic",
+                "served_service_tier": "standard",
+                "stop_reason": "end_turn",
+                "stop_sequence": null
+              },
+              "metrics": {
+                "completion_tokens": 5,
+                "prompt_cache_creation_1h_tokens": 0,
+                "prompt_cache_creation_5m_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 13,
+                "time_to_first_token": 0,
+                "tokens": 18
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "beta-create",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-beta-stream-operation",
+          "children": [
+            {
+              "name": "anthropic.messages.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Count from 1 to 3 and include the words one two three.",
+                  "role": "user"
+                }
+              ],
+              "output": "1. one\n2. two\n3. three",
+              "metadata": {
+                "container": null,
+                "max_tokens": 32,
+                "model": "claude-haiku-4-5",
+                "provider": "anthropic",
+                "served_service_tier": "standard",
+                "stop_details": null,
+                "stop_reason": "end_turn",
+                "stop_sequence": null,
+                "stream": true
+              },
+              "metrics": {
+                "completion_tokens": 15,
+                "prompt_cache_creation_1h_tokens": 0,
+                "prompt_cache_creation_5m_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 24,
+                "time_to_first_token": 0,
+                "tokens": 39
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "beta-stream",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-beta-messages-stream-operation",
+          "children": [
+            {
+              "name": "anthropic.messages.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Count from 1 to 3 and include the words one two three.",
+                  "role": "user"
+                }
+              ],
+              "output": "1. one\n2. two\n3. three",
+              "metadata": {
+                "container": null,
+                "max_tokens": 32,
+                "model": "claude-haiku-4-5",
+                "provider": "anthropic",
+                "served_service_tier": "standard",
+                "stop_details": null,
+                "stop_reason": "end_turn",
+                "stop_sequence": null,
+                "stream": true
+              },
+              "metrics": {
+                "completion_tokens": 15,
+                "prompt_cache_creation_1h_tokens": 0,
+                "prompt_cache_creation_5m_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 24,
+                "time_to_first_token": 0,
+                "tokens": 39
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "beta-messages-stream",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-beta-stream-tool-operation",
+          "children": [
+            {
+              "name": "anthropic.messages.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Use the get_weather tool for Paris, France. Do not answer from memory.",
+                  "role": "user"
+                }
+              ],
+              "output": {
+                "content": [
+                  {
+                    "id": "<span:1>",
+                    "input": {
+                      "location": "Paris, France"
+                    },
+                    "name": "get_weather",
+                    "type": "tool_use"
+                  }
+                ],
+                "role": "assistant"
+              },
+              "metadata": {
+                "container": null,
+                "max_tokens": 128,
+                "model": "claude-haiku-4-5",
+                "provider": "anthropic",
+                "served_service_tier": "standard",
+                "stop_details": null,
+                "stop_reason": "tool_use",
+                "stop_sequence": null,
+                "stream": true,
+                "tool_choice": {
+                  "disable_parallel_tool_use": true,
+                  "name": "get_weather",
+                  "type": "tool"
+                },
+                "tools": [
+                  {
+                    "description": "Get the current weather in a given location",
+                    "input_schema": {
+                      "properties": {
+                        "location": {
+                          "description": "The city and state or city and country",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "location"
+                      ],
+                      "type": "object"
+                    },
+                    "name": "get_weather"
+                  }
+                ]
+              },
+              "metrics": {
+                "completion_tokens": 26,
+                "prompt_cache_creation_1h_tokens": 0,
+                "prompt_cache_creation_5m_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 687,
+                "time_to_first_token": 0,
+                "tokens": 713
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "beta-stream-tool",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-beta-tool-runner-operation",
+          "children": [
+            {
+              "name": "anthropic.beta.messages.toolRunner",
+              "type": "task",
+              "children": [
+                {
+                  "name": "anthropic.messages.create",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": "Use the get_weather tool exactly once for Paris, France. After you receive the tool result, reply with exactly that tool result text and do not call any tools again.",
+                      "role": "user"
+                    }
+                  ],
+                  "output": {
+                    "content": [
+                      {
+                        "caller": {
+                          "type": "direct"
+                        },
+                        "id": "<span:1>",
+                        "input": {
+                          "location": "Paris, France"
+                        },
+                        "name": "get_weather",
+                        "type": "tool_use"
+                      }
+                    ],
+                    "role": "assistant"
+                  },
+                  "metadata": {
+                    "betas": [
+                      "message-threads-2026-08-12"
+                    ],
+                    "max_tokens": 128,
+                    "model": "claude-haiku-4-5",
+                    "provider": "anthropic",
+                    "served_service_tier": "standard",
+                    "stop_reason": "tool_use",
+                    "stop_sequence": null,
+                    "stream": false,
+                    "thread": {
+                      "type": "create"
+                    },
+                    "tools": [
+                      {
+                        "description": "Get the current weather in a given location",
+                        "input_schema": {
+                          "properties": {
+                            "location": {
+                              "description": "The city and state or city and country",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "location"
+                          ],
+                          "type": "object"
+                        },
+                        "name": "get_weather"
+                      }
+                    ]
+                  },
+                  "metrics": {
+                    "completion_tokens": 56,
+                    "prompt_cache_creation_1h_tokens": 0,
+                    "prompt_cache_creation_5m_tokens": 0,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 607,
+                    "time_to_first_token": 0,
+                    "tokens": 663
+                  }
+                },
+                {
+                  "name": "tool: get_weather",
+                  "type": "tool",
+                  "children": [
+                    {
+                      "name": "get_weather.lookup",
+                      "children": []
+                    }
+                  ],
+                  "input": {
+                    "location": "Paris, France"
+                  },
+                  "output": "The weather in Paris, France is 18C and sunny.",
+                  "metadata": {
+                    "gen_ai.tool.name": "get_weather",
+                    "provider": "anthropic"
+                  }
+                },
+                {
+                  "name": "anthropic.messages.create",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": [
+                        {
+                          "content": "The weather in Paris, France is 18C and sunny.",
+                          "tool_use_id": "toolu_018yL5idGyYtCjaDEEi3nH2n",
+                          "type": "tool_result"
+                        }
+                      ],
+                      "role": "user"
+                    }
+                  ],
+                  "output": {
+                    "content": [
+                      {
+                        "text": "The weather in Paris, France is 18C and sunny.",
+                        "type": "text"
+                      }
+                    ],
+                    "role": "assistant"
+                  },
+                  "metadata": {
+                    "betas": [
+                      "message-threads-2026-08-12"
+                    ],
+                    "max_tokens": 128,
+                    "model": "claude-haiku-4-5",
+                    "provider": "anthropic",
+                    "served_service_tier": "standard",
+                    "stop_reason": "end_turn",
+                    "stop_sequence": null,
+                    "stream": false,
+                    "thread": {
+                      "previous_message_id": "msg_011CgjvFyXo8mo41jGK1Jb5r",
+                      "type": "continue"
+                    }
+                  },
+                  "metrics": {
+                    "completion_tokens": 16,
+                    "prompt_cache_creation_1h_tokens": 0,
+                    "prompt_cache_creation_5m_tokens": 0,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 687,
+                    "time_to_first_token": 0,
+                    "tokens": 703
+                  }
+                }
+              ],
+              "input": [
+                {
+                  "content": "Use the get_weather tool exactly once for Paris, France. After you receive the tool result, reply with exactly that tool result text and do not call any tools again.",
+                  "role": "user"
+                }
+              ],
+              "output": {
+                "content": [
+                  {
+                    "text": "The weather in Paris, France is 18C and sunny.",
+                    "type": "text"
+                  }
+                ],
+                "role": "assistant"
+              },
+              "metadata": {
+                "anthropic_tool_runner_iterations": 2,
+                "max_iterations": 3,
+                "max_tokens": 128,
+                "model": "claude-haiku-4-5",
+                "operation": "toolRunner",
+                "provider": "anthropic",
+                "stop_reason": "end_turn",
+                "stop_sequence": null,
+                "tool_names": [
+                  "get_weather"
+                ]
+              },
+              "metrics": {
+                "completion_tokens": 72,
+                "prompt_cache_creation_1h_tokens": 0,
+                "prompt_cache_creation_5m_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 1294,
+                "time_to_first_token": 0,
+                "tokens": 1366
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "beta-tool-runner",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-sessions-turn-operation",
+          "children": [
+            {
+              "name": "anthropic.beta.sessions.turn",
+              "type": "task",
+              "children": [
+                {
+                  "name": "anthropic.messages.create",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": [
+                        {
+                          "text": "Check the weather in Paris.",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "user"
+                    }
+                  ],
+                  "output": {
+                    "content": [
+                      {
+                        "id": "<span:1>",
+                        "input": {
+                          "city": "Paris"
+                        },
+                        "name": "get_weather",
+                        "type": "tool_use"
+                      }
+                    ],
+                    "role": "assistant"
+                  },
+                  "metadata": {
+                    "provider": "anthropic"
+                  },
+                  "metrics": {
+                    "completion_tokens": 3,
+                    "prompt_cache_creation_tokens": 1,
+                    "prompt_cached_tokens": 2,
+                    "prompt_tokens": 13,
+                    "tokens": 16
+                  }
+                },
+                {
+                  "name": "get_weather",
+                  "type": "tool",
+                  "children": [],
+                  "input": {
+                    "city": "Paris"
+                  },
+                  "output": [
+                    {
+                      "text": "18C and sunny",
+                      "type": "text"
+                    }
+                  ],
+                  "metadata": {
+                    "tool_approval": "approved"
+                  }
+                },
+                {
+                  "name": "anthropic.messages.create",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": [
+                        {
+                          "text": "Check the weather in Paris.",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "user"
+                    },
+                    {
+                      "content": [
+                        {
+                          "id": "<span:1>",
+                          "input": {
+                            "city": "Paris"
+                          },
+                          "name": "get_weather",
+                          "type": "tool_use"
+                        }
+                      ],
+                      "role": "assistant"
+                    },
+                    {
+                      "content": [
+                        {
+                          "content": [
+                            {
+                              "text": "18C and sunny",
+                              "type": "text"
+                            }
+                          ],
+                          "tool_use_id": "sevt_tool_use",
+                          "type": "tool_result"
+                        }
+                      ],
+                      "role": "user"
+                    }
+                  ],
+                  "output": {
+                    "content": [
+                      {
+                        "text": "It is 18C and sunny.",
+                        "type": "text"
+                      }
+                    ],
+                    "role": "assistant"
+                  },
+                  "metadata": {
+                    "provider": "anthropic"
+                  },
+                  "metrics": {
+                    "completion_tokens": 4,
+                    "prompt_cache_creation_tokens": 0,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 20,
+                    "time_to_first_token": 0,
+                    "tokens": 24
+                  }
+                }
+              ],
+              "input": [
+                {
+                  "content": [
+                    {
+                      "text": "Check the weather in Paris.",
+                      "type": "text"
+                    }
+                  ],
+                  "role": "user"
+                }
+              ],
+              "output": {
+                "content": [
+                  {
+                    "text": "It is 18C and sunny.",
+                    "type": "text"
+                  }
+                ],
+                "role": "assistant"
+              },
+              "metadata": {
+                "provider": "anthropic"
+              },
+              "metrics": {
+                "completion_tokens": 7,
+                "prompt_cache_creation_tokens": 1,
+                "prompt_cached_tokens": 2,
+                "prompt_tokens": 33,
+                "tokens": 40
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "sessions-turn",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-sessions-uncollected-operation",
+          "children": [],
+          "metadata": {
+            "operation": "sessions-uncollected",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-sessions-thread-turn-operation",
+          "children": [
+            {
+              "name": "anthropic.beta.sessions.thread.turn",
+              "type": "task",
+              "children": [
+                {
+                  "name": "anthropic.messages.create",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": [
+                        {
+                          "text": "Check the weather in Paris.",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "user"
+                    }
+                  ],
+                  "output": {
+                    "content": [
+                      {
+                        "id": "<span:1>",
+                        "input": {
+                          "city": "Paris"
+                        },
+                        "name": "get_weather",
+                        "type": "tool_use"
+                      }
+                    ],
+                    "role": "assistant"
+                  },
+                  "metadata": {
+                    "provider": "anthropic"
+                  },
+                  "metrics": {
+                    "completion_tokens": 3,
+                    "prompt_cache_creation_tokens": 1,
+                    "prompt_cached_tokens": 2,
+                    "prompt_tokens": 13,
+                    "tokens": 16
+                  }
+                },
+                {
+                  "name": "get_weather",
+                  "type": "tool",
+                  "children": [],
+                  "input": {
+                    "city": "Paris"
+                  },
+                  "output": [
+                    {
+                      "text": "18C and sunny",
+                      "type": "text"
+                    }
+                  ],
+                  "metadata": {
+                    "tool_approval": "approved"
+                  }
+                },
+                {
+                  "name": "anthropic.messages.create",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": [
+                        {
+                          "text": "Check the weather in Paris.",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "user"
+                    },
+                    {
+                      "content": [
+                        {
+                          "id": "<span:1>",
+                          "input": {
+                            "city": "Paris"
+                          },
+                          "name": "get_weather",
+                          "type": "tool_use"
+                        }
+                      ],
+                      "role": "assistant"
+                    },
+                    {
+                      "content": [
+                        {
+                          "content": [
+                            {
+                              "text": "18C and sunny",
+                              "type": "text"
+                            }
+                          ],
+                          "tool_use_id": "sevt_tool_use",
+                          "type": "tool_result"
+                        }
+                      ],
+                      "role": "user"
+                    }
+                  ],
+                  "output": {
+                    "content": [
+                      {
+                        "text": "It is 18C and sunny.",
+                        "type": "text"
+                      }
+                    ],
+                    "role": "assistant"
+                  },
+                  "metadata": {
+                    "provider": "anthropic"
+                  },
+                  "metrics": {
+                    "completion_tokens": 4,
+                    "prompt_cache_creation_tokens": 0,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 20,
+                    "time_to_first_token": 0,
+                    "tokens": 24
+                  }
+                }
+              ],
+              "input": [
+                {
+                  "content": [
+                    {
+                      "text": "Check the weather in Paris.",
+                      "type": "text"
+                    }
+                  ],
+                  "role": "user"
+                }
+              ],
+              "output": {
+                "content": [
+                  {
+                    "text": "It is 18C and sunny.",
+                    "type": "text"
+                  }
+                ],
+                "role": "assistant"
+              },
+              "metadata": {
+                "provider": "anthropic"
+              },
+              "metrics": {
+                "completion_tokens": 7,
+                "prompt_cache_creation_tokens": 1,
+                "prompt_cached_tokens": 2,
+                "prompt_tokens": 33,
+                "tokens": 40
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "sessions-thread-turn",
+            "testRunId": "<run:1>"
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "anthropic-instrumentation",
+        "testRunId": "<run:1>"
+      }
+    }
+  ]
+}

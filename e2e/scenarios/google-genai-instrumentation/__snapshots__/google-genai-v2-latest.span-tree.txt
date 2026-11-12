@@ -4,10 +4,20 @@ span_tree:
       "scenario": "google-genai-instrumentation",
       "testRunId": "<run:1>"
     }
+    context: {
+      "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+      "caller_functionname": "runTracedScenario",
+      "caller_lineno": 0
+    }
     ├── google-generate-operation
     │   metadata: {
     │     "operation": "generate",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── generate_content [llm]
     │       input: {
@@ -65,6 +75,7 @@ span_tree:
     │       metadata: {
     │         "maxOutputTokens": 24,
     │         "model": "gemini-2.5-flash",
+    │         "served_service_tier": "standard",
     │         "temperature": 0
     │       }
     │       metrics: {
@@ -74,10 +85,20 @@ span_tree:
     │         "prompt_tokens": 6,
     │         "tokens": 26
     │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
     ├── google-image-generate-operation
     │   metadata: {
     │     "operation": "image-generate",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── generate_content [llm]
     │       input: {
@@ -161,7 +182,8 @@ span_tree:
     │         "model": "gemini-2.5-flash-image",
     │         "responseModalities": [
     │           "IMAGE"
-    │         ]
+    │         ],
+    │         "served_service_tier": "standard"
     │       }
     │       metrics: {
     │         "completion_image_tokens": 1290,
@@ -170,10 +192,20 @@ span_tree:
     │         "prompt_tokens": 13,
     │         "tokens": 1303
     │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
     ├── google-image-generate-stream-operation
     │   metadata: {
     │     "operation": "image-generate-stream",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── generate_content_stream [llm]
     │       input: {
@@ -237,7 +269,8 @@ span_tree:
     │         "model": "gemini-2.5-flash-image",
     │         "responseModalities": [
     │           "IMAGE"
-    │         ]
+    │         ],
+    │         "served_service_tier": "standard"
     │       }
     │       metrics: {
     │         "completion_image_tokens": 1290,
@@ -247,10 +280,20 @@ span_tree:
     │         "time_to_first_token": 0,
     │         "tokens": 1303
     │       }
+    │       context: {
+    │         "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │         "caller_functionname": "collectAsync",
+    │         "caller_lineno": 0
+    │       }
     ├── google-native-image-edit-operation
     │   metadata: {
     │     "operation": "native-image-edit",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── generate_content [llm]
     │       input: {
@@ -355,7 +398,8 @@ span_tree:
     │         "model": "gemini-2.5-flash-image",
     │         "responseModalities": [
     │           "IMAGE"
-    │         ]
+    │         ],
+    │         "served_service_tier": "standard"
     │       }
     │       metrics: {
     │         "completion_image_tokens": 1290,
@@ -364,10 +408,20 @@ span_tree:
     │         "prompt_tokens": 279,
     │         "tokens": 1569
     │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
     ├── google-edit-image-operation
     │   metadata: {
     │     "operation": "edit-image",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── edit_image [llm]
     │       input: {
@@ -398,10 +452,20 @@ span_tree:
     │         "provider": "google"
     │       }
     │       error: "This method is only supported by the Gemini Enterprise Agent Platform (previously known as Vertex AI)."
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
     ├── google-generate-videos-operation
     │   metadata: {
     │     "operation": "generate-videos",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── generate_videos [llm]
     │       input: {
@@ -420,10 +484,20 @@ span_tree:
     │         "model": "veo-3.1-lite-generate-preview",
     │         "provider": "google"
     │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
     ├── google-legacy-image-generate-operation
     │   metadata: {
     │     "operation": "legacy-image-generate",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── generate_images [llm]
     │       input: {
@@ -439,11 +513,21 @@ span_tree:
     │         "model": "imagen-4.0-fast-generate-001",
     │         "provider": "google"
     │       }
-    │       error: "{\"error\":{\"code\":404,\"message\":\"models/imagen-4.0-fast-generate-001 is not found for API version v1beta, or is not supported for predict. Call ModelService.ListModels to see the list of available models and their supported methods.\",\"status\":\"NOT_FOUND\"}}"
+    │       error: "This method is only supported by the Gemini Enterprise Agent Platform (previously known as Vertex AI)."
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
     ├── google-system-instruction-operation
     │   metadata: {
     │     "operation": "system-instruction",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── generate_content [llm]
     │       input: {
@@ -508,6 +592,7 @@ span_tree:
     │       metadata: {
     │         "maxOutputTokens": 64,
     │         "model": "gemini-2.5-flash",
+    │         "served_service_tier": "standard",
     │         "systemInstruction": "You are a pirate. Always respond in pirate speak.",
     │         "temperature": 0
     │       }
@@ -518,10 +603,20 @@ span_tree:
     │         "prompt_tokens": 19,
     │         "tokens": 79
     │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
     ├── google-multi-turn-operation
     │   metadata: {
     │     "operation": "multi-turn",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── generate_content [llm]
     │       input: {
@@ -608,6 +703,7 @@ span_tree:
     │       metadata: {
     │         "maxOutputTokens": 64,
     │         "model": "gemini-2.5-flash",
+    │         "served_service_tier": "standard",
     │         "temperature": 0
     │       }
     │       metrics: {
@@ -617,10 +713,20 @@ span_tree:
     │         "prompt_tokens": 28,
     │         "tokens": 66
     │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
     ├── google-embed-operation
     │   metadata: {
     │     "operation": "embed",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── embed_content [llm]
     │       input: {
@@ -637,10 +743,20 @@ span_tree:
     │         "model": "gemini-embedding-001",
     │         "provider": "google"
     │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
     ├── google-multimodal-embed-operation
     │   metadata: {
     │     "operation": "multimodal-embed",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── embed_content [llm]
     │       input: {
@@ -724,10 +840,20 @@ span_tree:
     │         "prompt_tokens": 699,
     │         "tokens": 699
     │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
     ├── google-video-generate-operation
     │   metadata: {
     │     "operation": "video-generate",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── generate_video [llm]
     │       input: {
@@ -758,6 +884,7 @@ span_tree:
     │         "interaction_id": "<interaction_id:1>",
     │         "model": "gemini-omni-1.1-flash",
     │         "provider": "google",
+    │         "served_service_tier": "standard",
     │         "status": "completed"
     │       }
     │       metrics: {
@@ -773,6 +900,11 @@ span_tree:
     │     "operation": "interaction",
     │     "testRunId": "<run:1>"
     │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
+    │   }
     │   └── create_interaction [llm]
     │       input: {
     │         "generation_config": {
@@ -787,11 +919,31 @@ span_tree:
     │         "model": "gemini-2.5-flash"
     │       }
     │       output: {
+    │         "continuation_ids": [
+    │           "v1_ChdkQXlrYXJIYktjbWpfdU1QaFpiei1BNBIXZEF5a2FySGJLY21qX3VNUGhaYnotQTQ"
+    │         ],
     │         "created": "<timestamp>",
     │         "id": "<span:1>",
     │         "model": "gemini-2.5-flash",
     │         "object": "interaction",
     │         "output_text": "ROME",
+    │         "sdkHttpResponse": {
+    │           "headers": {
+    │             "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+    │             "connection": "keep-alive",
+    │             "content-type": "application/json",
+    │             "date": "<timestamp>",
+    │             "keep-alive": "timeout=5",
+    │             "server": "scaffolding on HTTPServer2",
+    │             "server-timing": "<server-timing>",
+    │             "transfer-encoding": "chunked",
+    │             "vary": "Origin, X-Origin, Referer",
+    │             "x-content-type-options": "nosniff",
+    │             "x-frame-options": "SAMEORIGIN",
+    │             "x-xss-protection": "0"
+    │           },
+    │           "responseInternal": {}
+    │         },
     │         "service_tier": "standard",
     │         "status": "completed",
     │         "steps": [
@@ -811,6 +963,7 @@ span_tree:
     │         ],
     │         "updated": "<timestamp>",
     │         "usage": {
+    │           "initial_input_tokens": 7,
     │           "input_tokens_by_modality": [
     │             {
     │               "modality": "text",
@@ -834,6 +987,7 @@ span_tree:
     │         "interaction_id": "<interaction_id:1>",
     │         "model": "gemini-2.5-flash",
     │         "provider": "google",
+    │         "served_service_tier": "standard",
     │         "status": "completed"
     │       }
     │       metrics: {
@@ -848,6 +1002,11 @@ span_tree:
     │   metadata: {
     │     "operation": "interaction-stream",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── create_interaction [llm]
     │       input: {
@@ -913,6 +1072,7 @@ span_tree:
     │         "interaction_id": "<interaction_id:1>",
     │         "model": "gemini-2.5-flash",
     │         "provider": "google",
+    │         "served_service_tier": "standard",
     │         "status": "completed"
     │       }
     │       metrics: {
@@ -929,6 +1089,11 @@ span_tree:
     │     "operation": "interaction-stateful-first",
     │     "testRunId": "<run:1>"
     │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
+    │   }
     │   └── create_interaction [llm]
     │       input: {
     │         "generation_config": {
@@ -943,11 +1108,31 @@ span_tree:
     │         "model": "gemini-2.5-flash"
     │       }
     │       output: {
+    │         "continuation_ids": [
+    │           "v1_ChdlQXlrYXRHSkh0M1BfdU1QdWI2TjJBNBIXZUF5a2F0R0pIdDNQX3VNUHViNk4yQTQ"
+    │         ],
     │         "created": "<timestamp>",
     │         "id": "<span:1>",
     │         "model": "gemini-2.5-flash",
     │         "object": "interaction",
     │         "output_text": "Hi Amir! Nice to meet you. How can I help you today?",
+    │         "sdkHttpResponse": {
+    │           "headers": {
+    │             "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+    │             "connection": "keep-alive",
+    │             "content-type": "application/json",
+    │             "date": "<timestamp>",
+    │             "keep-alive": "timeout=5",
+    │             "server": "scaffolding on HTTPServer2",
+    │             "server-timing": "<server-timing>",
+    │             "transfer-encoding": "chunked",
+    │             "vary": "Origin, X-Origin, Referer",
+    │             "x-content-type-options": "nosniff",
+    │             "x-frame-options": "SAMEORIGIN",
+    │             "x-xss-protection": "0"
+    │           },
+    │           "responseInternal": {}
+    │         },
     │         "service_tier": "standard",
     │         "status": "completed",
     │         "steps": [
@@ -967,6 +1152,7 @@ span_tree:
     │         ],
     │         "updated": "<timestamp>",
     │         "usage": {
+    │           "initial_input_tokens": 8,
     │           "input_tokens_by_modality": [
     │             {
     │               "modality": "text",
@@ -990,6 +1176,7 @@ span_tree:
     │         "interaction_id": "<interaction_id:1>",
     │         "model": "gemini-2.5-flash",
     │         "provider": "google",
+    │         "served_service_tier": "standard",
     │         "status": "completed"
     │       }
     │       metrics: {
@@ -1004,6 +1191,11 @@ span_tree:
     │   metadata: {
     │     "operation": "interaction-stateful-second",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── create_interaction [llm]
     │       input: {
@@ -1020,11 +1212,31 @@ span_tree:
     │         "previous_interaction_id": "<previous_interaction_id:1>"
     │       }
     │       output: {
+    │         "continuation_ids": [
+    │           "v1_ChdlQXlrYXRHSkh0M1BfdU1QdWI2TjJBNBIXZVF5a2F2X09OWU9UX3VNUHpyWFk4UUU"
+    │         ],
     │         "created": "<timestamp>",
     │         "id": "<span:1>",
     │         "model": "gemini-2.5-flash",
     │         "object": "interaction",
     │         "output_text": "AMIR",
+    │         "sdkHttpResponse": {
+    │           "headers": {
+    │             "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+    │             "connection": "keep-alive",
+    │             "content-type": "application/json",
+    │             "date": "<timestamp>",
+    │             "keep-alive": "timeout=5",
+    │             "server": "scaffolding on HTTPServer2",
+    │             "server-timing": "<server-timing>",
+    │             "transfer-encoding": "chunked",
+    │             "vary": "Origin, X-Origin, Referer",
+    │             "x-content-type-options": "nosniff",
+    │             "x-frame-options": "SAMEORIGIN",
+    │             "x-xss-protection": "0"
+    │           },
+    │           "responseInternal": {}
+    │         },
     │         "service_tier": "standard",
     │         "status": "completed",
     │         "steps": [
@@ -1044,6 +1256,7 @@ span_tree:
     │         ],
     │         "updated": "<timestamp>",
     │         "usage": {
+    │           "initial_input_tokens": 36,
     │           "input_tokens_by_modality": [
     │             {
     │               "modality": "text",
@@ -1067,6 +1280,7 @@ span_tree:
     │         "interaction_id": "<interaction_id:1>",
     │         "model": "gemini-2.5-flash",
     │         "provider": "google",
+    │         "served_service_tier": "standard",
     │         "status": "completed"
     │       }
     │       metrics: {
@@ -1082,10 +1296,20 @@ span_tree:
     │     "operation": "interaction-background",
     │     "testRunId": "<run:1>"
     │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
+    │   }
     ├── google-attachment-operation
     │   metadata: {
     │     "operation": "attachment",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── generate_content [llm]
     │       input: {
@@ -1164,6 +1388,7 @@ span_tree:
     │       metadata: {
     │         "maxOutputTokens": 48,
     │         "model": "gemini-2.5-flash",
+    │         "served_service_tier": "standard",
     │         "temperature": 0
     │       }
     │       metrics: {
@@ -1173,10 +1398,20 @@ span_tree:
     │         "prompt_tokens": 268,
     │         "tokens": 312
     │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
     ├── google-stream-operation
     │   metadata: {
     │     "operation": "stream",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── generate_content_stream [llm]
     │       input: {
@@ -1197,10 +1432,20 @@ span_tree:
     │       metrics: {
     │         "duration": 0
     │       }
+    │       context: {
+    │         "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │         "caller_functionname": "collectAsync",
+    │         "caller_lineno": 0
+    │       }
     ├── google-stream-return-operation
     │   metadata: {
     │     "operation": "stream-return",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── generate_content_stream [llm]
     │       input: {
@@ -1245,6 +1490,7 @@ span_tree:
     │       metadata: {
     │         "maxOutputTokens": 24,
     │         "model": "gemini-2.5-flash",
+    │         "served_service_tier": "standard",
     │         "temperature": 0
     │       }
     │       metrics: {
@@ -1255,10 +1501,20 @@ span_tree:
     │         "time_to_first_token": 0,
     │         "tokens": 27
     │       }
+    │       context: {
+    │         "caller_filename": "<repo>/e2e/scenarios/google-genai-instrumentation/scenario.impl.mjs",
+    │         "caller_functionname": "<anonymous>",
+    │         "caller_lineno": 0
+    │       }
     ├── google-grounded-generate-operation
     │   metadata: {
     │     "operation": "grounded-generate",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── generate_content [llm]
     │       input: {
@@ -1385,6 +1641,7 @@ span_tree:
     │         },
     │         "maxOutputTokens": 256,
     │         "model": "gemini-2.5-flash",
+    │         "served_service_tier": "standard",
     │         "temperature": 0,
     │         "tools": [
     │           {
@@ -1399,10 +1656,20 @@ span_tree:
     │         "prompt_tokens": 121,
     │         "tokens": 388
     │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
     ├── google-grounded-stream-operation
     │   metadata: {
     │     "operation": "grounded-stream",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── generate_content_stream [llm]
     │       input: {
@@ -1535,6 +1802,7 @@ span_tree:
     │         },
     │         "maxOutputTokens": 256,
     │         "model": "gemini-2.5-flash",
+    │         "served_service_tier": "standard",
     │         "temperature": 0,
     │         "tools": [
     │           {
@@ -1550,10 +1818,20 @@ span_tree:
     │         "time_to_first_token": 0,
     │         "tokens": 363
     │       }
+    │       context: {
+    │         "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │         "caller_functionname": "collectAsync",
+    │         "caller_lineno": 0
+    │       }
     ├── google-tool-operation
     │   metadata: {
     │     "operation": "tool",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── generate_content [llm]
     │       input: {
@@ -1631,6 +1909,7 @@ span_tree:
     │       metadata: {
     │         "maxOutputTokens": 128,
     │         "model": "gemini-2.5-flash",
+    │         "served_service_tier": "standard",
     │         "temperature": 0,
     │         "toolConfig": {
     │           "functionCallingConfig": {
@@ -1670,10 +1949,20 @@ span_tree:
     │         "prompt_tokens": 65,
     │         "tokens": 164
     │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
     └── google-multi-tool-operation
         metadata: {
           "operation": "multi-tool",
           "testRunId": "<run:1>"
+        }
+        context: {
+          "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+          "caller_functionname": "runOperation",
+          "caller_lineno": 0
         }
         └── generate_content [llm]
             input: {
@@ -1760,6 +2049,7 @@ span_tree:
             metadata: {
               "maxOutputTokens": 128,
               "model": "gemini-2.5-flash",
+              "served_service_tier": "standard",
               "temperature": 0,
               "toolConfig": {
                 "functionCallingConfig": {
@@ -1815,4 +2105,9 @@ span_tree:
               "duration": 0,
               "prompt_tokens": 110,
               "tokens": 207
+            }
+            context: {
+              "caller_filename": "<node-internal>",
+              "caller_functionname": "<node-internal>",
+              "caller_lineno": 0
             }

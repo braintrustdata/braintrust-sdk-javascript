@@ -119,6 +119,7 @@ export interface CursorSDKRun {
   readonly result?: string;
   readonly model?: CursorSDKModelSelection;
   readonly durationMs?: number;
+  readonly usage?: CursorSDKUsage;
   readonly git?: CursorSDKRunGitInfo;
   readonly createdAt?: number;
   stream(): AsyncGenerator<CursorSDKMessage, void>;
@@ -139,6 +140,7 @@ export interface CursorSDKRunResult {
   result?: string;
   model?: CursorSDKModelSelection;
   durationMs?: number;
+  usage?: CursorSDKUsage;
   git?: CursorSDKRunGitInfo;
   [key: string]: unknown;
 }

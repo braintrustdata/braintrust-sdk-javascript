@@ -61,6 +61,13 @@
                 }
               ],
               "metadata": {
+                "audio.selections": {
+                  "selection-0": {
+                    "end_offset_ms": 0,
+                    "start_offset_ms": 0
+                  }
+                },
+                "audio.source_id": "agent-output",
                 "contrib.livekit.message_ids": [
                   "<native:3>"
                 ],
@@ -82,6 +89,16 @@
             ],
             "contrib.livekit.generation_count": 1,
             "contrib.livekit.generation_id": "<native:2>",
+            "contrib.livekit.playback_events": [
+              {
+                "attributes": {
+                  "interrupted": false,
+                  "playbackPosition": 0
+                },
+                "name": "playbackFinished",
+                "time_unix_ms": 0
+              }
+            ],
             "contrib.livekit.speech.queue_wait": 0,
             "contrib.livekit.speech_id": "<native:1>",
             "gen_ai.agent.name": "default_agent",
@@ -171,6 +188,18 @@
         }
       ],
       "metadata": {
+        "audio.schema.version": "3.0.0",
+        "audio.sources": {
+          "agent-output": {
+            "label": "Agent audio"
+          },
+          "session-input": {
+            "label": "Agent input audio"
+          }
+        },
+        "audio.timeline": {
+          "origin_unix_ms": 0
+        },
         "contrib.livekit.agent_label": "default_agent",
         "contrib.livekit.events": [
           {

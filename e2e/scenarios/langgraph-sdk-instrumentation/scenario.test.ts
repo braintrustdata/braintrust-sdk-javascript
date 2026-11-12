@@ -19,7 +19,12 @@ const scenarioDir = await prepareScenarioDir({
   scenarioDir: originalScenarioDir,
 });
 const variants = await Promise.all(
-  ["langgraph-sdk-v1", "langgraph-sdk-v1-latest"].map(async (dependency) => ({
+  [
+    "langgraph-sdk-v1",
+    "langgraph-sdk-v1-latest",
+    "langgraph-sdk-v2",
+    "langgraph-sdk-v2-latest",
+  ].map(async (dependency) => ({
     dependency,
     version: await readInstalledPackageVersion(scenarioDir, dependency),
   })),

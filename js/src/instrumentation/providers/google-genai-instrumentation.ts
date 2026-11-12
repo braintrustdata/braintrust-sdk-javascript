@@ -1,12 +1,16 @@
+import { automaticAttachmentOriginals } from "../../automatic-attachments";
+import { serviceTierMetadata } from "../core/service-tier";
 import { uint8ArrayToBase64 } from "../../../util/bytes";
 import { debugLogger } from "../../debug-logger";
 import {
+  convertDataToBlob,
   getExtensionFromMediaType,
   omitMediaData,
+  isEnvFlagEnabled,
   processInputAttachments,
 } from "../../wrappers/attachment-utils";
 
-import { traceStreamingCall } from "../core/tracing";
+import { traceAsyncCall, traceStreamingCall } from "../core/tracing";
 import { observeResult, runInstrumentation } from "../core/observe-result";
 
 import { SpanTypeAttribute } from "../../../util/index";
@@ -122,6 +126,7 @@ class GoogleGenAIInstrumentationConsumer {
     this.subscribeToGenerateImagesChannel();
     this.subscribeToEditImageChannel();
     this.subscribeToGenerateVideosChannel();
+    this.subscribeToDecisionsCreateChannel();
   }
 
   private subscribeToGenerateContentChannel(): void {
@@ -268,14 +273,38 @@ class GoogleGenAIInstrumentationConsumer {
         });
       };
       runInstrumentation(() => prepare(event));
-      const result = Reflect.apply(target, receiver, args);
+      const failed = (error: unknown) => {
+        const streamEvent = event as GenerateContentStreamEvent;
+        const span = startBaseSpan(
+          withSpanInstrumentationName(
+            {
+              name: "generate_content_stream",
+              spanAttributes: { type: SpanTypeAttribute.LLM },
+              event: {
+                input: streamEvent.googleGenAIInput,
+                metadata: streamEvent.googleGenAIMetadata,
+              },
+            },
+            INSTRUMENTATION_NAMES.GOOGLE_GENAI,
+          ),
+        );
+        span.log({ error });
+        span.end();
+      };
+      let result;
+      try {
+        result = Reflect.apply(target, receiver, args);
+      } catch (error) {
+        runInstrumentation(() => failed(error));
+        throw error;
+      }
       return observeResult(
         result,
         (value) => {
           Object.assign(event, { result: value });
           resolved(event);
         },
-        () => {},
+        failed,
       );
     });
   }
@@ -428,6 +457,76 @@ class GoogleGenAIInstrumentationConsumer {
     });
   }
 
+  private subscribeToDecisionsCreateChannel(): void {
+    googleGenAIChannels.decisionsCreate.intercept(
+      (target, receiver, args, additional) =>
+        traceAsyncCall<typeof googleGenAIChannels.decisionsCreate>(
+          () =>
+            runWithAutoInstrumentationSuppressed(() =>
+              Reflect.apply(target, receiver, args),
+            ),
+          { ...additional, arguments: args, self: receiver },
+          {
+            instrumentationName: INSTRUMENTATION_NAMES.GOOGLE_GENAI,
+            name: "create_decision",
+            type: "decision",
+            extractInput: ([params]) => ({
+              input: {
+                state: Array.isArray(params.input)
+                  ? params.input.map(serializeDecisionContent)
+                  : serializeDecisionContent(params.input),
+                questions: Object.entries(params.questions).map(
+                  ([id, question]) => ({
+                    id,
+                    type: question.type === "noul" ? "boolean" : question.type,
+                    instructions: Array.isArray(question.instructions)
+                      ? question.instructions.map(serializeDecisionContent)
+                      : serializeDecisionContent(question.instructions),
+                    ...(question.criteria !== undefined
+                      ? { criteria: question.criteria }
+                      : {}),
+                  }),
+                ),
+              },
+              metadata: { model: params.model, provider: "google" },
+            }),
+            extractOutput: (result) => ({
+              answers: Object.entries(result.answers ?? {}).map(
+                ([id, answer]) =>
+                  answer.type === "noul"
+                    ? { id, type: "boolean", probability: answer.noul }
+                    : {
+                        id,
+                        type: answer.type,
+                        ...(answer.choice !== undefined
+                          ? { choice: answer.choice }
+                          : {}),
+                        ...(answer.score !== undefined
+                          ? { score: answer.score }
+                          : {}),
+                        ...(answer.confidence !== undefined
+                          ? { confidence: answer.confidence }
+                          : {}),
+                        ...(answer.probabilities !== undefined
+                          ? { probabilities: answer.probabilities }
+                          : {}),
+                        ...(answer.legend !== undefined
+                          ? { legend: answer.legend }
+                          : {}),
+                      },
+              ),
+            }),
+            extractMetrics: (result) => {
+              const metrics: Record<string, number> = {};
+              if (result.usage)
+                populateInteractionUsageMetrics(metrics, result.usage);
+              return metrics;
+            },
+          },
+        ),
+    );
+  }
+
   private subscribeToInteractionsCreateChannel(): void {
     googleGenAIChannels.interactionsCreate.intercept(
       (target, receiver, args, additional) =>
@@ -447,7 +546,11 @@ class GoogleGenAIInstrumentationConsumer {
                 ? serializeVideoInteractionInput(params)
                 : serializeInteractionInput(params),
               metadata: isVideoInteractionCreate(params)
-                ? { model: params.model, provider: "google" }
+                ? {
+                    model: params.model,
+                    provider: "google",
+                    ...serviceTierMetadata({ requested: params.service_tier }),
+                  }
                 : extractInteractionMetadata(params),
             }),
             extractOutput: (result, event) =>
@@ -459,6 +562,8 @@ class GoogleGenAIInstrumentationConsumer {
               extractInteractionResponseMetadata(result),
             extractMetrics: (result, startTime) =>
               cleanMetrics(extractInteractionMetrics(result, startTime)),
+            extractChunkMetadata: (event) =>
+              serviceTierMetadata({ served: event.interaction?.service_tier }),
             aggregateChunks: (chunks, _result, _event, startTime) =>
               aggregateInteractionEvents(chunks, startTime),
           },
@@ -654,6 +759,7 @@ function patchGoogleGenAIStreamingResult(args: {
   const chunks: GoogleGenAIGenerateContentResponse[] = [];
   let firstTokenTime: number | null = null;
   let finalized = false;
+  let servedServiceTier: string | undefined;
   let span: Span | null = null;
   const requestStartTime = startTime ?? getCurrentUnixTimestamp();
 
@@ -782,6 +888,16 @@ function patchGoogleGenAIStreamingResult(args: {
           )) as IteratorResult<GoogleGenAIGenerateContentResponse>;
 
           if (!nextResult.done && nextResult.value) {
+            const tier = serviceTierMetadata({
+              served: nextResult.value.usageMetadata?.serviceTier,
+            });
+            if (
+              tier.served_service_tier &&
+              tier.served_service_tier !== servedServiceTier
+            ) {
+              servedServiceTier = tier.served_service_tier;
+              ensureSpan().log({ metadata: tier });
+            }
             if (firstTokenTime === null) {
               firstTokenTime = getCurrentUnixTimestamp();
             }
@@ -1282,6 +1398,34 @@ function serializeEmbedContentInput(
   }
 }
 
+function serializeDecisionContent(
+  content: string | GoogleGenAIInteractionContent,
+): unknown {
+  if (typeof content === "string") return content;
+  const { data, ...rest } = content;
+  if (data === undefined) return rest;
+  const isRecording =
+    content.type === "audio" ||
+    content.type === "video" ||
+    content.mime_type?.startsWith("audio/") ||
+    content.mime_type?.startsWith("video/");
+  const capture =
+    _internalCaptureAttachmentsEnabled() &&
+    (!isRecording ||
+      isEnvFlagEnabled("BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS"));
+  if (!capture) return rest;
+  if (!content.mime_type) return content;
+  const blob = convertDataToBlob(data, content.mime_type);
+  if (!blob) return content;
+  const attachment = new Attachment({
+    data: blob,
+    filename: `file.${getExtensionFromMediaType(content.mime_type)}`,
+    contentType: content.mime_type,
+  });
+  automaticAttachmentOriginals.set(attachment, data);
+  return { ...rest, data: attachment };
+}
+
 function serializeInteractionInput(
   params: GoogleGenAIInteractionCreateParams,
 ): Record<string, unknown> {
@@ -1319,7 +1463,10 @@ function serializeInteractionInput(
 function extractInteractionMetadata(
   params: GoogleGenAIInteractionCreateParams,
 ): Record<string, unknown> {
-  const metadata: Record<string, unknown> = { provider: "google" };
+  const metadata: Record<string, unknown> = {
+    provider: "google",
+    ...serviceTierMetadata({ requested: params.service_tier }),
+  };
 
   for (const key of [
     "model",
@@ -1772,6 +1919,11 @@ function extractGenerateContentMetadata(
     }
   }
 
+  Object.assign(
+    metadata,
+    serviceTierMetadata({ requested: params.config?.serviceTier }),
+  );
+
   const tools = serializeGenerateContentTools(params);
   if (tools) {
     metadata.tools = tools;
@@ -1868,7 +2020,9 @@ function extractInteractionResponseMetadata(
     return undefined;
   }
 
-  const metadata: Record<string, unknown> = {};
+  const metadata: Record<string, unknown> = serviceTierMetadata({
+    served: responseDict.service_tier,
+  });
   if (typeof responseDict.id === "string") {
     metadata.interaction_id = responseDict.id;
   }
@@ -2191,6 +2345,7 @@ function aggregateInteractionEvents(
     metrics.duration = end - startTime;
   }
 
+  const metadata: Record<string, unknown> = {};
   let latestInteraction: Record<string, unknown> | undefined;
   let latestUsage: GoogleGenAIInteractionUsage | undefined;
   let status: string | undefined;
@@ -2209,6 +2364,10 @@ function aggregateInteractionEvents(
     }
 
     const interaction = tryToDict(event.interaction);
+    Object.assign(
+      metadata,
+      serviceTierMetadata({ served: interaction?.service_tier }),
+    );
     if (interaction) {
       latestInteraction = serializeInteractionValue(interaction) as Record<
         string,
@@ -2269,7 +2428,6 @@ function aggregateInteractionEvents(
     output.steps = compactSteps;
   }
 
-  const metadata: Record<string, unknown> = {};
   if (typeof output.id === "string") {
     metadata.interaction_id = output.id;
   }
@@ -2389,6 +2547,12 @@ function extractResponseMetadata(
   }
 
   const metadata: Record<string, unknown> = {};
+  Object.assign(
+    metadata,
+    serviceTierMetadata({
+      served: tryToDict(responseDict.usageMetadata)?.serviceTier,
+    }),
+  );
   const responseGroundingMetadata = responseDict.groundingMetadata;
   const candidateGroundingMetadata: unknown[] = [];
 

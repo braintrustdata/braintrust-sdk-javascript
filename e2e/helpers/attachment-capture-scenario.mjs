@@ -50,7 +50,9 @@ export async function runAttachmentCaptureScenario(provider, scenarioUrl, sdk) {
       const result = await client.messages.create({
         model: "claude-haiku-4-5",
         max_tokens: 32,
-        temperature: 0,
+        ...(process.env.ANTHROPIC_SUPPORTS_TEMPERATURE !== "false"
+          ? { temperature: 0 }
+          : {}),
         messages: [
           {
             role: "user",

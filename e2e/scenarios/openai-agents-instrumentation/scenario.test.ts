@@ -17,10 +17,12 @@ const openAIAgentsScenarios = await Promise.all(
     {
       dependencyName: "openai-agents-v0",
       variantKey: "openai-agents-v0",
+      hasTurnSpans: false,
     },
     {
       dependencyName: "openai-agents-v0-latest",
       variantKey: "openai-agents-v0-latest",
+      hasTurnSpans: true,
     },
   ].map(async (scenario) => ({
     ...scenario,
@@ -36,6 +38,7 @@ describe.concurrent("variants", () => {
     describeVariant(`openai agents sdk ${scenario.version}`, () => {
       defineOpenAIAgentsAutoInstrumentationAssertions({
         name: "auto-hook instrumentation",
+        hasTurnSpans: scenario.hasTurnSpans,
         runScenario: async ({ runNodeScenarioDir }) => {
           await runNodeScenarioDir({
             entry: "scenario.mjs",

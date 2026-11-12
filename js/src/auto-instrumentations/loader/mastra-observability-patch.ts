@@ -11,6 +11,8 @@
  *
  *      // dist/index.js
  *      export { Mastra } from "./chunk-PLCLLPJL.js";
+ *      // Mastra 1.81 uses a named chunk and an aliased ESM export:
+ *      export { t as Mastra } from "./mastra-BES2WRR_.js";
  *
  *    The entry filename itself is stable (pinned by the package's `exports`
  *    map), so we patch it — but a re-export has no local binding to mutate,
@@ -102,21 +104,27 @@ export function classifyMastraTarget(
   return null;
 }
 
-// Extract the chunk path from a Mastra entry source.
+// Extract the chunk path and original export from a Mastra entry source.
 //   ESM shape: `export { Mastra } from "../chunk-XYZ.js";`
+//   ESM since 1.81: `export { t as Mastra } from "../mastra-XYZ.js";`
 //   CJS shape: `var chunkXYZ_cjs = require("../chunk-XYZ.cjs"); ...`
+//   CJS since 1.81: `const require_mastra = require("../mastra-XYZ.cjs"); ...`
 // Returns null when the shape isn't what we expect — caller falls through and
 // emits the original source unchanged so user code keeps working.
-function extractChunkPath(source: string): string | null {
+function extractMastraExport(
+  source: string,
+): { chunkPath: string; exportName: string } | null {
   const esmMatch = source.match(
-    /export\s*\{\s*Mastra(?:\s+as\s+\w+)?\s*\}\s*from\s*['"]([^'"]+)['"]/,
+    /export\s*\{\s*(?:Mastra|([\w$]+)\s+as\s+Mastra)\s*\}\s*from\s*['"]([^'"]+)['"]/,
   );
-  if (esmMatch) return esmMatch[1];
+  if (esmMatch) {
+    return { chunkPath: esmMatch[2], exportName: esmMatch[1] ?? "Mastra" };
+  }
 
   const cjsMatch = source.match(
-    /require\s*\(\s*['"]([^'"]+chunk-[^'"]+)['"]\s*\)/,
+    /require\s*\(\s*['"]([^'"]+(?:chunk|mastra)-[^'"]+)['"]\s*\)/,
   );
-  if (cjsMatch) return cjsMatch[1];
+  if (cjsMatch) return { chunkPath: cjsMatch[1], exportName: "Mastra" };
 
   return null;
 }
@@ -162,9 +170,9 @@ const MASTRA_PROXY_HANDLER_BODY = `
   },
 }`;
 
-function buildMastraEsmWrapper(chunkPath: string): string {
+function buildMastraEsmWrapper(chunkPath: string, exportName: string): string {
   const chunk = JSON.stringify(chunkPath);
-  return `import { Mastra as __braintrustOrigMastra } from ${chunk};
+  return `import { ${exportName} as __braintrustOrigMastra } from ${chunk};
 import { createRequire as __braintrustCreateRequire } from "node:module";
 
 let __braintrustObservabilityClass = null;
@@ -277,11 +285,11 @@ export function patchMastraSource(
   format: MastraModuleFormat,
 ): string {
   if (target === "core") {
-    const chunkPath = extractChunkPath(source);
-    if (!chunkPath) return source;
+    const mastraExport = extractMastraExport(source);
+    if (!mastraExport) return source;
     return format === "esm"
-      ? buildMastraEsmWrapper(chunkPath)
-      : buildMastraCjsWrapper(chunkPath);
+      ? buildMastraEsmWrapper(mastraExport.chunkPath, mastraExport.exportName)
+      : buildMastraCjsWrapper(mastraExport.chunkPath);
   }
   // Observability: append-wrap, leaving original source intact above.
   return source + OBSERVABILITY_APPEND_BODY;

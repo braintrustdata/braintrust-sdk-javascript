@@ -9,6 +9,7 @@ export function defineAttachmentCaptureTests(options: {
   provider: "openai" | "anthropic";
   packageName: string;
   variantKey: string;
+  supportsTemperature?: boolean;
 }) {
   for (const mode of ["wrapped", "auto"]) {
     test(`attachment capture policies (${options.variantKey}, ${mode})`, async () => {
@@ -21,6 +22,9 @@ export function defineAttachmentCaptureTests(options: {
             CAPTURE_PACKAGE_NAME: options.packageName,
             CAPTURE_WRAPPED: String(mode === "wrapped"),
             BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "",
+            ANTHROPIC_SUPPORTS_TEMPERATURE: String(
+              options.supportsTemperature ?? true,
+            ),
           },
           runContext: {
             variantKey: options.variantKey,

@@ -30,6 +30,7 @@
                 "max_tokens": 24,
                 "model": "claude-haiku-4-5",
                 "provider": "anthropic",
+                "served_service_tier": "standard",
                 "stop_reason": "end_turn",
                 "stop_sequence": null,
                 "temperature": 0
@@ -93,6 +94,7 @@
                 "max_tokens": 24,
                 "model": "claude-haiku-4-5",
                 "provider": "anthropic",
+                "served_service_tier": "standard",
                 "stop_reason": "end_turn",
                 "stop_sequence": null,
                 "temperature": 0
@@ -139,6 +141,7 @@
                 "max_tokens": 24,
                 "model": "claude-haiku-4-5",
                 "provider": "anthropic",
+                "served_service_tier": "standard",
                 "stop_reason": "end_turn",
                 "stop_sequence": null,
                 "temperature": 0
@@ -203,6 +206,7 @@
                 "max_tokens": 32,
                 "model": "claude-haiku-4-5",
                 "provider": "anthropic",
+                "served_service_tier": "standard",
                 "stop_reason": "end_turn",
                 "stop_sequence": null,
                 "temperature": 0
@@ -241,6 +245,7 @@
                 "max_tokens": 32,
                 "model": "claude-haiku-4-5",
                 "provider": "anthropic",
+                "served_service_tier": "standard",
                 "stop_details": null,
                 "stop_reason": "end_turn",
                 "stop_sequence": null,
@@ -281,6 +286,7 @@
                 "max_tokens": 32,
                 "model": "claude-haiku-4-5",
                 "provider": "anthropic",
+                "served_service_tier": "standard",
                 "stop_details": null,
                 "stop_reason": "end_turn",
                 "stop_sequence": null,
@@ -333,6 +339,7 @@
                 "max_tokens": 128,
                 "model": "claude-haiku-4-5",
                 "provider": "anthropic",
+                "served_service_tier": "standard",
                 "stop_details": null,
                 "stop_reason": "tool_use",
                 "stop_sequence": null,
@@ -411,6 +418,7 @@
                 "max_tokens": 128,
                 "model": "claude-haiku-4-5",
                 "provider": "anthropic",
+                "served_service_tier": "standard",
                 "stop_reason": "tool_use",
                 "stop_sequence": null,
                 "temperature": 0,

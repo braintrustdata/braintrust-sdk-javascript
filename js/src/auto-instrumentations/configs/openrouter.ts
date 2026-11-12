@@ -71,7 +71,8 @@ export const openRouterConfigs: InstrumentationConfig[] = [
     channelName: openRouterChannels.callModel.channelName,
     module: {
       name: "@openrouter/sdk",
-      versionRange: ">=0.9.11 <2.0.0",
+      // callModel moved to @openrouter/agent and was removed in SDK 1.5.57.
+      versionRange: ">=0.9.11 <1.5.57",
       filePath: "esm/sdk/sdk.js",
     },
     functionQuery: {

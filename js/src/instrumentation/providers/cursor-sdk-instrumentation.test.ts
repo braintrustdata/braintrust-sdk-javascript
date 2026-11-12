@@ -104,6 +104,57 @@ describe("CursorSDKPlugin", () => {
     expect(spans).toHaveLength(0);
   });
 
+  it("captures cumulative prompt usage when no agent callbacks are exposed", async () => {
+    const result = {
+      id: "run-prompt",
+      status: "finished",
+      result: "hello",
+      usage: {
+        inputTokens: 3,
+        outputTokens: 4,
+        cacheReadTokens: 5,
+        cacheWriteTokens: 2,
+      },
+    };
+    const promise = Promise.resolve(result);
+    expect(
+      handler("Agent.prompt").call({ arguments: ["hello", {}] }, () => promise),
+    ).toBe(promise);
+    await promise;
+    await settled();
+    expect(finalLog().metrics).toMatchObject({
+      prompt_tokens: 10,
+      completion_tokens: 4,
+      prompt_cached_tokens: 5,
+      prompt_cache_creation_tokens: 2,
+      tokens: 14,
+    });
+    expect(root().end).toHaveBeenCalledOnce();
+  });
+
+  it("uses cumulative run usage without counting observed turns twice", async () => {
+    const usage = {
+      inputTokens: 3,
+      outputTokens: 4,
+      cacheReadTokens: 5,
+      cacheWriteTokens: 2,
+    };
+    for (const observeTurn of [false, true]) {
+      const run = { ...makeRun(), usage };
+      const { result, options } = send(run);
+      await result;
+      if (observeTurn)
+        options.onDelta({ update: { type: "turn-ended", usage } });
+      await run.wait();
+      await settled();
+      expect(spans.at(-1).log.mock.calls.at(-1)[0].metrics).toMatchObject({
+        prompt_tokens: 10,
+        completion_tokens: 4,
+        tokens: 14,
+      });
+    }
+  });
+
   it("captures cache-inclusive usage without adding cache buckets twice", async () => {
     const { result, options } = send(makeRun());
     await result;

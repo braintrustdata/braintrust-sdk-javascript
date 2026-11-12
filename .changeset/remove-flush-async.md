@@ -2,4 +2,4 @@
 "braintrust": major
 ---
 
-ref!: Remove `flushAsync` option
+ref!: Remove `asyncFlush` option

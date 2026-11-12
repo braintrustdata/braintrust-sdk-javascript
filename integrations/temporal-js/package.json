@@ -1,6 +1,6 @@
 {
   "name": "@braintrust/temporal",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "SDK for integrating Braintrust with Temporal",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -27,11 +27,11 @@
   "author": "Braintrust Data Inc.",
   "license": "MIT",
   "devDependencies": {
-    "@temporalio/activity": "^1.14.1",
-    "@temporalio/client": "^1.14.1",
-    "@temporalio/common": "^1.14.1",
-    "@temporalio/worker": "^1.14.1",
-    "@temporalio/workflow": "^1.14.1",
+    "@temporalio/activity": "^1.25.0",
+    "@temporalio/client": "^1.25.0",
+    "@temporalio/common": "^1.25.0",
+    "@temporalio/worker": "^1.25.0",
+    "@temporalio/workflow": "^1.25.0",
     "@types/node": "^22.15.21",
     "braintrust": "workspace:*",
     "typescript": "5.5.4",
@@ -44,7 +44,7 @@
     "@temporalio/common": ">=1.11.0",
     "@temporalio/worker": ">=1.11.0",
     "@temporalio/workflow": ">=1.11.0",
-    "braintrust": ">=2.0.0"
+    "braintrust": "workspace:^"
   },
   "peerDependenciesMeta": {
     "braintrust": {

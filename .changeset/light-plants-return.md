@@ -3,4 +3,4 @@
 "braintrust": major
 ---
 
-feat!: Add `BRAINTRUST_CAPTURE_ATTACHMENTS` env var option and `captureAttachments` logger option for all integrations
+feat!: Add `BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS` env var option and `autoCaptureAttachments` logger option for all integrations

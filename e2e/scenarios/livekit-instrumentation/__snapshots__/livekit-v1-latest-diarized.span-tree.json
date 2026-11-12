@@ -1,0 +1,1182 @@
+{
+  "span_tree": [
+    {
+      "name": "session",
+      "type": "task",
+      "children": [
+        {
+          "name": "livekit.session_start",
+          "type": "task",
+          "children": [
+            {
+              "name": "livekit.start_agent_activity",
+              "type": "task",
+              "children": [
+                {
+                  "name": "livekit.setup_toolsets",
+                  "type": "task",
+                  "children": [],
+                  "metadata": {
+                    "scenario": "livekit-instrumentation",
+                    "testRunId": "<run:1>"
+                  }
+                },
+                {
+                  "name": "livekit.on_enter",
+                  "type": "task",
+                  "children": [],
+                  "metadata": {
+                    "contrib.livekit.agent_label": "default_agent",
+                    "scenario": "livekit-instrumentation",
+                    "testRunId": "<run:1>"
+                  }
+                }
+              ],
+              "metadata": {
+                "contrib.livekit.agent_label": "default_agent",
+                "gen_ai.agent.name": "default_agent",
+                "gen_ai.operation.name": "create_agent",
+                "gen_ai.provider.name": "<provider-host>",
+                "gen_ai.request.model": "gpt-5.4-nano",
+                "model": "gpt-5.4-nano",
+                "provider": "<provider-host>",
+                "scenario": "livekit-instrumentation",
+                "testRunId": "<run:1>"
+              }
+            }
+          ],
+          "metadata": {
+            "scenario": "livekit-instrumentation",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "user_turn",
+          "type": "task",
+          "children": [
+            {
+              "name": "user_speech",
+              "type": "task",
+              "children": [],
+              "metadata": {
+                "audio.selections": {
+                  "selection-0": {
+                    "end_offset_ms": 0,
+                    "start_offset_ms": 0
+                  }
+                },
+                "audio.source_id": "session-input",
+                "scenario": "livekit-instrumentation",
+                "testRunId": "<run:1>",
+                "turn.id": "<span:1>"
+              }
+            },
+            {
+              "name": "user_speech",
+              "type": "task",
+              "children": [],
+              "metadata": {
+                "audio.selections": {
+                  "selection-0": {
+                    "end_offset_ms": 0,
+                    "start_offset_ms": 0
+                  }
+                },
+                "audio.source_id": "session-input",
+                "scenario": "livekit-instrumentation",
+                "testRunId": "<run:1>",
+                "turn.id": "<span:1>"
+              }
+            },
+            {
+              "name": "user_speech",
+              "type": "task",
+              "children": [],
+              "metadata": {
+                "audio.selections": {
+                  "selection-0": {
+                    "end_offset_ms": 0,
+                    "start_offset_ms": 0
+                  }
+                },
+                "audio.source_id": "session-input",
+                "scenario": "livekit-instrumentation",
+                "testRunId": "<run:1>",
+                "turn.id": "<span:1>"
+              }
+            },
+            {
+              "name": "user_speech",
+              "type": "task",
+              "children": [],
+              "metadata": {
+                "audio.selections": {
+                  "selection-0": {
+                    "end_offset_ms": 0,
+                    "start_offset_ms": 0
+                  }
+                },
+                "audio.source_id": "session-input",
+                "scenario": "livekit-instrumentation",
+                "testRunId": "<run:1>",
+                "turn.id": "<span:1>"
+              }
+            },
+            {
+              "name": "stt",
+              "type": "task",
+              "children": [],
+              "output": [
+                {
+                  "content": "Hi. I'm calling with my partner,",
+                  "role": "user"
+                }
+              ],
+              "metadata": {
+                "audio.source_id": "session-input",
+                "audio.speaker_ids": [
+                  "speaker-1"
+                ],
+                "contrib.livekit.language": "en",
+                "contrib.livekit.provider_request_id": "session_fixture_1",
+                "contrib.livekit.speaker_id": "0",
+                "contrib.livekit.transcript_confidence": 1,
+                "model": "deepgram/nova-3",
+                "provider": "livekit",
+                "scenario": "livekit-instrumentation",
+                "testRunId": "<run:1>",
+                "turn.id": "<span:1>"
+              }
+            },
+            {
+              "name": "stt",
+              "type": "task",
+              "children": [],
+              "output": [
+                {
+                  "content": "who has a question about our order.",
+                  "role": "user"
+                }
+              ],
+              "metadata": {
+                "audio.source_id": "session-input",
+                "audio.speaker_ids": [
+                  "speaker-1"
+                ],
+                "contrib.livekit.language": "en",
+                "contrib.livekit.provider_request_id": "session_fixture_1",
+                "contrib.livekit.speaker_id": "0",
+                "contrib.livekit.transcript_confidence": 1,
+                "model": "deepgram/nova-3",
+                "provider": "livekit",
+                "scenario": "livekit-instrumentation",
+                "testRunId": "<run:1>",
+                "turn.id": "<span:1>"
+              }
+            },
+            {
+              "name": "stt",
+              "type": "task",
+              "children": [],
+              "output": [
+                {
+                  "content": "Where is order demo one zero four two?",
+                  "role": "user"
+                }
+              ],
+              "metadata": {
+                "audio.source_id": "session-input",
+                "audio.speaker_ids": [
+                  "speaker-2"
+                ],
+                "contrib.livekit.language": "en",
+                "contrib.livekit.provider_request_id": "session_fixture_1",
+                "contrib.livekit.speaker_id": "1",
+                "contrib.livekit.transcript_confidence": 0.9980469,
+                "model": "deepgram/nova-3",
+                "provider": "livekit",
+                "scenario": "livekit-instrumentation",
+                "testRunId": "<run:1>",
+                "turn.id": "<span:1>"
+              }
+            },
+            {
+              "name": "stt",
+              "type": "task",
+              "children": [],
+              "output": [
+                {
+                  "content": "It was supposed to arrive this week.",
+                  "role": "user"
+                }
+              ],
+              "metadata": {
+                "audio.source_id": "session-input",
+                "audio.speaker_ids": [
+                  "speaker-2"
+                ],
+                "contrib.livekit.language": "en",
+                "contrib.livekit.provider_request_id": "session_fixture_1",
+                "contrib.livekit.speaker_id": "1",
+                "contrib.livekit.transcript_confidence": 1,
+                "model": "deepgram/nova-3",
+                "provider": "livekit",
+                "scenario": "livekit-instrumentation",
+                "testRunId": "<run:1>",
+                "turn.id": "<span:1>"
+              }
+            },
+            {
+              "name": "stt",
+              "type": "task",
+              "children": [],
+              "output": [
+                {
+                  "content": "And we haven't heard anything.",
+                  "role": "user"
+                }
+              ],
+              "metadata": {
+                "audio.source_id": "session-input",
+                "audio.speaker_ids": [
+                  "speaker-2"
+                ],
+                "contrib.livekit.language": "en",
+                "contrib.livekit.provider_request_id": "session_fixture_1",
+                "contrib.livekit.speaker_id": "1",
+                "contrib.livekit.transcript_confidence": 0.99902344,
+                "model": "deepgram/nova-3",
+                "provider": "livekit",
+                "scenario": "livekit-instrumentation",
+                "testRunId": "<run:1>",
+                "turn.id": "<span:1>"
+              }
+            },
+            {
+              "name": "livekit.eou_wait",
+              "type": "task",
+              "children": [],
+              "metadata": {
+                "contrib.livekit.eou.endpointing_delay": 0,
+                "contrib.livekit.eou.not_committed_count": 0,
+                "contrib.livekit.eou.outcome": "committed",
+                "contrib.livekit.eou.rearm_count": 0,
+                "contrib.livekit.eou.source": "manual",
+                "contrib.livekit.eou.wait_duration": 0,
+                "scenario": "livekit-instrumentation",
+                "testRunId": "<run:1>",
+                "turn.id": "<span:1>"
+              }
+            },
+            {
+              "name": "livekit.on_user_turn_completed",
+              "type": "task",
+              "children": [],
+              "metadata": {
+                "contrib.livekit.agent_label": "default_agent",
+                "scenario": "livekit-instrumentation",
+                "testRunId": "<run:1>",
+                "turn.id": "<span:1>"
+              }
+            }
+          ],
+          "input": [
+            {
+              "content": "Hi. I'm calling with my partner, who has a question about our order. Where is order demo one zero four two? It was supposed to arrive this week. And we haven't heard anything.",
+              "role": "user"
+            }
+          ],
+          "metadata": {
+            "audio.selections": {
+              "selection-0": {
+                "end_offset_ms": 0,
+                "start_offset_ms": 0
+              }
+            },
+            "contrib.livekit.end_of_turn_delay": 0,
+            "contrib.livekit.message_id": "<native:1>",
+            "contrib.livekit.on_user_turn_completed_delay": 0,
+            "contrib.livekit.provider_request_ids": [
+              "session_fixture_1"
+            ],
+            "contrib.livekit.started_speaking_at": 0,
+            "contrib.livekit.stopped_speaking_at": 0,
+            "contrib.livekit.stt.events": [
+              {
+                "received_at": 0,
+                "transcript_length": 3,
+                "type": "interim_transcript"
+              },
+              {
+                "received_at": 0,
+                "transcript_length": 23,
+                "type": "interim_transcript"
+              },
+              {
+                "received_at": 0,
+                "transcript_length": 32,
+                "type": "final_transcript"
+              },
+              {
+                "received_at": 0,
+                "transcript_length": 24,
+                "type": "interim_transcript"
+              },
+              {
+                "received_at": 0,
+                "transcript_length": 35,
+                "type": "final_transcript"
+              },
+              {
+                "received_at": 0,
+                "transcript_length": 8,
+                "type": "interim_transcript"
+              },
+              {
+                "received_at": 0,
+                "transcript_length": 23,
+                "type": "interim_transcript"
+              },
+              {
+                "received_at": 0,
+                "transcript_length": 38,
+                "type": "interim_transcript"
+              },
+              {
+                "received_at": 0,
+                "transcript_length": 38,
+                "type": "final_transcript"
+              },
+              {
+                "received_at": 0,
+                "transcript_length": 15,
+                "type": "interim_transcript"
+              },
+              {
+                "received_at": 0,
+                "transcript_length": 35,
+                "type": "interim_transcript"
+              },
+              {
+                "received_at": 0,
+                "transcript_length": 36,
+                "type": "final_transcript"
+              },
+              {
+                "received_at": 0,
+                "transcript_length": 20,
+                "type": "interim_transcript"
+              },
+              {
+                "received_at": 0,
+                "transcript_length": 30,
+                "type": "final_transcript"
+              }
+            ],
+            "contrib.livekit.transcript_confidence": 0.9994140679999999,
+            "contrib.livekit.transcription_delay": 0,
+            "gen_ai.provider.name": "livekit",
+            "gen_ai.request.model": "deepgram/nova-3",
+            "model": "deepgram/nova-3",
+            "provider": "livekit",
+            "scenario": "livekit-instrumentation",
+            "testRunId": "<run:1>",
+            "turn.id": "<span:1>"
+          }
+        },
+        {
+          "name": "user_turn",
+          "type": "task",
+          "children": [
+            {
+              "name": "livekit.eou_wait",
+              "type": "task",
+              "children": [],
+              "metadata": {
+                "contrib.livekit.eou.endpointing_delay": 0,
+                "contrib.livekit.eou.not_committed_count": 0,
+                "contrib.livekit.eou.outcome": "committed",
+                "contrib.livekit.eou.rearm_count": 0,
+                "contrib.livekit.eou.source": "manual",
+                "contrib.livekit.eou.wait_duration": 0,
+                "scenario": "livekit-instrumentation",
+                "testRunId": "<run:1>",
+                "turn.id": "<span:1>"
+              }
+            }
+          ],
+          "metadata": {
+            "contrib.livekit.end_of_turn_delay": 0,
+            "contrib.livekit.transcript_confidence": 0,
+            "contrib.livekit.transcription_delay": 0,
+            "gen_ai.provider.name": "livekit",
+            "gen_ai.request.model": "deepgram/nova-3",
+            "model": "deepgram/nova-3",
+            "provider": "livekit",
+            "scenario": "livekit-instrumentation",
+            "testRunId": "<run:1>",
+            "turn.id": "<span:1>"
+          }
+        },
+        {
+          "name": "agent_turn",
+          "type": "task",
+          "children": [
+            {
+              "name": "llm_response",
+              "type": "llm",
+              "children": [
+                {
+                  "name": "livekit.llm_request_run",
+                  "type": "task",
+                  "children": [],
+                  "metadata": {
+                    "contrib.livekit.provider_request_ids": [
+                      "chatcmpl-EdfLzUW91M0k4r3I9GcqV6FhJAC3N"
+                    ],
+                    "contrib.livekit.retry_count": 0,
+                    "scenario": "livekit-instrumentation",
+                    "testRunId": "<run:1>",
+                    "turn.id": "<span:1>",
+                    "turn.reply_to": "<span:2>"
+                  }
+                }
+              ],
+              "input": [
+                {
+                  "content": "You help customers check orders. Always call lookup_order when an order number is supplied. Answer with one short sentence giving the delivery day.",
+                  "role": "system"
+                },
+                {
+                  "content": "Hi. I'm calling with my partner, who has a question about our order. Where is order demo one zero four two? It was supposed to arrive this week. And we haven't heard anything.",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "content": null,
+                  "role": "assistant",
+                  "tool_calls": [
+                    {
+                      "function": {
+                        "arguments": "{\"order_id\":\"demo one zero four two\"}",
+                        "name": "lookup_order"
+                      },
+                      "id": "<span:1>",
+                      "type": "function"
+                    }
+                  ]
+                }
+              ],
+              "metadata": {
+                "contrib.livekit.function_tools": "[\"lookup_order\"]",
+                "contrib.livekit.response.ttft": 0,
+                "gen_ai.operation.name": "chat",
+                "gen_ai.request.stream": true,
+                "gen_ai.response.finish_reasons": [
+                  "tool_call"
+                ],
+                "gen_ai.response.time_to_first_chunk": 0,
+                "links": [
+                  {
+                    "attributes": {
+                      "braintrust.relationship.type": "uses_context"
+                    },
+                    "context": {
+                      "spanId": "<span:4>",
+                      "traceFlags": 1,
+                      "traceId": "<span:3>"
+                    }
+                  },
+                  {
+                    "attributes": {
+                      "braintrust.relationship.type": "uses_context"
+                    },
+                    "context": {
+                      "spanId": "<span:5>",
+                      "traceFlags": 1,
+                      "traceId": "<span:3>"
+                    }
+                  },
+                  {
+                    "attributes": {
+                      "braintrust.relationship.type": "uses_context"
+                    },
+                    "context": {
+                      "spanId": "<span:6>",
+                      "traceFlags": 1,
+                      "traceId": "<span:3>"
+                    }
+                  },
+                  {
+                    "attributes": {
+                      "braintrust.relationship.type": "uses_context"
+                    },
+                    "context": {
+                      "spanId": "<span:7>",
+                      "traceFlags": 1,
+                      "traceId": "<span:3>"
+                    }
+                  },
+                  {
+                    "attributes": {
+                      "braintrust.relationship.type": "uses_context"
+                    },
+                    "context": {
+                      "spanId": "<span:8>",
+                      "traceFlags": 1,
+                      "traceId": "<span:3>"
+                    }
+                  }
+                ],
+                "model": "gpt-5.4-nano",
+                "provider": "<provider-host>",
+                "scenario": "livekit-instrumentation",
+                "testRunId": "<run:1>",
+                "tools": [
+                  {
+                    "function": {
+                      "description": "Look up an order delivery status.",
+                      "name": "lookup_order",
+                      "parameters": {
+                        "$schema": "http://json-schema.org/draft-07/schema#",
+                        "additionalProperties": false,
+                        "properties": {
+                          "order_id": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "order_id"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "type": "function"
+                  }
+                ],
+                "turn.id": "<span:1>",
+                "turn.reply_to": "<span:2>"
+              },
+              "metrics": {
+                "completion_tokens": 22,
+                "prompt_tokens": 195,
+                "time_to_first_token": 0,
+                "tokens": 217
+              }
+            },
+            {
+              "name": "llm_response",
+              "type": "llm",
+              "children": [
+                {
+                  "name": "livekit.llm_request_run",
+                  "type": "task",
+                  "children": [],
+                  "metadata": {
+                    "contrib.livekit.provider_request_ids": [
+                      "chatcmpl-EdfM0UB4rfCyVDVb2FThIQ08lgjzP"
+                    ],
+                    "contrib.livekit.retry_count": 0,
+                    "scenario": "livekit-instrumentation",
+                    "testRunId": "<run:1>",
+                    "turn.id": "<span:1>",
+                    "turn.reply_to": "<span:2>"
+                  }
+                }
+              ],
+              "input": [
+                {
+                  "content": "You help customers check orders. Always call lookup_order when an order number is supplied. Answer with one short sentence giving the delivery day.",
+                  "role": "system"
+                },
+                {
+                  "content": "Hi. I'm calling with my partner, who has a question about our order. Where is order demo one zero four two? It was supposed to arrive this week. And we haven't heard anything.",
+                  "role": "user"
+                },
+                {
+                  "content": null,
+                  "role": "assistant",
+                  "tool_calls": [
+                    {
+                      "function": {
+                        "arguments": "{\"order_id\":\"demo one zero four two\"}",
+                        "name": "lookup_order"
+                      },
+                      "id": "<span:1>",
+                      "type": "function"
+                    }
+                  ]
+                },
+                {
+                  "content": "{\"order_id\":\"demo one zero four two\",\"status\":\"in_transit\",\"delivery\":\"Friday\"}",
+                  "role": "tool",
+                  "tool_call_id": "call_o51XTQQhCMCPy3dK55DZsr8L"
+                }
+              ],
+              "output": [
+                {
+                  "content": "Your order demo one zero four two is scheduled for delivery on Friday.",
+                  "role": "assistant"
+                }
+              ],
+              "metadata": {
+                "contrib.livekit.function_tools": "[\"lookup_order\"]",
+                "contrib.livekit.response.ttft": 0,
+                "gen_ai.operation.name": "chat",
+                "gen_ai.request.stream": true,
+                "gen_ai.response.finish_reasons": [
+                  "stop"
+                ],
+                "gen_ai.response.time_to_first_chunk": 0,
+                "links": [
+                  {
+                    "attributes": {
+                      "braintrust.relationship.type": "uses_context"
+                    },
+                    "context": {
+                      "spanId": "<span:4>",
+                      "traceFlags": 1,
+                      "traceId": "<span:3>"
+                    }
+                  },
+                  {
+                    "attributes": {
+                      "braintrust.relationship.type": "uses_context"
+                    },
+                    "context": {
+                      "spanId": "<span:5>",
+                      "traceFlags": 1,
+                      "traceId": "<span:3>"
+                    }
+                  },
+                  {
+                    "attributes": {
+                      "braintrust.relationship.type": "uses_context"
+                    },
+                    "context": {
+                      "spanId": "<span:6>",
+                      "traceFlags": 1,
+                      "traceId": "<span:3>"
+                    }
+                  },
+                  {
+                    "attributes": {
+                      "braintrust.relationship.type": "uses_context"
+                    },
+                    "context": {
+                      "spanId": "<span:7>",
+                      "traceFlags": 1,
+                      "traceId": "<span:3>"
+                    }
+                  },
+                  {
+                    "attributes": {
+                      "braintrust.relationship.type": "uses_context"
+                    },
+                    "context": {
+                      "spanId": "<span:8>",
+                      "traceFlags": 1,
+                      "traceId": "<span:3>"
+                    }
+                  },
+                  {
+                    "attributes": {
+                      "braintrust.relationship.type": "consumes_tool_result"
+                    },
+                    "context": {
+                      "spanId": "<span:9>",
+                      "traceFlags": 1,
+                      "traceId": "<span:3>"
+                    }
+                  }
+                ],
+                "model": "gpt-5.4-nano",
+                "provider": "<provider-host>",
+                "scenario": "livekit-instrumentation",
+                "testRunId": "<run:1>",
+                "tool_choice": "auto",
+                "tools": [
+                  {
+                    "function": {
+                      "description": "Look up an order delivery status.",
+                      "name": "lookup_order",
+                      "parameters": {
+                        "$schema": "http://json-schema.org/draft-07/schema#",
+                        "additionalProperties": false,
+                        "properties": {
+                          "order_id": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "order_id"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "type": "function"
+                  }
+                ],
+                "turn.id": "<span:1>",
+                "turn.reply_to": "<span:2>"
+              },
+              "metrics": {
+                "completion_tokens": 17,
+                "prompt_tokens": 248,
+                "time_to_first_token": 0,
+                "tokens": 265
+              }
+            },
+            {
+              "name": "lookup_order",
+              "type": "tool",
+              "children": [],
+              "input": {
+                "order_id": "demo one zero four two"
+              },
+              "output": {
+                "delivery": "Friday",
+                "order_id": "demo one zero four two",
+                "status": "in_transit"
+              },
+              "metadata": {
+                "contrib.livekit.function_tool.is_error": false,
+                "contrib.livekit.function_tool.name": "lookup_order",
+                "gen_ai.agent.name": "default_agent",
+                "gen_ai.operation.name": "execute_tool",
+                "gen_ai.tool.call.id": "call_o51XTQQhCMCPy3dK55DZsr8L",
+                "gen_ai.tool.name": "lookup_order",
+                "gen_ai.tool.type": "function",
+                "links": [
+                  {
+                    "attributes": {
+                      "braintrust.relationship.type": "requested_by"
+                    },
+                    "context": {
+                      "spanId": "<span:4>",
+                      "traceFlags": 1,
+                      "traceId": "<span:3>"
+                    }
+                  }
+                ],
+                "scenario": "livekit-instrumentation",
+                "testRunId": "<run:1>",
+                "turn.id": "<span:1>",
+                "turn.reply_to": "<span:2>"
+              }
+            },
+            {
+              "name": "tts",
+              "type": "task",
+              "children": [
+                {
+                  "name": "livekit.tts_request",
+                  "type": "task",
+                  "children": [
+                    {
+                      "name": "livekit.tts_request_run",
+                      "type": "task",
+                      "children": [
+                        {
+                          "name": "livekit.tts_request",
+                          "type": "task",
+                          "children": [
+                            {
+                              "name": "livekit.tts_request_run",
+                              "type": "task",
+                              "children": [],
+                              "metadata": {
+                                "contrib.livekit.retry_count": 0,
+                                "scenario": "livekit-instrumentation",
+                                "testRunId": "<run:1>",
+                                "turn.id": "<span:1>",
+                                "turn.reply_to": "<span:2>"
+                              }
+                            }
+                          ],
+                          "metadata": {
+                            "contrib.livekit.tts.label": "openai.TTS",
+                            "contrib.livekit.tts.streaming": false,
+                            "contrib.livekit.tts_metrics": {
+                              "audioDurationMs": 0,
+                              "cancelled": false,
+                              "charactersCount": 70,
+                              "durationMs": 0,
+                              "inputTokens": 0,
+                              "label": "openai.TTS",
+                              "metadata": {
+                                "modelName": "gpt-4o-mini-tts",
+                                "modelProvider": "<provider-host>"
+                              },
+                              "outputTokens": 0,
+                              "requestId": "<native:5>",
+                              "streamed": false,
+                              "timestamp": 0,
+                              "ttfbMs": 0,
+                              "type": "tts_metrics"
+                            },
+                            "scenario": "livekit-instrumentation",
+                            "testRunId": "<run:1>",
+                            "turn.id": "<span:1>",
+                            "turn.reply_to": "<span:2>"
+                          }
+                        }
+                      ],
+                      "metadata": {
+                        "contrib.livekit.provider_request_ids": [
+                          "<native:5>"
+                        ],
+                        "contrib.livekit.retry_count": 0,
+                        "scenario": "livekit-instrumentation",
+                        "testRunId": "<run:1>",
+                        "turn.id": "<span:1>",
+                        "turn.reply_to": "<span:2>"
+                      }
+                    }
+                  ],
+                  "metadata": {
+                    "contrib.livekit.tts.label": "openai.TTS",
+                    "contrib.livekit.tts.streaming": true,
+                    "scenario": "livekit-instrumentation",
+                    "testRunId": "<run:1>",
+                    "turn.id": "<span:1>",
+                    "turn.reply_to": "<span:2>"
+                  }
+                }
+              ],
+              "metadata": {
+                "contrib.livekit.response.ttfb": 0,
+                "gen_ai.provider.name": "<provider-host>",
+                "gen_ai.request.model": "gpt-4o-mini-tts",
+                "links": [
+                  {
+                    "attributes": {
+                      "braintrust.relationship.type": "generated_by"
+                    },
+                    "context": {
+                      "spanId": "<span:2>",
+                      "traceFlags": 1,
+                      "traceId": "<span:1>"
+                    }
+                  }
+                ],
+                "model": "gpt-4o-mini-tts",
+                "provider": "<provider-host>",
+                "scenario": "livekit-instrumentation",
+                "testRunId": "<run:1>",
+                "turn.id": "<span:3>",
+                "turn.reply_to": "<span:4>"
+              }
+            },
+            {
+              "name": "agent_speech",
+              "type": "task",
+              "children": [],
+              "output": [
+                {
+                  "content": "Your order demo one zero four two is scheduled for delivery on Friday.",
+                  "role": "assistant"
+                }
+              ],
+              "metadata": {
+                "audio.selections": {
+                  "selection-0": {
+                    "end_offset_ms": 0,
+                    "start_offset_ms": 0
+                  }
+                },
+                "audio.source_id": "agent-output",
+                "contrib.livekit.message_ids": [
+                  "<native:6>"
+                ],
+                "links": [
+                  {
+                    "attributes": {
+                      "braintrust.relationship.type": "generated_by"
+                    },
+                    "context": {
+                      "spanId": "<span:2>",
+                      "traceFlags": 1,
+                      "traceId": "<span:1>"
+                    }
+                  }
+                ],
+                "scenario": "livekit-instrumentation",
+                "testRunId": "<run:1>",
+                "turn.id": "<span:3>",
+                "turn.reply_to": "<span:4>"
+              }
+            }
+          ],
+          "input": [
+            {
+              "content": "Hi. I'm calling with my partner, who has a question about our order. Where is order demo one zero four two? It was supposed to arrive this week. And we haven't heard anything.",
+              "role": "user"
+            }
+          ],
+          "metadata": {
+            "contrib.livekit.e2e_latency": 0,
+            "contrib.livekit.end_of_turn_delay": 0,
+            "contrib.livekit.events": [
+              {
+                "attributes": {
+                  "contrib.livekit.generation_id": "<native:4>"
+                },
+                "name": "generation",
+                "time_unix_ms": 0
+              },
+              {
+                "attributes": {
+                  "contrib.livekit.generation_id": "<native:3>",
+                  "contrib.livekit.parent_generation_id": "<native:4>"
+                },
+                "name": "generation",
+                "time_unix_ms": 0
+              }
+            ],
+            "contrib.livekit.generation_count": 2,
+            "contrib.livekit.generation_id": "<native:3>",
+            "contrib.livekit.interrupted": false,
+            "contrib.livekit.on_user_turn_completed_delay": 0,
+            "contrib.livekit.playback_events": [
+              {
+                "attributes": {
+                  "interrupted": false,
+                  "playbackPosition": 0
+                },
+                "name": "playbackFinished",
+                "time_unix_ms": 0
+              }
+            ],
+            "contrib.livekit.speech.queue_wait": 0,
+            "contrib.livekit.speech_id": "<native:2>",
+            "contrib.livekit.transcription_delay": 0,
+            "gen_ai.agent.name": "default_agent",
+            "gen_ai.operation.name": "invoke_agent",
+            "scenario": "livekit-instrumentation",
+            "testRunId": "<run:1>",
+            "turn.id": "<span:1>",
+            "turn.reply_to": "<span:2>"
+          }
+        },
+        {
+          "name": "livekit.session_close",
+          "type": "task",
+          "children": [
+            {
+              "name": "livekit.drain_agent_activity",
+              "type": "task",
+              "children": [
+                {
+                  "name": "livekit.on_exit",
+                  "type": "task",
+                  "children": [],
+                  "metadata": {
+                    "contrib.livekit.agent_label": "default_agent",
+                    "scenario": "livekit-instrumentation",
+                    "testRunId": "<run:1>"
+                  }
+                }
+              ],
+              "metadata": {
+                "contrib.livekit.agent_label": "default_agent",
+                "scenario": "livekit-instrumentation",
+                "testRunId": "<run:1>"
+              }
+            }
+          ],
+          "metadata": {
+            "contrib.livekit.close.drain": false,
+            "contrib.livekit.close_reason": "user_initiated",
+            "scenario": "livekit-instrumentation",
+            "testRunId": "<run:1>"
+          }
+        }
+      ],
+      "input": {
+        "audio": {
+          "part-0": {
+            "content_type": "audio/ogg",
+            "filename": "part-0.ogg",
+            "key": "<uuid:1>",
+            "type": "braintrust_attachment"
+          }
+        }
+      },
+      "metadata": {
+        "audio.schema.version": "3.0.0",
+        "audio.segments": {
+          "part-0": {
+            "attachment": {
+              "ref": "/input/audio/part-0"
+            },
+            "attributes": {
+              "opus.application": "audio",
+              "opus.bitrate_bps": 64000,
+              "opus.complexity": 5
+            },
+            "channels": {
+              "0": {
+                "sources": [
+                  "session-input"
+                ]
+              },
+              "1": {
+                "sources": [
+                  "agent-output"
+                ]
+              }
+            },
+            "duration_ms": 0,
+            "encoding": "opus",
+            "mime_type": "audio/ogg",
+            "sample_rate_hz": 48000,
+            "start_offset_ms": 0,
+            "state": "ready"
+          }
+        },
+        "audio.sources": {
+          "agent-output": {
+            "label": "Agent audio"
+          },
+          "session-input": {
+            "label": "Agent input audio"
+          }
+        },
+        "audio.speakers": {
+          "speaker-1": {
+            "attributes": {
+              "contrib.livekit.speaker_id": "0"
+            },
+            "type": "user"
+          },
+          "speaker-2": {
+            "attributes": {
+              "contrib.livekit.speaker_id": "1"
+            },
+            "type": "user"
+          }
+        },
+        "audio.timeline": {
+          "origin_unix_ms": 0
+        },
+        "contrib.livekit.agent_label": "default_agent",
+        "contrib.livekit.audio.input_formats": [
+          {
+            "channel_count": 1,
+            "sample_rate_hz": 16000
+          }
+        ],
+        "contrib.livekit.audio.output_formats": [
+          {
+            "channel_count": 1,
+            "sample_rate_hz": 24000
+          }
+        ],
+        "contrib.livekit.events": [
+          {
+            "attributes": {
+              "contrib.livekit.new_state": "listening",
+              "contrib.livekit.old_state": "initializing"
+            },
+            "name": "agent_state_changed",
+            "time_unix_ms": 0
+          },
+          {
+            "attributes": {
+              "contrib.livekit.new_state": "speaking",
+              "contrib.livekit.old_state": "listening"
+            },
+            "name": "user_state_changed",
+            "time_unix_ms": 0
+          },
+          {
+            "attributes": {
+              "contrib.livekit.new_state": "listening",
+              "contrib.livekit.old_state": "speaking"
+            },
+            "name": "user_state_changed",
+            "time_unix_ms": 0
+          },
+          {
+            "attributes": {
+              "contrib.livekit.new_state": "speaking",
+              "contrib.livekit.old_state": "listening"
+            },
+            "name": "user_state_changed",
+            "time_unix_ms": 0
+          },
+          {
+            "attributes": {
+              "contrib.livekit.new_state": "listening",
+              "contrib.livekit.old_state": "speaking"
+            },
+            "name": "user_state_changed",
+            "time_unix_ms": 0
+          },
+          {
+            "attributes": {
+              "contrib.livekit.new_state": "speaking",
+              "contrib.livekit.old_state": "listening"
+            },
+            "name": "user_state_changed",
+            "time_unix_ms": 0
+          },
+          {
+            "attributes": {
+              "contrib.livekit.new_state": "listening",
+              "contrib.livekit.old_state": "speaking"
+            },
+            "name": "user_state_changed",
+            "time_unix_ms": 0
+          },
+          {
+            "attributes": {
+              "contrib.livekit.new_state": "speaking",
+              "contrib.livekit.old_state": "listening"
+            },
+            "name": "user_state_changed",
+            "time_unix_ms": 0
+          },
+          {
+            "attributes": {
+              "contrib.livekit.new_state": "listening",
+              "contrib.livekit.old_state": "speaking"
+            },
+            "name": "user_state_changed",
+            "time_unix_ms": 0
+          },
+          {
+            "attributes": {
+              "contrib.livekit.new_state": "thinking",
+              "contrib.livekit.old_state": "listening"
+            },
+            "name": "agent_state_changed",
+            "time_unix_ms": 0
+          },
+          {
+            "attributes": {
+              "contrib.livekit.new_state": "speaking",
+              "contrib.livekit.old_state": "thinking"
+            },
+            "name": "agent_state_changed",
+            "time_unix_ms": 0
+          },
+          {
+            "attributes": {
+              "contrib.livekit.new_state": "listening",
+              "contrib.livekit.old_state": "speaking"
+            },
+            "name": "agent_state_changed",
+            "time_unix_ms": 0
+          }
+        ],
+        "gen_ai.operation.name": "invoke_workflow",
+        "gen_ai.workflow.name": "agent_session",
+        "scenario": "livekit-instrumentation",
+        "testRunId": "<run:1>"
+      }
+    }
+  ]
+}

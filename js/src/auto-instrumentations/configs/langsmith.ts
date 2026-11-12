@@ -4,7 +4,13 @@ import { langSmithChannels } from "../../instrumentation/providers/langsmith-int
 const versionRange = ">=0.3.30 <1.0.0";
 
 export const langSmithConfigs: InstrumentationConfig[] = [
-  ...["dist/client.js", "dist/client.cjs"].flatMap((filePath) => [
+  // LangSmith 0.11 moved the tracing client from dist/ to lib/.
+  ...[
+    "dist/client.js",
+    "dist/client.cjs",
+    "lib/client.mjs",
+    "lib/client.js",
+  ].flatMap((filePath) => [
     {
       channelName: langSmithChannels.createRun.channelName,
       module: { name: "langsmith", versionRange, filePath },

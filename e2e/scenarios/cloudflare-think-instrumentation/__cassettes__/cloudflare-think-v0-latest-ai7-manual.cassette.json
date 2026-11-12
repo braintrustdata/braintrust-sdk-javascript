@@ -1,0 +1,767 @@
+{
+  "entries": [
+    {
+      "callIndex": 0,
+      "id": "8e64d59c2c2a2430",
+      "matchKey": "POST api.openai.com/v1/chat/completions",
+      "recordedAt": "2026-11-05T14:21:09.410Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "messages": [
+              {
+                "content": "You are a deterministic weather-test agent. You must call lookup_weather exactly once with Vienna before answering. After the tool result, reply with exactly: \"Vienna is sunny and 21°C.\"\n\nYou are running inside a Think agent.\n\nCapabilities available in this turn:\n- You can inspect and edit the agent workspace using the available file tools.\n- Use the tools exposed in this turn when they materially improve accuracy or let you act on the user's request. Treat tool descriptions and schemas as the source of truth.\n- Some tools may call server code, browser/client code, MCP servers, extensions, or delegated agents. Use them according to their descriptions.\n- Do not claim access to capabilities that are not exposed as tools in this turn.",
+                "role": "developer"
+              },
+              {
+                "content": "What is the weather in Vienna?",
+                "role": "user"
+              }
+            ],
+            "model": "gpt-5-nano",
+            "stream": true,
+            "stream_options": {
+              "include_usage": true
+            },
+            "tool_choice": "auto",
+            "tools": [
+              {
+                "function": {
+                  "description": "Read a workspace file. Images and PDFs are passed to capable models. Text output is capped at 2000 lines or 256KB and includes line and byte continuations when truncated.",
+                  "name": "read",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "byteOffset": {
+                        "description": "Byte continuation returned by a previous read. Pass it with offset to avoid rescanning.",
+                        "maximum": 9007199254740991,
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "limit": {
+                        "description": "Maximum number of lines to read",
+                        "maximum": 9007199254740991,
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      "offset": {
+                        "description": "Line number to start reading from (1-indexed)",
+                        "maximum": 9007199254740991,
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      "path": {
+                        "description": "Path to the file to read",
+                        "type": "string"
+                      }
+                    },
+                    "required": ["path"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "List entries in a workspace directory with file sizes and modification times. The result defaults to 200 entries; use limit and offset to page through large directories.",
+                  "name": "ls",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "limit": {
+                        "description": "Maximum entries to return. Defaults to 200.",
+                        "maximum": 1000,
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      "offset": {
+                        "description": "Number of entries to skip in name order.",
+                        "maximum": 9007199254740991,
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "path": {
+                        "description": "Absolute directory path to list, e.g. /workspace/src.",
+                        "type": "string"
+                      }
+                    },
+                    "required": ["path"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Find files and directories matching a glob. * stays within one path segment, ** crosses directories, and ? matches one character.",
+                  "name": "find",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "exclude": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          }
+                        ],
+                        "description": "Glob patterns to leave out, for example [\"node_modules/**\", \"**/.git/**\"]. An excluded directory is skipped along with everything below it."
+                      },
+                      "limit": {
+                        "maximum": 1000,
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      "offset": {
+                        "maximum": 9007199254740991,
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "path": {
+                        "default": "/workspace",
+                        "description": "Absolute directory to search.",
+                        "type": "string"
+                      },
+                      "pattern": {
+                        "description": "Glob pattern relative to path, for example \"**/*.ts\" or \"src/?.js\".",
+                        "type": "string"
+                      }
+                    },
+                    "required": ["pattern"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Search workspace text with a literal string or regular expression. Results include paths and line numbers and can include surrounding lines.",
+                  "name": "grep",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "context": {
+                        "maximum": 10,
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "exclude": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          }
+                        ],
+                        "description": "Glob patterns to leave out, for example [\"node_modules/**\", \"**/.git/**\"]. An excluded directory is skipped along with everything below it."
+                      },
+                      "ignoreCase": {
+                        "description": "Ignore letter case.",
+                        "type": "boolean"
+                      },
+                      "include": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          }
+                        ],
+                        "description": "Glob relative to path that limits searched files, for example \"**/*.ts\" or [\"**/*.ts\", \"**/*.md\"]."
+                      },
+                      "limit": {
+                        "maximum": 1000,
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      "offset": {
+                        "maximum": 9007199254740991,
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "path": {
+                        "default": "/workspace",
+                        "description": "Absolute file or directory to search.",
+                        "type": "string"
+                      },
+                      "query": {
+                        "description": "Literal string or regular expression to search for.",
+                        "type": "string"
+                      },
+                      "regex": {
+                        "description": "Interpret query as a regular expression.",
+                        "type": "boolean"
+                      }
+                    },
+                    "required": ["query"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Write content to a file. Overwrites any existing file at the path.",
+                  "name": "write",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "content": {
+                        "description": "File content",
+                        "type": "string"
+                      },
+                      "path": {
+                        "description": "Absolute path, e.g. /workspace/main.zig",
+                        "type": "string"
+                      }
+                    },
+                    "required": ["path", "content"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Edit a single file using exact text replacement. Every edits[].oldText must match a unique, non-overlapping region of the original file. If two changes touch the same block, merge them into one edit.",
+                  "name": "edit",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "edits": {
+                        "description": "One or more targeted replacements. Each edit is matched against the original file, not incrementally. Do not include overlapping or nested edits.",
+                        "items": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "newText": {
+                              "description": "Replacement text for this targeted edit.",
+                              "type": "string"
+                            },
+                            "oldText": {
+                              "description": "Exact text for one targeted replacement. Must be unique in the original file and not overlap with any other edits[].oldText in the same call.",
+                              "type": "string"
+                            }
+                          },
+                          "required": ["oldText", "newText"],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      "path": {
+                        "description": "Path to the file to edit",
+                        "type": "string"
+                      }
+                    },
+                    "required": ["path", "edits"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Delete a file or directory. Set recursive to true to remove a non-empty directory.",
+                  "name": "delete",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "path": {
+                        "description": "Absolute path to the file or directory to delete.",
+                        "type": "string"
+                      },
+                      "recursive": {
+                        "description": "Remove a directory and all of its contents. Defaults to false.",
+                        "type": "boolean"
+                      }
+                    },
+                    "required": ["path"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Get deterministic weather for a city.",
+                  "name": "lookup_weather",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "city": {
+                        "type": "string"
+                      }
+                    },
+                    "required": ["city"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "data: {\"id\":\"chatcmpl-Egsct2IVMiUuPuFBpKtJrzcXA9QGM\",\"object\":\"chat.completion.chunk\",\"created\":1793888467,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"index\":0,\"id\":\"call_lTHIwQv6xru2Nd1DvPZ1ZpAX\",\"type\":\"function\",\"function\":{\"name\":\"lookup_weather\",\"arguments\":\"\"}}],\"refusal\":null},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"kwmvle74v431d\"}",
+            "data: {\"id\":\"chatcmpl-Egsct2IVMiUuPuFBpKtJrzcXA9QGM\",\"object\":\"chat.completion.chunk\",\"created\":1793888467,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"{\\\"\"}}]},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"ERsbtT06Eu\"}",
+            "data: {\"id\":\"chatcmpl-Egsct2IVMiUuPuFBpKtJrzcXA9QGM\",\"object\":\"chat.completion.chunk\",\"created\":1793888467,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"city\"}}]},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"O4WKYVNM9\"}",
+            "data: {\"id\":\"chatcmpl-Egsct2IVMiUuPuFBpKtJrzcXA9QGM\",\"object\":\"chat.completion.chunk\",\"created\":1793888467,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"\\\":\\\"\"}}]},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"KkOkwqeS\"}",
+            "data: {\"id\":\"chatcmpl-Egsct2IVMiUuPuFBpKtJrzcXA9QGM\",\"object\":\"chat.completion.chunk\",\"created\":1793888467,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"Vien\"}}]},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"8fjOBFke0\"}",
+            "data: {\"id\":\"chatcmpl-Egsct2IVMiUuPuFBpKtJrzcXA9QGM\",\"object\":\"chat.completion.chunk\",\"created\":1793888467,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"na\"}}]},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"UaxZCv4fgiP\"}",
+            "data: {\"id\":\"chatcmpl-Egsct2IVMiUuPuFBpKtJrzcXA9QGM\",\"object\":\"chat.completion.chunk\",\"created\":1793888467,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"\\\"}\"}}]},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"vKQH37jcNQ\"}",
+            "data: {\"id\":\"chatcmpl-Egsct2IVMiUuPuFBpKtJrzcXA9QGM\",\"object\":\"chat.completion.chunk\",\"created\":1793888467,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"tool_calls\"}],\"usage\":null,\"obfuscation\":\"PsBlmThh38u\"}",
+            "data: {\"id\":\"chatcmpl-Egsct2IVMiUuPuFBpKtJrzcXA9QGM\",\"object\":\"chat.completion.chunk\",\"created\":1793888467,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[],\"usage\":{\"prompt_tokens\":1148,\"completion_tokens\":344,\"total_tokens\":1492,\"prompt_tokens_details\":{\"cached_tokens\":0,\"audio_tokens\":0},\"completion_tokens_details\":{\"reasoning_tokens\":320,\"audio_tokens\":0,\"accepted_prediction_tokens\":0,\"rejected_prediction_tokens\":0}},\"obfuscation\":\"0oYEJpDqnAC5UrN\"}",
+            "data: [DONE]"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a55c80c40f204c6b-WAW",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Thu, 05 Nov 2026 14:21:09 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "2524",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "x-content-type-options": "nosniff",
+          "x-openai-proxy-wasm": "v0.1",
+          "x-ratelimit-limit-requests": "30000",
+          "x-ratelimit-limit-tokens": "180000000",
+          "x-ratelimit-remaining-requests": "29999",
+          "x-ratelimit-remaining-tokens": "179999805",
+          "x-ratelimit-reset-requests": "2ms",
+          "x-ratelimit-reset-tokens": "0s",
+          "x-request-id": "req_67e239377186411481a5908541553337"
+        },
+        "status": 200
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "f4633b28f6cfd8a6",
+      "matchKey": "POST api.openai.com/v1/chat/completions",
+      "recordedAt": "2026-11-05T14:21:11.109Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "messages": [
+              {
+                "content": "You are a deterministic weather-test agent. You must call lookup_weather exactly once with Vienna before answering. After the tool result, reply with exactly: \"Vienna is sunny and 21°C.\"\n\nYou are running inside a Think agent.\n\nCapabilities available in this turn:\n- You can inspect and edit the agent workspace using the available file tools.\n- Use the tools exposed in this turn when they materially improve accuracy or let you act on the user's request. Treat tool descriptions and schemas as the source of truth.\n- Some tools may call server code, browser/client code, MCP servers, extensions, or delegated agents. Use them according to their descriptions.\n- Do not claim access to capabilities that are not exposed as tools in this turn.",
+                "role": "developer"
+              },
+              {
+                "content": "What is the weather in Vienna?",
+                "role": "user"
+              },
+              {
+                "content": null,
+                "role": "assistant",
+                "tool_calls": [
+                  {
+                    "function": {
+                      "arguments": "{\"city\":\"Vienna\"}",
+                      "name": "lookup_weather"
+                    },
+                    "id": "call_lTHIwQv6xru2Nd1DvPZ1ZpAX",
+                    "type": "function"
+                  }
+                ]
+              },
+              {
+                "content": "{\"city\":\"Vienna\",\"condition\":\"sunny\",\"degreesC\":21}",
+                "role": "tool",
+                "tool_call_id": "call_lTHIwQv6xru2Nd1DvPZ1ZpAX"
+              }
+            ],
+            "model": "gpt-5-nano",
+            "stream": true,
+            "stream_options": {
+              "include_usage": true
+            },
+            "tool_choice": "auto",
+            "tools": [
+              {
+                "function": {
+                  "description": "Read a workspace file. Images and PDFs are passed to capable models. Text output is capped at 2000 lines or 256KB and includes line and byte continuations when truncated.",
+                  "name": "read",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "byteOffset": {
+                        "description": "Byte continuation returned by a previous read. Pass it with offset to avoid rescanning.",
+                        "maximum": 9007199254740991,
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "limit": {
+                        "description": "Maximum number of lines to read",
+                        "maximum": 9007199254740991,
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      "offset": {
+                        "description": "Line number to start reading from (1-indexed)",
+                        "maximum": 9007199254740991,
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      "path": {
+                        "description": "Path to the file to read",
+                        "type": "string"
+                      }
+                    },
+                    "required": ["path"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "List entries in a workspace directory with file sizes and modification times. The result defaults to 200 entries; use limit and offset to page through large directories.",
+                  "name": "ls",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "limit": {
+                        "description": "Maximum entries to return. Defaults to 200.",
+                        "maximum": 1000,
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      "offset": {
+                        "description": "Number of entries to skip in name order.",
+                        "maximum": 9007199254740991,
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "path": {
+                        "description": "Absolute directory path to list, e.g. /workspace/src.",
+                        "type": "string"
+                      }
+                    },
+                    "required": ["path"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Find files and directories matching a glob. * stays within one path segment, ** crosses directories, and ? matches one character.",
+                  "name": "find",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "exclude": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          }
+                        ],
+                        "description": "Glob patterns to leave out, for example [\"node_modules/**\", \"**/.git/**\"]. An excluded directory is skipped along with everything below it."
+                      },
+                      "limit": {
+                        "maximum": 1000,
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      "offset": {
+                        "maximum": 9007199254740991,
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "path": {
+                        "default": "/workspace",
+                        "description": "Absolute directory to search.",
+                        "type": "string"
+                      },
+                      "pattern": {
+                        "description": "Glob pattern relative to path, for example \"**/*.ts\" or \"src/?.js\".",
+                        "type": "string"
+                      }
+                    },
+                    "required": ["pattern"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Search workspace text with a literal string or regular expression. Results include paths and line numbers and can include surrounding lines.",
+                  "name": "grep",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "context": {
+                        "maximum": 10,
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "exclude": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          }
+                        ],
+                        "description": "Glob patterns to leave out, for example [\"node_modules/**\", \"**/.git/**\"]. An excluded directory is skipped along with everything below it."
+                      },
+                      "ignoreCase": {
+                        "description": "Ignore letter case.",
+                        "type": "boolean"
+                      },
+                      "include": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          }
+                        ],
+                        "description": "Glob relative to path that limits searched files, for example \"**/*.ts\" or [\"**/*.ts\", \"**/*.md\"]."
+                      },
+                      "limit": {
+                        "maximum": 1000,
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      "offset": {
+                        "maximum": 9007199254740991,
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "path": {
+                        "default": "/workspace",
+                        "description": "Absolute file or directory to search.",
+                        "type": "string"
+                      },
+                      "query": {
+                        "description": "Literal string or regular expression to search for.",
+                        "type": "string"
+                      },
+                      "regex": {
+                        "description": "Interpret query as a regular expression.",
+                        "type": "boolean"
+                      }
+                    },
+                    "required": ["query"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Write content to a file. Overwrites any existing file at the path.",
+                  "name": "write",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "content": {
+                        "description": "File content",
+                        "type": "string"
+                      },
+                      "path": {
+                        "description": "Absolute path, e.g. /workspace/main.zig",
+                        "type": "string"
+                      }
+                    },
+                    "required": ["path", "content"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Edit a single file using exact text replacement. Every edits[].oldText must match a unique, non-overlapping region of the original file. If two changes touch the same block, merge them into one edit.",
+                  "name": "edit",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "edits": {
+                        "description": "One or more targeted replacements. Each edit is matched against the original file, not incrementally. Do not include overlapping or nested edits.",
+                        "items": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "newText": {
+                              "description": "Replacement text for this targeted edit.",
+                              "type": "string"
+                            },
+                            "oldText": {
+                              "description": "Exact text for one targeted replacement. Must be unique in the original file and not overlap with any other edits[].oldText in the same call.",
+                              "type": "string"
+                            }
+                          },
+                          "required": ["oldText", "newText"],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      "path": {
+                        "description": "Path to the file to edit",
+                        "type": "string"
+                      }
+                    },
+                    "required": ["path", "edits"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Delete a file or directory. Set recursive to true to remove a non-empty directory.",
+                  "name": "delete",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "path": {
+                        "description": "Absolute path to the file or directory to delete.",
+                        "type": "string"
+                      },
+                      "recursive": {
+                        "description": "Remove a directory and all of its contents. Defaults to false.",
+                        "type": "boolean"
+                      }
+                    },
+                    "required": ["path"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Get deterministic weather for a city.",
+                  "name": "lookup_weather",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "city": {
+                        "type": "string"
+                      }
+                    },
+                    "required": ["city"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "data: {\"id\":\"chatcmpl-Egscvuw0gUIrHRbyW4azYPMSVqTAt\",\"object\":\"chat.completion.chunk\",\"created\":1793888469,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"KEFcr\"}",
+            "data: {\"id\":\"chatcmpl-Egscvuw0gUIrHRbyW4azYPMSVqTAt\",\"object\":\"chat.completion.chunk\",\"created\":1793888469,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Vien\"},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"0iS\"}",
+            "data: {\"id\":\"chatcmpl-Egscvuw0gUIrHRbyW4azYPMSVqTAt\",\"object\":\"chat.completion.chunk\",\"created\":1793888469,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"content\":\"na\"},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"OfRT8\"}",
+            "data: {\"id\":\"chatcmpl-Egscvuw0gUIrHRbyW4azYPMSVqTAt\",\"object\":\"chat.completion.chunk\",\"created\":1793888469,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"content\":\" is\"},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"K8aD\"}",
+            "data: {\"id\":\"chatcmpl-Egscvuw0gUIrHRbyW4azYPMSVqTAt\",\"object\":\"chat.completion.chunk\",\"created\":1793888469,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"content\":\" sunny\"},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"P\"}",
+            "data: {\"id\":\"chatcmpl-Egscvuw0gUIrHRbyW4azYPMSVqTAt\",\"object\":\"chat.completion.chunk\",\"created\":1793888469,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"content\":\" and\"},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"Bw9\"}",
+            "data: {\"id\":\"chatcmpl-Egscvuw0gUIrHRbyW4azYPMSVqTAt\",\"object\":\"chat.completion.chunk\",\"created\":1793888469,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"content\":\" \"},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"Wwroc6\"}",
+            "data: {\"id\":\"chatcmpl-Egscvuw0gUIrHRbyW4azYPMSVqTAt\",\"object\":\"chat.completion.chunk\",\"created\":1793888469,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"content\":\"21\"},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"SABZC\"}",
+            "data: {\"id\":\"chatcmpl-Egscvuw0gUIrHRbyW4azYPMSVqTAt\",\"object\":\"chat.completion.chunk\",\"created\":1793888469,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"content\":\"°C\"},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"lcNvR\"}",
+            "data: {\"id\":\"chatcmpl-Egscvuw0gUIrHRbyW4azYPMSVqTAt\",\"object\":\"chat.completion.chunk\",\"created\":1793888469,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"content\":\".\"},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"TZpaom\"}",
+            "data: {\"id\":\"chatcmpl-Egscvuw0gUIrHRbyW4azYPMSVqTAt\",\"object\":\"chat.completion.chunk\",\"created\":1793888469,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}],\"usage\":null,\"obfuscation\":\"n\"}",
+            "data: {\"id\":\"chatcmpl-Egscvuw0gUIrHRbyW4azYPMSVqTAt\",\"object\":\"chat.completion.chunk\",\"created\":1793888469,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[],\"usage\":{\"prompt_tokens\":1193,\"completion_tokens\":146,\"total_tokens\":1339,\"prompt_tokens_details\":{\"cached_tokens\":1024,\"audio_tokens\":0},\"completion_tokens_details\":{\"reasoning_tokens\":128,\"audio_tokens\":0,\"accepted_prediction_tokens\":0,\"rejected_prediction_tokens\":0}},\"obfuscation\":\"gGe9UakCYGrz\"}",
+            "data: [DONE]"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a55c80d64f824c6b-WAW",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Thu, 05 Nov 2026 14:21:10 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "1302",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "x-content-type-options": "nosniff",
+          "x-openai-proxy-wasm": "v0.1",
+          "x-ratelimit-limit-requests": "30000",
+          "x-ratelimit-limit-tokens": "180000000",
+          "x-ratelimit-remaining-requests": "29999",
+          "x-ratelimit-remaining-tokens": "179999790",
+          "x-ratelimit-reset-requests": "2ms",
+          "x-ratelimit-reset-tokens": "0s",
+          "x-request-id": "req_d831ae2c385049f2888a5a2fbb67b482"
+        },
+        "status": 200
+      }
+    }
+  ],
+  "meta": {
+    "createdAt": "2026-10-20T10:02:50.183Z"
+  }
+}

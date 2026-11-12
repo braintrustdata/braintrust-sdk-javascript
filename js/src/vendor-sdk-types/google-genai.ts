@@ -18,6 +18,7 @@ export interface GoogleGenAIClient {
   models: GoogleGenAIModels;
   chats: GoogleGenAIChats;
   interactions?: GoogleGenAIInteractions;
+  decisions?: GoogleGenAIDecisions;
 }
 
 export interface GoogleGenAIModels {
@@ -54,12 +55,57 @@ export interface GoogleGenAIInteractions {
   >;
 }
 
+export interface GoogleGenAIDecisions {
+  create: (
+    params: GoogleGenAIDecisionCreateParams,
+    options?: Record<string, unknown>,
+  ) => Promise<GoogleGenAIDecisionResponse>;
+}
+
+export interface GoogleGenAIDecisionCreateParams {
+  model: string;
+  input:
+    | string
+    | GoogleGenAIInteractionContent
+    | GoogleGenAIInteractionContent[];
+  questions: Record<
+    string,
+    {
+      type: "noul" | "choice" | "score";
+      instructions:
+        | string
+        | GoogleGenAIInteractionContent
+        | GoogleGenAIInteractionContent[];
+      criteria?: Record<string, string> | string[];
+    }
+  >;
+  api_version?: string;
+}
+
+export interface GoogleGenAIDecisionResponse {
+  answers?: Record<
+    string,
+    {
+      type: "noul" | "choice" | "score";
+      confidence: number;
+      noul?: number;
+      choice?: string;
+      score?: number;
+      probabilities?: Record<string, number>;
+      legend?: Record<string, string>;
+    }
+  >;
+  prompt_feedback?: Record<string, unknown>;
+  usage?: GoogleGenAIInteractionUsage;
+}
+
 // Requests
 
 export interface GoogleGenAIGenerateContentParams {
   model: string;
   contents: string | GoogleGenAIContent | GoogleGenAIContent[];
   config?: {
+    serviceTier?: string;
     tools?: {
       functionDeclarations?: Record<string, unknown>[];
       [key: string]: unknown;
@@ -304,6 +350,7 @@ export interface GoogleGenAIGenerateVideosOperation {
 }
 
 export interface GoogleGenAIInteraction {
+  service_tier?: string;
   id?: string;
   created?: string;
   status?: string;
@@ -350,6 +397,7 @@ export interface GoogleGenAIGroundingMetadata {
 }
 
 export interface GoogleGenAIUsageMetadata {
+  serviceTier?: string;
   promptTokenCount?: number;
   candidatesTokenCount?: number;
   totalTokenCount?: number;

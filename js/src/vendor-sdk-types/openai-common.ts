@@ -20,6 +20,7 @@ export interface OpenAIWithResponse<T> {
 // Requests
 
 export interface OpenAIChatCreateParams {
+  service_tier?: string | null;
   messages: unknown;
   stream?: boolean | null;
   audio?: { format: string; [key: string]: unknown } | null;
@@ -37,6 +38,7 @@ export interface OpenAIModerationCreateParams {
 }
 
 export interface OpenAIResponseCreateParams {
+  service_tier?: string | null;
   input?: unknown;
   stream?: boolean | null;
   [key: string]: unknown;
@@ -129,6 +131,7 @@ export interface OpenAIChatChoice {
 }
 
 export interface OpenAIChatCompletion {
+  service_tier?: string | null;
   choices: OpenAIChatChoice[];
   usage?: OpenAIUsage;
   [key: string]: unknown;
@@ -154,6 +157,7 @@ export interface OpenAIChatChunkChoice {
 }
 
 export interface OpenAIChatCompletionChunk {
+  service_tier?: string | null;
   choices?: OpenAIChatChunkChoice[];
   usage?: OpenAIUsage;
   [key: string]: unknown;
@@ -177,6 +181,7 @@ export interface OpenAIModerationResponse {
 }
 
 export interface OpenAIResponse {
+  service_tier?: string | null;
   output?: unknown;
   usage?: OpenAIUsage;
   error?: { code: string; message: string } | null;

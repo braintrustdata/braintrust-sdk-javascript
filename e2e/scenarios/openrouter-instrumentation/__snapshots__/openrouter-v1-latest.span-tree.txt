@@ -225,6 +225,7 @@ span_tree:
     │         "provider": "openai",
     │         "reasoning": null,
     │         "safetyIdentifier": null,
+    │         "served_service_tier": "auto",
     │         "serviceTier": "auto",
     │         "status": "completed",
     │         "store": false,
@@ -297,6 +298,7 @@ span_tree:
     │         "provider": "openai",
     │         "reasoning": null,
     │         "safetyIdentifier": null,
+    │         "served_service_tier": "auto",
     │         "serviceTier": "auto",
     │         "status": "completed",
     │         "store": false,
@@ -325,336 +327,54 @@ span_tree:
     │         "time_to_first_token": 0,
     │         "tokens": 18
     │       }
-    ├── openrouter-rerank-operation
-    │   metadata: {
-    │     "operation": "rerank",
-    │     "testRunId": "<run:1>"
-    │   }
-    │   └── openrouter.rerank.rerank [llm]
-    │       input: {
-    │         "documents": [
-    │           "Athens is in Greece.",
-    │           "Paris is in France.",
-    │           "Lima is in Peru."
-    │         ],
-    │         "query": "Which document is about France?"
-    │       }
-    │       output: [
-    │         {
-    │           "index": 1,
-    │           "relevance_score": 0.06657539
-    │         },
-    │         {
-    │           "index": 0,
-    │           "relevance_score": 0.015062517
-    │         }
-    │       ]
-    │       metadata: {
-    │         "document_count": 3,
-    │         "id": "<span:1>",
-    │         "model": "rerank-v3.5",
-    │         "provider": "cohere",
-    │         "results": [
-    │           {
-    │             "document": {
-    │               "text": "Paris is in France."
-    │             },
-    │             "index": 1,
-    │             "relevanceScore": 0.06657539
-    │           },
-    │           {
-    │             "document": {
-    │               "text": "Athens is in Greece."
-    │             },
-    │             "index": 0,
-    │             "relevanceScore": 0.015062517
-    │           }
-    │         ],
-    │         "topN": 2
-    │       }
-    │       metrics: {
-    │         "cost": 0.001,
-    │         "search_units": 1
-    │       }
-    └── openrouter-call-model-operation
+    └── openrouter-rerank-operation
         metadata: {
-          "operation": "call-model",
+          "operation": "rerank",
           "testRunId": "<run:1>"
         }
-        └── openrouter.callModel [task]
-            input: "Use the lookup_weather tool for Vienna exactly once, then answer with only the forecast."
+        └── openrouter.rerank.rerank [llm]
+            input: {
+              "documents": [
+                "Athens is in Greece.",
+                "Paris is in France.",
+                "Lima is in Peru."
+              ],
+              "query": "Which document is about France?"
+            }
             output: [
               {
-                "content": [
-                  {
-                    "annotations": [],
-                    "logprobs": [],
-                    "text": "Sunny in Vienna",
-                    "type": "output_text"
-                  }
-                ],
-                "id": "<span:1>",
-                "role": "assistant",
-                "status": "completed",
-                "type": "message"
+                "index": 1,
+                "relevance_score": 0.06657539
+              },
+              {
+                "index": 0,
+                "relevance_score": 0.015062517
               }
             ]
             metadata: {
-              "background": false,
-              "completedAt": 1785754658,
-              "createdAt": 1785754658,
-              "error": null,
-              "frequencyPenalty": 0,
+              "document_count": 3,
               "id": "<span:1>",
-              "incompleteDetails": null,
-              "instructions": null,
-              "is_byok": false,
-              "maxOutputTokens": 24,
-              "maxToolCalls": 1,
-              "metadata": {},
-              "model": "gemini-2.5-flash-lite",
-              "object": "response",
-              "parallelToolCalls": true,
-              "presencePenalty": 0,
-              "previousResponseId": null,
-              "promptCacheOptions": null,
-              "provider": "google",
-              "reasoning": null,
-              "safetyIdentifier": null,
-              "serviceTier": "default",
-              "status": "completed",
-              "store": false,
-              "temperature": 0,
-              "text": {
-                "format": {
-                  "type": "text"
-                }
-              },
-              "toolChoice": "auto",
-              "tools": [
+              "model": "rerank-v3.5",
+              "provider": "cohere",
+              "results": [
                 {
-                  "description": "Look up the weather forecast for a city.",
-                  "name": "lookup_weather",
-                  "parameters": {
-                    "$schema": "http://json-schema.org/draft-07/schema#",
-                    "additionalProperties": false,
-                    "properties": {
-                      "city": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "city"
-                    ],
-                    "type": "object"
+                  "document": {
+                    "text": "Paris is in France."
                   },
-                  "strict": null,
-                  "type": "function"
+                  "index": 1,
+                  "relevanceScore": 0.06657539
+                },
+                {
+                  "document": {
+                    "text": "Athens is in Greece."
+                  },
+                  "index": 0,
+                  "relevanceScore": 0.015062517
                 }
               ],
-              "topLogprobs": 0,
-              "topP": 1,
-              "truncation": "disabled",
-              "turn_count": 2
+              "topN": 2
             }
-            ├── openrouter.beta.responses.send [llm]
-            │   input: "Use the lookup_weather tool for Vienna exactly once, then answer with only the forecast."
-            │   output: [
-            │     {
-            │       "arguments": "{\"city\":\"Vienna\"}",
-            │       "callId": "tool_lookup_weather_wpdUzM9iTJVWsAhhwR5y",
-            │       "id": "<span:1>",
-            │       "name": "lookup_weather",
-            │       "status": "completed",
-            │       "type": "function_call"
-            │     }
-            │   ]
-            │   metadata: {
-            │     "background": false,
-            │     "completedAt": 1785754658,
-            │     "createdAt": 1785754657,
-            │     "error": null,
-            │     "frequencyPenalty": 0,
-            │     "id": "<span:1>",
-            │     "incompleteDetails": null,
-            │     "instructions": null,
-            │     "is_byok": false,
-            │     "maxOutputTokens": 24,
-            │     "maxToolCalls": 1,
-            │     "metadata": {},
-            │     "model": "gemini-2.5-flash-lite",
-            │     "object": "response",
-            │     "parallelToolCalls": true,
-            │     "presencePenalty": 0,
-            │     "previousResponseId": null,
-            │     "promptCacheOptions": null,
-            │     "provider": "google",
-            │     "reasoning": null,
-            │     "safetyIdentifier": null,
-            │     "serviceTier": "default",
-            │     "status": "completed",
-            │     "step": 1,
-            │     "step_type": "initial",
-            │     "store": false,
-            │     "stream": true,
-            │     "temperature": 0,
-            │     "text": {
-            │       "format": {
-            │         "type": "text"
-            │       }
-            │     },
-            │     "toolChoice": "auto",
-            │     "tools": [
-            │       {
-            │         "description": "Look up the weather forecast for a city.",
-            │         "name": "lookup_weather",
-            │         "parameters": {
-            │           "$schema": "http://json-schema.org/draft-07/schema#",
-            │           "additionalProperties": false,
-            │           "properties": {
-            │             "city": {
-            │               "type": "string"
-            │             }
-            │           },
-            │           "required": [
-            │             "city"
-            │           ],
-            │           "type": "object"
-            │         },
-            │         "strict": null,
-            │         "type": "function"
-            │       }
-            │     ],
-            │     "topLogprobs": 0,
-            │     "topP": 1,
-            │     "truncation": "disabled"
-            │   }
-            │   metrics: {
-            │     "completion_reasoning_tokens": 0,
-            │     "completion_tokens": 5,
-            │     "cost": 0.0000054,
-            │     "cost_upstream_inference_cost": 0.0000054,
-            │     "cost_upstream_inference_input_cost": 0.0000034,
-            │     "cost_upstream_inference_output_cost": 0.000002,
-            │     "prompt_cache_write_tokens": 0,
-            │     "prompt_cached_tokens": 0,
-            │     "prompt_tokens": 34,
-            │     "tokens": 39
-            │   }
-            ├── lookup_weather [tool]
-            │   input: {
-            │     "city": "Vienna"
-            │   }
-            │   output: {
-            │     "forecast": "Sunny in Vienna"
-            │   }
-            │   metadata: {
-            │     "provider": "openrouter",
-            │     "tool_name": "lookup_weather"
-            │   }
-            └── openrouter.beta.responses.send [llm]
-                input: [
-                  "Use the lookup_weather tool for Vienna exactly once, then answer with only the forecast.",
-                  {
-                    "arguments": "{\"city\":\"Vienna\"}",
-                    "callId": "tool_lookup_weather_wpdUzM9iTJVWsAhhwR5y",
-                    "id": "<span:1>",
-                    "name": "lookup_weather",
-                    "status": "completed",
-                    "type": "function_call"
-                  },
-                  {
-                    "callId": "tool_lookup_weather_wpdUzM9iTJVWsAhhwR5y",
-                    "id": "<span:2>",
-                    "output": "{\"forecast\":\"Sunny in Vienna\"}",
-                    "type": "function_call_output"
-                  }
-                ]
-                output: [
-                  {
-                    "content": [
-                      {
-                        "annotations": [],
-                        "logprobs": [],
-                        "text": "Sunny in Vienna",
-                        "type": "output_text"
-                      }
-                    ],
-                    "id": "<span:1>",
-                    "role": "assistant",
-                    "status": "completed",
-                    "type": "message"
-                  }
-                ]
-                metadata: {
-                  "background": false,
-                  "completedAt": 1785754658,
-                  "createdAt": 1785754658,
-                  "error": null,
-                  "frequencyPenalty": 0,
-                  "id": "<span:1>",
-                  "incompleteDetails": null,
-                  "instructions": null,
-                  "is_byok": false,
-                  "maxOutputTokens": 24,
-                  "maxToolCalls": 1,
-                  "metadata": {},
-                  "model": "gemini-2.5-flash-lite",
-                  "object": "response",
-                  "parallelToolCalls": true,
-                  "presencePenalty": 0,
-                  "previousResponseId": null,
-                  "promptCacheOptions": null,
-                  "provider": "google",
-                  "reasoning": null,
-                  "safetyIdentifier": null,
-                  "serviceTier": "default",
-                  "status": "completed",
-                  "step": 2,
-                  "step_type": "continue",
-                  "store": false,
-                  "stream": false,
-                  "temperature": 0,
-                  "text": {
-                    "format": {
-                      "type": "text"
-                    }
-                  },
-                  "toolChoice": "auto",
-                  "tools": [
-                    {
-                      "description": "Look up the weather forecast for a city.",
-                      "name": "lookup_weather",
-                      "parameters": {
-                        "$schema": "http://json-schema.org/draft-07/schema#",
-                        "additionalProperties": false,
-                        "properties": {
-                          "city": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "city"
-                        ],
-                        "type": "object"
-                      },
-                      "strict": null,
-                      "type": "function"
-                    }
-                  ],
-                  "topLogprobs": 0,
-                  "topP": 1,
-                  "truncation": "disabled"
-                }
-                metrics: {
-                  "completion_reasoning_tokens": 0,
-                  "completion_tokens": 3,
-                  "cost": 0.0000058,
-                  "cost_upstream_inference_cost": 0.0000058,
-                  "cost_upstream_inference_input_cost": 0.0000046,
-                  "cost_upstream_inference_output_cost": 0.0000012,
-                  "prompt_cache_write_tokens": 0,
-                  "prompt_cached_tokens": 0,
-                  "prompt_tokens": 46,
-                  "tokens": 49
-                }
+            metrics: {
+              "cost": 0.001,
+              "search_units": 1
+            }
