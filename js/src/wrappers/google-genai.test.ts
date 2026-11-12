@@ -12,7 +12,10 @@ const { invoke } = vi.hoisted(() => ({
 }));
 vi.mock("../global-instrumentation-hooks", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../global-instrumentation-hooks")>()),
-  newGlobalInvocationHook: vi.fn(() => ({ invoke })),
+  newGlobalInvocationHook: vi.fn(() => ({
+    invoke,
+    intercept: vi.fn(() => () => {}),
+  })),
 }));
 
 import { wrapGoogleGenAI } from "./google-genai";

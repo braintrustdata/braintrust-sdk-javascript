@@ -389,6 +389,21 @@
     ]
   },
   {
+    "scenarioDirName": "google-genai-decisions-instrumentation",
+    "label": "Google GenAI Decisions Instrumentation",
+    "metadataScenario": "google-genai-decisions-instrumentation",
+    "variants": [
+      {
+        "variantKey": "google-genai-decisions-v3",
+        "label": "v3 pinned"
+      },
+      {
+        "variantKey": "google-genai-decisions-v3-latest",
+        "label": "v3 latest"
+      }
+    ]
+  },
+  {
     "scenarioDirName": "genkit-instrumentation",
     "label": "Genkit Instrumentation",
     "metadataScenario": "genkit-instrumentation",
