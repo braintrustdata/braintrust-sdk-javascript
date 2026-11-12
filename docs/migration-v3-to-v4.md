@@ -5,6 +5,23 @@ The behavior changes below can affect applications even when their code still ty
 
 ## 1. Version support changes
 
+### Package versions
+
+Use these major versions with SDK v4.
+When upgrading `braintrust`, also upgrade the companion packages your application already uses:
+
+| Package                             | Major version for SDK v4 |
+| ----------------------------------- | ------------------------ |
+| `braintrust`                        | 4.x                      |
+| `@braintrust/otel`                  | 2.x                      |
+| `@braintrust/temporal`              | 2.x                      |
+| `@braintrust/browser`               | 2.x                      |
+| `@braintrust/deepseek-harness`      | 2.x                      |
+| `@braintrust/templates-nunjucks-js` | 2.x                      |
+| `@braintrust/audio`                 | 1.x                      |
+
+### Runtime and provider versions
+
 **Node.js:** The minimum supported version is now **22.18.0** for these packages:
 
 - `braintrust`
@@ -98,6 +115,10 @@ Set `autoCaptureAttachments: false` explicitly to disable capture after it was e
 Child spans inherit the policy.
 Loggers created with `setCurrent: false` have an independent policy and use the environment variable when the option is omitted.
 
+`init()` and `Eval()` do not accept an `autoCaptureAttachments` option.
+For experiments and evals, set `BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS=true` before creating spans, or use the state's default capture policy configured by a current logger as described above.
+An explicit state policy takes precedence over the environment variable.
+
 With capture disabled, inline media payloads are omitted from logged inputs and outputs.
 Text, remote URLs, and file references can still appear in traces.
 Explicitly logged `Attachment`, `ExternalAttachment`, and `JSONAttachment` objects are unaffected by this option.
@@ -125,6 +146,48 @@ Forward `traceparent`, `tracestate`, and `baggage` together to preserve trace id
 Within one process, use `span.startSpan()`, `span.traced()`, or `withCurrent()` to create child spans.
 
 `span.export()` remains available for APIs that explicitly accept exported identifiers, such as `invoke()`.
+
+**Experiment destinations**
+
+An experiment's ID must be resolved before its spans can inject the destination into `baggage`.
+Unlike `await span.export()`, `span.inject()` is synchronous and does not wait for that ID.
+For a span in a newly initialized experiment, resolve its destination before injecting headers:
+
+```ts
+await span.export();
+const headers = span.inject();
+```
+
+Send the injected headers to the receiver.
+Without the destination, the receiver can route the span to its own logger or experiment, or fail to continue the trace.
+
+**Legacy IDs**
+
+Unset `BRAINTRUST_LEGACY_IDS` before starting spans that need W3C propagation.
+Legacy UUIDs cannot be encoded as W3C trace IDs and span IDs, so `span.inject()` and `injectTraceContext()` emit no trace headers for those spans.
+If `BRAINTRUST_OTEL_COMPAT` is enabled, it overrides the legacy-ID setting and selects W3C-compatible hex IDs.
+
+**Distributed evals**
+
+`span.export()` disables the local span cache because remote spans are not stored in it.
+`span.inject()` and `injectTraceContext()` do not disable that cache.
+If your eval calls another service and scorers read its spans through `trace.getSpans()`, set `enableCache: false` in the third argument to `Eval()`:
+
+```ts
+await Eval("my-project", evaluator, {
+  enableCache: false,
+});
+```
+
+Otherwise, scorers can receive only locally cached spans and miss remote children.
+Ensure that the remote service flushes its spans before scoring starts.
+
+**Propagated metadata and tags**
+
+Exported span strings include `propagatedEvent`, but the W3C headers do not serialize it.
+If you use `propagatedEvent` to inherit metadata or tags across services, send that data separately in your application's request payload.
+On the receiver, pass the received data as `propagatedEvent` alongside the extracted `parent`, for example `startSpan({ name: "handler", parent, propagatedEvent })`.
+The receiving span and its descendants then inherit that data.
 
 ### Dataset records
 
@@ -161,7 +224,14 @@ Install `bt` separately in development and CI using the [CLI installation instru
 + bt eval example.eval.ts
 ```
 
-Move push/pull scripts to the corresponding `bt` commands and check their flags with `bt --help`.
+For function push/pull scripts, use `bt functions push` and `bt functions pull`.
+See the [function CLI reference](https://www.braintrust.dev/docs/reference/cli/functions) for their flags.
+
+Lambda sandbox registration is an exception: `bt` has no Lambda sandbox registration command.
+Keep a separate registration project or setup environment on TypeScript SDK v3 for that step, with eval code and dependencies compatible with v3, and run its `npx braintrust push` command there.
+The migrated application can keep SDK v4.
+See [Register your sandbox](https://www.braintrust.dev/docs/evaluate/remote-evals#2-register-your-sandbox) for the registration steps.
+Modal sandbox registration through `registerSandbox()` remains available in SDK v4.
 
 ### Removed integration packages
 
@@ -419,6 +489,7 @@ Sampling flags and trace state are preserved across native and OpenTelemetry spa
   Pass `undefined` to `configureContextManager()` to restore the default.
 - The `BRAINTRUST_ID_GENERATOR` and `BRAINTRUST_SPAN_COMPONENT` globals are no longer used, and ID-generator exports have been removed.
   The SDK uses its default IDs; `BRAINTRUST_LEGACY_IDS` remains available for legacy UUIDs.
+  See [Trace propagation](#trace-propagation) for the W3C limitations of legacy UUIDs.
 - `@braintrust/browser` now installs its context manager through `configureContextManager()`.
   Update it alongside the core SDK.
 
@@ -429,7 +500,7 @@ Sampling flags and trace state are preserved across native and OpenTelemetry spa
 - `graph` has been removed without replacement.
 - `SpanFetcher` and `CachedSpanFetcher` are no longer exported.
   Access spans through `Trace` or `LocalTrace` methods.
-- Template-registry internals and prompt-rendering helpers are no longer exported.
+- `templateRegistry`, `getTemplateRenderer()`, `renderMessage()`, and `renderPromptParams()` are no longer exported.
   Use `registerTemplatePlugin()` for template extensions and `Prompt.build()` for rendering.
 - Stream helpers and runtime schemas are no longer exported.
   Use `BraintrustStream` for streaming and define application-specific validation in your application.

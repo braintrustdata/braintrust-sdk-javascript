@@ -106,11 +106,16 @@ For deeper details, see the [auto-instrumentation architecture docs](src/auto-in
 
 ## Migration Guides
 
+### Upgrading from 3.x to 4.x
+
+See the [Migrate from v3.x to v4.x guide](../docs/migration-v3-to-v4.md).
+
+In 4.x, `braintrust/browser` has been removed.
+Import from `braintrust` with browser export conditions, or use `@braintrust/browser` for its context propagation integration.
+
 ### Upgrading from 2.x to 3.x
 
 See the [Migrate from v2.x to v3.x guide](https://www.braintrust.dev/docs/reference/sdks/typescript/migrations/v2-to-v3).
-
-In 3.x, browser usage should move to `@braintrust/browser` instead of relying on the legacy `braintrust/browser` path.
 
 ### Upgrading from 1.x to 2.x
 
