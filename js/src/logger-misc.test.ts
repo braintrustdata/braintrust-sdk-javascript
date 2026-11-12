@@ -4,18 +4,25 @@
  */
 
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
-import { vi, expect, test, describe, beforeEach, afterEach } from "vitest";
 import {
-  _exportsForTestingOnly,
+  vi,
+  expect,
+  test,
+  describe,
+  beforeEach,
+  afterEach,
+} from "vite-plus/test";
+import { _exportsForTestingOnly } from "./logger/testing";
+import {
   BaseAttachment,
   Attachment,
   ExternalAttachment,
-  initExperiment,
   initLogger,
   NOOP_SPAN,
   permalink,
   BraintrustState,
-} from "./logger";
+} from "./logger/core";
+import { init } from "./logger/experiments";
 import { SpanObjectTypeV3 } from "../util/index";
 import { LazyValue } from "./util";
 import { BackgroundLogEvent, IS_MERGE_FIELD } from "../util/index";
@@ -368,7 +375,7 @@ describe("span.link", () => {
     expect(state.appUrl).toBeDefined();
 
     // Create a test experiment
-    const experiment = initExperiment("test-experiment");
+    const experiment = init({ project: "test-experiment" });
 
     // Get a span within the experiment context
     const span = experiment.startSpan({
@@ -417,7 +424,7 @@ describe("span.link", () => {
 
   test("span.link handles missing experiment id", async () => {
     await _exportsForTestingOnly.simulateLoginForTests();
-    const experiment = initExperiment("test-experiment");
+    const experiment = init({ project: "test-experiment" });
     const span = experiment.startSpan({ name: "test-span" });
     span.end();
     // Force parentObjectId to be undefined

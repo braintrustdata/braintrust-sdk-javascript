@@ -6,7 +6,7 @@ import {
   beforeAll,
   beforeEach,
   afterEach,
-} from "vitest";
+} from "vite-plus/test";
 import {
   CachedSpanFetcher,
   LocalTrace,
@@ -14,11 +14,8 @@ import {
   SpanFetchFn,
   SpanFilters,
 } from "./trace";
-import {
-  _exportsForTestingOnly,
-  _internalGetGlobalState,
-  type BraintrustState,
-} from "./logger";
+import { _exportsForTestingOnly } from "./logger/testing";
+import { _internalGetGlobalState, type BraintrustState } from "./logger/core";
 import { configureNode } from "./node/config";
 
 // Mock the invoke function

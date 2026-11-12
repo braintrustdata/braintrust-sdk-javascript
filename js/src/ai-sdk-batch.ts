@@ -1,4 +1,5 @@
-import { aiSDKBatchChannels } from "./instrumentation/plugins/ai-sdk-batch-interceptors";
+import { registerInstrumentation } from "./instrumentation/registrations/aisdk";
+import { aiSDKBatchChannels } from "./instrumentation/providers/ai-sdk-batch-interceptors";
 import type {
   CompleteAISDKBatchTraceArgs,
   StartAISDKBatchTraceArgs,
@@ -18,6 +19,7 @@ import type {
 export function startAISDKBatchTrace(
   args: StartAISDKBatchTraceArgs,
 ): Promise<string | undefined> {
+  registerInstrumentation();
   return aiSDKBatchChannels.start.invoke(
     async () => undefined,
     undefined,
@@ -40,6 +42,7 @@ export function startAISDKBatchTrace(
 export function completeAISDKBatchTrace(
   args: CompleteAISDKBatchTraceArgs,
 ): Promise<void> {
+  registerInstrumentation();
   return aiSDKBatchChannels.complete.invoke(
     async () => undefined,
     undefined,

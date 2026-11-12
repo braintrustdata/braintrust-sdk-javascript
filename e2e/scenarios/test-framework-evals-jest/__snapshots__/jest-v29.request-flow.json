@@ -28,7 +28,7 @@
       "rows": [
         {
           "context": {
-            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
+            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.mjs",
             "caller_functionname": "Object.<anonymous>",
             "caller_lineno": 0
           },
@@ -59,7 +59,7 @@
         },
         {
           "context": {
-            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
+            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.mjs",
             "caller_functionname": "Object.<anonymous>",
             "caller_lineno": 0
           },
@@ -98,7 +98,7 @@
         },
         {
           "context": {
-            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
+            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.mjs",
             "caller_functionname": "Object.<anonymous>",
             "caller_lineno": 0
           },
@@ -133,7 +133,7 @@
         },
         {
           "context": {
-            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
+            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.mjs",
             "caller_functionname": "traced.name",
             "caller_lineno": 0
           },
@@ -170,7 +170,7 @@
         },
         {
           "context": {
-            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
+            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.mjs",
             "caller_functionname": "Object.<anonymous>",
             "caller_lineno": 0
           },
@@ -197,7 +197,7 @@
         },
         {
           "context": {
-            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
+            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.mjs",
             "caller_functionname": "traced.name",
             "caller_lineno": 0
           },
@@ -226,7 +226,7 @@
         },
         {
           "context": {
-            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
+            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.mjs",
             "caller_functionname": "traced.name",
             "caller_lineno": 0
           },
@@ -258,7 +258,7 @@
         },
         {
           "context": {
-            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
+            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.mjs",
             "caller_functionname": "Object.<anonymous>",
             "caller_lineno": 0
           },
@@ -296,7 +296,7 @@
       "rows": [
         {
           "context": {
-            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
+            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.mjs",
             "caller_functionname": "Object.<anonymous>",
             "caller_lineno": 0
           },
@@ -327,7 +327,7 @@
         },
         {
           "context": {
-            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
+            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.mjs",
             "caller_functionname": "Object.<anonymous>",
             "caller_lineno": 0
           },
@@ -366,7 +366,7 @@
         },
         {
           "context": {
-            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
+            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.mjs",
             "caller_functionname": "Object.<anonymous>",
             "caller_lineno": 0
           },
@@ -401,7 +401,7 @@
         },
         {
           "context": {
-            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
+            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.mjs",
             "caller_functionname": "traced.name",
             "caller_lineno": 0
           },
@@ -438,7 +438,7 @@
         },
         {
           "context": {
-            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
+            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.mjs",
             "caller_functionname": "Object.<anonymous>",
             "caller_lineno": 0
           },
@@ -465,7 +465,7 @@
         },
         {
           "context": {
-            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
+            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.mjs",
             "caller_functionname": "traced.name",
             "caller_lineno": 0
           },
@@ -494,7 +494,7 @@
         },
         {
           "context": {
-            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
+            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.mjs",
             "caller_functionname": "traced.name",
             "caller_lineno": 0
           },
@@ -526,7 +526,7 @@
         },
         {
           "context": {
-            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.cjs",
+            "caller_filename": "<repo>/e2e/scenarios/test-framework-evals-jest/runner.case.mjs",
             "caller_functionname": "Object.<anonymous>",
             "caller_lineno": 0
           },

@@ -1,5 +1,6 @@
+import { registerInstrumentation } from "../instrumentation/registrations/cohere";
 import { debugLogger } from "../debug-logger";
-import { cohereChannels } from "../instrumentation/plugins/cohere-interceptors";
+import { cohereChannels } from "../instrumentation/providers/cohere-interceptors";
 import type {
   CohereChatRequest,
   CohereChatResponse,
@@ -16,6 +17,7 @@ import type {
  * Braintrust plugins can consume.
  */
 export function wrapCohere<T>(cohere: T): T {
+  registerInstrumentation();
   if (isSupportedCohereClient(cohere)) {
     return cohereProxy(cohere) as T;
   }

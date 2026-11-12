@@ -1,29 +1,22 @@
+import { _initializeSpanContext, getEvaluatorRegistry } from "./framework";
 import { debugLogger } from "./debug-logger";
-import { _initializeSpanContext } from "./framework";
 import type { Trace } from "./trace";
-import iso from "./isomorph";
+import iso from "#braintrust-platform";
 import { slugify } from "../util/string_util";
 import { z } from "zod/v3";
-import {
-  type FunctionTypeEnumType as FunctionType,
-  type IfExistsType as IfExists,
-  type SavedFunctionIdType as SavedFunctionId,
-  type PromptBlockDataType as PromptBlockData,
-  type PromptDataType as PromptData,
-  ToolFunctionDefinition as toolFunctionDefinitionSchema,
-  type ToolFunctionDefinitionType as ToolFunctionDefinition,
-  FunctionData as functionDataSchema,
-  Project as projectSchema,
-  type ExtendedSavedFunctionIdType as ExtendedSavedFunctionId,
-} from "./generated_types";
+import { Project as projectSchema } from "./sdk-schemas";
+import type {
+  FunctionTypeEnum as FunctionType,
+  IfExists,
+  SavedFunctionId,
+  PromptBlockData,
+  PromptData,
+  ToolFunctionDefinition,
+  ExtendedSavedFunctionId,
+} from "./sdk-types";
 import { loadPrettyXact, TransactionId } from "../util/index";
-import {
-  _internalGetGlobalState,
-  login,
-  Prompt,
-  PromptRowWithId,
-  RemoteEvalParameters,
-} from "./logger";
+import { _internalGetGlobalState, login } from "./logger/core";
+import { Prompt, PromptRowWithId } from "./logger/prompts";
 import type { BaseFnOpts, GenericFunction } from "./framework-types";
 import type { EvalParameters } from "./eval-parameters";
 import {
@@ -31,20 +24,18 @@ import {
   type PromptDefinition,
 } from "./prompt-schemas";
 import { zodToJsonSchema, type ZodSchema } from "./zod/utils";
-import type {
-  ParametersSchema,
-  StaticParametersSchema,
-  SerializedParametersContainer,
-} from "../dev/types";
-
-export { toolFunctionDefinitionSchema };
-// ToolFunctionDefinition exported as type-only from main index to avoid namespace issues
+type ParametersSchema = {
+  type: "object";
+  properties: Record<string, Record<string, unknown>>;
+  required?: string[];
+  additionalProperties?: boolean;
+};
 
 // Safe access to __filename (only exists in Node.js CJS)
 const currentFilename =
   typeof __filename !== "undefined" ? __filename : "unknown";
 
-export type CreateProjectOpts =
+type CreateProjectOpts =
   | {
       name: string;
       /**
@@ -55,13 +46,13 @@ export type CreateProjectOpts =
     }
   | { id: string };
 class ProjectBuilder {
-  create(opts: CreateProjectOpts) {
+  create(opts: CreateProjectOpts): Project {
     return new Project(opts);
   }
 }
-export const projects = new ProjectBuilder();
+export const projects: ProjectBuilder = new ProjectBuilder();
 
-export class Project {
+class Project {
   public readonly name?: string;
   public readonly id?: string;
   public readonly projectGroupName?: string;
@@ -94,20 +85,18 @@ export class Project {
     this.classifiers = new ClassifierBuilder(this);
   }
 
-  public addPrompt(prompt: CodePrompt) {
+  public addPrompt(prompt: CodePrompt): void {
     this._publishablePrompts.push(prompt);
     if (globalThis._lazy_load) {
-      globalThis._evals.prompts.push(prompt);
+      getEvaluatorRegistry().prompts.push(prompt);
     }
   }
 
-  public addParameters(parameters: CodeParameters) {
+  public addParameters(parameters: CodeParameters): void {
     this._publishableParameters.push(parameters);
     if (globalThis._lazy_load) {
-      if (globalThis._evals.parameters == null)
-        globalThis._evals.parameters = [];
-
-      globalThis._evals.parameters.push(parameters);
+      const registry = getEvaluatorRegistry();
+      (registry.parameters ??= []).push(parameters);
     }
   }
 
@@ -120,26 +109,24 @@ export class Project {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       GenericFunction<any, any>
     >,
-  ) {
+  ): void {
     this._publishableCodeFunctions.push(fn);
     if (globalThis._lazy_load) {
-      globalThis._evals.functions.push(fn);
+      getEvaluatorRegistry().functions.push(fn);
     }
   }
 
-  async publish() {
+  async publish(): Promise<void> {
     if (globalThis._lazy_load) {
-      debugLogger.notice.warn(
-        "publish() is a no-op when running `braintrust push`.",
-      );
+      debugLogger.notice.warn("publish() is a no-op when running `bt push`.");
       return;
     }
     await login();
     const projectMap = new ProjectNameIdMap();
-    const functionDefinitions: FunctionEvent[] = [];
+    const functionDefinitions: PromptFunctionEvent[] = [];
     if (this._publishableCodeFunctions.length > 0) {
       debugLogger.notice.warn(
-        "Code functions cannot be published directly. Use `braintrust push` instead.",
+        "Code functions cannot be published directly. Use `bt push` instead.",
       );
     }
     if (this._publishablePrompts.length > 0) {
@@ -156,7 +143,7 @@ export class Project {
   }
 }
 
-export class ToolBuilder {
+class ToolBuilder {
   private taskCounter = 0;
   constructor(private readonly project: Project) {}
 
@@ -226,7 +213,7 @@ export class ToolBuilder {
   }
 }
 
-export class ScorerBuilder {
+class ScorerBuilder {
   private taskCounter = 0;
   constructor(private readonly project: Project) {}
 
@@ -239,7 +226,7 @@ export class ScorerBuilder {
       Exact<Params, ScorerArgs<Output, Input>>,
       Returns
     >,
-  >(opts: ScorerOpts<Output, Input, Params, Returns, Fn>) {
+  >(opts: ScorerOpts<Output, Input, Params, Returns, Fn>): void {
     this.taskCounter++;
 
     let resolvedName = opts.name;
@@ -319,7 +306,9 @@ class ClassifierBuilder {
       Exact<Params, ScorerArgs<Output, Input>>,
       Returns
     >,
-  >(opts: ClassifierOpts<Output, Input, Params, Returns, Fn>) {
+  >(
+    opts: ClassifierOpts<Output, Input, Params, Returns, Fn>,
+  ): CodeFunction<Exact<Params, ScorerArgs<Output, Input>>, Returns, Fn> {
     this.taskCounter++;
 
     let resolvedName = opts.name ?? opts.handler.name;
@@ -344,7 +333,7 @@ class ClassifierBuilder {
   }
 }
 
-export type CodeOpts<
+type CodeOpts<
   Params,
   Returns,
   Fn extends GenericFunction<Params, Returns>,
@@ -387,7 +376,7 @@ type ScorerOptsUnion<
   | CodeOpts<Exact<Params, ScorerArgs<Output, Input>>, Returns, Fn>
   | ScorerPromptOpts;
 
-export type ScorerOpts<
+type ScorerOpts<
   Output,
   Input,
   Params,
@@ -510,7 +499,7 @@ export class CodePrompt {
 
   async toFunctionDefinition(
     projectNameToId: ProjectNameIdMap,
-  ): Promise<FunctionEvent> {
+  ): Promise<PromptFunctionEvent> {
     const prompt_data = {
       ...this.prompt,
     };
@@ -572,7 +561,7 @@ interface PromptNoTrace {
   noTrace: boolean;
 }
 
-export type PromptOpts<
+type PromptOpts<
   HasId extends boolean,
   HasVersion extends boolean,
   HasTools extends boolean = true,
@@ -586,7 +575,7 @@ export type PromptOpts<
   (HasNoTrace extends true ? Partial<PromptNoTrace> : {}) &
   PromptDefinition;
 
-export class PromptBuilder {
+class PromptBuilder {
   constructor(private readonly project: Project) {}
 
   public create<
@@ -677,7 +666,7 @@ export class CodeParameters {
 
   async toFunctionDefinition(
     projectNameToId: ProjectNameIdMap,
-  ): Promise<FunctionEvent> {
+  ): Promise<ParametersFunctionEvent> {
     const schema = serializeEvalParameterstoParametersSchema(this.schema);
     return {
       project_id: await projectNameToId.resolve(this.project),
@@ -715,47 +704,6 @@ class ParametersBuilder {
 
     return opts.schema;
   }
-}
-
-export function serializeEvalParametersToStaticParametersSchema(
-  parameters: EvalParameters,
-): StaticParametersSchema {
-  return Object.fromEntries(
-    Object.entries(parameters).map(([name, value]) => {
-      if ("type" in value && value.type === "prompt") {
-        return [
-          name,
-          {
-            type: "prompt",
-            default: value.default
-              ? promptDefinitionToPromptData(value.default)
-              : undefined,
-            description: value.description,
-          },
-        ];
-      } else if ("type" in value && value.type === "model") {
-        return [
-          name,
-          {
-            type: "model",
-            default: value.default,
-            description: value.description,
-          },
-        ];
-      } else {
-        const jsonSchema = zodToJsonSchema(value);
-        return [
-          name,
-          {
-            type: "data",
-            schema: jsonSchema,
-            default: jsonSchema.default,
-            description: jsonSchema.description,
-          },
-        ];
-      }
-    }),
-  );
 }
 
 function serializeEvalParameterstoParametersSchema(
@@ -824,43 +772,30 @@ function getDefaultDataFromParametersSchema(
   );
 }
 
-export function serializeRemoteEvalParametersContainer(
-  parameters: EvalParameters | RemoteEvalParameters<boolean, boolean>,
-): SerializedParametersContainer {
-  if (RemoteEvalParameters.isParameters(parameters)) {
-    return {
-      type: "braintrust.parameters",
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      schema: parameters.schema as ParametersSchema,
-      source: {
-        parametersId: parameters.id,
-        slug: parameters.slug,
-        name: parameters.name,
-        projectId: parameters.projectId,
-        version: parameters.version,
-      },
-    };
-  }
-
-  return {
-    type: "braintrust.staticParameters",
-    schema: serializeEvalParametersToStaticParametersSchema(parameters),
-    source: null,
-  };
-}
-
-export interface FunctionEvent {
+interface FunctionEventBase {
   project_id: string;
   slug: string;
   name: string;
   description: string;
-  prompt_data?: PromptData;
-  function_data: z.infer<typeof functionDataSchema>;
   function_type?: FunctionType;
   if_exists?: IfExists;
   tags?: string[];
   metadata?: Record<string, unknown>;
   environments?: { slug: string }[];
+}
+
+interface PromptFunctionEvent extends FunctionEventBase {
+  prompt_data: PromptData;
+  function_data: { type: "prompt" };
+}
+
+interface ParametersFunctionEvent extends FunctionEventBase {
+  function_type: "parameters";
+  function_data: {
+    type: "parameters";
+    data: Record<string, unknown>;
+    __schema: ParametersSchema;
+  };
 }
 
 export class ProjectNameIdMap {

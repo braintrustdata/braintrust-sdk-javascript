@@ -23,7 +23,7 @@ e2e/
 |     |- scenario.test.ts     # Colocated Vitest suite
 |     |- package.json         # Optional slim scenario-local deps
 |     `- __snapshots__/       # Colocated snapshots
-`- vitest.config.mts
+`- vite.config.ts
 ```
 
 Any extra files needed only by one scenario stay in that scenario folder. Anything reused by multiple scenarios belongs in `e2e/helpers/`.
@@ -80,7 +80,7 @@ Wrapper scenarios often create a root span with `testRunId` metadata and then le
 - Find the scenario root span first.
 - Scope raw payload snapshots by `root_span_id` using `payloadRowsForRootSpan(...)`.
 - Prefer normalized span-tree snapshots from `matchSpanTreeSnapshot(...)`. The `.json` sibling is the structural contract, and the `.txt` sibling is the ASCII tree for review; both are asserted and should be updated together.
-- If the wrapper has an explicit support matrix, reuse one shared test across version-specific scenario entries instead of duplicating the assertions. The AI SDK wrapper scenario uses this for supported v3-v6 package combinations.
+- If the wrapper has an explicit support matrix, reuse one shared test across version-specific scenario entries instead of duplicating the assertions. The AI SDK wrapper scenario uses this for its supported package combinations.
 
 ### Runner-wrapper scenario pattern
 
@@ -88,7 +88,7 @@ Some wrappers execute inside a nested test runner rather than a single SDK call.
 
 - Keep the outer e2e suite in `scenario.test.ts` and the spawned runner entrypoint in `scenario.ts`.
 - Put nested runner source in files like `runner.case.ts` or `runner.case.mjs`.
-- Do not name nested runner files `*.test.ts`, because the outer `e2e/vitest.config.mts` includes `scenarios/**/*.test.ts` and will try to execute them directly.
+- Do not name nested runner files `*.test.ts`, because the outer `e2e/vite.config.ts` includes `scenarios/**/*.test.ts` and will try to execute them directly.
 - Tag every traced test/eval with `metadata.testRunId` so the outer assertions can isolate rows across multiple trace roots with `payloadRowsForTestRunId(...)`.
 - If a nested runner needs its own test discovery rules, keep that config local to the scenario folder so the shared e2e config stays unchanged.
 
@@ -201,7 +201,7 @@ Only whole scenarios can be selected; test filters, file paths, sharding, and sn
 
 These scenarios have cassette wiring in place and will use cassettes once they're recorded:
 
-`anthropic-bedrock-instrumentation`, `anthropic-instrumentation`, `openai-instrumentation`, `openai-codex-instrumentation`, `ai-sdk-instrumentation`, `ai-sdk-otel-export`, `claude-agent-sdk-instrumentation`, `cohere-instrumentation`, `cursor-sdk-instrumentation`, `github-copilot-instrumentation`, `google-adk-instrumentation`, `google-genai-instrumentation`, `groq-instrumentation`, `huggingface-instrumentation`, `mistral-instrumentation`, `ollama-instrumentation`, `openrouter-agent-instrumentation`, `openrouter-instrumentation`, `typesafe-instrumentation`, `wrap-langchain-js-traces`.
+`anthropic-bedrock-instrumentation`, `anthropic-instrumentation`, `openai-instrumentation`, `openai-codex-instrumentation`, `ai-sdk-instrumentation`, `ai-sdk-otel-export`, `claude-agent-sdk-instrumentation`, `cohere-instrumentation`, `cursor-sdk-instrumentation`, `github-copilot-instrumentation`, `google-adk-instrumentation`, `google-genai-instrumentation`, `groq-instrumentation`, `huggingface-instrumentation`, `mistral-instrumentation`, `ollama-instrumentation`, `openrouter-agent-instrumentation`, `openrouter-instrumentation`, `typesafe-instrumentation`.
 
 ### Cassette format
 

@@ -2,4 +2,5 @@
 set -e
 
 pnpm install --ignore-workspace --frozen-lockfile
-pnpm exec vitest run
+pnpm run check:typings
+pnpm exec vp test run

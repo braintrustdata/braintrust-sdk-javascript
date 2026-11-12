@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { InstrumentationMatcher } from "../../src/auto-instrumentations/orchestrion-js";
 import { fastMCPConfigs } from "../../src/auto-instrumentations/configs/fastmcp";
-import { fastMCPChannels } from "../../src/instrumentation/plugins/fastmcp-interceptors";
+import { fastMCPChannels } from "../../src/instrumentation/providers/fastmcp-interceptors";
 
 describe("FastMCP session transformation", () => {
   it.each(["3.35.0", "4.0.0", "4.23.7"])(

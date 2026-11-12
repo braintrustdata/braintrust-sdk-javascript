@@ -1,6 +1,6 @@
 import type { EvalScorer, EvalScorerArgs } from "./framework";
 import type { SpanData } from "./trace";
-import type { BaseMetadata, DefaultMetadataType } from "./logger";
+import type { BaseMetadata, DefaultMetadataType } from "./logger/core";
 import type { Score } from "../util";
 
 type MaybePromise<T> = T | Promise<T>;

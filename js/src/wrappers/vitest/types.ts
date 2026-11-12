@@ -1,4 +1,4 @@
-import type { Span } from "../../logger";
+import type { Span } from "../../logger/core";
 
 import type { ScorerFunction, ProgressEvent } from "../shared/types";
 
@@ -89,8 +89,9 @@ export type WrappedDescribe = WithModifiers<BaseWrappedDescribe>;
 
 export interface VitestMethods<
   VitestContext = unknown,
-  ExpectType extends (...args: unknown[]) => unknown = (
-    ...args: unknown[]
+  ExpectType extends (value: unknown, message?: string) => unknown = (
+    value: unknown,
+    message?: string,
   ) => unknown,
 > {
   test: TestFunction<VitestContext>;
@@ -105,8 +106,9 @@ export interface VitestMethods<
 
 export interface BraintrustVitest<
   VitestContext = unknown,
-  ExpectType extends (...args: unknown[]) => unknown = (
-    ...args: unknown[]
+  ExpectType extends (value: unknown, message?: string) => unknown = (
+    value: unknown,
+    message?: string,
   ) => unknown,
 > {
   test: WrappedTest<VitestContext>;

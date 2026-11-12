@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "vite-plus/test";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -72,7 +72,7 @@ for (const dependency of ["miniflare-v4", "miniflare-v4-latest"]) {
             scenarioDir,
             env: {
               MINIFLARE_PACKAGE_NAME: dependency,
-              BRAINTRUST_CAPTURE_ATTACHMENTS: String(capture),
+              BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: String(capture),
             },
             runContext: { originalScenarioDir, variantKey: dependency },
             timeoutMs: 180_000,

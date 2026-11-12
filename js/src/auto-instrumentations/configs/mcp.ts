@@ -2,7 +2,7 @@ import type { InstrumentationConfig } from "../orchestrion-js";
 import {
   mcpSDKChannels,
   mcpServerChannels,
-} from "../../instrumentation/plugins/mcp-interceptors";
+} from "../../instrumentation/providers/mcp-interceptors";
 
 export const mcpConfigs: InstrumentationConfig[] = (
   ["connect", "setRequestHandler"] as const

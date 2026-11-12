@@ -212,7 +212,7 @@ async function main() {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "DD-API-KEY": ddApiKey,
+      "DD-API-KEY": ddApiKey!,
     },
     body: JSON.stringify(payload),
   });

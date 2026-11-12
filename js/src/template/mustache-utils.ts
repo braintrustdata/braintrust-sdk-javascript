@@ -4,7 +4,7 @@ import Mustache from "mustache";
 export function lintTemplate(
   template: string,
   context: Record<string, unknown>,
-) {
+): void {
   const variables = getMustacheVars(template);
   for (const variable of variables) {
     const arrPathsReplaced = variable[1].replaceAll(/\.\d+/g, ".0");

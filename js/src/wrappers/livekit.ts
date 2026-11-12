@@ -1,6 +1,7 @@
+import { registerInstrumentation } from "../instrumentation/registrations/livekit";
 /* eslint-disable @typescript-eslint/consistent-type-assertions -- vendored LiveKit boundaries. */
 import { debugLogger } from "../debug-logger";
-import { livekitChannels } from "../instrumentation/plugins/livekit-interceptors";
+import { livekitChannels } from "../instrumentation/providers/livekit-interceptors";
 import type {
   AgentActivity,
   AgentSession,
@@ -89,6 +90,7 @@ function wrapSession(session: AgentSession): AgentSession {
  * ```
  */
 export function wrapLiveKit<T extends object>(module: T): T {
+  registerInstrumentation();
   const livekit = module as unknown as Partial<LiveKitModule> | undefined;
   if (
     !livekit ||

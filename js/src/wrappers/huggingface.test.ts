@@ -5,13 +5,10 @@ import {
   describe,
   expect,
   test,
-} from "vitest";
+} from "vite-plus/test";
 import { configureNode } from "../node/config";
-import {
-  _exportsForTestingOnly,
-  initLogger,
-  TestBackgroundLogger,
-} from "../logger";
+import { _exportsForTestingOnly } from "../logger/testing";
+import { initLogger, TestBackgroundLogger } from "../logger/core";
 import { wrapHuggingFace } from "./huggingface";
 
 try {

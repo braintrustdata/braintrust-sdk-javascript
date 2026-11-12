@@ -5,12 +5,9 @@ import {
   describe,
   expect,
   test,
-} from "vitest";
-import {
-  _exportsForTestingOnly,
-  initLogger,
-  type TestBackgroundLogger,
-} from "../logger";
+} from "vite-plus/test";
+import { _exportsForTestingOnly } from "../logger/testing";
+import { initLogger, type TestBackgroundLogger } from "../logger/core";
 import { configureNode } from "../node/config";
 import { wrapHuggingFaceTransformers } from "./huggingface-transformers";
 import type {

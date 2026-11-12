@@ -3,7 +3,7 @@ import {
   findChildSpans,
   findLatestSpan,
 } from "../../helpers/trace-selectors";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,

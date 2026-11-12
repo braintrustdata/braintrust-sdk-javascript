@@ -23,6 +23,7 @@ export interface OpenAIChatCreateParams {
   service_tier?: string | null;
   messages: unknown;
   stream?: boolean | null;
+  audio?: { format: string; [key: string]: unknown } | null;
   [key: string]: unknown;
 }
 

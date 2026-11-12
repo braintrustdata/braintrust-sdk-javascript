@@ -1,28 +1,43 @@
+import { getLoaderCaches } from "./logger/prompts";
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 
-import { vi, expect, test, describe, beforeEach, afterEach } from "vitest";
 import {
-  _exportsForTestingOnly,
-  init,
-  initDataset,
+  vi,
+  expect,
+  expectTypeOf,
+  test,
+  describe,
+  beforeEach,
+  afterEach,
+} from "vite-plus/test";
+import { _exportsForTestingOnly } from "./logger/testing";
+import {
+  _internalStartSpan,
   initLogger,
-  Prompt,
-  RemoteEvalParameters,
+  extractTraceContextFromHeaders,
   BraintrustState,
   FailedHTTPResponse,
-  loadPrompt,
-  loadParameters,
   loginToState,
   wrapTraced,
+  traced,
   currentSpan,
   withParent,
   startSpan,
   updateSpan,
   Attachment,
   deepCopyEvent,
-  ReadonlyExperiment,
+  flush,
+  type InitLoggerOptions,
+} from "./logger/core";
+import { init, ReadonlyExperiment } from "./logger/experiments";
+import { initDataset } from "./logger/datasets";
+import {
+  Prompt,
+  RemoteEvalParameters,
+  loadPrompt,
+  loadParameters,
   renderMessageImpl,
-} from "./logger";
+} from "./logger/prompts";
 
 import { configureNode } from "./node/config";
 import { type GitMetadataSettingsType as GitMetadataSettings } from "./generated_types";
@@ -44,6 +59,12 @@ import { DiskCache } from "./prompt-cache/disk-cache";
 import { LRUCache } from "./lru-cache";
 
 configureNode();
+
+type InitLoggerHasAsyncFlush = "asyncFlush" extends keyof InitLoggerOptions
+  ? true
+  : false;
+
+expectTypeOf<InitLoggerHasAsyncFlush>().toEqualTypeOf<false>();
 
 test("renderMessage renders templates in structured content parts", () => {
   const message = {
@@ -456,13 +477,64 @@ test("verify MemoryBackgroundLogger intercepts logs", async () => {
   _exportsForTestingOnly.clearTestBackgroundLogger(); // can go back to normal
 });
 
+test("logger and tracing APIs preserve return shapes without implicit flushing", async () => {
+  await _exportsForTestingOnly.simulateLoginForTests();
+  const backgroundLogger = _exportsForTestingOnly.useTestBackgroundLogger();
+  const flushSpy = vi.spyOn(backgroundLogger, "flush");
+
+  try {
+    const logger = initLogger({
+      projectName: "test",
+      projectId: "test-project-id",
+    });
+
+    const id = logger.log({ input: "input" });
+    expectTypeOf(id).toEqualTypeOf<string>();
+
+    const loggerSyncResult = logger.traced(() => 42 as const);
+    expectTypeOf(loggerSyncResult).toEqualTypeOf<42>();
+    expect(loggerSyncResult).toBe(42);
+
+    const loggerAsyncResult = logger.traced(async () => 43);
+    expectTypeOf(loggerAsyncResult).toEqualTypeOf<Promise<number>>();
+    await expect(loggerAsyncResult).resolves.toBe(43);
+
+    const tracedSyncResult = traced(() => "sync" as const);
+    expectTypeOf(tracedSyncResult).toEqualTypeOf<"sync">();
+    expect(tracedSyncResult).toBe("sync");
+
+    const syncFunction = (value: number) => value + 1;
+    const wrappedSyncFunction = wrapTraced(syncFunction);
+    expectTypeOf(wrappedSyncFunction).toEqualTypeOf<typeof syncFunction>();
+    expect(wrappedSyncFunction(1)).toBe(2);
+
+    const asyncFunction = async (value: number) => value + 1;
+    const wrappedAsyncFunction = wrapTraced(asyncFunction);
+    expectTypeOf(wrappedAsyncFunction).toEqualTypeOf<typeof asyncFunction>();
+    await expect(wrappedAsyncFunction(2)).resolves.toBe(3);
+
+    expect(flushSpy).not.toHaveBeenCalled();
+
+    await logger.flush();
+    const span = logger.startSpan({ name: "explicit-flush" });
+    span.end();
+    await span.flush();
+    await flush();
+
+    expect(flushSpy).toHaveBeenCalledTimes(3);
+  } finally {
+    _exportsForTestingOnly.clearTestBackgroundLogger();
+    _exportsForTestingOnly.simulateLogoutForTests();
+  }
+});
+
 test.each([
   ["single chunk", false],
   ["split bytes", true],
 ])(
   "logs a Unicode byte stream without changing its text: %s",
   async (_, split) => {
-    _exportsForTestingOnly.simulateLoginForTests();
+    await _exportsForTestingOnly.simulateLoginForTests();
     const memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();
     const logger = initLogger({
       projectName: "test",
@@ -1073,7 +1145,8 @@ test("legacy initDataset applies bt eval internal BTQL runtime value", async () 
       },
     });
 
-    const dataset = initDataset("test-project", {
+    const dataset = initDataset({
+      project: "test-project",
       dataset: "test-dataset",
       state,
     });
@@ -2349,8 +2422,14 @@ describe("prompt and parameters loaders", () => {
         )
         .mockResolvedValueOnce(jsonResponse({ objects: [promptRow] }))
         .mockResolvedValueOnce(serverErrorResponse());
-      const globalCacheGet = vi.spyOn(state.promptCache, "get");
-      const globalCacheSet = vi.spyOn(state.promptCache, "set");
+      const globalCacheGet = vi.spyOn(
+        getLoaderCaches(state).promptCache,
+        "get",
+      );
+      const globalCacheSet = vi.spyOn(
+        getLoaderCaches(state).promptCache,
+        "set",
+      );
 
       const options = {
         projectName: "test-project",
@@ -2753,7 +2832,7 @@ describe("prompt and parameters loaders", () => {
           logWarnings: false,
         });
         const diskCacheSet = vi.spyOn(onlineDiskCache, "set");
-        onlineState.promptCache = new PromptCache({
+        getLoaderCaches(onlineState).promptCache = new PromptCache({
           diskCache: onlineDiskCache,
         });
         await onlineState.login({});
@@ -2782,7 +2861,7 @@ describe("prompt and parameters loaders", () => {
           fetch: offlineFetch as unknown as typeof globalThis.fetch,
           noExitFlush: true,
         });
-        offlineState.promptCache = new PromptCache({
+        getLoaderCaches(offlineState).promptCache = new PromptCache({
           diskCache: new DiskCache({ cacheDir, logWarnings: false }),
         });
 
@@ -2807,7 +2886,7 @@ describe("prompt and parameters loaders", () => {
           fetch: rejectedFetch as unknown as typeof globalThis.fetch,
           noExitFlush: true,
         });
-        rejectedState.promptCache = new PromptCache({
+        getLoaderCaches(rejectedState).promptCache = new PromptCache({
           diskCache: new DiskCache({ cacheDir, logWarnings: false }),
         });
 
@@ -2848,7 +2927,7 @@ describe("prompt and parameters loaders", () => {
         fetch: fetchMock as unknown as typeof globalThis.fetch,
         noExitFlush: true,
       });
-      switchingState.promptCache = new PromptCache({
+      getLoaderCaches(switchingState).promptCache = new PromptCache({
         memoryCache: new LRUCache<string, PromptMemoryCacheEntry>({ max: 10 }),
       });
 
@@ -2873,10 +2952,10 @@ describe("prompt and parameters loaders", () => {
     });
 
     test("loadPrompt does not read legacy unnamespaced cache entries", async () => {
-      state.promptCache = new PromptCache({
+      getLoaderCaches(state).promptCache = new PromptCache({
         memoryCache: new LRUCache<string, PromptMemoryCacheEntry>({ max: 10 }),
       });
-      await state.promptCache.set(
+      await getLoaderCaches(state).promptCache.set(
         {
           projectName: "test-project",
           slug: "saved-prompt",
@@ -2965,7 +3044,7 @@ describe("prompt and parameters loaders", () => {
     });
 
     test("loadParameters uses request-local credentials and isolated caches", async () => {
-      state.parametersCache = new ParametersCache({
+      getLoaderCaches(state).parametersCache = new ParametersCache({
         memoryCache: new LRUCache<string, ParametersMemoryCacheEntry>({
           max: 10,
         }),
@@ -3720,7 +3799,7 @@ describe("wrapTraced noTraceIO", () => {
         });
         return response;
       },
-      { noTraceIO: true, asyncFlush: true },
+      { noTraceIO: true },
     );
 
     expect(callModel({ input: "manual input" })).toEqual({
@@ -4170,7 +4249,7 @@ describe("parent precedence", () => {
   test("withParent + wrapTraced: child spans attach to current span (not directly to withParent)", async () => {
     const logger = initLogger({ projectName: "test", projectId: "pid" });
     const outer = logger.startSpan({ name: "outer" });
-    const parentStr = await outer.export();
+    const parentContext = extractTraceContextFromHeaders(outer.inject())!;
     outer.end();
 
     const inner = wrapTraced(
@@ -4180,7 +4259,7 @@ describe("parent precedence", () => {
       { name: "inner" },
     );
 
-    await withParent(parentStr, () => inner());
+    await withParent(parentContext, () => inner());
 
     await memory.flush();
     const events = await memory.drain();
@@ -4224,7 +4303,7 @@ describe("parent precedence", () => {
 
     const inner = wrapTraced(
       async function inner() {
-        startSpan({ name: "forced", parent: parentStr }).end();
+        _internalStartSpan({ name: "forced", parent: parentStr }).end();
       },
       { name: "inner" },
     );
@@ -4256,7 +4335,7 @@ describe("parent precedence", () => {
 
     const child = secondaryLogger.startSpan({
       name: "child",
-      parent: parentStr,
+      parent: parentStr as never,
     });
     child.end();
 
@@ -4287,7 +4366,7 @@ describe("parent precedence", () => {
 
     const child = secondaryExperiment.startSpan({
       name: "child",
-      parent: parentStr,
+      parent: parentStr as never,
     });
     child.end();
 

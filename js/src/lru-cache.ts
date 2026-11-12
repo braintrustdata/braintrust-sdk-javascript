@@ -72,7 +72,7 @@ export class LRUCache<K, V> {
       this.cache.delete(key);
     } else if (this.maxSize && this.cache.size >= this.maxSize) {
       // Map.keys() iterates in insertion order.
-      const first = this.cache.keys().next().value;
+      const first = this.cache.keys().next().value!;
       this.cache.delete(first);
     }
     this.cache.set(key, { value });

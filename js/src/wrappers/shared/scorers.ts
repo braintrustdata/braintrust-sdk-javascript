@@ -1,5 +1,5 @@
 import { debugLogger } from "../../debug-logger";
-import type { Span } from "../../logger";
+import type { Span } from "../../logger/core";
 import type { Score } from "../../../util/score";
 import type { ScorerFunction } from "./types";
 import type { OneOrMoreScores } from "../../framework";

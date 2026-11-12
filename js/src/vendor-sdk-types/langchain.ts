@@ -1,4 +1,4 @@
-import type { Logger, Span, StartSpanArgs } from "../logger";
+import type { Logger, Span, StartSpanArgs } from "../logger/core";
 import type { ExperimentLogPartialArgs } from "../util";
 
 export type LangChainSerialized = {
@@ -43,13 +43,12 @@ export interface LangChainCaptureOptions {
   captureModelTokenUsage?: boolean;
 }
 
-export type LangChainCallbackHandlerOptions<IsAsyncFlush extends boolean> =
-  LangChainCaptureOptions & {
-    debug: boolean;
-    excludeMetadataProps: RegExp;
-    logger?: Logger<IsAsyncFlush> | Span;
-    parent?: Span | (() => Span);
-  };
+export type LangChainCallbackHandlerOptions = LangChainCaptureOptions & {
+  debug: boolean;
+  excludeMetadataProps: RegExp;
+  logger?: Logger | Span;
+  parent?: Span | (() => Span);
+};
 
 export type LangChainStartSpanArgs = StartSpanArgs & {
   parentRunId?: string;

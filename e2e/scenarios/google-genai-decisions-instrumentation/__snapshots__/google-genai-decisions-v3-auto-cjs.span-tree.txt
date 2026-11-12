@@ -94,7 +94,6 @@ span_tree:
           ],
           "state": [
             {
-              "data": "<omitted>",
               "mime_type": "image/png",
               "type": "image"
             }

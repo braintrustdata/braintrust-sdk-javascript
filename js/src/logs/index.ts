@@ -1,6 +1,5 @@
-import { currentLogger, type Logger } from "../logger";
-import iso from "../isomorph";
-import { debugLogger } from "../debug-logger";
+import { currentLogger, type Logger } from "../logger/core";
+import iso from "#braintrust-platform";
 import { consoleHooks, wrapConsoleMethods } from "./console-interceptor";
 import { runConsoleCall, type ConsoleMethod, type LogConsole } from "./console";
 import type { ApplicationLogLevel } from "./templates";
@@ -32,7 +31,7 @@ function formatConsole(args: unknown[]): string {
 /** Forward one console call, keeping message extraction independent of hook registration. */
 function forwardConsoleCall(
   call: () => void,
-  logger: Logger<boolean> | undefined,
+  logger: Logger | undefined,
   method: ConsoleMethod,
   args: unknown[],
 ): void {
@@ -55,19 +54,14 @@ function forwardConsoleCall(
       });
     }
     const level: ApplicationLogLevel = method === "log" ? "info" : method;
-    const result = logger[level](body, { metadata });
-    if (result instanceof Promise) {
-      void result.catch((error) =>
-        debugLogger.error("Application log flush failed:", error),
-      );
-    }
+    logger[level](body, { metadata });
   }
   return call();
 }
 
 type WrapConsoleOptions = {
   /** Destination for console logs. Defaults to the current project logger at call time. */
-  logger?: Logger<boolean>;
+  logger?: Logger;
 };
 
 const consoleRegistrations = new WeakMap<object, WrapConsoleOptions | null>();

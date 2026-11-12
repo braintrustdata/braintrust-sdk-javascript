@@ -6,8 +6,8 @@
  * Every entry in this file represents a target SDK that doesn't expose a
  * stable extension point we can hook through global instrumentation hooks + the
  * internal Orchestrion matcher. New integrations should
- * **prefer the standard channel-handler / `BasePlugin` pattern** used by
- * every other integration in `js/src/instrumentation/plugins/*-plugin.ts`.
+ * **prefer the standard channel-consumer pattern** used by the integrations in
+ * `js/src/instrumentation/providers/*-plugin.ts`.
  * Only add an entry here when the target SDK gives us no other option (e.g.
  * the SDK relies on side-effectful module initialization, exposes its API
  * exclusively as re-exports from content-hashed chunks, or otherwise can't

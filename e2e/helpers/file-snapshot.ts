@@ -1,6 +1,6 @@
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { expect, type ExpectStatic } from "vitest";
+import { expect, type ExpectStatic } from "vite-plus/test";
 import { normalizeForSnapshot, type Json } from "./normalize";
 
 function sortJsonKeys(value: Json): Json {

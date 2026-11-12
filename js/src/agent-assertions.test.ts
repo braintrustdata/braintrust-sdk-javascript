@@ -1,4 +1,4 @@
-import { beforeAll, expect, expectTypeOf, test, vi } from "vitest";
+import { beforeAll, expect, expectTypeOf, test, vi } from "vite-plus/test";
 import { z } from "zod";
 
 import { agentAssertionScorer, Eval } from "./exports";

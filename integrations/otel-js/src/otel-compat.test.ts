@@ -5,21 +5,27 @@
  * when created in mixed contexts.
  */
 
-import { beforeEach, afterEach, describe, expect, test } from "vitest";
+import { beforeEach, afterEach, describe, expect, test } from "vite-plus/test";
+import { initLogger, currentSpan, Eval } from "braintrust";
+import { _exportsForTestingOnly } from "../../../js/src/logger/testing";
 import {
-  initLogger,
-  currentSpan,
+  NoopSpan,
+  _internalStartSpan,
+  _internalWithParent,
   getContextManager,
-  BRAINTRUST_CURRENT_SPAN_STORE,
-  _exportsForTestingOnly,
-  runEvaluator,
-} from "braintrust";
+} from "../../../js/src/logger/core";
 import {
   BasicTracerProvider,
   InMemorySpanExporter,
   SimpleSpanProcessor,
 } from "@opentelemetry/sdk-trace-base";
-import { context as otelContext, trace as otelTrace } from "@opentelemetry/api";
+import {
+  context as otelContext,
+  trace as otelTrace,
+  type Context,
+  createTraceState,
+  ROOT_CONTEXT,
+} from "@opentelemetry/api";
 import {
   AsyncHooksContextManager,
   AsyncLocalStorageContextManager,
@@ -33,6 +39,7 @@ import {
   setupOtelCompat,
   resetOtelCompat,
   BraintrustSpanProcessor,
+  contextFromSpan,
 } from "@braintrust/otel";
 
 class NoopProgressReporter {
@@ -41,15 +48,14 @@ class NoopProgressReporter {
   public increment() {}
 }
 
-function setupOtelFixture(projectName: string = "otel-compat-test") {
+function setupOtelFixture(_projectName: string = "otel-compat-test") {
   // For introspection in tests
   const exporter = new InMemorySpanExporter();
   const memoryProcessor = new SimpleSpanProcessor(exporter);
 
   // For actual Braintrust integration - inject test processor to avoid hitting APIs
   const braintrustProcessor = new BraintrustSpanProcessor({
-    parent: `project_name:${projectName}`,
-    _spanProcessor: memoryProcessor,
+    processor: memoryProcessor,
   });
 
   const tp = createTracerProvider(BasicTracerProvider, [
@@ -89,6 +95,62 @@ describe("OTEL compatibility mode", () => {
     _exportsForTestingOnly.clearTestBackgroundLogger();
     _exportsForTestingOnly.simulateLogoutForTests();
     resetOtelCompat();
+  });
+
+  test("an explicit native parent overrides routing from the ambient native span", async () => {
+    const { tracer, exporter, processor } = setupOtelFixture();
+    const first = initLogger({ projectName: "routing-first" });
+    const second = initLogger({ projectName: "routing-second" });
+    const explicit = second.startSpan({ name: "explicit-parent" });
+    try {
+      await first.traced(async () => {
+        tracer.startSpan("child", {}, contextFromSpan(explicit)).end();
+        tracer.startSpan("unrelated-root", {}, ROOT_CONTEXT).end();
+      });
+      await processor.forceFlush();
+      const child = exporter.getFinishedSpans()[0];
+      expect(child.attributes["braintrust.parent"]).toBe(
+        "project_name:routing-second",
+      );
+      expect(getParentSpanId(child)).toBe(explicit.spanId);
+      expect(
+        exporter.getFinishedSpans()[1].attributes["braintrust.parent"],
+      ).toBeUndefined();
+    } finally {
+      explicit.end();
+      await processor.shutdown();
+    }
+  });
+
+  test("native spans preserve an unsampled OTel parent and its trace state", async () => {
+    const { tracer, exporter, processor } = setupOtelFixture();
+    const logger = initLogger({ projectName: "sampling-state" });
+    const parent = otelTrace.setSpanContext(otelContext.active(), {
+      traceId: "1".repeat(32),
+      spanId: "2".repeat(16),
+      traceFlags: 0,
+      traceState: createTraceState("vendor=value"),
+      isRemote: true,
+    });
+    try {
+      await otelContext.with(parent, async () => {
+        await logger.traced(async (native) => {
+          expect(native.inject().traceparent).toMatch(/-00$/);
+          expect(native.inject().tracestate).toBe("vendor=value");
+          const child = tracer.startSpan("gen_ai.unsampled");
+          expect(child.isRecording()).toBe(false);
+          expect(child.spanContext().traceFlags).toBe(0);
+          expect(child.spanContext().traceState?.serialize()).toBe(
+            "vendor=value",
+          );
+          child.end();
+        });
+      });
+      await processor.forceFlush();
+      expect(exporter.getFinishedSpans()).toHaveLength(0);
+    } finally {
+      await processor.shutdown();
+    }
   });
 
   test("mixed BT/OTEL tracing with BT logger first", async () => {
@@ -264,28 +326,12 @@ describe("OTEL compatibility mode", () => {
     expect(cm.getCurrentSpan).toBeDefined();
   });
 
-  test("uses OtelContextManager when OTEL enabled", async () => {
-    // Test that when OTEL is available and env var is set, we get OtelContextManager
-    // Note: In test environment, OTEL packages may not be available even though
-    // we checked OTEL_AVAILABLE. If the require fails in getContextManager,
-    // it falls back to BraintrustContextManager, which is correct behavior.
-
-    // Clear module cache and re-import to get fresh context manager
-    const loggerModule = await import("braintrust?t=" + Date.now());
-    const cm = loggerModule.getContextManager();
-
-    // If OTEL is truly available, we should get OtelContextManager
-    // Otherwise, fallback to BraintrustContextManager is acceptable
-    if (cm.constructor.name === "OtelContextManager") {
-      expect(cm.getParentSpanIds).toBeDefined();
-      expect(cm.runInContext).toBeDefined();
-      expect(cm.getCurrentSpan).toBeDefined();
-    } else {
-      // OTEL module not actually available at runtime, which is fine
-      console.warn(
-        "OTEL context manager not available at runtime, using fallback",
-      );
-    }
+  test("uses OtelContextManager when OTEL enabled", () => {
+    const cm = getContextManager();
+    expect(cm.constructor.name).toBe("OtelContextManager");
+    expect(cm.getParentSpanIds).toBeDefined();
+    expect(cm.runInContext).toBeDefined();
+    expect(cm.getCurrentSpan).toBeDefined();
   });
 
   test("OTEL spans inherit braintrust.parent attribute", async () => {
@@ -371,7 +417,7 @@ describe("OTEL compatibility mode", () => {
     expect(trace2Id).not.toBe(trace3Id);
   });
 
-  test("OTEL spans in experiment Eval() inherit experiment_id parent", async () => {
+  test("OTEL spans in Eval() inherit Braintrust parent context", async () => {
     const { tracer, exporter, processor } = setupOtelFixture(
       "experiment-eval-test",
     );
@@ -379,12 +425,11 @@ describe("OTEL compatibility mode", () => {
     // Capture BT span info from inside the task
     const btSpanInfo: Array<{ traceId: string; spanId: string }> = [];
 
-    // Use runEvaluator with null experiment to avoid API calls
-    const result = await runEvaluator(
-      null,
+    // Use the public Eval API without making Braintrust API calls.
+    const result = await Eval(
+      "test-eval-project",
       {
-        projectName: "test-eval-project",
-        evalName: "otel-eval-test",
+        experimentName: "otel-eval-test",
         data: [{ input: 1 }, { input: 2 }],
         task: async (input: number) => {
           // Capture the current BT span info
@@ -408,9 +453,10 @@ describe("OTEL compatibility mode", () => {
         },
         scores: [],
       },
-      new NoopProgressReporter(),
-      [],
-      undefined,
+      {
+        noSendLogs: true,
+        progress: new NoopProgressReporter(),
+      },
     );
 
     // Verify we captured BT span info
@@ -652,7 +698,7 @@ describe("OTEL compatibility mode", () => {
 
     parentSpan.end();
 
-    const childSpan = logger.startSpan({
+    const childSpan = _internalStartSpan({
       name: "child-span-v4",
       parent: exported,
     });
@@ -678,11 +724,9 @@ describe("OTEL compatibility mode", () => {
     parentSpan.end();
 
     // Use withParent helper with logger.startSpan to properly handle the exported parent
-    const { withParent } = await import("braintrust");
-
-    withParent(exported, () => {
+    _internalWithParent(exported, () => {
       // Pass parent explicitly in addition to withParent context
-      const childSpan = logger.startSpan({
+      const childSpan = _internalStartSpan({
         name: "child-span-v4-with-parent",
         parent: exported,
       });
@@ -703,8 +747,6 @@ describe("OtelContextManager TracingChannel integration", () => {
     await _exportsForTestingOnly.simulateLoginForTests();
     _exportsForTestingOnly.useTestBackgroundLogger();
 
-    // AsyncLocalStorageContextManager (not AsyncHooksContextManager) exposes
-    // _asyncLocalStorage which is required for TracingChannel bindStore.
     contextManager = new AsyncLocalStorageContextManager();
     contextManager.enable();
     otelContext.setGlobalContextManager(contextManager);
@@ -720,12 +762,11 @@ describe("OtelContextManager TracingChannel integration", () => {
     resetOtelCompat();
   });
 
-  test("OtelContextManager exposes OTEL ALS via BRAINTRUST_CURRENT_SPAN_STORE", () => {
+  test("OtelContextManager exposes a public context store", () => {
     const cm = getContextManager();
     expect(cm.constructor.name).toBe("OtelContextManager");
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const store = (cm as any)[BRAINTRUST_CURRENT_SPAN_STORE];
+    const store = cm.getCurrentSpanStore()!;
     expect(store).toBeDefined();
     expect(typeof store.run).toBe("function");
     expect(typeof store.getStore).toBe("function");
@@ -733,21 +774,20 @@ describe("OtelContextManager TracingChannel integration", () => {
 
   test("wrapSpanForStore returns OTEL Context that makes currentSpan() work", () => {
     const cm = getContextManager();
-    const mockSpan = {
+    const mockSpan = Object.assign(new NoopSpan(), {
       spanId: "abc123def456789a",
       rootSpanId: "00000000000000000000000000000001",
       spanParents: [],
       getParentInfo: () => undefined,
-    };
+    });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const ctx = cm.wrapSpanForStore(mockSpan as any);
+    const ctx = cm.wrapSpanForStore(mockSpan);
     expect(ctx).toBeDefined();
 
     // Running in the returned context should expose the BT span via currentSpan()
     otelContext.with(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ctx as any,
+      ctx as Context,
       () => {
         expect(currentSpan()).toBe(mockSpan);
       },
@@ -756,19 +796,17 @@ describe("OtelContextManager TracingChannel integration", () => {
 
   test("store.run() with wrapSpanForStore output propagates span to currentSpan()", () => {
     const cm = getContextManager();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const store = (cm as any)[BRAINTRUST_CURRENT_SPAN_STORE];
+    const store = cm.getCurrentSpanStore()!;
     expect(store).toBeDefined();
 
-    const mockSpan = {
+    const mockSpan = Object.assign(new NoopSpan(), {
       spanId: "deadbeef12345678",
       rootSpanId: "00000000000000000000000000000002",
       spanParents: [],
       getParentInfo: () => undefined,
-    };
+    });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const wrappedCtx = cm.wrapSpanForStore(mockSpan as any);
+    const wrappedCtx = cm.wrapSpanForStore(mockSpan);
 
     // Simulate what TracingChannel's runStores does: call store.run(value, fn)
     store.run(wrappedCtx, () => {
@@ -778,28 +816,27 @@ describe("OtelContextManager TracingChannel integration", () => {
 
   test("nested store.run() calls maintain correct span chain", () => {
     const cm = getContextManager();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const store = (cm as any)[BRAINTRUST_CURRENT_SPAN_STORE];
+    const store = cm.getCurrentSpanStore()!;
 
-    const parentSpan = {
+    const parentSpan = Object.assign(new NoopSpan(), {
       spanId: "1111111111111111",
       rootSpanId: "00000000000000000000000000000003",
       spanParents: [],
       getParentInfo: () => undefined,
-    };
-    const childSpan = {
+    });
+    const childSpan = Object.assign(new NoopSpan(), {
       spanId: "2222222222222222",
       rootSpanId: "00000000000000000000000000000003",
       spanParents: ["1111111111111111"],
       getParentInfo: () => undefined,
-    };
+    });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    store.run(cm.wrapSpanForStore(parentSpan as any), () => {
+    store.run(cm.wrapSpanForStore(parentSpan), () => {
       expect(currentSpan()).toBe(parentSpan);
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      store.run(cm.wrapSpanForStore(childSpan as any), () => {
+      store.run(cm.wrapSpanForStore(childSpan), () => {
         expect(currentSpan()).toBe(childSpan);
       });
 
@@ -813,19 +850,18 @@ describe("OtelContextManager TracingChannel integration", () => {
 
   test("wrapSpanForStore result sets OTEL active span with matching IDs", () => {
     const cm = getContextManager();
-    const mockSpan = {
+    const mockSpan = Object.assign(new NoopSpan(), {
       spanId: "aabbccddeeff0011",
       rootSpanId: "aabbccddeeff00112233445566778899",
       spanParents: [],
       getParentInfo: () => undefined,
-    };
+    });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const ctx = cm.wrapSpanForStore(mockSpan as any);
+    const ctx = cm.wrapSpanForStore(mockSpan);
 
     otelContext.with(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ctx as any,
+      ctx as Context,
       () => {
         const activeSpan = otelTrace.getActiveSpan();
         expect(activeSpan).toBeDefined();
@@ -838,7 +874,7 @@ describe("OtelContextManager TracingChannel integration", () => {
   });
 });
 
-describe("OtelContextManager fallback ALS (AsyncHooksContextManager)", () => {
+describe("OtelContextManager with AsyncHooksContextManager", () => {
   let hooksContextManager: AsyncHooksContextManager;
 
   beforeEach(async () => {
@@ -846,8 +882,6 @@ describe("OtelContextManager fallback ALS (AsyncHooksContextManager)", () => {
     await _exportsForTestingOnly.simulateLoginForTests();
     _exportsForTestingOnly.useTestBackgroundLogger();
 
-    // AsyncHooksContextManager does NOT expose _asyncLocalStorage, so
-    // OtelContextManager should create its own fallback ALS.
     hooksContextManager = new AsyncHooksContextManager();
     hooksContextManager.enable();
     otelContext.setGlobalContextManager(hooksContextManager);
@@ -863,43 +897,41 @@ describe("OtelContextManager fallback ALS (AsyncHooksContextManager)", () => {
     resetOtelCompat();
   });
 
-  test("exposes fallback ALS via BRAINTRUST_CURRENT_SPAN_STORE when OTEL ALS is unavailable", () => {
+  test("exposes a store without access to OTel internals", () => {
     const cm = getContextManager();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const store = (cm as any)[BRAINTRUST_CURRENT_SPAN_STORE];
+    const store = cm.getCurrentSpanStore()!;
     expect(store).toBeDefined();
     expect(typeof store.run).toBe("function");
     expect(typeof store.getStore).toBe("function");
   });
 
-  test("wrapSpanForStore returns span directly (not OTEL Context) in fallback mode", () => {
+  test("wrapSpanForStore uses OTel context with AsyncHooksContextManager", () => {
     const cm = getContextManager();
-    const mockSpan = {
+    const mockSpan = Object.assign(new NoopSpan(), {
       spanId: "1234567890abcdef",
       rootSpanId: "00000000000000000000000000000010",
       spanParents: [],
       getParentInfo: () => undefined,
-    };
+    });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = cm.wrapSpanForStore(mockSpan as any);
-    // In fallback mode, the span is stored directly (not wrapped in OTEL Context)
-    expect(result).toBe(mockSpan);
+    const result = cm.wrapSpanForStore(mockSpan);
+    cm.getCurrentSpanStore()!.run(result, () =>
+      expect(cm.getCurrentSpan()).toBe(mockSpan),
+    );
   });
 
-  test("store.run() with span in fallback mode makes getCurrentSpan() work", () => {
+  test("store.run() with AsyncHooksContextManager makes getCurrentSpan() work", () => {
     const cm = getContextManager();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const store = (cm as any)[BRAINTRUST_CURRENT_SPAN_STORE];
+    const store = cm.getCurrentSpanStore()!;
 
-    const mockSpan = {
+    const mockSpan = Object.assign(new NoopSpan(), {
       spanId: "fedcba0987654321",
       rootSpanId: "00000000000000000000000000000011",
       spanParents: [],
       getParentInfo: () => undefined,
-    };
+    });
 
-    store.run(mockSpan, () => {
+    store.run(cm.wrapSpanForStore(mockSpan), () => {
       expect(cm.getCurrentSpan()).toBe(mockSpan);
     });
 
@@ -938,29 +970,16 @@ describe("Distributed Tracing (BT → OTEL)", () => {
     resetOtelCompat();
   });
 
-  test("otelContextFromSpanExport parses BT span and creates OTEL context", async () => {
-    const { contextFromSpanExport: otelContextFromSpanExport } =
-      await import("./");
-    const { SpanComponentsV4 } = await import("braintrust/util");
-    const { SpanObjectTypeV3 } = await import("braintrust/util");
-
-    // Create a sample span export string
+  test("contextFromSpan creates an OTEL context", async () => {
+    const { contextFromSpan } = await import("./");
     const rootSpanId = "a1b2c3d4e5f6789012345678abcdef01"; // 32 hex chars (16 bytes)
     const spanId = "a1b2c3d4e5f67890"; // 16 hex chars (8 bytes)
-    const objectId = "proj-123";
-
-    const components = new SpanComponentsV4({
-      object_type: SpanObjectTypeV3.PROJECT_LOGS,
-      object_id: objectId,
-      row_id: "row-123",
-      span_id: spanId,
-      root_span_id: rootSpanId,
-      propagated_event: undefined,
-    });
-
-    const exportStr = components.toStr();
-
-    const ctx = otelContextFromSpanExport(exportStr);
+    const ctx = contextFromSpan({
+      inject: () => ({
+        traceparent: `00-${rootSpanId}-${spanId}-01`,
+        baggage: "braintrust.parent=project_id%3Aproj-123",
+      }),
+    } as any);
 
     // Verify that a valid context was created
     expect(ctx).toBeDefined();
@@ -985,8 +1004,7 @@ describe("Distributed Tracing (BT → OTEL)", () => {
   test("BT span in Service A can be parent of OTEL span in Service B", async () => {
     const { tracer, exporter, processor } =
       setupOtelFixture("service-a-project");
-    const { contextFromSpanExport: otelContextFromSpanExport } =
-      await import("./");
+    const { contextFromSpan } = await import("./");
 
     const projectName = "service-a-project";
     const logger = initLogger({ projectName });
@@ -994,25 +1012,23 @@ describe("Distributed Tracing (BT → OTEL)", () => {
     // ===== Service A: Create BT span and export =====
     let serviceATraceId: string | undefined;
     let serviceASpanId: string | undefined;
-    let exportedContext: string | undefined;
+    let sourceSpan: import("braintrust").Span | undefined;
 
     await logger.traced(
       async (serviceASpan) => {
         serviceATraceId = serviceASpan.rootSpanId;
         serviceASpanId = serviceASpan.spanId;
-
-        // Export context for sending to Service B (e.g., via HTTP header)
-        exportedContext = await serviceASpan.export();
+        sourceSpan = serviceASpan;
       },
       { name: "service_a_span" },
     );
 
-    expect(exportedContext).toBeDefined();
+    expect(sourceSpan).toBeDefined();
     expect(serviceATraceId).toBeDefined();
     expect(serviceASpanId).toBeDefined();
 
     // ===== Service B: Import context and create OTEL child span =====
-    const ctx = otelContextFromSpanExport(exportedContext!);
+    const ctx = contextFromSpan(sourceSpan!);
 
     // Use context.with() to run code in the imported context
     await context.with(ctx, async () => {
@@ -1041,19 +1057,10 @@ describe("Distributed Tracing (BT → OTEL)", () => {
     // Assert unified trace ID across services
     expect(serviceBTraceId).toBe(serviceATraceId);
 
-    // Service B span should have Service A span as parent
-    if ((serviceBSpan as any).parentSpanId) {
-      expect((serviceBSpan as any).parentSpanId).toBe(serviceASpanId);
-    }
-
-    // Note: In distributed tracing, the braintrust.parent attribute is NOT
-    // automatically set in Service B because there's no active BT span context.
-    // The imported context only contains trace/span IDs for parent-child relationships.
-    // This is expected behavior - the key feature is trace ID unification.
-    expect(serviceBSpan.attributes).toBeDefined();
-    if (serviceBSpan.attributes) {
-      // Verify the attribute is NOT set (this is expected in distributed scenarios)
-      expect(serviceBSpan.attributes["braintrust.parent"]).toBeUndefined();
-    }
+    expect(getParentSpanId(serviceBSpan)).toBe(serviceASpanId);
+    // W3C baggage carries project routing across the service boundary.
+    expect(serviceBSpan.attributes["braintrust.parent"]).toBe(
+      "project_name:service-a-project",
+    );
   });
 });

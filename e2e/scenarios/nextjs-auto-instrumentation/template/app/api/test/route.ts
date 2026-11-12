@@ -1,4 +1,3 @@
-import "braintrust"; // Registers Braintrust's global instrumentation hooks.
 import OpenAI from "openai";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";

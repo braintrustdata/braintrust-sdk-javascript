@@ -1,10 +1,10 @@
-import { aiSDKServiceTierMetadata } from "../../instrumentation/plugins/ai-sdk-service-tier";
+import { aiSDKServiceTierMetadata } from "../../instrumentation/providers/ai-sdk-service-tier";
 import { debugLogger } from "../../debug-logger";
 import {
   AI_SDK_TOOL_CALL_ID,
   AI_SDK_TOOL_CAPTURE,
   type AISDKToolSpan,
-} from "../../instrumentation/plugins/ai-sdk-tool-tracing";
+} from "../../instrumentation/providers/ai-sdk-tool-tracing";
 import { isAutoInstrumentationSuppressed } from "../../instrumentation/auto-instrumentation-suppression";
 import {
   SpanTypeAttribute,
@@ -12,7 +12,7 @@ import {
   isObject,
   isObjectOrArray,
 } from "../../util";
-import { logError, startSpan, withCurrent, type Span } from "../../logger";
+import { logError, startSpan, withCurrent, type Span } from "../../logger/core";
 import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
@@ -37,7 +37,7 @@ import {
   processAISDKWorkflowAgentCallInput,
   processAISDKWorkflowAgentModelCallInput,
   serializeModelWithProvider,
-} from "../../instrumentation/plugins/ai-sdk-plugin";
+} from "../../instrumentation/providers/ai-sdk-instrumentation";
 import type {
   AISDKCallParams,
   AISDKEvaluationResult,
@@ -62,7 +62,7 @@ import { currentWorkflowAgentWrapperSpan } from "./workflow-agent-context";
 import {
   currentCloudflareThinkRun,
   type CloudflareThinkRun,
-} from "../../instrumentation/plugins/cloudflare-think-context";
+} from "../../instrumentation/providers/cloudflare-think-context";
 import {
   currentHarnessTurnParent,
   startHarnessTurnChildSpan,
@@ -396,7 +396,9 @@ export function braintrustAISDKTelemetry(): any {
       span.log({
         ...(shouldRecordOutputs(event)
           ? {
-              output: processAISDKOutput(result, DEFAULT_DENY_OUTPUT_PATHS),
+              output: withCurrent(span, () =>
+                processAISDKOutput(result, DEFAULT_DENY_OUTPUT_PATHS),
+              ),
             }
           : {}),
         metrics: extractTokenMetrics(result),
@@ -526,9 +528,11 @@ export function braintrustAISDKTelemetry(): any {
       state.span.log({
         ...(shouldRecordOutputs(event)
           ? {
-              output: applyAISDKToolModelOutputs(
-                finishOutput(result, state.operationName),
-                aiSDKModelOutputToolNames(state.tools),
+              output: withCurrent(state.span, () =>
+                applyAISDKToolModelOutputs(
+                  finishOutput(result, state.operationName),
+                  aiSDKModelOutputToolNames(state.tools),
+                ),
               ),
             }
           : {}),
@@ -676,9 +680,11 @@ export function braintrustAISDKTelemetry(): any {
         if (shouldRecordInputs(event)) {
           const callInput =
             workflowAgentCallInput ?? operationInput(event, operationName);
-          const { input, outputPromise } = workflowAgent
-            ? processAISDKWorkflowAgentCallInput(callInput)
-            : processAISDKCallInput(callInput);
+          const { input, outputPromise } = withCurrent(span, () =>
+            workflowAgent
+              ? processAISDKWorkflowAgentCallInput(callInput)
+              : processAISDKCallInput(callInput),
+          );
           logPayload.input = input;
           const state = operations.get(operationKey);
           if (state) {
@@ -727,12 +733,15 @@ export function braintrustAISDKTelemetry(): any {
         const operationName = state?.operationName ?? "generateText";
         const callInput = operationInput(event, operationName);
         const workflowAgent = operationName === "WorkflowAgent.stream";
-        const processedInput =
+        const processInput = () =>
           shouldRecordInputs(event) && workflowAgent
             ? processAISDKWorkflowAgentModelCallInput(callInput).input
             : shouldRecordInputs(event)
               ? processAISDKCallInput(callInput).input
               : undefined;
+        const processedInput = state
+          ? withCurrent(state.span, processInput)
+          : processInput();
         if (
           workflowAgent &&
           state?.ownsSpan &&
@@ -886,7 +895,9 @@ export function braintrustAISDKTelemetry(): any {
         span.log({
           ...(shouldRecordOutputs(event)
             ? {
-                output: processAISDKOutput(result, DEFAULT_DENY_OUTPUT_PATHS),
+                output: withCurrent(span, () =>
+                  processAISDKOutput(result, DEFAULT_DENY_OUTPUT_PATHS),
+                ),
               }
             : {}),
           metrics: extractTokenMetrics(result),

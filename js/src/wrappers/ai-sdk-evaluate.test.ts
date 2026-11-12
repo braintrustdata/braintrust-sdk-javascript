@@ -1,15 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
-  _exportsForTestingOnly,
-  initLogger,
-  traced,
-  type TestBackgroundLogger,
-} from "../logger";
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vite-plus/test";
+import { _exportsForTestingOnly } from "../logger/testing";
+import { initLogger, traced, type TestBackgroundLogger } from "../logger/core";
 import { configureNode } from "../node/config";
-import { aiSDKChannels } from "../instrumentation/plugins/ai-sdk-interceptors";
-import { registry } from "../instrumentation/registry";
+import { aiSDKChannels } from "../instrumentation/providers/ai-sdk-interceptors";
+import { registerInstrumentation } from "../instrumentation/registrations/aisdk";
 import { runWithAutoInstrumentationSuppressed } from "../instrumentation/auto-instrumentation-suppression";
 import type {
   AISDKEvaluateParams,
@@ -92,7 +95,7 @@ describe.each(["experimental_evaluate", "experimental_decide"] as const)(
     });
 
     test("keeps media request, receiver, promise and result identity", async () => {
-      vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", "true");
+      vi.stubEnv("BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS", "true");
       const bytes = new Uint8Array([1, 2]);
       const request = {
         ...params,
@@ -252,21 +255,13 @@ describe.each(["experimental_evaluate", "experimental_decide"] as const)(
       expect(await backgroundLogger.drain()).toHaveLength(1);
     });
 
-    test("preserves calls while disabled and resumes without duplicate subscriptions", async () => {
+    test("registers repeatedly without duplicate subscriptions", async () => {
       const original = Promise.resolve(result);
       const wrapped = wrapAISDK({
         [method]: (_params: AISDKEvaluateParams) => original,
       });
-      registry.disable();
-      registry.disable();
-      try {
-        expect(wrapped[method](params)).toBe(original);
-        await original;
-        expect(await backgroundLogger.drain()).toHaveLength(0);
-      } finally {
-        registry.enable();
-        registry.enable();
-      }
+      registerInstrumentation();
+      registerInstrumentation();
       await wrapped[method](params);
       expect(await backgroundLogger.drain()).toHaveLength(1);
     });

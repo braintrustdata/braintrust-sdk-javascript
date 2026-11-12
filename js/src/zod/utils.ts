@@ -15,7 +15,9 @@ function isZodV4(zodObject: ZodSchema): zodObject is z4.ZodType {
   );
 }
 
-export function zodToJsonSchema(schema: ZodSchema) {
+export function zodToJsonSchema(
+  schema: ZodSchema,
+): ReturnType<typeof z4.toJSONSchema> | ReturnType<typeof zodToJsonSchemaV3> {
   if (isZodV4(schema)) {
     return z4.toJSONSchema(schema, {
       target: "draft-7",

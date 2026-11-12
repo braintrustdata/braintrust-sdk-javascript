@@ -1,4 +1,4 @@
-import { describe } from "vitest";
+import { describe } from "vite-plus/test";
 import { describeVariant } from "../../helpers/describe-variant";
 import { resolve } from "node:path";
 import {
@@ -45,6 +45,7 @@ describe.concurrent("variants", () => {
           await runScenarioDir({
             entry: "scenario.ts",
             env: {
+              BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "true",
               GROQ_AUDIO_FILE: audioFile,
               GROQ_PACKAGE_NAME: scenario.dependencyName,
             },
@@ -67,6 +68,7 @@ describe.concurrent("variants", () => {
           await runNodeScenarioDir({
             entry: "scenario.mjs",
             env: {
+              BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "true",
               GROQ_AUDIO_FILE: audioFile,
               GROQ_PACKAGE_NAME: scenario.dependencyName,
             },

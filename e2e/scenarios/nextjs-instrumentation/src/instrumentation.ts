@@ -1,4 +1,5 @@
-import { BraintrustExporter } from "@braintrust/otel";
+import { OTLPHttpJsonTraceExporter } from "@vercel/otel";
+import { BraintrustExporter, braintrustOtlpConfig } from "@braintrust/otel";
 import { registerOTel } from "@vercel/otel";
 import { initLogger } from "braintrust";
 import { scopedName } from "./lib/runtime-check";
@@ -12,10 +13,14 @@ export async function register() {
   registerOTel({
     serviceName: "nextjs-instrumentation-e2e",
     traceExporter: new BraintrustExporter({
-      apiKey: process.env.BRAINTRUST_API_KEY!,
-      apiUrl: process.env.BRAINTRUST_API_URL!,
-      parent: `project_name:${scopedName("e2e-nextjs-instrumentation")}`,
+      exporter: new OTLPHttpJsonTraceExporter(
+        braintrustOtlpConfig({
+          apiKey: process.env.BRAINTRUST_API_KEY!,
+          apiUrl: process.env.BRAINTRUST_API_URL!,
+          parent: `project_name:${scopedName("e2e-nextjs-instrumentation")}`,
+        }),
+      ),
       filterAISpans: false,
-    }) as any,
+    }),
   });
 }

@@ -1,3 +1,4 @@
+import { registerInstrumentation } from "../instrumentation/registrations/anthropic";
 import { debugLogger } from "../debug-logger";
 
 const sessionStreamCollectors = new WeakMap<object, () => void>();
@@ -21,6 +22,7 @@ export function registerAnthropicSessionStreamCollector(
  * @returns The same stream object.
  */
 export function collectAnthropicSession<T extends object>(stream: T): T {
+  registerInstrumentation();
   const collector = sessionStreamCollectors.get(stream);
   if (!collector) {
     return stream;

@@ -1,6 +1,8 @@
+import { registerInstrumentation } from "../instrumentation/registrations/huggingface";
+import { huggingFaceChannels } from "../instrumentation/providers/huggingface-interceptors";
 import { debugLogger } from "../debug-logger";
 import { isObject } from "../../util";
-import { huggingFaceChannels } from "../instrumentation/plugins/huggingface-interceptors";
+
 import type {
   HuggingFaceChatCompletion,
   HuggingFaceChatCompletionChunk,
@@ -44,6 +46,7 @@ export function wrapHuggingFace(
 ): HuggingFaceClient;
 export function wrapHuggingFace<T>(huggingFace: T): T;
 export function wrapHuggingFace(huggingFace: unknown): unknown {
+  registerInstrumentation();
   if (isSupportedHuggingFaceModule(huggingFace)) {
     return moduleProxy(huggingFace);
   }

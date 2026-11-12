@@ -1,8 +1,5 @@
 import { spawn, execSync } from "node:child_process";
-import {
-  displayTestResults,
-  hasFailures,
-} from "../../../shared/dist/index.mjs";
+import { displayTestResults, hasFailures } from "../../../shared/dist/index.js";
 
 const PORT = 8800;
 const MAX_RETRIES = 20;

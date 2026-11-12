@@ -1,5 +1,5 @@
 import { LevenshteinScorer } from "npm:autoevals";
-import { Eval } from "npm:braintrust";
+import { Eval } from "npm:braintrust@^3.30.0";
 
 Eval("Say Hi Bot", {
   data: () => {

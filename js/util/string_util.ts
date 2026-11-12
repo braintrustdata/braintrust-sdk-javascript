@@ -7,32 +7,32 @@ export function _urljoin(...parts: string[]): string {
     .join("/");
 }
 
-export function capitalize(s: string, sep?: string) {
+export function capitalize(s: string, sep?: string): string {
   const items = sep ? s.split(sep) : [s];
   return items
     .map((s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s))
     .join(sep || "");
 }
 
-export function lowercase(s: string, sep?: string) {
+export function lowercase(s: string, sep?: string): string {
   const items = sep ? s.split(sep) : [s];
   return items
     .map((s) => (s ? s.charAt(0).toLowerCase() + s.slice(1) : s))
     .join(sep || "");
 }
 
-export function snakeToCamelCase(s: string) {
+export function snakeToCamelCase(s: string): string {
   return s
     .split("_")
     .map((s) => capitalize(s))
     .join("");
 }
 
-export function snakeToTitleCase(s: string) {
+export function snakeToTitleCase(s: string): string {
   return capitalize(s, "_").replace("_", " ");
 }
 
-export function camelToSnakeCase(s: string) {
+export function camelToSnakeCase(s: string): string {
   return s.replace(/([A-Z])/g, (m) => "_" + m.toLowerCase()).replace(/^_/, "");
 }
 

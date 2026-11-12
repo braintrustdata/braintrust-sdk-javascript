@@ -7,13 +7,11 @@ import {
   expect,
   it,
   vi,
-} from "vitest";
-import { Attachment, _exportsForTestingOnly, initLogger } from "../logger";
+} from "vite-plus/test";
+import { Attachment, initLogger } from "../logger/core";
+import { _exportsForTestingOnly } from "../logger/testing";
 import { TypedAttachmentProcessor } from "../typed-attachments";
-import {
-  configureInstrumentation,
-  registry,
-} from "../instrumentation/registry";
+import { setSpanCustomizers } from "../span-customizer";
 import { configureNode } from "../node/config";
 import type {
   TypeSafeAPIPromise,
@@ -105,9 +103,7 @@ describe("TypeSafe wrapper", () => {
 
   afterEach(() => {
     _exportsForTestingOnly.clearTestBackgroundLogger();
-    registry.disable();
-    configureInstrumentation({ spanCustomizers: [] });
-    registry.enable();
+    setSpanCustomizers([]);
     vi.restoreAllMocks();
     vi.unstubAllEnvs();
   });
@@ -216,7 +212,7 @@ describe("TypeSafe wrapper", () => {
   });
 
   it("logs image references and box answers without reading bytes when capture is disabled", async () => {
-    vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", "false");
+    vi.stubEnv("BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS", "false");
     const readData = vi.fn(() => {
       throw new Error("Image bytes must not be observed");
     });
@@ -290,7 +286,7 @@ describe("TypeSafe wrapper", () => {
   it.each(["bytes", "blob"])(
     "captures %s at every input location and snapshots caller-owned bytes",
     async (kind) => {
-      vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", "true");
+      vi.stubEnv("BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS", "true");
       const bytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 13, 10, 26, 10]);
       const originalBytes = bytes.slice();
       const image = {
@@ -325,7 +321,7 @@ describe("TypeSafe wrapper", () => {
   it.each(["state", "instructions"])(
     "uses escaped input-rooted image paths in %s and preserves reordered mixed answers",
     async (location) => {
-      vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", "true");
+      vi.stubEnv("BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS", "true");
       const image = {
         [Symbol.for("@typesafe-ai/sdk/image")]: true,
         type: "image",
@@ -409,7 +405,7 @@ describe("TypeSafe wrapper", () => {
       const client = wrapTypeSafe({
         systemOne: (_request: unknown) => responsePromise({ answers }),
       });
-      vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", "false");
+      vi.stubEnv("BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS", "false");
       await client.systemOne({
         state: [
           image,
@@ -431,7 +427,7 @@ describe("TypeSafe wrapper", () => {
   it.each(["success", "upload failure", "move", "redact"])(
     "keeps image paths consistent through %s without restoring customized media",
     async (mode) => {
-      vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", "true");
+      vi.stubEnv("BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS", "true");
       const upload = vi
         .spyOn(Attachment.prototype, "upload")
         .mockResolvedValue(
@@ -440,29 +436,25 @@ describe("TypeSafe wrapper", () => {
             : { upload_status: "done" },
         );
       if (mode === "move" || mode === "redact") {
-        registry.disable();
-        configureInstrumentation({
-          spanCustomizers: [
-            {
-              onSpanExport(data) {
-                if (data.input && data.output) {
-                  const input = data.input as any;
-                  const answer = (data.output as any).answers[0];
-                  if (mode === "move") {
-                    input.state = { moved: input.state.photo };
-                    answer.image_path = "/state/moved";
-                  } else {
-                    input.state = "[redacted]";
-                    delete answer.image_path;
-                  }
+        setSpanCustomizers([
+          {
+            onSpanExport(data) {
+              if (data.input && data.output) {
+                const input = data.input as any;
+                const answer = (data.output as any).answers[0];
+                if (mode === "move") {
+                  input.state = { moved: input.state.photo };
+                  answer.image_path = "/state/moved";
+                } else {
+                  input.state = "[redacted]";
+                  delete answer.image_path;
                 }
-                return data;
-              },
+              }
+              return data;
             },
-          ],
-        });
+          },
+        ]);
       }
-      registry.enable();
       const image = {
         [Symbol.for("@typesafe-ai/sdk/image")]: true,
         type: "image",
@@ -511,7 +503,7 @@ describe("TypeSafe wrapper", () => {
   );
 
   it("keeps the span and box answer when image capture fails", async () => {
-    vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", "true");
+    vi.stubEnv("BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS", "true");
     const image = {
       [Symbol.for("@typesafe-ai/sdk/image")]: true,
       get data() {

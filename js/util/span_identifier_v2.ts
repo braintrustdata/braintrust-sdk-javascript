@@ -50,7 +50,7 @@ export class SpanRowIdsV2 {
     }
   }
 
-  public toObject() {
+  public toObject(): { rowId: string; spanId: string; rootSpanId: string } {
     return {
       rowId: this.rowId,
       spanId: this.spanId,
@@ -244,7 +244,12 @@ export class SpanComponentsV2 {
     }
   }
 
-  public toObject() {
+  public toObject(): {
+    objectType: SpanObjectTypeV2;
+    objectId: string | undefined;
+    computeObjectMetadataArgs: Record<string, any> | undefined;
+    rowIds: { rowId: string; spanId: string; rootSpanId: string } | undefined;
+  } {
     return {
       objectType: this.objectType,
       objectId: this.objectId,

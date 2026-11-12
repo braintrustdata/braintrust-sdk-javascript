@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { expect, it } from "vitest";
+import { expect, it } from "vite-plus/test";
 import { channel, defineInterceptor } from "./interceptor-definitions";
 
 it("defines sync and async wrapping contracts without tracing configuration", async () => {

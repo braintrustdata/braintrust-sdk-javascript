@@ -5,9 +5,9 @@ import {
   type PromptDiskCacheEntry,
   type PromptMemoryCacheEntry,
 } from "./prompt-cache";
-import { Prompt } from "../logger";
+import { Prompt } from "../logger/prompts";
 import { tmpdir } from "os";
-import { beforeEach, describe, it, afterEach, expect } from "vitest";
+import { beforeEach, describe, it, afterEach, expect } from "vite-plus/test";
 import type { PromptKey } from "./prompt-cache";
 import { DiskCache } from "./disk-cache";
 import { configureNode } from "../node/config";

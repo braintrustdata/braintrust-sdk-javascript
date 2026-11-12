@@ -3,15 +3,13 @@
   "version": "1.0.0",
   "description": "Braintrust tracing plugin for DeepSeek Harness",
   "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "module": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "default": "./dist/index.js"
     },
     "./cordis.patch.yml": "./cordis.patch.yml"
   },
@@ -21,11 +19,11 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "vp run compile",
     "check:typings": "tsc --noEmit",
-    "watch": "tsup --watch",
+    "watch": "vp pack --watch",
     "clean": "rm -r dist/*",
-    "test": "vitest run",
+    "test": "vp test run",
     "yalc:publish": "yalc publish"
   },
   "dsh": {
@@ -65,9 +63,8 @@
     "@deepseek-ai/dsh-session": "0.1.0-rc.6",
     "@deepseek-ai/dsh-tools": "0.1.0-rc.6",
     "@types/node": "^22.15.21",
-    "tsup": "^8.5.1",
     "typescript": "^5.5.4",
-    "vitest": "4.1.11"
+    "vite-plus": "catalog:"
   },
   "repository": {
     "type": "git",
@@ -79,5 +76,10 @@
     "access": "public",
     "registry": "https://registry.npmjs.org/",
     "provenance": true
-  }
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "sideEffects": false
 }

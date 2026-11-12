@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, test } from "vite-plus/test";
 import { audioSelections } from "./audio-selections";
 
 test("intervals become whole-millisecond selections, in timeline order", () => {

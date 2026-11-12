@@ -1,6 +1,6 @@
 // Auto-generated file (content hash 387034529ea006a9) -- do not modify
 
-import { z } from "zod/v3";
+import {z} from "zod/v3";
 
 export const AclObjectType = z.union([
   z.enum([

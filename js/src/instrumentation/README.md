@@ -1,4 +1,4 @@
-# Writing Braintrust Instrumentation Plugins
+# Braintrust Instrumentation Consumers
 
 API wrapping and span instrumentation are separate layers.
 Invocation hooks work independently of the SDK; provider plugins explicitly connect them to tracing functions.
@@ -162,7 +162,7 @@ instrumentation context.
 ### OpenTelemetry spans
 
 The same registration applies to spans exported through `@braintrust/otel`'s
-`BraintrustSpanProcessor` or `BraintrustExporter`, including compatibility mode
+`BraintrustExporter`, including pipelines composed with `BraintrustSpanProcessor` and compatibility mode
 (`BRAINTRUST_OTEL_COMPAT` or `setupOtelCompat()`). Compatibility mode is not
 required to customize OTel exports. Native spans still use the native record
 shape above; OTel hooks receive an isolated plain snapshot, not a live
@@ -174,7 +174,7 @@ shape above; OTel hooks receive an isolated plain snapshot, not a live
   `spanContext` is an object, not a method. Times are OTel
   `[seconds, nanoseconds]` arrays; trace state is a string.
 - `resource: { attributes, schemaUrl? }`, `instrumentationScope:
-{ name, version?, schemaUrl?, attributes? }`, and dropped attribute/event/link
+  { name, version?, schemaUrl?, attributes? }`, and dropped attribute/event/link
   counts. OTel 1.x's instrumentation library is exposed as `instrumentationScope`.
 - Events contain `name`, `time`, optional attributes and dropped count; links
   contain a plain `context` (the same shape as `spanContext`), optional attributes

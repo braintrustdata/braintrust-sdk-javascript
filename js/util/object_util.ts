@@ -22,7 +22,7 @@ export function mergeDictsWithPaths({
   mergeInto: Record<string, unknown>;
   mergeFrom: Record<string, unknown>;
   mergePaths: string[][];
-}) {
+}): Record<string, unknown> {
   const mergePathsSerialized = new Set<string>(
     mergePaths.map((p) => JSON.stringify(p)),
   );
@@ -95,7 +95,7 @@ function mergeDictsWithPathsHelper({
 export function mergeDicts(
   mergeInto: Record<string, unknown>,
   mergeFrom: Record<string, unknown>,
-) {
+): Record<string, unknown> {
   return mergeDictsWithPaths({ mergeInto, mergeFrom, mergePaths: [] });
 }
 
@@ -114,7 +114,7 @@ export function forEachMissingKey({
     v: unknown;
     path: string[];
   }) => void;
-}) {
+}): void {
   function helper(lhs: unknown, rhs: unknown, path: string[]) {
     if (lhs instanceof Object) {
       if (!(rhs instanceof Object)) {

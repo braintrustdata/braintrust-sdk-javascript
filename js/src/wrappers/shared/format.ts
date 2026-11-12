@@ -1,4 +1,4 @@
-import type { ExperimentSummary } from "../../logger";
+import type { ExperimentSummary } from "../../logger/experiments";
 
 export function formatExperimentSummary(summary: ExperimentSummary): string {
   const lines: string[] = [];

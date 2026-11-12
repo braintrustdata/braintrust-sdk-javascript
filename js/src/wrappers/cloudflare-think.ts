@@ -1,4 +1,5 @@
-import { cloudflareThinkChannels } from "../instrumentation/plugins/cloudflare-think-interceptors";
+import { registerInstrumentation } from "../instrumentation/registrations/cloudflareThink";
+import { cloudflareThinkChannels } from "../instrumentation/providers/cloudflare-think-interceptors";
 import type {
   CloudflareThinkConstructor,
   CloudflareThinkInstance,
@@ -20,6 +21,7 @@ const WRAPPED_THINK = Symbol.for("braintrust.cloudflare-think.wrapped");
  * ```
  */
 export function wrapCloudflareThink<T>(sdk: T): T {
+  registerInstrumentation();
   if (!sdk || typeof sdk !== "object") {
     return sdk;
   }
