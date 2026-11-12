@@ -13,6 +13,16 @@ import { googleGenAIChannels } from "../../instrumentation/plugins/google-genai-
  * "orchestrion:google-genai:models.generateContent"
  */
 export const googleGenAIConfigs: InstrumentationConfig[] = [
+  ...["dist/node/index.mjs", "dist/node/index.cjs", "dist/web/index.mjs"].map(
+    (filePath): InstrumentationConfig => ({
+      channelName: googleGenAIChannels.decisionsCreate.channelName,
+      module: { name: "@google/genai", versionRange: ">=3.2.0", filePath },
+      functionQuery: {
+        className: "GeminiNextGenDecisions",
+        methodName: "create",
+      },
+    }),
+  ),
   // ADK's CommonJS modules load the GenAI CommonJS entrypoint. Capture the
   // underlying model calls as well as the enclosing ADK runner and agents.
   {
