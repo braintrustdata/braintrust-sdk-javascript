@@ -55,6 +55,8 @@ await import("./app.js");
 ### Logging and flushing
 
 The `asyncFlush` option has been removed from `initLogger`, `currentLogger`, `startSpan`, `traced`, and `wrapTraced`.
+The `logger.asyncFlush` getter has also been removed.
+Remove conditions that read this property, and explicitly await `logger.flush()` wherever uploads must finish.
 Logs are now always uploaded in the background.
 If you previously used `asyncFlush: false`, call and await `flush()` where you need to wait for uploads:
 
@@ -90,6 +92,9 @@ initLogger({
 You can also enable capture with the `BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS` environment variable, set to `true` or `1`.
 The old names `captureAttachments` and `BRAINTRUST_CAPTURE_ATTACHMENTS` are no longer supported.
 An explicit `autoCaptureAttachments` option overrides the environment variable, including when set to `false`.
+For current loggers (`setCurrent: true`, the default), an explicit option also sets the state's default capture policy.
+Later current loggers that omit the option retain that setting.
+Set `autoCaptureAttachments: false` explicitly to disable capture after it was enabled.
 Child spans inherit the policy.
 Loggers created with `setCurrent: false` have an independent policy and use the environment variable when the option is omitted.
 
