@@ -44,7 +44,7 @@
     "@temporalio/common": ">=1.11.0",
     "@temporalio/worker": ">=1.11.0",
     "@temporalio/workflow": ">=1.11.0",
-    "braintrust": ">=2.0.0"
+    "braintrust": "workspace:^"
   },
   "peerDependenciesMeta": {
     "braintrust": {
