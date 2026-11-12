@@ -1,5 +1,15 @@
 # @braintrust/temporal
 
+## 1.1.0
+
+### Minor Changes
+
+- feat: Bump support for temporal (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2748)
+
+### Patch Changes
+
+- Updated dependencies: braintrust@3.44.0
+
 ## 1.0.1
 
 ### Patch Changes

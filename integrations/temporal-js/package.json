@@ -1,6 +1,6 @@
 {
   "name": "@braintrust/temporal",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "SDK for integrating Braintrust with Temporal",
   "main": "./dist/index.js",
   "module": "./dist/index.js",

@@ -1,5 +1,22 @@
 # braintrust
 
+## 3.44.0
+
+### Minor Changes
+
+- feat: Bump support for eve (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2749)
+- feat: Bump support for mastra (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2747)
+- feat: Bump support for openai agents (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2746)
+- feat: Bump support for openrouter sdk (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2759)
+- feat(langchain): Add capture controls (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2763)
+- feat: Support eve 1.0.0 (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2764)
+- feat(instrumentation): Track service tiers (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2768)
+
+### Patch Changes
+
+- fix(ai-sdk): log AI SDK v7 inline file data as attachments (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2752)
+- fix(deps): Upgrade minimatch from v10 to v11 (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2770)
+
 ## 3.43.0
 
 ### Minor Changes
