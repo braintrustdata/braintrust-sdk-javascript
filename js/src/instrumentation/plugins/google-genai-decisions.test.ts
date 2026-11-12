@@ -237,6 +237,60 @@ describe("Google GenAI decisions", () => {
     expect(input[0].data).toBe("aW1hZ2U=");
   });
 
+  test.each(
+    [
+      { shared: "false", recording: "false" },
+      { shared: "true", recording: "false" },
+      { shared: "false", recording: "true" },
+      { shared: "true", recording: "true" },
+    ].flatMap((flags) =>
+      ["object", "array"].map((shape) => ({ ...flags, shape })),
+    ),
+  )(
+    "applies capture controls to $shape instructions with shared=$shared recording=$recording",
+    async ({ shared, recording, shape }) => {
+      vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", shared);
+      vi.stubEnv("BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS", recording);
+      const create = vi.fn(async () => response);
+      const { instance } = client(create);
+      for (const [type, mime_type] of [
+        ["image", "image/png"],
+        ["audio", "audio/wav"],
+        ["video", "video/mp4"],
+      ]) {
+        const media = Object.freeze({ type, mime_type, data: "aGVsbG8=" });
+        const text = { type: "text", text: "Inspect the media." };
+        const remote = { type, uri: "https://example.com/media" };
+        const instructions = shape === "array" ? [text, media, remote] : media;
+        const request: GoogleGenAIDecisionCreateParams = {
+          ...params,
+          questions: { media: { type: "noul", instructions } },
+        };
+        await instance.decisions.create(request);
+        expect(create).toHaveBeenLastCalledWith(request);
+        const [span] = (await logger.drain()) as any[];
+        const logged = span.input.questions[0].instructions;
+        const loggedMedia = shape === "array" ? logged[1] : logged;
+        expect(loggedMedia).toMatchObject({ type, mime_type });
+        if (shared === "true" && (type === "image" || recording === "true")) {
+          expect(loggedMedia.data).toBeInstanceOf(Attachment);
+          expect(automaticAttachmentOriginals.get(loggedMedia.data)).toBe(
+            media.data,
+          );
+        } else {
+          expect(loggedMedia.data).toBe("<omitted>");
+          expect(JSON.stringify(span.input)).not.toContain(media.data);
+        }
+        if (shape === "array") {
+          expect(logged[0]).toEqual(text);
+          expect(logged[2]).toEqual(remote);
+        }
+        expect(request.questions.media.instructions).toBe(instructions);
+        expect(media.data).toBe("aGVsbG8=");
+      }
+    },
+  );
+
   test("captures opted-in media and retains originals for export fallback", async () => {
     vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", "true");
     vi.stubEnv("BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS", "true");

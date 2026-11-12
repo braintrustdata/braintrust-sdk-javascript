@@ -503,7 +503,9 @@ export class GoogleGenAIPlugin extends BasePlugin {
                       id,
                       type:
                         question.type === "noul" ? "boolean" : question.type,
-                      instructions: question.instructions,
+                      instructions: Array.isArray(question.instructions)
+                        ? question.instructions.map(serializeDecisionContent)
+                        : serializeDecisionContent(question.instructions),
                       ...(question.criteria !== undefined
                         ? { criteria: question.criteria }
                         : {}),
