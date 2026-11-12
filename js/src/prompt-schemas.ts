@@ -4,7 +4,6 @@ import {
   type ToolFunctionDefinitionType as ToolFunctionDefinition,
   ChatCompletionMessageParam as chatCompletionMessageParamSchema,
   ModelParams as modelParamsSchema,
-  ChatCompletionContentPartText as chatCompletionContentPartTextSchema,
   PromptBlockData as generatedPromptBlockDataSchema,
   PromptData as generatedPromptDataSchema,
 } from "./generated_types";
@@ -15,10 +14,20 @@ const decisionPromptSchema = z.object({
     z.string(),
     z.array(
       z.object({
-        role: z.enum(["system", "developer", "user", "assistant"]),
+        role: z.literal("user"),
+        type: z.literal("message").optional(),
         content: z.union([
           z.string(),
-          z.array(chatCompletionContentPartTextSchema),
+          z.array(
+            z.discriminatedUnion("type", [
+              z.object({ type: z.literal("input_text"), text: z.string() }),
+              z.object({
+                type: z.literal("input_image"),
+                image_url: z.string(),
+                detail: z.string().nullish(),
+              }),
+            ]),
+          ),
         ]),
       }),
     ),

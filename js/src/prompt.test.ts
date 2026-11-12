@@ -1,7 +1,10 @@
-import { beforeAll, describe, test, expect, vi } from "vitest";
+import { beforeAll, describe, test, expect, expectTypeOf, vi } from "vitest";
 import { configureNode } from "./node/config";
 import { Prompt } from "./logger";
 import { validateParameters } from "./eval-parameters";
+import { evaluatorDefinitionsSchema } from "../dev/types";
+import { serializeRemoteEvalParametersContainer } from "./framework2";
+import type { OpenAIDecisionCreateParams } from "./vendor-sdk-types/openai-decisions";
 import {
   type PromptData,
   promptDefinitionToPromptData,
@@ -398,6 +401,27 @@ describe("decisions prompts", () => {
     );
   });
 
+  test("round-trips decisions prompt defaults through evaluator manifests", () => {
+    const parameters = serializeRemoteEvalParametersContainer({
+      prompt: { type: "prompt", default: definition },
+    });
+    const manifest = { evaluator: { parameters } };
+    const parsed = evaluatorDefinitionsSchema.parse(manifest);
+    expect(parsed).toEqual(manifest);
+    const serialized = parsed.evaluator.parameters;
+    if (serialized?.type !== "braintrust.staticParameters") {
+      throw new Error("Expected static parameters");
+    }
+    const parameter = serialized.schema.prompt;
+    if (parameter.type !== "prompt" || !parameter.default) {
+      throw new Error("Expected a prompt default");
+    }
+    const prompt = Prompt.fromPromptData("decisions", parameter.default);
+    expect(prompt.build(args, { flavor: "decisions" }).input).toBe(
+      "Evaluate hello",
+    );
+  });
+
   test("builds code-defined prompts and preserves question value types", () => {
     const data = promptDefinitionToPromptData(
       promptDefinitionSchema.parse(definition),
@@ -405,6 +429,7 @@ describe("decisions prompts", () => {
     const original = structuredClone(data);
     const prompt = Prompt.fromPromptData("decisions", data);
     const built = prompt.build(args, { flavor: "decisions", strict: true });
+    expectTypeOf(built).toMatchTypeOf<OpenAIDecisionCreateParams>();
     expect(built).toMatchObject({
       model: "decision-model",
       input: "Evaluate hello",
@@ -433,40 +458,61 @@ describe("decisions prompts", () => {
     expect(data).toEqual(original);
   });
 
-  test("renders message content while preserving roles and cache control", () => {
+  test("renders decisions messages with provider-compatible text and image parts", () => {
     const prompt = Prompt.fromPromptData("decisions", {
       options: { model: "decision-model" },
       prompt: {
         type: "decisions",
         input: [
-          { role: "system", content: "Evaluate {{topic}}" },
-          { role: "developer", content: "Be {{level}} quality" },
+          { role: "user", content: "Evaluate {{topic}}" },
           {
             role: "user",
+            type: "message",
             content: [
               {
-                type: "text",
+                type: "input_text",
                 text: "{{text}}",
-                cache_control: { type: "ephemeral" },
+              },
+              {
+                type: "input_image",
+                image_url: "https://example.com/{{topic}}.png",
+                detail: "low",
               },
             ],
           },
-          { role: "assistant", content: "{{name}}" },
         ],
         questions: [],
       },
     });
-    expect(prompt.build(args, { flavor: "decisions" }).input).toEqual([
-      { role: "system", content: "Evaluate greeting" },
-      { role: "developer", content: "Be high quality" },
+    const built = prompt.build(args, { flavor: "decisions" });
+    expectTypeOf(built).toMatchTypeOf<OpenAIDecisionCreateParams>();
+    expect(built.input).toEqual([
+      { role: "user", content: "Evaluate greeting" },
       {
         role: "user",
+        type: "message",
         content: [
-          { type: "text", text: "hello", cache_control: { type: "ephemeral" } },
+          { type: "input_text", text: "hello" },
+          {
+            type: "input_image",
+            image_url: "https://example.com/greeting.png",
+            detail: "low",
+          },
         ],
       },
-      { role: "assistant", content: "safe" },
     ]);
+  });
+
+  test.each([
+    { role: "system", content: "text" },
+    { role: "developer", content: "text" },
+    { role: "assistant", content: "text" },
+    { role: "user", content: [{ type: "text", text: "text" }] },
+  ])("rejects chat-only message formats: %j", (message) => {
+    expect(
+      promptDefinitionSchema.safeParse({ ...definition, input: [message] })
+        .success,
+    ).toBe(false);
   });
 
   test.each([
@@ -475,7 +521,16 @@ describe("decisions prompts", () => {
       input: [
         {
           role: "user" as const,
-          content: [{ type: "text" as const, text: "{{missing}}" }],
+          content: [{ type: "input_text" as const, text: "{{missing}}" }],
+        },
+      ],
+      questions: [],
+    },
+    {
+      input: [
+        {
+          role: "user" as const,
+          content: [{ type: "input_image" as const, image_url: "{{missing}}" }],
         },
       ],
       questions: [],

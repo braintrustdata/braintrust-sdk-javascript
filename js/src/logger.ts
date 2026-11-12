@@ -10425,10 +10425,11 @@ export class Prompt<
           content:
             typeof message.content === "string"
               ? render(message.content)
-              : message.content.map((part) => ({
-                  ...part,
-                  text: render(part.text),
-                })),
+              : message.content.map((part) =>
+                  part.type === "input_text"
+                    ? { ...part, text: render(part.text) }
+                    : { ...part, image_url: render(part.image_url) },
+                ),
         }));
       }
 
