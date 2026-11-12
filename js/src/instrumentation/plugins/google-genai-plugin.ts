@@ -1,12 +1,20 @@
+import { automaticAttachmentOriginals } from "../../automatic-attachments";
 import { serviceTierMetadata } from "../core/service-tier";
 import { uint8ArrayToBase64 } from "../../../util/bytes";
 import { debugLogger } from "../../debug-logger";
 import {
+  convertDataToBlob,
   getExtensionFromMediaType,
+  isAutoCaptureAttachmentsEnabled,
+  isEnvFlagEnabled,
   processInputAttachments,
 } from "../../wrappers/attachment-utils";
 import { BasePlugin } from "../core";
-import { traceStreamingCall, unsubscribeAll } from "../core/tracing";
+import {
+  traceAsyncCall,
+  traceStreamingCall,
+  unsubscribeAll,
+} from "../core/tracing";
 import { observeResult, runInstrumentation } from "../core/observe-result";
 
 import { SpanTypeAttribute } from "../../../util/index";
@@ -123,6 +131,7 @@ export class GoogleGenAIPlugin extends BasePlugin {
     this.subscribeToGenerateImagesChannel();
     this.subscribeToEditImageChannel();
     this.subscribeToGenerateVideosChannel();
+    this.subscribeToDecisionsCreateChannel();
   }
 
   private subscribeToGenerateContentChannel(): void {
@@ -468,6 +477,77 @@ export class GoogleGenAIPlugin extends BasePlugin {
       },
     );
     this.unsubscribers.push(removeHandlers);
+  }
+
+  private subscribeToDecisionsCreateChannel(): void {
+    this.unsubscribers.push(
+      googleGenAIChannels.decisionsCreate.intercept(
+        (target, receiver, args, additional) =>
+          traceAsyncCall<typeof googleGenAIChannels.decisionsCreate>(
+            () =>
+              runWithAutoInstrumentationSuppressed(() =>
+                Reflect.apply(target, receiver, args),
+              ),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.GOOGLE_GENAI,
+              name: "create_decision",
+              type: "decision",
+              extractInput: ([params]) => ({
+                input: {
+                  state: Array.isArray(params.input)
+                    ? params.input.map(serializeDecisionContent)
+                    : serializeDecisionContent(params.input),
+                  questions: Object.entries(params.questions).map(
+                    ([id, question]) => ({
+                      id,
+                      type:
+                        question.type === "noul" ? "boolean" : question.type,
+                      instructions: question.instructions,
+                      ...(question.criteria !== undefined
+                        ? { criteria: question.criteria }
+                        : {}),
+                    }),
+                  ),
+                },
+                metadata: { model: params.model, provider: "google" },
+              }),
+              extractOutput: (result) => ({
+                answers: Object.entries(result.answers ?? {}).map(
+                  ([id, answer]) =>
+                    answer.type === "noul"
+                      ? { id, type: "boolean", probability: answer.noul }
+                      : {
+                          id,
+                          type: answer.type,
+                          ...(answer.choice !== undefined
+                            ? { choice: answer.choice }
+                            : {}),
+                          ...(answer.score !== undefined
+                            ? { score: answer.score }
+                            : {}),
+                          ...(answer.confidence !== undefined
+                            ? { confidence: answer.confidence }
+                            : {}),
+                          ...(answer.probabilities !== undefined
+                            ? { probabilities: answer.probabilities }
+                            : {}),
+                          ...(answer.legend !== undefined
+                            ? { legend: answer.legend }
+                            : {}),
+                        },
+                ),
+              }),
+              extractMetrics: (result) => {
+                const metrics: Record<string, number> = {};
+                if (result.usage)
+                  populateInteractionUsageMetrics(metrics, result.usage);
+                return metrics;
+              },
+            },
+          ),
+      ),
+    );
   }
 
   private subscribeToInteractionsCreateChannel(): void {
@@ -1309,6 +1389,34 @@ function serializeEmbedContentInput(
     );
     return input;
   }
+}
+
+function serializeDecisionContent(
+  content: string | GoogleGenAIInteractionContent,
+): unknown {
+  if (typeof content === "string") return content;
+  const { data, ...rest } = content;
+  if (data === undefined) return rest;
+  const isRecording =
+    content.type === "audio" ||
+    content.type === "video" ||
+    content.mime_type?.startsWith("audio/") ||
+    content.mime_type?.startsWith("video/");
+  const capture =
+    isAutoCaptureAttachmentsEnabled() &&
+    (!isRecording ||
+      isEnvFlagEnabled("BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS"));
+  if (!capture) return { ...rest, data: "<omitted>" };
+  if (!content.mime_type) return content;
+  const blob = convertDataToBlob(data, content.mime_type);
+  if (!blob) return content;
+  const attachment = new Attachment({
+    data: blob,
+    filename: `file.${getExtensionFromMediaType(content.mime_type)}`,
+    contentType: content.mime_type,
+  });
+  automaticAttachmentOriginals.set(attachment, data);
+  return { ...rest, data: attachment };
 }
 
 function serializeInteractionInput(
