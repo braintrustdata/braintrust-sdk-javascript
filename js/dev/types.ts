@@ -2,8 +2,8 @@ import {
   FunctionId as functionIdSchema,
   InvokeParent as invokeParentSchema,
   RunEval as runEvalSchema,
-  PromptData as promptDataSchema,
 } from "../src/generated_types";
+import { promptDataSchema } from "../src/prompt-schemas";
 import { z } from "zod/v3";
 import { EvaluatorDef } from "../src/framework";
 import { BaseMetadata } from "../src/logger";

@@ -6,8 +6,8 @@ import { Prompt, RemoteEvalParameters } from "./logger";
 import {
   promptDefinitionWithToolsSchema,
   promptDefinitionToPromptData,
+  promptDataSchema,
 } from "./prompt-schemas";
-import { PromptData as promptDataSchema } from "./generated_types";
 import type { ZodSchema } from "./zod/utils";
 
 // Schema for evaluation parameters

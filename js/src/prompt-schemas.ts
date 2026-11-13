@@ -4,9 +4,69 @@ import {
   type ToolFunctionDefinitionType as ToolFunctionDefinition,
   ChatCompletionMessageParam as chatCompletionMessageParamSchema,
   ModelParams as modelParamsSchema,
-  type PromptBlockDataType as PromptBlockData,
-  type PromptDataType as PromptData,
+  PromptBlockData as generatedPromptBlockDataSchema,
+  PromptData as generatedPromptDataSchema,
 } from "./generated_types";
+
+const decisionPromptSchema = z.object({
+  type: z.literal("decisions"),
+  input: z.union([
+    z.string(),
+    z.array(
+      z.object({
+        role: z.literal("user"),
+        type: z.literal("message").optional(),
+        content: z.union([
+          z.string(),
+          z.array(
+            z.discriminatedUnion("type", [
+              z.object({ type: z.literal("input_text"), text: z.string() }),
+              z.object({
+                type: z.literal("input_image"),
+                image_url: z.string(),
+                detail: z.string().nullish(),
+              }),
+            ]),
+          ),
+        ]),
+      }),
+    ),
+  ]),
+  questions: z.array(
+    z.object({ name: z.string().optional(), instructions: z.string() }).and(
+      z.discriminatedUnion("type", [
+        z.object({ type: z.literal("predicate") }),
+        z.object({
+          type: z.literal("choice"),
+          choices: z.array(
+            z.object({
+              value: z.union([z.string(), z.boolean()]),
+              description: z.string().optional(),
+            }),
+          ),
+        }),
+        z.object({
+          type: z.literal("score"),
+          levels: z.array(
+            z.object({ label: z.string(), description: z.string().optional() }),
+          ),
+        }),
+      ]),
+    ),
+  ),
+});
+
+// Keep SDK prompt support independent of generated platform schema updates.
+const promptBlockDataSchema = z.union([
+  generatedPromptBlockDataSchema,
+  decisionPromptSchema,
+]);
+export type PromptBlockData = z.infer<typeof promptBlockDataSchema>;
+
+export const promptDataSchema = generatedPromptDataSchema.extend({
+  prompt: promptBlockDataSchema.nullish(),
+});
+export type PromptData = z.infer<typeof promptDataSchema>;
 
 // This roughly maps to promptBlockDataSchema, but is more ergonomic for the user.
 export const promptContentsSchema = z.union([
@@ -16,6 +76,7 @@ export const promptContentsSchema = z.union([
   z.object({
     messages: z.array(chatCompletionMessageParamSchema),
   }),
+  decisionPromptSchema.omit({ type: true }),
 ]);
 
 export type PromptContents = z.infer<typeof promptContentsSchema>;
@@ -45,20 +106,26 @@ export function promptDefinitionToPromptData(
   promptDefinition: PromptDefinition,
   rawTools?: ToolFunctionDefinition[],
 ): PromptData {
-  const promptBlock: PromptBlockData =
-    "messages" in promptDefinition
-      ? {
-          type: "chat",
-          messages: promptDefinition.messages,
-          tools:
-            rawTools && rawTools.length > 0
-              ? JSON.stringify(rawTools)
-              : undefined,
-        }
-      : {
-          type: "completion",
-          content: promptDefinition.prompt,
-        };
+  let promptBlock: PromptBlockData;
+  if ("messages" in promptDefinition) {
+    promptBlock = {
+      type: "chat",
+      messages: promptDefinition.messages,
+      tools:
+        rawTools && rawTools.length > 0 ? JSON.stringify(rawTools) : undefined,
+    };
+  } else if ("questions" in promptDefinition) {
+    promptBlock = {
+      type: "decisions",
+      input: promptDefinition.input,
+      questions: promptDefinition.questions,
+    };
+  } else {
+    promptBlock = {
+      type: "completion",
+      content: promptDefinition.prompt,
+    };
+  }
 
   return {
     prompt: promptBlock,
