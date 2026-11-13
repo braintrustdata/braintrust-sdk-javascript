@@ -1,4 +1,4 @@
-// Auto-generated file (content hash 387034529ea006a9) -- do not modify
+// Auto-generated file (content hash 1bcc26eb1d227626) -- do not modify
 
 export type AclObjectTypeType =
   /**
@@ -39,7 +39,7 @@ export type PermissionType =
   /**
  * Each permission permits a certain type of operation on an object in the system
 
-Permissions can be assigned to to objects on an individual basis, or grouped into roles
+Permissions can be assigned to objects on an individual basis, or grouped into roles
  *
  * @enum create, read, update, delete, create_acls, read_acls, update_acls, delete_acls
  */
@@ -162,6 +162,20 @@ export type AgentType = {
     (| string
         /**
          * Date of agent creation
+         */
+        | null
+      )
+    | undefined;
+  deleted_at?:
+    | /**
+     * Date of agent deletion, or null if the agent is still active
+     */
+    /**
+     * Date of agent deletion, or null if the agent is still active
+     */
+    (| string
+        /**
+         * Date of agent deletion, or null if the agent is still active
          */
         | null
       )
@@ -417,6 +431,9 @@ export type ApiKeyType = {
    * Name of the api key
    */
   name: string;
+  /**
+   * Masked preview showing the key prefix and last four characters, e.g. sk-…AbCd.
+   */
   preview_name: string;
   user_id?:
     | /**
@@ -484,6 +501,20 @@ export type ApiKeyType = {
     (| string
         /**
          * Unique identifier for the organization
+         */
+        | null
+      )
+    | undefined;
+  last_used_at?:
+    | /**
+     * Approximate time this credential was last used to authenticate. Updates are limited to once every 10 minutes and may be delayed by authorization caches. If null, no usage has been recorded.
+     */
+    /**
+     * Approximate time this credential was last used to authenticate. Updates are limited to once every 10 minutes and may be delayed by authorization caches. If null, no usage has been recorded.
+     */
+    (| string
+        /**
+         * Approximate time this credential was last used to authenticate. Updates are limited to once every 10 minutes and may be delayed by authorization caches. If null, no usage has been recorded.
          */
         | null
       )
@@ -600,6 +631,7 @@ export type AsyncScoringControlType =
        */
       kind: "score_update";
       token?: string | undefined;
+      triggered_xact_id?: string | undefined;
     }
   | {
       /**
@@ -1382,7 +1414,7 @@ export type CodeBundleType = {
                */
               provider: "modal";
               /**
-               * sandbox snapshot ref
+               * The Modal snapshot to start the sandbox from
                */
               snapshot_ref: string;
             }
@@ -1673,7 +1705,7 @@ export type DatasetEventType = {
       )
     | undefined;
   /**
-   * A unique identifier used to link different dataset events together as part of a full trace. See the [tracing guide](https://www.braintrust.dev/docs/instrument) for full details on tracing
+   * A unique identifier used to link different dataset events together as part of a full trace. See the [tracing guide](https://docs.braintrust.dev/instrument) for full details on tracing
    */
   span_id: string;
   /**
@@ -1767,7 +1799,7 @@ export type DatasetSnapshotType = {
   name: string;
   description: string | null;
   /**
-   * Transaction id of the brainstore version at the time of the snapshot
+   * Transaction ID of the dataset version at the time of the snapshot
    */
   xact_id: string;
   /**
@@ -1900,7 +1932,7 @@ export type EnvVarType = {
       )
     | undefined;
   /**
-   * The category of the secret: env_var for regular environment variables, ai_provider for AI provider API keys
+   * The category of the secret: env_var for regular environment variables, ai_provider for AI provider API keys, sandbox_provider for sandbox provider credentials, automation_integration for automation delivery credentials
    *
    * @default "env_var"
    * @enum env_var, ai_provider, sandbox_provider, automation_integration
@@ -2244,12 +2276,12 @@ export type SpanTypeType =
   /**
    * Type of the span, for display purposes only
    *
-   * @enum llm, score, function, eval, task, tool, automation, facet, preprocessor, classifier, review, question, log
+   * @enum llm, score, function, eval, task, tool, automation, facet, preprocessor, classifier, review, decision, question, log
    */
   | /**
    * Type of the span, for display purposes only
    *
-   * @enum llm, score, function, eval, task, tool, automation, facet, preprocessor, classifier, review, question, log
+   * @enum llm, score, function, eval, task, tool, automation, facet, preprocessor, classifier, review, decision, question, log
    */
   (| "llm"
       | "score"
@@ -2262,13 +2294,14 @@ export type SpanTypeType =
       | "preprocessor"
       | "classifier"
       | "review"
+      | "decision"
       | "question"
       | "log"
     )
   /**
    * Type of the span, for display purposes only
    *
-   * @enum llm, score, function, eval, task, tool, automation, facet, preprocessor, classifier, review, question, log
+   * @enum llm, score, function, eval, task, tool, automation, facet, preprocessor, classifier, review, decision, question, log
    */
   | null;
 export type SpanAttributesType =
@@ -2389,14 +2422,14 @@ export type ExperimentEventType = {
     unknown | undefined;
   scores?:
     | /**
-     * A dictionary of numeric values (between 0 and 1) to log. The scores should give you a variety of signals that help you determine how accurate the outputs are compared to what you expect and diagnose failures. For example, a summarization app might have one score that tells you how accurate the summary is, and another that measures the word similarity between the generated and grouth truth summary. The word similarity score could help you determine whether the summarization was covering similar concepts or not. You can use these scores to help you sort, filter, and compare experiments
+     * A dictionary of numeric values (between 0 and 1) to log. The scores should give you a variety of signals that help you determine how accurate the outputs are compared to what you expect and diagnose failures. For example, a summarization app might have one score that tells you how accurate the summary is, and another that measures the word similarity between the generated and ground truth summary. The word similarity score could help you determine whether the summarization was covering similar concepts or not. You can use these scores to help you sort, filter, and compare experiments.
      */
     /**
-     * A dictionary of numeric values (between 0 and 1) to log. The scores should give you a variety of signals that help you determine how accurate the outputs are compared to what you expect and diagnose failures. For example, a summarization app might have one score that tells you how accurate the summary is, and another that measures the word similarity between the generated and grouth truth summary. The word similarity score could help you determine whether the summarization was covering similar concepts or not. You can use these scores to help you sort, filter, and compare experiments
+     * A dictionary of numeric values (between 0 and 1) to log. The scores should give you a variety of signals that help you determine how accurate the outputs are compared to what you expect and diagnose failures. For example, a summarization app might have one score that tells you how accurate the summary is, and another that measures the word similarity between the generated and ground truth summary. The word similarity score could help you determine whether the summarization was covering similar concepts or not. You can use these scores to help you sort, filter, and compare experiments.
      */
     (| {}
         /**
-         * A dictionary of numeric values (between 0 and 1) to log. The scores should give you a variety of signals that help you determine how accurate the outputs are compared to what you expect and diagnose failures. For example, a summarization app might have one score that tells you how accurate the summary is, and another that measures the word similarity between the generated and grouth truth summary. The word similarity score could help you determine whether the summarization was covering similar concepts or not. You can use these scores to help you sort, filter, and compare experiments
+         * A dictionary of numeric values (between 0 and 1) to log. The scores should give you a variety of signals that help you determine how accurate the outputs are compared to what you expect and diagnose failures. For example, a summarization app might have one score that tells you how accurate the summary is, and another that measures the word similarity between the generated and ground truth summary. The word similarity score could help you determine whether the summarization was covering similar concepts or not. You can use these scores to help you sort, filter, and compare experiments.
          */
         | null
       )
@@ -2514,7 +2547,7 @@ export type ExperimentEventType = {
       )
     | undefined;
   /**
-   * A unique identifier used to link different experiment events together as part of a full trace. See the [tracing guide](https://www.braintrust.dev/docs/instrument) for full details on tracing
+   * A unique identifier used to link different experiment events together as part of a full trace. See the [tracing guide](https://docs.braintrust.dev/instrument) for full details on tracing
    */
   span_id: string;
   span_parents?:
@@ -2674,6 +2707,54 @@ export type PromptBlockDataNullishType =
        */
       type: "completion";
       content: string;
+    }
+  | {
+      /**
+       * @enum decisions
+       */
+      type: "decisions";
+      input:
+        | string
+        | Array<{
+            /**
+             * @enum system, developer, user, assistant
+             */
+            role: "system" | "developer" | "user" | "assistant";
+            content: string | Array<ChatCompletionContentPartTextType>;
+          }>;
+      questions: Array<
+        {
+          name?: string | undefined;
+          instructions: string;
+        } & (
+          | {
+              /**
+               * @enum predicate
+               */
+              type: "predicate";
+            }
+          | {
+              /**
+               * @enum choice
+               */
+              type: "choice";
+              choices: Array<{
+                value: string | boolean;
+                description?: string | undefined;
+              }>;
+            }
+          | {
+              /**
+               * @enum score
+               */
+              type: "score";
+              levels: Array<{
+                label: string;
+                description?: string | undefined;
+              }>;
+            }
+        )
+      >;
     }
   | null;
 export type ModelParamsType =
@@ -2946,6 +3027,54 @@ export type PromptBlockDataType =
        */
       type: "completion";
       content: string;
+    }
+  | {
+      /**
+       * @enum decisions
+       */
+      type: "decisions";
+      input:
+        | string
+        | Array<{
+            /**
+             * @enum system, developer, user, assistant
+             */
+            role: "system" | "developer" | "user" | "assistant";
+            content: string | Array<ChatCompletionContentPartTextType>;
+          }>;
+      questions: Array<
+        {
+          name?: string | undefined;
+          instructions: string;
+        } & (
+          | {
+              /**
+               * @enum predicate
+               */
+              type: "predicate";
+            }
+          | {
+              /**
+               * @enum choice
+               */
+              type: "choice";
+              choices: Array<{
+                value: string | boolean;
+                description?: string | undefined;
+              }>;
+            }
+          | {
+              /**
+               * @enum score
+               */
+              type: "score";
+              levels: Array<{
+                label: string;
+                description?: string | undefined;
+              }>;
+            }
+        )
+      >;
     };
 export type GraphNodeType =
   | {
@@ -3465,7 +3594,149 @@ export type FunctionDataType =
         additionalProperties?: boolean | undefined;
       };
     }
-  | (TopicMapDataType & unknown);
+  | (TopicMapDataType & unknown)
+  /**
+   * A task function that runs a conversation between an agent and a simulated user.
+   */
+  | {
+      /**
+       * @enum conversation
+       */
+      type: "conversation";
+      config:
+        | {
+            /**
+             * Who speaks first in the conversation
+             *
+             * @default "agent"
+             * @enum agent, simulated_user
+             */
+            initiator: "agent" | "simulated_user";
+            /**
+             * Maximum conversation duration in seconds
+             *
+             * @default 600
+             * @minimum 15
+             * @maximum 3600
+             */
+            timeout_seconds: number;
+            /**
+             * @default "voice"
+             * @enum voice
+             */
+            modality: "voice";
+            agent:
+              | {
+                  /**
+                   * @enum livekit
+                   */
+                  type: "livekit";
+                  /**
+                   * The WebSocket URL of the LiveKit project hosting the agent
+                   *
+                   * @minLength 1
+                   */
+                  server_url: string;
+                  /**
+                   * The name of the LiveKit agent to dispatch
+                   *
+                   * @minLength 1
+                   */
+                  agent_name: string;
+                }
+              | {
+                  /**
+                   * @enum phone
+                   */
+                  type: "phone";
+                  /**
+                   * @pattern ^\+[1-9]\d{7,14}$
+                   */
+                  phone_number: string;
+                }
+              | {
+                  /**
+                   * @enum sip
+                   */
+                  type: "sip";
+                  /**
+                   * @pattern ^sips?:[^\s]+$
+                   */
+                  uri: string;
+                };
+          }
+        | {
+            /**
+             * Who speaks first in the conversation
+             *
+             * @default "agent"
+             * @enum agent, simulated_user
+             */
+            initiator: "agent" | "simulated_user";
+            /**
+             * Maximum conversation duration in seconds
+             *
+             * @default 600
+             * @minimum 15
+             * @maximum 3600
+             */
+            timeout_seconds: number;
+            /**
+             * @enum text
+             */
+            modality: "text";
+            agent:
+              | {
+                  /**
+                   * @enum livekit
+                   */
+                  type: "livekit";
+                  /**
+                   * The WebSocket URL of the LiveKit project hosting the agent
+                   *
+                   * @minLength 1
+                   */
+                  server_url: string;
+                  /**
+                   * The name of the LiveKit agent to dispatch
+                   *
+                   * @minLength 1
+                   */
+                  agent_name: string;
+                }
+              | {
+                  /**
+                   * @enum acp
+                   */
+                  type: "acp";
+                  /**
+                   * Executable for the ACP agent subprocess, communicating over stdio
+                   *
+                   * @minLength 1
+                   */
+                  command: string;
+                  /**
+                   * Arguments passed to the executable without shell interpretation
+                   *
+                   * @default []
+                   */
+                  args: Array<string>;
+                  /**
+                   * Absolute working directory for the ACP session on the execution host
+                   *
+                   * @pattern ^(?:[/]|[A-Za-z]:[\\/]|\\\\)
+                   */
+                  cwd: string;
+                  /**
+                   * Deny ACP permission requests; this does not sandbox the subprocess
+                   *
+                   * @default "deny"
+                   * @enum deny
+                   */
+                  permissions: "deny";
+                };
+          };
+    };
 export type FunctionType = {
   /**
    * Unique identifier for the prompt
@@ -3565,14 +3836,14 @@ export type FunctionType = {
         object_id: string;
         internal?:
           | /**
-           * The function exists for internal purposes and should not be displayed in the list of functions.
+           * If true, the function was created for use by another Braintrust object and is hidden from function lists in the Braintrust UI.
            */
           /**
-           * The function exists for internal purposes and should not be displayed in the list of functions.
+           * If true, the function was created for use by another Braintrust object and is hidden from function lists in the Braintrust UI.
            */
           (| boolean
               /**
-               * The function exists for internal purposes and should not be displayed in the list of functions.
+               * If true, the function was created for use by another Braintrust object and is hidden from function lists in the Braintrust UI.
                */
               | null
             )
@@ -3599,9 +3870,9 @@ export type FunctionType = {
 };
 export type FunctionFormatType =
   /**
-   * @enum llm, code, global, graph, topic_map
+   * @enum llm, code, global, graph, topic_map, conversation
    */
-  "llm" | "code" | "global" | "graph" | "topic_map";
+  "llm" | "code" | "global" | "graph" | "topic_map" | "conversation";
 export type PromptDataType = Partial<{
   prompt: PromptBlockDataNullishType;
   options: PromptOptionsNullishType;
@@ -3988,10 +4259,10 @@ export type InvokeParentType =
       object_id: string;
       row_ids?:
         | /**
-         * Identifiers for the row to to log a subspan under
+         * Identifiers for the row to log a subspan under
          */
         /**
-         * Identifiers for the row to to log a subspan under
+         * Identifiers for the row to log a subspan under
          */
         (| {
                 /**
@@ -4008,7 +4279,7 @@ export type InvokeParentType =
                 root_span_id: string;
               }
             /**
-             * Identifiers for the row to to log a subspan under
+             * Identifiers for the row to log a subspan under
              */
             | null
           )
@@ -4057,6 +4328,10 @@ export type InvokeFunctionType =
   FunctionIdType &
     Partial<{
       /**
+       * A label identifying the caller, used to attribute usage
+       */
+      request_source: string;
+      /**
        * Argument to the function, which can be any JSON serializable value
        */
       input: unknown;
@@ -4065,14 +4340,14 @@ export type InvokeFunctionType =
        */
       expected: unknown;
       /**
-       * Any relevant metadata. This will be logged and available as the `metadata` argument.
+       * Any relevant metadata to log on the span. For prompts, this is available as the `metadata` template variable. For code functions, this is passed through hooks and is not added to `input`.
        */
       metadata: /**
-         * Any relevant metadata. This will be logged and available as the `metadata` argument.
+         * Any relevant metadata to log on the span. For prompts, this is available as the `metadata` template variable. For code functions, this is passed through hooks and is not added to `input`.
          */
         | {}
         /**
-         * Any relevant metadata. This will be logged and available as the `metadata` argument.
+         * Any relevant metadata to log on the span. For prompts, this is available as the `metadata` template variable. For code functions, this is passed through hooks and is not added to `input`.
          */
         | null;
       /**
@@ -4323,6 +4598,14 @@ export type TraceScopeType = {
 };
 export type OnlineScoreConfigType = {
   status?: AutomationStatusType | undefined;
+  service_tier?:
+    | /**
+     * Service tier for online scoring. If omitted, prompt-level service tiers are preserved.
+     *
+     * @enum standard, flex
+     */
+    ("standard" | "flex")
+    | undefined;
   /**
    * The sampling rate for online scoring
    *
@@ -4406,11 +4689,76 @@ export type OrganizationType = {
    * Name of the organization
    */
   name: string;
-  api_url?: (string | null) | undefined;
-  is_universal_api?: (boolean | null) | undefined;
-  is_dataplane_private?: (boolean | null) | undefined;
-  proxy_url?: (string | null) | undefined;
-  realtime_url?: (string | null) | undefined;
+  api_url?:
+    | /**
+     * URL of the organization's data plane API. If unset, the Braintrust-hosted API is used.
+     */
+    /**
+     * URL of the organization's data plane API. If unset, the Braintrust-hosted API is used.
+     */
+    (| string
+        /**
+         * URL of the organization's data plane API. If unset, the Braintrust-hosted API is used.
+         */
+        | null
+      )
+    | undefined;
+  is_universal_api?:
+    | /**
+     * Whether the data plane at `api_url` also serves the AI proxy, at `api_url` with `/v1/proxy` appended
+     */
+    /**
+     * Whether the data plane at `api_url` also serves the AI proxy, at `api_url` with `/v1/proxy` appended
+     */
+    (| boolean
+        /**
+         * Whether the data plane at `api_url` also serves the AI proxy, at `api_url` with `/v1/proxy` appended
+         */
+        | null
+      )
+    | undefined;
+  is_dataplane_private?:
+    | /**
+     * Whether the organization's data plane is only reachable from a private network
+     */
+    /**
+     * Whether the organization's data plane is only reachable from a private network
+     */
+    (| boolean
+        /**
+         * Whether the organization's data plane is only reachable from a private network
+         */
+        | null
+      )
+    | undefined;
+  proxy_url?:
+    | /**
+     * URL of the organization's AI proxy
+     */
+    /**
+     * URL of the organization's AI proxy
+     */
+    (| string
+        /**
+         * URL of the organization's AI proxy
+         */
+        | null
+      )
+    | undefined;
+  realtime_url?:
+    | /**
+     * URL of the organization's realtime service
+     */
+    /**
+     * URL of the organization's realtime service
+     */
+    (| string
+        /**
+         * URL of the organization's realtime service
+         */
+        | null
+      )
+    | undefined;
   created?:
     | /**
      * Date of organization creation
@@ -4425,8 +4773,34 @@ export type OrganizationType = {
         | null
       )
     | undefined;
-  archived_at?: (string | null) | undefined;
-  deleted_at?: (string | null) | undefined;
+  archived_at?:
+    | /**
+     * Date the organization was archived
+     */
+    /**
+     * Date the organization was archived
+     */
+    (| string
+        /**
+         * Date the organization was archived
+         */
+        | null
+      )
+    | undefined;
+  deleted_at?:
+    | /**
+     * Date the organization was deleted
+     */
+    /**
+     * Date the organization was deleted
+     */
+    (| string
+        /**
+         * Date the organization was deleted
+         */
+        | null
+      )
+    | undefined;
   image_rendering_mode?: ImageRenderingModeType | undefined;
 };
 export type RetentionObjectTypeType =
@@ -4631,6 +5005,145 @@ export type ProjectSettingsType = Partial<{
      * If true, automatically complete a review after every assigned reviewer fills all human review scores visible to them.
      */
     | null;
+  user_id_fields: Array<
+    /**
+     * Path to the application's end-user identifier in metadata or span_attributes, for example ["metadata", "customer_id"]. This identifies an end user, not a session, request, organization, or the Braintrust user who created the project.
+     */
+    Array</**
+     * @minLength 1
+     * @maxLength 256
+     */
+    string>
+  > | null;
+  /**
+   * Project-wide Slack user or agent and prompt for Pattern alert threads. Applies only to destinations in the selected workspace. Unset or null disables mentions.
+   */
+  pattern_alert_mention: /**
+     * Project-wide Slack user or agent and prompt for Pattern alert threads. Applies only to destinations in the selected workspace. Unset or null disables mentions.
+     */
+    | {
+        /**
+         * @minLength 1
+         */
+        workspace_id: string;
+        /**
+         * Slack member ID of the user or agent to mention in a Pattern alert's thread to investigate the pattern.
+         *
+         * @pattern ^[UW][A-Z0-9]+$
+         */
+        mention_user_id: string;
+        mention_handle?: /**
+           * Username shown for the selected user or agent. Mentions use mention_user_id.
+           *
+           * @maxLength 80
+           */
+          string | undefined;
+        mention_prompt?: /**
+           * Message posted after the mention in a Pattern alert's thread. {{pattern}} is replaced with a link to the pattern. Defaults to "Please investigate this pattern: {{pattern}}. Review the evidence, identify the root cause, and suggest a fix."
+           *
+           * @maxLength 2000
+           * @pattern \{\{pattern\}\}
+           */
+          string | undefined;
+      }
+    /**
+     * Project-wide Slack user or agent and prompt for Pattern alert threads. Applies only to destinations in the selected workspace. Unset or null disables mentions.
+     */
+    | null;
+  /**
+   * Project-wide Slack, webhook, and PagerDuty destinations for new and reactivated Pattern alerts. An empty array disables alerts.
+   */
+  pattern_alert_destinations: /**
+     * Project-wide Slack, webhook, and PagerDuty destinations for new and reactivated Pattern alerts. An empty array disables alerts.
+     */
+    | Array<
+        /**
+         * A delivery action available to an automation
+         */
+        | {
+            /**
+             * The type of action to take
+             *
+             * @enum webhook
+             */
+            type: "webhook";
+            /**
+             * The webhook URL to send the request to
+             */
+            url: string;
+            formatting_prompt?: /**
+               * Instructions for Loop to format content sent to this destination
+               *
+               * @minLength 1
+               * @maxLength 10000
+               */
+              string | undefined;
+          }
+        | {
+            /**
+             * The type of action to take
+             *
+             * @enum slack
+             */
+            type: "slack";
+            /**
+             * The Slack workspace ID to post to
+             */
+            workspace_id: string;
+            /**
+             * The Slack channel ID to post to
+             */
+            channel: string;
+            message_template?: /**
+               * Custom message template for the alert
+               */
+              string | undefined;
+            formatting_prompt?: /**
+               * Instructions for Loop to format content sent to this destination
+               *
+               * @minLength 1
+               * @maxLength 10000
+               */
+              string | undefined;
+          }
+        | {
+            /**
+             * The type of action to take
+             *
+             * @enum pagerduty
+             */
+            type: "pagerduty";
+            /**
+             * The data-plane secret containing the PagerDuty routing key
+             */
+            routing_key_secret_name: string;
+            /**
+             * @enum critical, error, warning, info
+             */
+            severity: "critical" | "error" | "warning" | "info";
+            formatting_prompt?: /**
+               * Instructions for Loop to format content sent to this destination
+               *
+               * @minLength 1
+               * @maxLength 10000
+               */
+              string | undefined;
+          }
+      >
+    /**
+     * Project-wide Slack, webhook, and PagerDuty destinations for new and reactivated Pattern alerts. An empty array disables alerts.
+     */
+    | null;
+  session_id_fields: Array<
+    /**
+     * Path to the application's session or conversation identifier in metadata or span_attributes, for example ["metadata", "conversation_id"]. This links turns of one conversation across traces, rather than identifying a user, request, trace, organization, or service account.
+     */
+    Array</**
+     * @minLength 1
+     * @maxLength 256
+     */
+    string>
+  > | null;
   default_preprocessor: NullableSavedFunctionIdType;
 }> | null;
 export type ProjectType = {
@@ -4715,23 +5228,27 @@ export type WindowedAutomationConfigType = {
     | /**
      * The product surface that created and manages the automation
      *
-     * @enum patterns
+     * @enum patterns, dashboard, digest
      */
     (| /**
          * The product surface that created and manages the automation
          *
-         * @enum patterns
+         * @enum patterns, dashboard, digest
          */
-        "patterns"
+        ("patterns" | "dashboard" | "digest")
         /**
          * The product surface that created and manages the automation
          *
-         * @enum patterns
+         * @enum patterns, dashboard, digest
          */
         | null
       )
     | undefined;
   status?: AutomationStatusType | undefined;
+  continuous?: /**
+     * Between scheduled runs, check for accumulated new work. The executor decides how to process it.
+     */
+    boolean | undefined;
   threshold?: /**
      * Optional calculation and lifecycle policy that gate scheduled delivery
      */
@@ -4899,6 +5416,14 @@ export type WindowedAutomationConfigType = {
          * @maxLength 10000
          */
         prompt: string;
+        digest?:
+          | {
+              /**
+               * @enum compact, detailed
+               */
+              writing_style: "compact" | "detailed";
+            }
+          | undefined;
         /**
          * Whether to include the automation trigger payload as input
          *
@@ -4922,14 +5447,14 @@ export type WindowedAutomationConfigType = {
         string>;
         harness?:
           | /**
-           * Required when saving a Loop automation. Currently only Codex is supported.
+           * Required for an explicit model selection. Currently only Codex is supported.
            *
-           * @enum codex, native, claude-code
+           * @enum native, codex, claude-code, pi
            */
-          ("codex" | "native" | "claude-code")
+          ("native" | "codex" | "claude-code" | "pi")
           | undefined;
         model?: /**
-           * Required when saving a Loop automation.
+           * Omit harness, model, and endpoint_name to inherit the organization default provider and its recommended execution settings.
            *
            * @minLength 1
            */
@@ -4943,6 +5468,20 @@ export type WindowedAutomationConfigType = {
            * @enum none, minimal, low, medium, high, xhigh, max
            */
           ("none" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max")
+          | undefined;
+        target?: /**
+           * The object this automation writes to or maintains
+           */
+          | {
+              /**
+               * @enum dashboard
+               */
+              type: "dashboard";
+              /**
+               * @enum overview
+               */
+              id: "overview";
+            }
           | undefined;
       }
     | undefined;
@@ -4994,22 +5533,11 @@ export type WindowedAutomationConfigType = {
            */
           string | undefined;
         formatting_prompt?: /**
-         * Publish a Slack mrkdwn digest.
-        
-        Pattern selection requirement: include every selected Pattern whose final status is active at the end of this automation run, plus every selected Pattern that changed from active to inactive during this run (a newly inactive outcome). Exclude Patterns that were already inactive before this run and remained inactive. Do not mention excluded Patterns anywhere in the digest, including Highlights. If no selected Patterns meet these criteria, say "No current pattern outcomes." This requirement overrides conflicting formatting guidance.
-        
-        Include a complete "*Pattern outcomes*" section with one row for every included Pattern.
-        
-        Use this row format exactly:
-        • <pattern_url|Pattern title> — `outcome`
-        
-        If a Pattern has no URL, use the plain title instead. Do not use GitHub Markdown tables or code-block tables, because links must remain clickable. Do not omit any active selected Pattern.
-        
-        After the outcome list, include a "*Highlights*" section with one very short paragraph, 2-3 sentences maximum. Summarize what changed or what broadly stands out among the included active Patterns. Do not introduce new claims beyond the run report.
-         *
-         * @minLength 1
-         * @maxLength 10000
-         */
+           * Instructions for Loop to format content sent to this destination
+           *
+           * @minLength 1
+           * @maxLength 10000
+           */
           string | undefined;
       }
     | {
@@ -5243,22 +5771,11 @@ export type TopicDigestAutomationConfigType = {
        */
       string | undefined;
     formatting_prompt?: /**
-         * Publish a Slack mrkdwn digest.
-        
-        Pattern selection requirement: include every selected Pattern whose final status is active at the end of this automation run, plus every selected Pattern that changed from active to inactive during this run (a newly inactive outcome). Exclude Patterns that were already inactive before this run and remained inactive. Do not mention excluded Patterns anywhere in the digest, including Highlights. If no selected Patterns meet these criteria, say "No current pattern outcomes." This requirement overrides conflicting formatting guidance.
-        
-        Include a complete "*Pattern outcomes*" section with one row for every included Pattern.
-        
-        Use this row format exactly:
-        • <pattern_url|Pattern title> — `outcome`
-        
-        If a Pattern has no URL, use the plain title instead. Do not use GitHub Markdown tables or code-block tables, because links must remain clickable. Do not omit any active selected Pattern.
-        
-        After the outcome list, include a "*Highlights*" section with one very short paragraph, 2-3 sentences maximum. Summarize what changed or what broadly stands out among the included active Patterns. Do not introduce new claims beyond the run report.
-         *
-         * @minLength 1
-         * @maxLength 10000
-         */
+       * Instructions for Loop to format content sent to this destination
+       *
+       * @minLength 1
+       * @maxLength 10000
+       */
       string | undefined;
   };
   topic_map_function_ids?: /**
@@ -5387,22 +5904,11 @@ export type ProjectAutomationType = {
                  */
                 string | undefined;
               formatting_prompt?: /**
-             * Publish a Slack mrkdwn digest.
-            
-            Pattern selection requirement: include every selected Pattern whose final status is active at the end of this automation run, plus every selected Pattern that changed from active to inactive during this run (a newly inactive outcome). Exclude Patterns that were already inactive before this run and remained inactive. Do not mention excluded Patterns anywhere in the digest, including Highlights. If no selected Patterns meet these criteria, say "No current pattern outcomes." This requirement overrides conflicting formatting guidance.
-            
-            Include a complete "*Pattern outcomes*" section with one row for every included Pattern.
-            
-            Use this row format exactly:
-            • <pattern_url|Pattern title> — `outcome`
-            
-            If a Pattern has no URL, use the plain title instead. Do not use GitHub Markdown tables or code-block tables, because links must remain clickable. Do not omit any active selected Pattern.
-            
-            After the outcome list, include a "*Highlights*" section with one very short paragraph, 2-3 sentences maximum. Summarize what changed or what broadly stands out among the included active Patterns. Do not introduce new claims beyond the run report.
-             *
-             * @minLength 1
-             * @maxLength 10000
-             */
+                 * Instructions for Loop to format content sent to this destination
+                 *
+                 * @minLength 1
+                 * @maxLength 10000
+                 */
                 string | undefined;
             }
           | {
@@ -5659,22 +6165,11 @@ export type ProjectAutomationType = {
                  */
                 string | undefined;
               formatting_prompt?: /**
-             * Publish a Slack mrkdwn digest.
-            
-            Pattern selection requirement: include every selected Pattern whose final status is active at the end of this automation run, plus every selected Pattern that changed from active to inactive during this run (a newly inactive outcome). Exclude Patterns that were already inactive before this run and remained inactive. Do not mention excluded Patterns anywhere in the digest, including Highlights. If no selected Patterns meet these criteria, say "No current pattern outcomes." This requirement overrides conflicting formatting guidance.
-            
-            Include a complete "*Pattern outcomes*" section with one row for every included Pattern.
-            
-            Use this row format exactly:
-            • <pattern_url|Pattern title> — `outcome`
-            
-            If a Pattern has no URL, use the plain title instead. Do not use GitHub Markdown tables or code-block tables, because links must remain clickable. Do not omit any active selected Pattern.
-            
-            After the outcome list, include a "*Highlights*" section with one very short paragraph, 2-3 sentences maximum. Summarize what changed or what broadly stands out among the included active Patterns. Do not introduce new claims beyond the run report.
-             *
-             * @minLength 1
-             * @maxLength 10000
-             */
+                 * Instructions for Loop to format content sent to this destination
+                 *
+                 * @minLength 1
+                 * @maxLength 10000
+                 */
                 string | undefined;
             }
           | {
@@ -5783,7 +6278,7 @@ export type ProjectGroupType = {
       )
     | undefined;
   /**
-   * Sorted ids of active projects in this project group
+   * Sorted ids of active projects in this project group. Modifying membership requires project_group:update on the group.
    */
   member_projects: Array<string>;
 };
@@ -5846,14 +6341,14 @@ export type ProjectLogsEventType = {
     unknown | undefined;
   scores?:
     | /**
-     * A dictionary of numeric values (between 0 and 1) to log. The scores should give you a variety of signals that help you determine how accurate the outputs are compared to what you expect and diagnose failures. For example, a summarization app might have one score that tells you how accurate the summary is, and another that measures the word similarity between the generated and grouth truth summary. The word similarity score could help you determine whether the summarization was covering similar concepts or not. You can use these scores to help you sort, filter, and compare logs.
+     * A dictionary of numeric values (between 0 and 1) to log. The scores should give you a variety of signals that help you determine how accurate the outputs are compared to what you expect and diagnose failures. For example, a summarization app might have one score that tells you how accurate the summary is, and another that measures the word similarity between the generated and ground truth summary. The word similarity score could help you determine whether the summarization was covering similar concepts or not. You can use these scores to help you sort, filter, and compare logs.
      */
     /**
-     * A dictionary of numeric values (between 0 and 1) to log. The scores should give you a variety of signals that help you determine how accurate the outputs are compared to what you expect and diagnose failures. For example, a summarization app might have one score that tells you how accurate the summary is, and another that measures the word similarity between the generated and grouth truth summary. The word similarity score could help you determine whether the summarization was covering similar concepts or not. You can use these scores to help you sort, filter, and compare logs.
+     * A dictionary of numeric values (between 0 and 1) to log. The scores should give you a variety of signals that help you determine how accurate the outputs are compared to what you expect and diagnose failures. For example, a summarization app might have one score that tells you how accurate the summary is, and another that measures the word similarity between the generated and ground truth summary. The word similarity score could help you determine whether the summarization was covering similar concepts or not. You can use these scores to help you sort, filter, and compare logs.
      */
     (| {}
         /**
-         * A dictionary of numeric values (between 0 and 1) to log. The scores should give you a variety of signals that help you determine how accurate the outputs are compared to what you expect and diagnose failures. For example, a summarization app might have one score that tells you how accurate the summary is, and another that measures the word similarity between the generated and grouth truth summary. The word similarity score could help you determine whether the summarization was covering similar concepts or not. You can use these scores to help you sort, filter, and compare logs.
+         * A dictionary of numeric values (between 0 and 1) to log. The scores should give you a variety of signals that help you determine how accurate the outputs are compared to what you expect and diagnose failures. For example, a summarization app might have one score that tells you how accurate the summary is, and another that measures the word similarity between the generated and ground truth summary. The word similarity score could help you determine whether the summarization was covering similar concepts or not. You can use these scores to help you sort, filter, and compare logs.
          */
         | null
       )
@@ -5971,7 +6466,7 @@ export type ProjectLogsEventType = {
       )
     | undefined;
   /**
-   * A unique identifier used to link different project logs events together as part of a full trace. See the [tracing guide](https://www.braintrust.dev/docs/instrument) for full details on tracing
+   * A unique identifier used to link different project logs events together as part of a full trace. See the [tracing guide](https://docs.braintrust.dev/instrument) for full details on tracing
    */
   span_id: string;
   span_parents?:
@@ -6620,7 +7115,20 @@ export type RunEvalType = {
               | null
             )
           | undefined;
-        _internal_btql?: ({} | null) | undefined;
+        _internal_btql?:
+          | /**
+           * Internal BTQL query overrides in parsed JSON form that select which dataset rows to evaluate. `filter` is a BTQL expression object, `sort` is an array of BTQL sort expressions, and `limit` is an integer.
+           */
+          /**
+           * Internal BTQL query overrides in parsed JSON form that select which dataset rows to evaluate. `filter` is a BTQL expression object, `sort` is an array of BTQL sort expressions, and `limit` is an integer.
+           */
+          (| {}
+              /**
+               * Internal BTQL query overrides in parsed JSON form that select which dataset rows to evaluate. `filter` is a BTQL expression object, `sort` is an array of BTQL sort expressions, and `limit` is an integer.
+               */
+              | null
+            )
+          | undefined;
       }
     /**
      * Project and dataset name
@@ -6656,13 +7164,30 @@ export type RunEvalType = {
               | null
             )
           | undefined;
-        _internal_btql?: ({} | null) | undefined;
+        _internal_btql?:
+          | /**
+           * Internal BTQL query overrides in parsed JSON form that select which dataset rows to evaluate. `filter` is a BTQL expression object, `sort` is an array of BTQL sort expressions, and `limit` is an integer.
+           */
+          /**
+           * Internal BTQL query overrides in parsed JSON form that select which dataset rows to evaluate. `filter` is a BTQL expression object, `sort` is an array of BTQL sort expressions, and `limit` is an integer.
+           */
+          (| {}
+              /**
+               * Internal BTQL query overrides in parsed JSON form that select which dataset rows to evaluate. `filter` is a BTQL expression object, `sort` is an array of BTQL sort expressions, and `limit` is an integer.
+               */
+              | null
+            )
+          | undefined;
       }
     /**
      * Dataset rows
      */
     | {
         data: Array<unknown>;
+        source_dataset_id?: /**
+           * The saved dataset these rows came from. Its project scopes saved simulated-user references; the caller must have read access to the dataset and source project.
+           */
+          string | undefined;
       }
     /**
      * Experiment whose inputs and outputs should be used as dataset inputs and expected values
@@ -6734,14 +7259,14 @@ export type RunEvalType = {
     | undefined;
   timeout?:
     | /**
-     * The maximum duration, in milliseconds, to run the evaluation. Defaults to undefined, in which case there is no timeout.
+     * The maximum duration, in milliseconds, to run the evaluation. There is no timeout by default.
      */
     /**
-     * The maximum duration, in milliseconds, to run the evaluation. Defaults to undefined, in which case there is no timeout.
+     * The maximum duration, in milliseconds, to run the evaluation. There is no timeout by default.
      */
     (| number
         /**
-         * The maximum duration, in milliseconds, to run the evaluation. Defaults to undefined, in which case there is no timeout.
+         * The maximum duration, in milliseconds, to run the evaluation. There is no timeout by default.
          */
         | null
       )
@@ -6914,6 +7439,9 @@ export type ServiceTokenType = {
    * Name of the service token
    */
   name: string;
+  /**
+   * Masked preview showing the token prefix and last four characters, e.g. bt-st-…AbCd.
+   */
   preview_name: string;
   service_account_id?:
     | /**
@@ -6967,6 +7495,20 @@ export type ServiceTokenType = {
     (| string
         /**
          * Unique identifier for the organization
+         */
+        | null
+      )
+    | undefined;
+  last_used_at?:
+    | /**
+     * Approximate time this credential was last used to authenticate. Updates are limited to once every 10 minutes and may be delayed by authorization caches. If null, no usage has been recorded.
+     */
+    /**
+     * Approximate time this credential was last used to authenticate. Updates are limited to once every 10 minutes and may be delayed by authorization caches. If null, no usage has been recorded.
+     */
+    (| string
+        /**
+         * Approximate time this credential was last used to authenticate. Updates are limited to once every 10 minutes and may be delayed by authorization caches. If null, no usage has been recorded.
          */
         | null
       )
@@ -7230,6 +7772,10 @@ export type ViewOptionsType =
       viewType: "monitor";
       options: Partial<{
         /**
+         * @enum span, trace
+         */
+        filterScope: "span" | "trace";
+        /**
          * @enum range, frame
          */
         spanType:
@@ -7359,7 +7905,7 @@ export type ViewType = {
   /**
    * Type of object that the view corresponds to.
    *
-   * @enum projects, experiments, experiment, playgrounds, playground, datasets, dataset, prompts, parameters, tools, scorers, classifiers, logs, monitor, for_review_project_log, for_review_experiments, for_review_datasets
+   * @enum projects, experiments, experiment, playgrounds, playground, datasets, dataset, prompts, parameters, tools, scorers, classifiers, logs, patterns, monitor, for_review_project_log, for_review_experiments, for_review_datasets
    */
   view_type:
     | "projects"
@@ -7375,6 +7921,7 @@ export type ViewType = {
     | "scorers"
     | "classifiers"
     | "logs"
+    | "patterns"
     | "monitor"
     | "for_review_project_log"
     | "for_review_experiments"
