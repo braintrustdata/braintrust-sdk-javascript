@@ -3,7 +3,7 @@
  *
  * Should never be exposed to users of the SDK!
  *
- * Sourced from @github/copilot-sdk@0.3.0:
+ * Sourced from @github/copilot-sdk@0.3.0 and @1.0.30:
  *   dist/types.d.ts
  *   dist/generated/session-events.d.ts
  */
@@ -276,7 +276,18 @@ export interface GitHubCopilotSessionHooks {
       timestamp: number;
     },
     invocation: { sessionId: string },
-  ) => Promise<void> | void;
+  ) =>
+    | Promise<{
+        suppressOutput?: boolean;
+        cleanupActions?: string[];
+        sessionSummary?: string;
+      } | void>
+    | {
+        suppressOutput?: boolean;
+        cleanupActions?: string[];
+        sessionSummary?: string;
+      }
+    | void;
   onErrorOccurred?: (
     input: {
       error: string;

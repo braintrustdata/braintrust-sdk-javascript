@@ -953,20 +953,20 @@
     "metadataScenario": "github-copilot-instrumentation",
     "variants": [
       {
-        "variantKey": "github-copilot-v0-wrapped",
-        "label": "v0 pinned wrapped"
+        "variantKey": "github-copilot-v0",
+        "label": "v0 pinned"
       },
       {
-        "variantKey": "github-copilot-v0-auto",
-        "label": "v0 pinned auto-hook"
+        "variantKey": "github-copilot-v0-latest",
+        "label": "v0 latest"
       },
       {
-        "variantKey": "github-copilot-v0-latest-wrapped",
-        "label": "v0 latest wrapped"
+        "variantKey": "github-copilot-v1",
+        "label": "v1 pinned"
       },
       {
-        "variantKey": "github-copilot-v0-latest-auto",
-        "label": "v0 latest auto-hook"
+        "variantKey": "github-copilot-v1-latest",
+        "label": "v1 latest"
       }
     ]
   },

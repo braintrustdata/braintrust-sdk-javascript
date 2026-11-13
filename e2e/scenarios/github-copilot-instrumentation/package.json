@@ -7,6 +7,10 @@
         "github-copilot-sdk-v0-latest": {
           "package": "@github/copilot-sdk",
           "range": "0"
+        },
+        "github-copilot-sdk-v1-latest": {
+          "package": "@github/copilot-sdk",
+          "range": "1"
         }
       }
     }
@@ -14,7 +18,9 @@
   "dependencies": {
     "vscode-jsonrpc": "8.2.1",
     "github-copilot-sdk-v0": "npm:@github/copilot-sdk@0.3.0",
-    "github-copilot-sdk-v0-latest": "npm:@github/copilot-sdk@0.3.0"
+    "github-copilot-sdk-v0-latest": "npm:@github/copilot-sdk@0.3.0",
+    "github-copilot-sdk-v1": "npm:@github/copilot-sdk@1.0.30",
+    "github-copilot-sdk-v1-latest": "npm:@github/copilot-sdk@1.0.30"
   },
   "pnpm": {
     "overrides": {
