@@ -1,5 +1,5 @@
 const githubCopilotPackageName =
-  process.env.GITHUB_COPILOT_PACKAGE_NAME ?? "github-copilot-sdk-v0-latest";
+  process.env.GITHUB_COPILOT_PACKAGE_NAME ?? "github-copilot-sdk-v1-latest";
 const { CopilotClient, approveAll, defineTool } = await import(
   githubCopilotPackageName
 );
