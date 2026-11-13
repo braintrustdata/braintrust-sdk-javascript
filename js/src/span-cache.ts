@@ -236,7 +236,6 @@ export class SpanCache {
 
   // Buffer for pending writes - flushed asynchronously
   private writeBuffer: DiskSpanRecord[] = [];
-  private flushScheduled = false;
   private flushPromise: Promise<void> | null = null;
 
   /**
@@ -253,42 +252,67 @@ export class SpanCache {
     this.writeBuffer.push(record);
     this.rootSpanIndex.add(rootSpanId);
 
-    // Schedule async flush if not already scheduled
-    if (!this.flushScheduled) {
-      this.flushScheduled = true;
-      this.flushPromise = this.flushWriteBuffer();
-    }
+    void this.flushWriteBuffer();
   }
 
   /**
    * Flush the write buffer to disk asynchronously.
    * Called automatically after queueWrite, but can also be called explicitly.
    */
-  async flushWriteBuffer(): Promise<void> {
+  flushWriteBuffer(): Promise<void> {
+    if (this.flushPromise) {
+      return this.flushPromise;
+    }
+
+    if (this.writeBuffer.length === 0) {
+      return Promise.resolve();
+    }
     const generation = this.generation;
-    // Take a snapshot of records to flush, but DON'T clear the buffer yet.
-    // Records stay in writeBuffer until disk write succeeds so getByRootSpanId can find them.
-    const recordsToFlush = [...this.writeBuffer];
-    this.flushScheduled = false;
+    const flush = async () => {
+      // Keep one writer active, including while initialization or appendFile is pending.
+      // Writes queued during an append are drained by the next iteration.
+      while (generation === this.generation && this.writeBuffer.length > 0) {
+        const recordsToFlush = new Set(this.writeBuffer);
+        await this.ensureInitialized();
 
-    if (recordsToFlush.length === 0) {
-      return;
-    }
+        if (generation !== this.generation || !this.fileHandle) {
+          return;
+        }
 
-    await this.ensureInitialized();
+        const lines = [...recordsToFlush]
+          .map((r) => JSON.stringify(r) + "\n")
+          .join("");
+        await this.fileHandle.appendFile(lines, "utf8");
 
-    if (generation !== this.generation || !this.fileHandle) {
-      return;
-    }
-
-    const lines = recordsToFlush.map((r) => JSON.stringify(r) + "\n").join("");
-    await this.fileHandle.appendFile(lines, "utf8");
-
-    // Only now remove the flushed records from the buffer.
-    // Filter out the records we just wrote (compare by reference).
-    this.writeBuffer = this.writeBuffer.filter(
-      (r) => !recordsToFlush.includes(r),
+        // Retain records until the append succeeds so synchronous reads can still find them.
+        // An old writer must not remove records queued after disposal and reuse.
+        if (generation !== this.generation) return;
+        this.writeBuffer = this.writeBuffer.filter(
+          (r) => !recordsToFlush.has(r),
+        );
+      }
+    };
+    const promise: Promise<void> = flush().then(
+      () => {
+        if (this.flushPromise === promise) {
+          this.flushPromise = null;
+          // Include writes queued between the drain finishing and this continuation.
+          if (
+            generation === this.generation &&
+            this.writeBuffer.length > 0 &&
+            !this.disabled
+          ) {
+            return this.flushWriteBuffer();
+          }
+        }
+      },
+      (error) => {
+        if (this.flushPromise === promise) this.flushPromise = null;
+        throw error;
+      },
     );
+    this.flushPromise = promise;
+    return promise;
   }
 
   /**
@@ -296,10 +320,7 @@ export class SpanCache {
    * Call this before reading from the cache to ensure consistency.
    */
   async waitForPendingWrites(): Promise<void> {
-    if (this.flushPromise) {
-      await this.flushPromise;
-      this.flushPromise = null;
-    }
+    await this.flushPromise;
   }
 
   /**
@@ -427,7 +448,6 @@ export class SpanCache {
 
     // Clear pending writes
     this.writeBuffer = [];
-    this.flushScheduled = false;
     this.flushPromise = null;
 
     if (this.fileHandle) {
