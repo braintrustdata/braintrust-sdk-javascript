@@ -1,5 +1,35 @@
 # braintrust
 
+## 4.0.0
+
+### Major Changes
+
+- feat(v4)!: Add Node Engine to package json (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2378)
+- build(sdk)!: Migrate to Vite+ and tree-shakeable ESM (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2626)
+- feat!: Add `BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS` env var option and `autoCaptureAttachments` logger option for all integrations (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2519)
+- ref!: Reduce API to a minimum that makes sense (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2429)
+- ref(ai-sdk)!: Remove AI SDK v3 support (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2474)
+- ref(eve)!: Bump minimum eve version to `0.34.0` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2385)
+- ref(v4)!: Remove flue pre-v1 support (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2380)
+- ref!: Remove `asyncFlush` option (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2409)
+- ref(v4)!: Remove JS Braintrust CLI (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2377)
+- ref!: Remove packaged `bt` binary from `braintrust` package (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2520)
+- ref!: Remove plugins as part of public API (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2386)
+- ref!: Remove Zod derived types from public SDK declarations (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2404)
+- refactor(sdk)!: Rename automatic attachment capture options (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2636)
+- ref!: Simplify Eval type definitions (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2516)
+- ref!: Don't make generated types part of public api (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2517)
+
+### Minor Changes
+
+- feat: Bump support for cloudflare agents (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2760)
+- feat(google-genai): Trace decision calls (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2774)
+
+### Patch Changes
+
+- fix(instrumentation): Initialize tracing automatically in bundles (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2630)
+- refactor(otel)!: Decouple from OpenTelemetry SDK versions (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2765)
+
 ## 3.44.0
 
 ### Minor Changes
