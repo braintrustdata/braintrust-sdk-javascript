@@ -64,6 +64,7 @@ export interface InstrumentationIntegrationsConfig {
   voyageai?: boolean;
   typesafe?: boolean;
   workersAI?: boolean;
+  deepgram?: boolean;
   elevenlabs?: boolean;
   /** Set to false to disable, or pass options; options keep LiveKit enabled. */
   livekit?: boolean | LiveKitIntegrationConfig;
@@ -263,6 +264,8 @@ const envIntegrationAliases: Record<
   typesafe: "typesafe",
   "typesafe-ai": "typesafe",
   "@typesafe-ai/sdk": "typesafe",
+  deepgram: "deepgram",
+  "@deepgram/sdk": "deepgram",
   elevenlabs: "elevenlabs",
   "@elevenlabs/elevenlabs-js": "elevenlabs",
   livekit: "livekit",
@@ -317,6 +320,7 @@ export function getDefaultInstrumentationIntegrations(): Record<
     voyageai: true,
     typesafe: true,
     workersAI: true,
+    deepgram: true,
     elevenlabs: true,
     livekit: true,
     mcp: true,

@@ -35,6 +35,7 @@ import { openRouterConfigs } from "./openrouter";
 import { openRouterAgentConfigs } from "./openrouter-agent";
 import { piCodingAgentConfigs } from "./pi-coding-agent";
 import { strandsAgentSDKConfigs } from "./strands-agent-sdk";
+import { deepgramConfigs } from "./deepgram";
 import { elevenLabsConfigs } from "./elevenlabs";
 import { voyageAIConfigs } from "./voyageai";
 import { mcpConfigs } from "./mcp";
@@ -135,6 +136,10 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
     {
       integrations: ["flue"],
       configs: flueConfigs,
+    },
+    {
+      integrations: ["deepgram"],
+      configs: deepgramConfigs,
     },
     {
       integrations: ["elevenlabs"],

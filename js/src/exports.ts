@@ -391,4 +391,5 @@ export type {
   SpanExportData,
 } from "./instrumentation";
 
+export { wrapDeepgram } from "./wrappers/deepgram";
 export { wrapElevenLabs } from "./wrappers/elevenlabs";

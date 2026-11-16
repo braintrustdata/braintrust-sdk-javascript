@@ -1190,5 +1190,36 @@
         "label": "v4 latest"
       }
     ]
+  },
+  {
+    "scenarioDirName": "deepgram-instrumentation",
+    "label": "Deepgram Instrumentation",
+    "metadataScenario": "deepgram-instrumentation",
+    "variants": [
+      {
+        "variantKey": "deepgram-v3",
+        "label": "v3 pinned"
+      },
+      {
+        "variantKey": "deepgram-v3-latest",
+        "label": "v3 latest"
+      },
+      {
+        "variantKey": "deepgram-v4",
+        "label": "v4 pinned"
+      },
+      {
+        "variantKey": "deepgram-v4-latest",
+        "label": "v4 latest"
+      },
+      {
+        "variantKey": "deepgram-v5",
+        "label": "v5 pinned"
+      },
+      {
+        "variantKey": "deepgram-v5-latest",
+        "label": "v5 latest"
+      }
+    ]
   }
 ]
