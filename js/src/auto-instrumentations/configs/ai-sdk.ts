@@ -98,6 +98,15 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     },
   },
 
+  // Public bindings are shared by the experimental and stable export names.
+  ...(["generateSpeech", "transcribe"] as const).flatMap((functionName) =>
+    ["dist/index.mjs", "dist/index.js"].map((filePath) => ({
+      channelName: aiSDKChannels[functionName].channelName,
+      module: { name: "ai", versionRange: ">=4.3.6 <8.0.0", filePath },
+      functionQuery: { functionName },
+    })),
+  ),
+
   // generateImage - stable in v6+, experimental alias in v5
   ...[
     {

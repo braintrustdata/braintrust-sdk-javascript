@@ -470,6 +470,7 @@ export function braintrustAISDKTelemetry(): any {
   const onEnd = (
     event: Parameters<NonNullable<AISDKV7Telemetry["onEnd"]>>[0],
   ) => {
+    if (isAutoInstrumentationSuppressed()) return;
     runSafely("onEnd", () => {
       const operationKey = operationKeyFromEvent(event, "finish");
       const state = operationKey ? operations.get(operationKey) : undefined;
@@ -586,6 +587,7 @@ export function braintrustAISDKTelemetry(): any {
     experimental_onDecideStart: onDecisionStart,
     experimental_onDecideEnd: onEnd,
     onStart(event) {
+      if (isAutoInstrumentationSuppressed()) return;
       runSafely("onStart", () => {
         const operationName = operationNameFromId(event.operationId);
         const workflowAgent = operationName === "WorkflowAgent.stream";

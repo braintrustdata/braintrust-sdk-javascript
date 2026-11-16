@@ -1,0 +1,60 @@
+{
+  "name": "@braintrust/e2e-ai-sdk-audio-instrumentation",
+  "private": true,
+  "braintrustScenario": {
+    "bump": {
+      "dependencies": {
+        "ai-sdk-v4-latest": {
+          "package": "ai",
+          "range": "4"
+        },
+        "ai-sdk-openai-v4-latest": {
+          "package": "@ai-sdk/openai",
+          "range": "1"
+        },
+        "ai-sdk-v5-latest": {
+          "package": "ai",
+          "range": "5"
+        },
+        "ai-sdk-openai-v5-latest": {
+          "package": "@ai-sdk/openai",
+          "range": "2"
+        },
+        "ai-sdk-v6-latest": {
+          "package": "ai",
+          "range": "6"
+        },
+        "ai-sdk-openai-v6-latest": {
+          "package": "@ai-sdk/openai",
+          "range": "3"
+        },
+        "ai-sdk-v7-latest": {
+          "package": "ai",
+          "range": "7"
+        },
+        "ai-sdk-openai-v7-latest": {
+          "package": "@ai-sdk/openai",
+          "range": "4"
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "ai-sdk-v4": "npm:ai@4.3.6",
+    "ai-sdk-v4-latest": "npm:ai@4.3.19",
+    "ai-sdk-openai-v4": "npm:@ai-sdk/openai@1.3.24",
+    "ai-sdk-openai-v4-latest": "npm:@ai-sdk/openai@1.3.24",
+    "ai-sdk-v5": "npm:ai@5.0.82",
+    "ai-sdk-v5-latest": "npm:ai@5.0.290",
+    "ai-sdk-openai-v5": "npm:@ai-sdk/openai@2.0.57",
+    "ai-sdk-openai-v5-latest": "npm:@ai-sdk/openai@2.0.143",
+    "ai-sdk-v6": "npm:ai@6.0.1",
+    "ai-sdk-v6-latest": "npm:ai@6.0.332",
+    "ai-sdk-openai-v6": "npm:@ai-sdk/openai@3.0.7",
+    "ai-sdk-openai-v6-latest": "npm:@ai-sdk/openai@3.0.143",
+    "ai-sdk-v7": "npm:ai@7.0.103",
+    "ai-sdk-v7-latest": "npm:ai@7.0.173",
+    "ai-sdk-openai-v7": "npm:@ai-sdk/openai@4.0.0",
+    "ai-sdk-openai-v7-latest": "npm:@ai-sdk/openai@4.0.118"
+  }
+}

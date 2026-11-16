@@ -18,6 +18,8 @@ import type {
   AISDKGenerateFunction,
   AISDKGenerateImageFunction,
   AISDKGenerateImageParams,
+  AISDKGenerateSpeechParams,
+  AISDKTranscribeParams,
   AISDKHarnessAgentCallParams,
   AISDKHarnessAgentCreateSessionFunction,
   AISDKHarnessAgentGenerateFunction,
@@ -174,6 +176,54 @@ export function wrapAISDK<T>(aiSDK: T, options: WrapAISDKOptions = {}): T {
                     denyOutputPaths: options.denyOutputPaths,
                     span_info,
                   },
+                );
+              }
+            : original;
+        }
+        case "generateSpeech":
+        case "experimental_generateSpeech": {
+          const operation = typedAISDK[prop];
+          return typeof operation === "function"
+            ? function (
+                this: unknown,
+                allParams: AISDKGenerateSpeechParams & SpanInfo,
+              ) {
+                let params = allParams;
+                let span_info: SpanInfo["span_info"];
+                if ("span_info" in allParams) {
+                  const { span_info: info, ...rest } = allParams;
+                  span_info = info;
+                  params = rest;
+                }
+                return aiSDKChannels.generateSpeech.invoke(
+                  operation,
+                  this,
+                  [params],
+                  { denyOutputPaths: options.denyOutputPaths, span_info },
+                );
+              }
+            : original;
+        }
+        case "transcribe":
+        case "experimental_transcribe": {
+          const operation = typedAISDK[prop];
+          return typeof operation === "function"
+            ? function (
+                this: unknown,
+                allParams: AISDKTranscribeParams & SpanInfo,
+              ) {
+                let params = allParams;
+                let span_info: SpanInfo["span_info"];
+                if ("span_info" in allParams) {
+                  const { span_info: info, ...rest } = allParams;
+                  span_info = info;
+                  params = rest;
+                }
+                return aiSDKChannels.transcribe.invoke(
+                  operation,
+                  this,
+                  [params],
+                  { denyOutputPaths: options.denyOutputPaths, span_info },
                 );
               }
             : original;
