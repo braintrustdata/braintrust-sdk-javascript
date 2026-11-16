@@ -51,6 +51,86 @@ export function ogg(): AudioMiddleware<EncodedPackets, Uint8Array> {
   };
 }
 
+function splitPages(stream: Uint8Array): Uint8Array[] {
+  const pages: Uint8Array[] = [];
+  for (let pos = 0; pos < stream.length;) {
+    if (String.fromCharCode(...stream.subarray(pos, pos + 4)) !== "OggS")
+      throw new Error(`Malformed Ogg page at byte ${pos}`);
+    const bodyStart = pos + 27 + (stream[pos + 26] ?? 0);
+    let end = bodyStart;
+    for (let i = pos + 27; i < bodyStart && i < stream.length; i++)
+      end += stream[i];
+    if (end > stream.length)
+      throw new Error(`Truncated Ogg page at byte ${pos}`);
+    pages.push(new Uint8Array(stream.subarray(pos, end)));
+    pos = end;
+  }
+  return pages;
+}
+
+function body(page: Uint8Array | undefined): Uint8Array {
+  return page ? page.subarray(27 + page[26]) : new Uint8Array();
+}
+
+function magic(page: Uint8Array | undefined): string {
+  return String.fromCharCode(...body(page).subarray(0, 8));
+}
+
+/**
+ * Joins Ogg Opus files, such as a recording's segments, into one logical
+ * stream. Appended files form a chained Ogg, which many decoders probe as only
+ * the last file's length. Assumes each file has OpusHead and OpusTags on one
+ * page each, then 20 ms packets.
+ */
+export function joinOggStreams(streams: Uint8Array[]): Uint8Array {
+  if (!streams.length) throw new Error("No Ogg streams to join");
+  const pages: Uint8Array[] = [];
+  let sampleOffset = 0;
+  streams.forEach((stream, index) => {
+    const [head, tags, ...audio] = splitPages(stream);
+    if (magic(head) !== "OpusHead" || magic(tags) !== "OpusTags")
+      throw new Error(`Ogg stream ${index} doesn't start with Opus headers`);
+    if (tags[26 + tags[26]] === 255)
+      throw new Error(`Ogg stream ${index} has OpusTags over several pages`);
+    if (index === 0) pages.push(head, tags);
+    else if (
+      body(head)[9] !== body(pages[0])[9] ||
+      body(head)[18] !== body(pages[0])[18]
+    )
+      throw new Error(`Ogg stream ${index} has a different channel layout`);
+    let granule = 0;
+    for (const page of audio) {
+      const view = new DataView(page.buffer);
+      granule = Number(view.getBigUint64(6, true));
+      view.setBigUint64(6, BigInt(sampleOffset + granule), true);
+      pages.push(page);
+    }
+    // Every packet is kept, so the next stream starts after this one's padding.
+    const samples = Math.ceil(granule / 960) * 960;
+    if (index < streams.length - 1)
+      new DataView(pages[pages.length - 1].buffer).setBigUint64(
+        6,
+        BigInt(sampleOffset + samples),
+        true,
+      );
+    sampleOffset += samples;
+  });
+
+  const serial = new DataView(pages[0].buffer).getUint32(14, true);
+  pages.forEach((page, sequence) => {
+    const view = new DataView(page.buffer);
+    page[5] =
+      (page[5] & 0x01) |
+      (sequence === 0 ? BOS : 0) |
+      (sequence === pages.length - 1 ? EOS : 0);
+    view.setUint32(14, serial, true);
+    view.setUint32(18, sequence, true);
+    view.setUint32(22, 0, true);
+    view.setUint32(22, crc32(page), true);
+  });
+  return concat(pages);
+}
+
 /** Opus comment header with no tags (RFC 7845 §5.2). */
 function opusTags() {
   const vendor = new TextEncoder().encode("@braintrust/audio");

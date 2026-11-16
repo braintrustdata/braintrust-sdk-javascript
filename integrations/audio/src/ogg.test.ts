@@ -2,8 +2,8 @@ import { expect, test } from "vite-plus/test";
 import oggOpus from "@audio/encode-opus";
 import { OggOpusDecoder } from "ogg-opus-decoder";
 import type { AudioSegmentMeta } from "./types";
-import { ogg } from "./ogg";
-import { opus } from "./opus";
+import { joinOggStreams, ogg } from "./ogg";
+import { opus, type OpusOptions } from "./opus";
 import type { EncodedPackets } from "./packets";
 
 const meta = (frames: number): AudioSegmentMeta => ({
@@ -36,8 +36,12 @@ function tones(frames: number) {
 }
 
 /** Runs the opus() → ogg() stack and returns the file it produces. */
-async function encodeOgg(pcm: Int16Array, input: AudioSegmentMeta) {
-  return opus()(
+async function encodeOgg(
+  pcm: Int16Array,
+  input: AudioSegmentMeta,
+  options?: OpusOptions,
+) {
+  return opus(options)(
     new Uint8Array(pcm.buffer),
     input,
     async (packets, packetMeta) =>
@@ -172,4 +176,146 @@ test.each([
       throw new Error("next must not run");
     }),
   ).toThrow(/ogg requires Opus packets/);
+});
+
+/** Raw page bytes, for building and inspecting joined files. */
+function pageBytes(file: Uint8Array) {
+  const result: Uint8Array[] = [];
+  for (let at = 0; at < file.length;) {
+    const lacing = file.subarray(at + 27, at + 27 + file[at + 26]);
+    const size = 27 + lacing.length + lacing.reduce((sum, n) => sum + n, 0);
+    result.push(file.subarray(at, at + size));
+    at += size;
+  }
+  return result;
+}
+
+const lacing = (page: Uint8Array) => [...page.subarray(27, 27 + page[26])];
+const uint32 = (page: Uint8Array, at: number) =>
+  new DataView(page.buffer, page.byteOffset).getUint32(at, true);
+const granule = (page: Uint8Array) =>
+  Number(new DataView(page.buffer, page.byteOffset).getBigUint64(6, true));
+const concat = (parts: Uint8Array[]) =>
+  Uint8Array.from(parts.flatMap((part) => [...part]));
+
+/** An Ogg page; the join rewrites its serial, sequence and CRC. */
+function page(
+  flags: number,
+  granule: number,
+  lacing: number[],
+  body: Uint8Array,
+) {
+  const page = new Uint8Array(27 + lacing.length + body.length);
+  page.set([0x4f, 0x67, 0x67, 0x53]);
+  page[5] = flags;
+  new DataView(page.buffer).setBigUint64(6, BigInt(granule), true);
+  page[26] = lacing.length;
+  page.set(lacing, 27);
+  page.set(body, 27 + lacing.length);
+  return page;
+}
+
+async function segment(seconds: number, options?: OpusOptions, channels = 2) {
+  const frames = seconds * 24000;
+  const input = {
+    ...meta(frames),
+    channels: meta(frames).channels.slice(0, channels),
+  };
+  return (await encodeOgg(tones(frames), input, options)).segment;
+}
+
+test("joins a long and a short segment into one logical stream", async () => {
+  const [a, b] = [await segment(60), await segment(2)];
+  const joined = joinOggStreams([a, b]);
+  const raw = pageBytes(joined);
+  const magic = raw.map((p) =>
+    new TextDecoder().decode(p.subarray(27 + p[26], 35 + p[26])),
+  );
+  expect(magic.filter((m) => m.startsWith("Opus"))).toEqual([
+    "OpusHead",
+    "OpusTags",
+  ]);
+  expect(new Set(raw.map((p) => uint32(p, 14))).size).toBe(1);
+  expect(raw.map((p) => uint32(p, 18))).toEqual(raw.map((_, i) => i));
+  const layout = pages(joined);
+  expect(layout.every((p) => p.crcValid)).toBe(true);
+  expect(layout.map((p) => p.flags)).toEqual(
+    layout.map((_, i) => (i === 0 ? 2 : i === layout.length - 1 ? 4 : 0)),
+  );
+  const granules = layout.map((p) => p.granule);
+  expect(granules).toEqual([...granules].sort((x, y) => x - y));
+  // Segment a keeps every packet, padding included: 960 samples each.
+  const samples =
+    pageBytes(a)
+      .slice(2)
+      .flatMap(lacing)
+      .filter((n) => n < 255).length * 960;
+  expect(granules[pageBytes(a).length - 1]).toBe(samples);
+  expect(granules.at(-1)).toBe(samples + granule(pageBytes(b).at(-1)!));
+  expect((await decode(joined)).errors).toEqual([]);
+});
+
+test("leaves a single segment unchanged", async () => {
+  const a = await segment(2);
+  expect(joinOggStreams([a])).toEqual(a);
+});
+
+test("skips a segment with headers and no audio", async () => {
+  const [a, b] = [await segment(1), await segment(1)];
+  const empty = concat(pageBytes(b).slice(0, 2));
+  expect(joinOggStreams([a, empty, b])).toEqual(joinOggStreams([a, b]));
+});
+
+test("keeps a packet continued across pages in a later segment", async () => {
+  const [a, b] = [await segment(1), await segment(2, { bitrate: 256_000 })];
+  const [head, tags, audio, ...rest] = pageBytes(b);
+  const sizes = lacing(audio);
+  const splitIndex = sizes.lastIndexOf(255) + 1;
+  const body = audio.subarray(27 + sizes.length);
+  const cut = sizes.slice(0, splitIndex).reduce((sum, n) => sum + n, 0);
+  const split = concat([
+    head,
+    tags,
+    page(
+      0,
+      granule(audio) - 960,
+      sizes.slice(0, splitIndex),
+      body.subarray(0, cut),
+    ),
+    page(1, granule(audio), sizes.slice(splitIndex), body.subarray(cut)),
+    ...rest,
+  ]);
+  const joined = joinOggStreams([a, split]);
+  expect(pages(joined).some((p) => p.flags & 1)).toBe(true);
+  expect((await decode(joined)).channelData).toEqual(
+    (await decode(joinOggStreams([a, b]))).channelData,
+  );
+});
+
+test("rejects OpusTags over several pages in a later segment", async () => {
+  const [a, b] = [await segment(1), await segment(1)];
+  const [head, tags, ...audio] = pageBytes(b);
+  const tagsBody = new Uint8Array(300);
+  tagsBody.set(tags.subarray(27 + tags[26]));
+  const split = concat([
+    head,
+    page(0, 0, [255], tagsBody.subarray(0, 255)),
+    page(1, 0, [45], tagsBody.subarray(255)),
+    ...audio,
+  ]);
+  expect(() => joinOggStreams([a, split])).toThrow(
+    /OpusTags over several pages/,
+  );
+});
+
+test("rejects a different channel layout", async () => {
+  const [a, b] = [await segment(1, {}, 1), await segment(1)];
+  expect(() => joinOggStreams([a, b])).toThrow(/different channel layout/);
+});
+
+test("rejects an empty list or non-Ogg input", () => {
+  expect(() => joinOggStreams([])).toThrow(/No Ogg streams/);
+  expect(() => joinOggStreams([new Uint8Array([1, 2, 3, 4, 5])])).toThrow(
+    /Malformed Ogg page/,
+  );
 });
