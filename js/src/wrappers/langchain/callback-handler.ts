@@ -328,7 +328,7 @@ export class BraintrustLangChainCallbackHandler {
       runId,
       parentRunId,
       name: runName ?? getSerializedName(tool) ?? "Tool",
-      type: "llm",
+      type: "tool",
       event: {
         input: safeJsonParse(input),
         tags,
@@ -370,7 +370,7 @@ export class BraintrustLangChainCallbackHandler {
     this.startSpan({
       runId,
       parentRunId,
-      type: "llm",
+      type: "tool",
       name: typeof action.tool === "string" ? action.tool : "Agent",
       event: {
         input: action,
