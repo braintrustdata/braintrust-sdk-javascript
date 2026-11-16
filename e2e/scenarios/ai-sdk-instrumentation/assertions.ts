@@ -1360,13 +1360,15 @@ export function defineAISDKInstrumentationAssertions(options: {
               parent?.span.id,
             );
 
-            expect(toolSpans.length).toBeGreaterThanOrEqual(1);
-            for (const toolSpan of toolSpans) {
-              expect(toolSpan.output).toEqual({
-                type: "text",
-                value: MODEL_OUTPUT_TOOL_VALUE,
-              });
-            }
+            expect(parent?.output).toMatchObject({
+              text: "1",
+              finishReason: "stop",
+            });
+            expect(toolSpans).toHaveLength(1);
+            expect(toolSpans[0].output).toEqual({
+              type: "text",
+              value: MODEL_OUTPUT_TOOL_VALUE,
+            });
             // Before v7, streamText parents log only text and finishReason.
             if (parentName === "generateText" || options.sdkMajorVersion >= 7) {
               expect(collectToolResultNames(parent?.output)).toContain(
