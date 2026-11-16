@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
-    "typescript": "^5.7.2",
+    "typescript": "^5.9.3",
     "vite-plus": "catalog:"
   },
   "sideEffects": false

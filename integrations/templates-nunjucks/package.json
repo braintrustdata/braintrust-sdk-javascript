@@ -35,7 +35,7 @@
     "@types/node": "^20.10.5",
     "@types/nunjucks": "^3.2.6",
     "braintrust": "workspace:*",
-    "typescript": "5.5.4",
+    "typescript": "5.9.3",
     "vitest": "catalog:",
     "vite-plus": "catalog:"
   },
