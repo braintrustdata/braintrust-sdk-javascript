@@ -1,7 +1,10 @@
-import { expect, test, describe, beforeEach, afterEach } from "vitest";
-import { UUIDGenerator, getIdGenerator } from "braintrust";
-import { OTELIDGenerator } from "./otel";
-import { setupOtelCompat, resetOtelCompat } from ".";
+import { expect, test, describe, beforeEach, afterEach } from "vite-plus/test";
+import {
+  OTELIDGenerator,
+  UUIDGenerator,
+  getIdGenerator,
+} from "../../../js/src/id-gen";
+import { setupOtelCompat, resetOtelCompat } from "./";
 
 describe("ID Generation", () => {
   beforeEach(() => {

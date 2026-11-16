@@ -2,7 +2,7 @@ import * as fs from "fs/promises";
 import * as path from "path";
 import { DiskCache } from "./disk-cache";
 import { tmpdir } from "os";
-import { beforeEach, describe, it, afterEach, expect } from "vitest";
+import { beforeEach, describe, it, afterEach, expect } from "vite-plus/test";
 import { configureNode } from "../node/config";
 
 describe("DiskCache", () => {

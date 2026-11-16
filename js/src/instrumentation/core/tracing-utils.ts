@@ -1,6 +1,6 @@
 import type { ChannelSpanInfo, SpanInfoCarrier, StartEvent } from "./types";
 import { debugLogger } from "../../debug-logger";
-import type { Span, StartSpanArgs } from "../../logger";
+import type { Span, StartSpanArgs } from "../../logger/core";
 import { isObject, mergeDicts } from "../../util";
 
 type ChannelConfigName =

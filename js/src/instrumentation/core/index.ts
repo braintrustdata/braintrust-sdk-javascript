@@ -1,26 +1,3 @@
-/**
- * Core utilities for building auto-instrumentation plugins.
- *
- * Provides BasePlugin class and channel utilities following the OpenTelemetry
- * InstrumentationBase pattern - core infrastructure lives here, but individual
- * instrumentations can be separate packages.
- *
- * Note: auto-instrumentation config types are exposed from the Braintrust
- * bundler subpaths, such as `braintrust/vite`.
- */
+/** Internal utilities shared by Braintrust instrumentation consumers. */
 
-export {
-  createChannelName,
-  isValidChannelName,
-  parseChannelName,
-} from "./channel";
 export { toLoggedError } from "./logging";
-export { BasePlugin } from "./plugin";
-export type {
-  AsyncEndEvent,
-  AsyncStartEvent,
-  BaseContext,
-  EndEvent,
-  ErrorEvent,
-  StartEvent,
-} from "./types";

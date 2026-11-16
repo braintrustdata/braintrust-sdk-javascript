@@ -1,5 +1,11 @@
+import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
+import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { context, trace } from "@opentelemetry/api";
-import { BraintrustSpanProcessor } from "@braintrust/otel";
+import {
+  BraintrustSpanProcessor,
+  BraintrustExporter,
+  braintrustOtlpConfig,
+} from "@braintrust/otel";
 import {
   createTracerProvider,
   getTestRunId,
@@ -10,10 +16,18 @@ import {
 async function main() {
   const testRunId = getTestRunId();
   const processor = new BraintrustSpanProcessor({
-    apiKey: process.env.BRAINTRUST_API_KEY!,
-    apiUrl: process.env.BRAINTRUST_API_URL!,
+    processor: new BatchSpanProcessor(
+      new BraintrustExporter({
+        exporter: new OTLPTraceExporter(
+          braintrustOtlpConfig({
+            apiKey: process.env.BRAINTRUST_API_KEY!,
+            apiUrl: process.env.BRAINTRUST_API_URL!,
+            parent: `project_name:${scopedName("e2e-otel-span-processor-export", testRunId)}`,
+          }),
+        ),
+      }),
+    ),
     filterAISpans: true,
-    parent: `project_name:${scopedName("e2e-otel-span-processor-export", testRunId)}`,
   });
   const provider = createTracerProvider([processor]);
   trace.setGlobalTracerProvider(provider);

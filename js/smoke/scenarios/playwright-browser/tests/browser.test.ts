@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import {
   displayTestResults,
   type TestResult,
-} from "../../../shared/dist/index.mjs";
+} from "../../../shared/dist/index.js";
 
 test.describe("Braintrust SDK Browser Tests", () => {
   test("should run all browser tests (shared + eval + prompt)", async ({

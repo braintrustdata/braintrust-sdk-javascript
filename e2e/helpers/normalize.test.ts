@@ -1,7 +1,11 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "vite-plus/test";
 import { normalizeForSnapshot } from "./normalize";
 
 describe("normalizeForSnapshot", () => {
+  test("preserves large inline media without scanning it as a repository path", () => {
+    const media = `data:image/png;base64,${"a".repeat(3_000_000)}`;
+    expect(normalizeForSnapshot(media)).toBe(media);
+  });
   test.each([0, 0.1, 1.2])(
     "normalizes tool wall time of %s seconds",
     (seconds) => {

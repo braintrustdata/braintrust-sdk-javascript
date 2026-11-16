@@ -1,5 +1,5 @@
 import { debugLogger } from "../debug-logger";
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vite-plus/test";
 
 const { invoke } = vi.hoisted(() => ({
   invoke: vi.fn(
