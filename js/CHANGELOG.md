@@ -2,6 +2,8 @@
 
 ## 4.0.0
 
+See the [v4 migration guide](https://github.com/braintrustdata/braintrust-sdk-javascript/blob/main/docs/migration-v3-to-v4.md) for upgrade instructions.
+
 ### Major Changes
 
 - feat(v4)!: Add Node Engine to package json (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2378)
