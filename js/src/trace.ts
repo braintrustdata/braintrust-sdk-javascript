@@ -1,6 +1,8 @@
-import { BraintrustState } from "./logger/core";
+import { BraintrustState, ReadonlyAttachment } from "./logger/core";
 import { ObjectFetcher, WithTransactionId } from "./logger/objects";
 import { invoke } from "./functions/invoke";
+import { BraintrustAttachmentReference } from "./sdk-schemas";
+import { joinOggStreams } from "./ogg";
 
 interface TraceOptions {
   objectType: "experiment" | "project_logs" | "playground_logs";
@@ -688,6 +690,37 @@ export interface Trace {
    * @returns The preprocessed thread as an array of messages.
    */
   getThread(options?: GetThreadOptions): Promise<unknown[]>;
+  /**
+   * Get the trajectory for this trace, as computed by the server's
+   * "trajectory" preprocessor. Requires a server that supports it.
+   */
+  getTrajectory(): Promise<unknown[]>;
+  /**
+   * Get the trace's audio recording as one base64 Ogg stream, or null if the
+   * trace has none.
+   */
+  getRecording(): Promise<Recording | null>;
+}
+
+interface Recording {
+  id: string;
+  mime_type: "audio/ogg";
+  data: string;
+}
+
+interface TrajectoryRecording {
+  id: string;
+  segments: {
+    id: string;
+    state: string;
+    mime_type?: string;
+    attachment_ref?: string;
+  }[];
+}
+
+interface TrajectoryData {
+  scope?: { type: string; trace_id?: string }[];
+  recordings?: TrajectoryRecording[];
 }
 
 /**
@@ -708,6 +741,7 @@ export class LocalTrace implements Trace {
   private spansFlushPromise: Promise<void> | null = null;
   private cachedFetcher: CachedSpanFetcher;
   private threadCache: Map<string, Promise<unknown[]>> = new Map();
+  private trajectoryCache: Promise<TrajectoryData[]> | undefined;
 
   constructor({
     objectType,
@@ -831,6 +865,141 @@ export class LocalTrace implements Trace {
     return Array.isArray(result) ? result : [];
   }
 
+  getTrajectory(): Promise<unknown[]> {
+    return this.getTrajectoryData();
+  }
+
+  async getRecording(): Promise<Recording | null> {
+    const recordings = (await this.getTrajectoryData()).flatMap(
+      (trajectory) => trajectory.recordings ?? [],
+    );
+    if (recordings.length === 0) {
+      return null;
+    }
+    if (recordings.length > 1) {
+      throw new Error(
+        `Trace has ${recordings.length} recordings; getRecording() supports one`,
+      );
+    }
+    const [{ id, segments }] = recordings;
+    if (segments.length === 0) {
+      throw new Error(`Recording ${id} has no segments`);
+    }
+    for (const segment of segments) {
+      if (segment.state !== "ready") {
+        throw new Error(
+          `Recording segment ${segment.id} is ${segment.state}, not ready`,
+        );
+      }
+      if (segment.mime_type !== "audio/ogg") {
+        throw new Error(
+          `Recording segment ${segment.id} is ${segment.mime_type}, not audio/ogg`,
+        );
+      }
+    }
+
+    // Read the row from the server, not the local span cache: cached rows
+    // have no id and may hold unuploaded Attachment objects.
+    const row = (await this.cachedFetcher.getSpans()).find(
+      (span) => span.id === id,
+    );
+    if (!row) {
+      throw new Error(`Recording session span ${id} not found`);
+    }
+    const references = segments.map((segment) => {
+      const reference = BraintrustAttachmentReference.safeParse(
+        segment.attachment_ref === undefined
+          ? undefined
+          : resolveJsonPointer(row, segment.attachment_ref),
+      );
+      if (!reference.success) {
+        throw new Error(
+          `Recording segment ${segment.id} has no Braintrust attachment at ${segment.attachment_ref}`,
+        );
+      }
+      if (reference.data.content_type !== "audio/ogg") {
+        throw new Error(
+          `Recording segment ${segment.id} attachment is ${reference.data.content_type}, not audio/ogg`,
+        );
+      }
+      return reference.data;
+    });
+
+    const streams = await Promise.all(
+      references.map(async (reference, index) => {
+        const segmentId = segments[index].id;
+        const blob = await new ReadonlyAttachment(reference, this.state)
+          .data()
+          .catch((error) => {
+            throw new Error(
+              `Couldn't read recording segment ${segmentId}: ${error instanceof Error ? error.message : String(error)}`,
+            );
+          });
+        if ((await blob.slice(0, 4).text()) !== "OggS") {
+          throw new Error(
+            `Recording segment ${segmentId} is not an Ogg stream`,
+          );
+        }
+        return new Uint8Array(await blob.arrayBuffer());
+      }),
+    );
+    const data = Buffer.from(joinOggStreams(streams)).toString("base64");
+    return { id, mime_type: "audio/ogg", data };
+  }
+
+  private getTrajectoryData(): Promise<TrajectoryData[]> {
+    this.trajectoryCache ??= this.fetchTrajectory().catch((error) => {
+      this.trajectoryCache = undefined;
+      throw error;
+    });
+    return this.trajectoryCache;
+  }
+
+  private async fetchTrajectory(): Promise<TrajectoryData[]> {
+    await this.ensureSpansReady();
+    await this.state.login({});
+    const response: { data: { trajectory: TrajectoryData }[] } =
+      await this.state.apiConn().post_json("btql", {
+        query: {
+          select: [
+            {
+              alias: "trajectory",
+              expr: {
+                op: "function",
+                name: { op: "ident", name: ["preprocessor"] },
+                args: [
+                  { op: "star" },
+                  { op: "literal", value: "thread" },
+                  { op: "literal", value: null },
+                  { op: "literal", value: "trajectory" },
+                ],
+              },
+            },
+          ],
+          from: {
+            op: "function",
+            name: { op: "ident", name: [this.objectType] },
+            args: [{ op: "literal", value: this.objectId }],
+            shape: "spans",
+          },
+          filter: btqlComparison("eq", ["root_span_id"], this.rootSpanId),
+        },
+        disable_limit: true,
+        brainstore_realtime: true,
+        query_source: "js_sdk_trace_trajectory",
+      });
+    const trajectories = response.data.map(({ trajectory }) => trajectory);
+    if (
+      trajectories.length !== 1 ||
+      !trajectories[0].scope?.some(
+        (ref) => ref.type === "trace" && ref.trace_id === this.rootSpanId,
+      )
+    ) {
+      throw new Error("Trajectory query did not return the trace's root");
+    }
+    return trajectories;
+  }
+
   private async ensureSpansReady() {
     if (this.spansFlushed || !this.ensureSpansFlushed) {
       return;
@@ -850,4 +1019,22 @@ export class LocalTrace implements Trace {
 
     await this.spansFlushPromise;
   }
+}
+
+function resolveJsonPointer(value: unknown, pointer: string): unknown {
+  if (!pointer.startsWith("/")) {
+    return undefined;
+  }
+  for (const token of pointer.slice(1).split("/")) {
+    const key = token.replace(/~1/g, "/").replace(/~0/g, "~");
+    if (
+      typeof value !== "object" ||
+      value === null ||
+      !Object.prototype.hasOwnProperty.call(value, key)
+    ) {
+      return undefined;
+    }
+    value = Reflect.get(value, key);
+  }
+  return value;
 }

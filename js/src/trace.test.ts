@@ -6,6 +6,7 @@ import {
   beforeAll,
   beforeEach,
   afterEach,
+  afterAll,
 } from "vite-plus/test";
 import {
   CachedSpanFetcher,
@@ -15,8 +16,12 @@ import {
   SpanFilters,
 } from "./trace";
 import { _exportsForTestingOnly } from "./logger/testing";
-import { _internalGetGlobalState, type BraintrustState } from "./logger/core";
+import { _internalGetGlobalState, BraintrustState } from "./logger/core";
 import { configureNode } from "./node/config";
+import { Eval } from "./framework";
+import type { ProgressReporter } from "./reporters/types";
+import { createServer, type Server } from "node:http";
+import { once } from "node:events";
 
 // Mock the invoke function
 vi.mock("./functions/invoke", () => ({
@@ -850,5 +855,385 @@ describe("LocalTrace.getThread", () => {
 
     const result = await trace.getThread();
     expect(result).toEqual([]);
+  });
+});
+
+describe("LocalTrace.getTrajectory and getRecording", () => {
+  class NoopProgressReporter implements ProgressReporter {
+    public start() {}
+    public stop() {}
+    public increment() {}
+  }
+
+  // Synthetic two-page Opus streams; the audio packets are "first" and
+  // "second", not real audio.
+  const firstStream = Buffer.from(
+    "T2dnUwACAAAAAAAAAAABAAAAAAAAAAJihVwBE09wdXNIZWFkAQI4AYC7AAAAAABPZ2dTAAAAAAAAAAAAAAEAAAABAAAAh1hgGgEQT3B1c1RhZ3MAAAAAAAAAAE9nZ1MABIQDAAAAAAAAAQAAAAIAAABw9k1XAQVmaXJzdA==",
+    "base64",
+  );
+  const secondStream = Buffer.from(
+    "T2dnUwACAAAAAAAAAAACAAAAAAAAAJemhaUBE09wdXNIZWFkAQI4AYC7AAAAAABPZ2dTAAAAAAAAAAAAAAIAAAABAAAAExo4wQEQT3B1c1RhZ3MAAAAAAAAAAE9nZ1MABOABAAAAAAAAAgAAAAIAAACtj3JjAQZzZWNvbmQ=",
+    "base64",
+  );
+  const joined =
+    "T2dnUwACAAAAAAAAAAABAAAAAAAAAAJihVwBE09wdXNIZWFkAQI4AYC7AAAAAABPZ2dTAAAAAAAAAAAAAAEAAAABAAAAh1hgGgEQT3B1c1RhZ3MAAAAAAAAAAE9nZ1MAAMADAAAAAAAAAQAAAAIAAACahI5GAQVmaXJzdE9nZ1MABKAFAAAAAAAAAQAAAAMAAAAQ4fcZAQZzZWNvbmQ=";
+  const segment = (id: string, part: string) => ({
+    id,
+    state: "ready",
+    start_offset_ms: 0,
+    attachment_ref: `/input/audio/${part}`,
+    mime_type: "audio/ogg",
+    channels: [],
+  });
+  const recording = {
+    id: "session_1",
+    origin: "2026-11-01T00:00:00Z",
+    sources: [],
+    segments: [segment("seg_0", "part-1"), segment("seg_1", "a~01~1b")],
+  };
+  const attachment = (key: string) => ({
+    type: "braintrust_attachment",
+    filename: `${key}.ogg`,
+    content_type: "audio/ogg",
+    key,
+  });
+
+  let recordings: unknown[];
+  let trajectoryRoot: string | undefined;
+  let trajectoryStatus: number;
+  let row: Record<string, unknown>;
+  let objects: Map<string, Buffer | string>;
+  let uploadStatus: string;
+  let btqlBodies: Record<string, any>[];
+  let baseUrl: string;
+  let server: Server;
+
+  beforeAll(async () => {
+    server = createServer(async (req, res) => {
+      const url = new URL(req.url ?? "", baseUrl);
+      const chunks: Buffer[] = [];
+      for await (const chunk of req) {
+        chunks.push(chunk);
+      }
+      const json = (body: unknown, status = 200) => {
+        res.writeHead(status, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(body));
+      };
+      if (url.pathname === "/btql") {
+        const body = JSON.parse(Buffer.concat(chunks).toString());
+        btqlBodies.push(body);
+        if (body.query.select[0].alias !== "trajectory") {
+          return json({ data: [row], cursor: null });
+        }
+        if (trajectoryStatus !== 200) {
+          return json({ error: "Unknown function preprocessor" }, 400);
+        }
+        const root = trajectoryRoot ?? body.query.filter.right.value;
+        return json({
+          data: [
+            {
+              trajectory: {
+                scope: [{ type: "trace", trace_id: root }],
+                turns: [],
+                recordings,
+              },
+            },
+          ],
+        });
+      }
+      if (url.pathname === "/attachment") {
+        return json({
+          downloadUrl: `${baseUrl}/objects/${url.searchParams.get("key")}`,
+          status: { upload_status: uploadStatus },
+        });
+      }
+      const object = objects.get(url.pathname.replace("/objects/", ""));
+      res.writeHead(object === undefined ? 404 : 200);
+      res.end(object ?? "missing");
+    });
+    server.listen(0, "127.0.0.1");
+    await once(server, "listening");
+    const address = server.address();
+    if (!address || typeof address === "string") {
+      throw new Error("No HTTP port");
+    }
+    baseUrl = `http://127.0.0.1:${address.port}`;
+  });
+
+  afterAll(async () => {
+    server.closeAllConnections();
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+  });
+
+  beforeEach(() => {
+    recordings = [recording];
+    trajectoryRoot = undefined;
+    trajectoryStatus = 200;
+    row = {
+      id: "session_1",
+      span_id: "span_1",
+      root_span_id: "root_1",
+      input: {
+        audio: {
+          "a~1/b": attachment("second"),
+          "part-1": attachment("first"),
+        },
+      },
+    };
+    objects = new Map([
+      ["first", firstStream],
+      ["second", secondStream],
+    ]);
+    uploadStatus = "done";
+    btqlBodies = [];
+  });
+
+  const makeState = () => {
+    const state = new BraintrustState({ noExitFlush: true });
+    state.apiUrl = baseUrl;
+    state.loggedIn = true;
+    state.apiConn().set_token("recording-test");
+    return state;
+  };
+  const makeTrace = (ensureSpansFlushed?: () => Promise<void>) =>
+    new LocalTrace({
+      objectType: "project_logs",
+      objectId: "project_1",
+      rootSpanId: "root_1",
+      ensureSpansFlushed,
+      state: makeState(),
+    });
+
+  test("a local Eval() scorer can read the trajectory and recording", async () => {
+    let seen: unknown[] = [];
+    const result = await Eval(
+      "trace-recording",
+      {
+        data: [{ input: "hi" }],
+        task: (input) => input,
+        scores: [
+          async ({ trace }) => {
+            seen = [await trace!.getTrajectory(), await trace!.getRecording()];
+            return { name: "has_recording", score: 1 };
+          },
+        ],
+        state: makeState(),
+      },
+      {
+        noSendLogs: true,
+        returnResults: true,
+        progress: new NoopProgressReporter(),
+      },
+    );
+    expect(result.results[0].scores.has_recording).toBe(1);
+    expect(seen).toEqual([
+      [expect.objectContaining({ recordings: [recording] })],
+      { id: "session_1", mime_type: "audio/ogg", data: joined },
+    ]);
+  });
+
+  test("flushes before querying, then shares and caches the trajectory", async () => {
+    const order: string[] = [];
+    const trace = makeTrace(async () => {
+      order.push("flush");
+    });
+    const [first, second] = await Promise.all([
+      trace.getTrajectory(),
+      trace.getTrajectory(),
+    ]);
+    order.push(`btql:${btqlBodies.length}`);
+    expect(first).toBe(second);
+    expect(await trace.getTrajectory()).toBe(first);
+    expect(order).toEqual(["flush", "btql:1"]);
+    expect(btqlBodies[0]).toMatchObject({
+      disable_limit: true,
+      brainstore_realtime: true,
+      query: {
+        select: [
+          {
+            alias: "trajectory",
+            expr: {
+              args: [
+                { op: "star" },
+                { value: "thread" },
+                { value: null },
+                { value: "trajectory" },
+              ],
+            },
+          },
+        ],
+        from: { name: { name: ["project_logs"] }, args: [{ value: "project_1" }] },
+        filter: { right: { value: "root_1" } },
+      },
+    });
+  });
+
+  test("surfaces server errors and retries after a failure", async () => {
+    const trace = makeTrace();
+    trajectoryStatus = 400;
+    await expect(trace.getTrajectory()).rejects.toThrow(
+      "Unknown function preprocessor",
+    );
+    trajectoryStatus = 200;
+    await expect(trace.getTrajectory()).resolves.toHaveLength(1);
+  });
+
+  test("rejects a trajectory for another root", async () => {
+    trajectoryRoot = "other_root";
+    await expect(makeTrace().getTrajectory()).rejects.toThrow(
+      "did not return the trace's root",
+    );
+  });
+
+  test("returns null without a recording", async () => {
+    recordings = [];
+    await expect(makeTrace().getRecording()).resolves.toBeNull();
+  });
+
+  test("reads the session row from the server, not the local span cache", async () => {
+    const state = makeState();
+    state.spanCache.start();
+    state.spanCache.queueWrite("root_1", "span_1", {
+      span_id: "span_1",
+      input: { audio: {} },
+    });
+    const trace = new LocalTrace({
+      objectType: "project_logs",
+      objectId: "project_1",
+      rootSpanId: "root_1",
+      state,
+    });
+    try {
+      await expect(trace.getRecording()).resolves.toMatchObject({
+        data: joined,
+      });
+    } finally {
+      state.spanCache.clearAll();
+      state.spanCache.stop();
+    }
+  });
+
+  test.each([
+    [
+      "more than one recording",
+      () => {
+        recordings = [recording, { ...recording, id: "session_2" }];
+      },
+      "2 recordings",
+    ],
+    [
+      "no segments",
+      () => {
+        recordings = [{ ...recording, segments: [] }];
+      },
+      "no segments",
+    ],
+    [
+      "a pending segment",
+      () => {
+        recordings = [
+          {
+            ...recording,
+            segments: [{ ...segment("seg_1", "x"), state: "pending" }],
+          },
+        ];
+      },
+      "seg_1 is pending, not ready",
+    ],
+    [
+      "a non-Ogg segment",
+      () => {
+        recordings = [
+          {
+            ...recording,
+            segments: [{ ...segment("seg_0", "part-1"), mime_type: "audio/wav" }],
+          },
+        ];
+      },
+      "seg_0 is audio/wav, not audio/ogg",
+    ],
+    [
+      "a missing row",
+      () => {
+        row = { ...row, id: "other" };
+      },
+      "session span session_1 not found",
+    ],
+    [
+      "a missing attachment_ref",
+      () => {
+        recordings = [
+          {
+            ...recording,
+            segments: [
+              { ...segment("seg_0", "part-1"), attachment_ref: undefined },
+            ],
+          },
+        ];
+      },
+      "seg_0 has no Braintrust attachment",
+    ],
+    [
+      "a missing reference",
+      () => {
+        row = { ...row, input: { audio: { "part-1": attachment("first") } } };
+      },
+      "seg_1 has no Braintrust attachment at /input/audio/a~01~1b",
+    ],
+    [
+      "a non-Ogg attachment",
+      () => {
+        row = {
+          ...row,
+          input: {
+            audio: {
+              "part-1": attachment("first"),
+              "a~1/b": { ...attachment("second"), content_type: "audio/wav" },
+            },
+          },
+        };
+      },
+      "seg_1 attachment is audio/wav, not audio/ogg",
+    ],
+    [
+      "a failed download",
+      () => {
+        objects.delete("second");
+      },
+      "Couldn't read recording segment seg_1",
+    ],
+    [
+      "an unfinished upload",
+      () => {
+        uploadStatus = "uploading";
+      },
+      'Expected attachment status "done", got "uploading"',
+    ],
+    [
+      "bytes that aren't Ogg",
+      () => {
+        objects.set("second", "RIFF....");
+      },
+      "seg_1 is not an Ogg stream",
+    ],
+    [
+      "a different channel layout",
+      () => {
+        const mono = Buffer.from(secondStream);
+        mono[37] = 1;
+        objects.set("second", mono);
+      },
+      "Ogg stream 1 has a different channel layout",
+    ],
+    [
+      "a truncated Ogg page",
+      () => {
+        objects.set("second", secondStream.subarray(0, 27));
+      },
+      "Truncated Ogg page at byte 0",
+    ],
+  ])("rejects %s", async (_name, setup, message) => {
+    setup();
+    await expect(makeTrace().getRecording()).rejects.toThrow(message);
   });
 });

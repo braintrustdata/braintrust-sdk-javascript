@@ -123,6 +123,8 @@ test("agentAssertionScorer evaluates trace-backed tool assertions after collecti
     }),
     getSpans,
     getThread: vi.fn(),
+    getTrajectory: vi.fn(),
+    getRecording: vi.fn(),
   };
   const callbackOrder: string[] = [];
   const scorer = agentAssertionScorer(({ assert }) => {
@@ -185,6 +187,8 @@ test("agentAssertionScorer requires undefined matcher keys to exist", async () =
     }),
     getSpans,
     getThread: vi.fn(),
+    getTrajectory: vi.fn(),
+    getRecording: vi.fn(),
   };
   const scorer = agentAssertionScorer(({ assert }) => [
     assert.calledTool(
@@ -234,6 +238,8 @@ test("agentAssertionScorer applies explicit undefined input and output matchers"
     }),
     getSpans,
     getThread: vi.fn(),
+    getTrajectory: vi.fn(),
+    getRecording: vi.fn(),
   };
   const scorer = agentAssertionScorer(({ assert }) => [
     assert.calledTool(
@@ -287,6 +293,8 @@ test("agentAssertionScorer matches object tool inputs and outputs with regexes",
     }),
     getSpans,
     getThread: vi.fn(),
+    getTrajectory: vi.fn(),
+    getRecording: vi.fn(),
   };
   const scorer = agentAssertionScorer(({ assert }) => [
     assert.calledTool(
@@ -336,6 +344,8 @@ test("agentAssertionScorer matches raw string regexes and array matchers", async
     }),
     getSpans,
     getThread: vi.fn(),
+    getTrajectory: vi.fn(),
+    getRecording: vi.fn(),
   };
   const scorer = agentAssertionScorer(({ assert }) => [
     assert.contains("hi", /^hi$/, "contains raw string"),
@@ -418,6 +428,8 @@ test("agentAssertionScorer matches tool names from span metadata", async () => {
     }),
     getSpans,
     getThread: vi.fn(),
+    getTrajectory: vi.fn(),
+    getRecording: vi.fn(),
   };
   const scorer = agentAssertionScorer(({ assert }) => [
     assert.calledTool("lookup_weather", {
