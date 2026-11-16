@@ -59,14 +59,19 @@ runMain(async () => {
         const image = await readFile(
           new URL("./test-image.png", import.meta.url),
         );
-        const result = await client.run("fal-ai/ltx-video/image-to-video", {
-          input: {
-            prompt: "The scene moves slowly. The camera stays still.",
-            image_url: `data:image/png;base64,${image.toString("base64")}`,
-            num_inference_steps: 10,
-            seed: 42,
+        const result = await client.run(
+          "fal-ai/ltx-video-13b-distilled/image-to-video",
+          {
+            input: {
+              prompt: "The scene moves slowly. The camera stays still.",
+              image_url: `data:image/png;base64,${image.toString("base64")}`,
+              num_frames: 9,
+              resolution: "480p",
+              first_pass_num_inference_steps: 2,
+              seed: 42,
+            },
           },
-        });
+        );
         assert.ok(result.data.video.url);
       });
       for (const mode of ["iterator", "done", "events"]) {

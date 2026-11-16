@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  effectiveScenarioTimeoutMs,
   prepareScenarioDir,
   resolveScenarioDir,
   withScenarioHarness,
@@ -111,7 +112,7 @@ for (const variant of ["fal-v1", "fal-v1-latest"]) {
             );
           });
         },
-        240_000,
+        effectiveScenarioTimeoutMs(240_000),
       );
     }
   });

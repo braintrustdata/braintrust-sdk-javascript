@@ -1,0 +1,385 @@
+{
+  "span_tree": [
+    {
+      "name": "fal-instrumentation-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "image",
+          "children": [
+            {
+              "name": "fal.run",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "operation": "generate",
+                "parameters": {
+                  "seed": 42,
+                  "size": {
+                    "height": 256,
+                    "width": 256
+                  }
+                },
+                "prompt": "A red cube on a white background"
+              },
+              "output": {
+                "annotations": {
+                  "has_nsfw_concepts": [
+                    false
+                  ],
+                  "seed": 42
+                },
+                "content": [
+                  {
+                    "image_url": {
+                      "height": 256,
+                      "url": "https://v3b.fal.media/files/b/0ab2b58a/UlujkkXX6YcnZFrXCstVe.jpg",
+                      "width": 256
+                    },
+                    "type": "image_url"
+                  }
+                ]
+              },
+              "metadata": {
+                "model": "fal-ai/flux/schnell",
+                "provider": "fal",
+                "request_id": "<request_id:1>"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "image",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "audio",
+          "children": [
+            {
+              "name": "fal.run",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "operation": "speech",
+                "parameters": {
+                  "speed": 1,
+                  "voice": "af_heart"
+                },
+                "prompt": "Hello from Braintrust."
+              },
+              "output": {
+                "content": [
+                  {
+                    "file": {
+                      "file_data": "https://v3b.fal.media/files/b/0ab2b594/z3TCV2RXaWptOt9p_obKF_z0PdDaiI.wav",
+                      "filename": "z3TCV2RXaWptOt9p_obKF_z0PdDaiI.wav"
+                    },
+                    "type": "file"
+                  }
+                ]
+              },
+              "metadata": {
+                "model": "fal-ai/kokoro/american-english",
+                "provider": "fal",
+                "request_id": "<request_id:1>"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "audio",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "video",
+          "children": [
+            {
+              "name": "fal.run",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "content": [
+                  {
+                    "image_url": {
+                      "url": {
+                        "content_type": "image/png",
+                        "filename": "fal.png",
+                        "key": "<uuid:1>",
+                        "type": "braintrust_attachment"
+                      }
+                    },
+                    "purpose": "reference",
+                    "type": "image_url"
+                  }
+                ],
+                "operation": "generate",
+                "parameters": {
+                  "seed": 42
+                },
+                "prompt": "The scene moves slowly. The camera stays still."
+              },
+              "output": {
+                "annotations": {
+                  "seed": 42
+                },
+                "content": [
+                  {
+                    "file": {
+                      "byte_size": 8745,
+                      "file_data": "https://v3b.fal.media/files/b/0ab2b5a9/zrYeoIextOEANTpye5B7D_OhbVrpoi.mp4",
+                      "filename": "zrYeoIextOEANTpye5B7D_OhbVrpoi.mp4"
+                    },
+                    "type": "file"
+                  }
+                ]
+              },
+              "metadata": {
+                "model": "fal-ai/ltx-video-13b-distilled/image-to-video",
+                "provider": "fal",
+                "request_id": "<request_id:1>"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "video",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "stream-iterator",
+          "children": [
+            {
+              "name": "fal.stream",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "operation": "generate",
+                "parameters": {
+                  "seed": 42,
+                  "size": {
+                    "height": 256,
+                    "width": 256
+                  }
+                },
+                "prompt": "A blue cube on a white background"
+              },
+              "output": {
+                "annotations": {
+                  "has_nsfw_concepts": [
+                    false
+                  ],
+                  "seed": 42
+                },
+                "content": [
+                  {
+                    "image_url": {
+                      "height": 512,
+                      "url": {
+                        "content_type": "image/jpeg",
+                        "filename": "fal.jpg",
+                        "key": "<uuid:1>",
+                        "type": "braintrust_attachment"
+                      },
+                      "width": 512
+                    },
+                    "type": "image_url"
+                  }
+                ]
+              },
+              "metadata": {
+                "model": "fal-ai/flux-lora",
+                "provider": "fal",
+                "request_id": "<request_id:1>"
+              },
+              "metrics": {
+                "time_to_first_token": 0
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "stream",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "stream-done",
+          "children": [
+            {
+              "name": "fal.stream",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "operation": "generate",
+                "parameters": {
+                  "seed": 42,
+                  "size": {
+                    "height": 256,
+                    "width": 256
+                  }
+                },
+                "prompt": "A blue cube on a white background"
+              },
+              "output": {
+                "annotations": {
+                  "has_nsfw_concepts": [
+                    false
+                  ],
+                  "seed": 42
+                },
+                "content": [
+                  {
+                    "image_url": {
+                      "height": 512,
+                      "url": {
+                        "content_type": "image/jpeg",
+                        "filename": "fal.jpg",
+                        "key": "<uuid:1>",
+                        "type": "braintrust_attachment"
+                      },
+                      "width": 512
+                    },
+                    "type": "image_url"
+                  }
+                ]
+              },
+              "metadata": {
+                "model": "fal-ai/flux-lora",
+                "provider": "fal",
+                "request_id": "<request_id:1>"
+              },
+              "metrics": {
+                "time_to_first_token": 0
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "stream",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "stream-events",
+          "children": [
+            {
+              "name": "fal.stream",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "operation": "generate",
+                "parameters": {
+                  "seed": 42,
+                  "size": {
+                    "height": 256,
+                    "width": 256
+                  }
+                },
+                "prompt": "A blue cube on a white background"
+              },
+              "output": {
+                "annotations": {
+                  "has_nsfw_concepts": [
+                    false
+                  ],
+                  "seed": 42
+                },
+                "content": [
+                  {
+                    "image_url": {
+                      "height": 512,
+                      "url": {
+                        "content_type": "image/jpeg",
+                        "filename": "fal.jpg",
+                        "key": "<uuid:1>",
+                        "type": "braintrust_attachment"
+                      },
+                      "width": 512
+                    },
+                    "type": "image_url"
+                  }
+                ]
+              },
+              "metadata": {
+                "model": "fal-ai/flux-lora",
+                "provider": "fal",
+                "request_id": "<request_id:1>"
+              },
+              "metrics": {
+                "time_to_first_token": 0
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "stream",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "error",
+          "children": [
+            {
+              "name": "fal.run",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "operation": "generate"
+              },
+              "metadata": {
+                "model": "fal-ai/flux/schnell",
+                "provider": "fal"
+              },
+              "error": "Unprocessable Entity"
+            }
+          ],
+          "metadata": {
+            "operation": "error",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "fal-instrumentation",
+        "testRunId": "<run:1>"
+      },
+      "context": {
+        "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+        "caller_functionname": "runTracedScenario",
+        "caller_lineno": 0
+      }
+    }
+  ]
+}
