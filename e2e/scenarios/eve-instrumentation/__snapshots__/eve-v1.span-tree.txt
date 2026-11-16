@@ -324,7 +324,7 @@ span_tree:
 │   │             "additionalProperties": false,
 │   │             "properties": {
 │   │               "timeoutSeconds": {
-│   │                 "description": "Optional. Seconds to wait before returning without a result. Omit it to wait for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
+│   │                 "description": "Optional. Seconds to wait before returning without a result. There is no upper limit, so set it above 1800 to wait longer than 30 minutes. Omit it to wait up to 30 minutes for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
 │   │                 "minimum": 1,
 │   │                 "type": "integer"
 │   │               }
@@ -1297,7 +1297,7 @@ span_tree:
 │   │             "additionalProperties": false,
 │   │             "properties": {
 │   │               "timeoutSeconds": {
-│   │                 "description": "Optional. Seconds to wait before returning without a result. Omit it to wait for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
+│   │                 "description": "Optional. Seconds to wait before returning without a result. There is no upper limit, so set it above 1800 to wait longer than 30 minutes. Omit it to wait up to 30 minutes for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
 │   │                 "minimum": 1,
 │   │                 "type": "integer"
 │   │               }
@@ -1740,7 +1740,7 @@ span_tree:
 │                 "additionalProperties": false,
 │                 "properties": {
 │                   "timeoutSeconds": {
-│                     "description": "Optional. Seconds to wait before returning without a result. Omit it to wait for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
+│                     "description": "Optional. Seconds to wait before returning without a result. There is no upper limit, so set it above 1800 to wait longer than 30 minutes. Omit it to wait up to 30 minutes for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
 │                     "minimum": 1,
 │                     "type": "integer"
 │                   }
@@ -2223,7 +2223,7 @@ span_tree:
 │   │             "additionalProperties": false,
 │   │             "properties": {
 │   │               "timeoutSeconds": {
-│   │                 "description": "Optional. Seconds to wait before returning without a result. Omit it to wait for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
+│   │                 "description": "Optional. Seconds to wait before returning without a result. There is no upper limit, so set it above 1800 to wait longer than 30 minutes. Omit it to wait up to 30 minutes for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
 │   │                 "minimum": 1,
 │   │                 "type": "integer"
 │   │               }
@@ -3307,7 +3307,7 @@ span_tree:
 │   │             "additionalProperties": false,
 │   │             "properties": {
 │   │               "timeoutSeconds": {
-│   │                 "description": "Optional. Seconds to wait before returning without a result. Omit it to wait for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
+│   │                 "description": "Optional. Seconds to wait before returning without a result. There is no upper limit, so set it above 1800 to wait longer than 30 minutes. Omit it to wait up to 30 minutes for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
 │   │                 "minimum": 1,
 │   │                 "type": "integer"
 │   │               }
@@ -3861,7 +3861,7 @@ span_tree:
 │                 "additionalProperties": false,
 │                 "properties": {
 │                   "timeoutSeconds": {
-│                     "description": "Optional. Seconds to wait before returning without a result. Omit it to wait for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
+│                     "description": "Optional. Seconds to wait before returning without a result. There is no upper limit, so set it above 1800 to wait longer than 30 minutes. Omit it to wait up to 30 minutes for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
 │                     "minimum": 1,
 │                     "type": "integer"
 │                   }
@@ -3914,7 +3914,7 @@ span_tree:
       "testRunId": "<run:1>"
     }
     context: {
-      "caller_filename": "<repo>/e2e/scenarios/eve-instrumentation/scenario.ts",
+      "caller_filename": "<repo>/e2e/scenarios/eve-instrumentation-v1/scenario.ts",
       "caller_functionname": "runTracedCallerSession",
       "caller_lineno": 0
     }
@@ -4243,7 +4243,7 @@ span_tree:
         │             "additionalProperties": false,
         │             "properties": {
         │               "timeoutSeconds": {
-        │                 "description": "Optional. Seconds to wait before returning without a result. Omit it to wait for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
+        │                 "description": "Optional. Seconds to wait before returning without a result. There is no upper limit, so set it above 1800 to wait longer than 30 minutes. Omit it to wait up to 30 minutes for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
         │                 "minimum": 1,
         │                 "type": "integer"
         │               }
@@ -5216,7 +5216,7 @@ span_tree:
         │             "additionalProperties": false,
         │             "properties": {
         │               "timeoutSeconds": {
-        │                 "description": "Optional. Seconds to wait before returning without a result. Omit it to wait for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
+        │                 "description": "Optional. Seconds to wait before returning without a result. There is no upper limit, so set it above 1800 to wait longer than 30 minutes. Omit it to wait up to 30 minutes for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
         │                 "minimum": 1,
         │                 "type": "integer"
         │               }
@@ -5659,7 +5659,7 @@ span_tree:
                       "additionalProperties": false,
                       "properties": {
                         "timeoutSeconds": {
-                          "description": "Optional. Seconds to wait before returning without a result. Omit it to wait for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
+                          "description": "Optional. Seconds to wait before returning without a result. There is no upper limit, so set it above 1800 to wait longer than 30 minutes. Omit it to wait up to 30 minutes for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
                           "minimum": 1,
                           "type": "integer"
                         }
