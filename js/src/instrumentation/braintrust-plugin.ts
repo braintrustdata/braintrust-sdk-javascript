@@ -194,7 +194,9 @@ export class BraintrustPlugin extends BasePlugin {
     }
 
     if (integrations.mistral !== false) {
-      this.mistralPlugin = new MistralPlugin();
+      this.mistralPlugin = new MistralPlugin(
+        this.config.streamingAttachmentBufferBytes,
+      );
       this.mistralPlugin.enable();
     }
 

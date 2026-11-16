@@ -1,6 +1,8 @@
 import { debugLogger } from "../debug-logger";
 import { mistralChannels } from "../instrumentation/plugins/mistral-interceptors";
 import type {
+  MistralAudio,
+  MistralOCR,
   MistralAgents,
   MistralAgentsCompletionResponse,
   MistralAgentsCreateParams,
@@ -58,7 +60,11 @@ function isSupportedMistralClient(value: unknown): value is MistralClient {
     (value.embeddings !== undefined && hasEmbeddings(value.embeddings)) ||
     (value.fim !== undefined && hasFim(value.fim)) ||
     (value.agents !== undefined && hasAgents(value.agents)) ||
-    (value.classifiers !== undefined && hasClassifiers(value.classifiers))
+    (value.classifiers !== undefined && hasClassifiers(value.classifiers)) ||
+    hasFunction(value.ocr, "process") ||
+    (isRecord(value.audio) &&
+      (hasFunction(value.audio.transcriptions, "complete") ||
+        hasFunction(value.audio.speech, "complete")))
   );
 }
 
@@ -86,6 +92,10 @@ function mistralProxy(mistral: MistralClient): MistralClient {
   return new Proxy(mistral, {
     get(target, prop, receiver) {
       switch (prop) {
+        case "ocr":
+          return target.ocr ? ocrProxy(target.ocr) : target.ocr;
+        case "audio":
+          return target.audio ? audioProxy(target.audio) : target.audio;
         case "chat":
           return target.chat ? chatProxy(target.chat) : target.chat;
         case "fim":
@@ -349,4 +359,74 @@ function wrapAgentsStream(
       [request, options],
       {},
     );
+}
+
+function ocrProxy(ocr: MistralOCR): MistralOCR {
+  return new Proxy(ocr, {
+    get(target, prop, receiver) {
+      if (prop === "process" && typeof target.process === "function") {
+        return (...args: Parameters<MistralOCR["process"]>) =>
+          mistralChannels.ocrProcess.invoke(target.process, target, args, {});
+      }
+      return Reflect.get(target, prop, receiver);
+    },
+  });
+}
+
+function audioProxy(audio: MistralAudio): MistralAudio {
+  return new Proxy(audio, {
+    get(target, prop, receiver) {
+      if (prop === "speech" && target.speech) {
+        return new Proxy(target.speech, {
+          get(speech, method, receiver) {
+            if (
+              method === "complete" &&
+              typeof speech.complete === "function"
+            ) {
+              return (...args: Parameters<typeof speech.complete>) =>
+                mistralChannels.speechComplete.invoke(
+                  speech.complete,
+                  speech,
+                  args,
+                  {},
+                );
+            }
+            return Reflect.get(speech, method, receiver);
+          },
+        });
+      }
+      if (prop === "transcriptions" && target.transcriptions) {
+        return new Proxy(target.transcriptions, {
+          get(transcriptions, method, receiver) {
+            if (
+              method === "complete" &&
+              typeof transcriptions.complete === "function"
+            ) {
+              return (...args: Parameters<typeof transcriptions.complete>) =>
+                mistralChannels.transcriptionsComplete.invoke(
+                  transcriptions.complete,
+                  transcriptions,
+                  args,
+                  {},
+                );
+            }
+            if (
+              method === "stream" &&
+              typeof transcriptions.stream === "function"
+            ) {
+              return (...args: Parameters<typeof transcriptions.stream>) =>
+                mistralChannels.transcriptionsStream.invoke(
+                  transcriptions.stream,
+                  transcriptions,
+                  args,
+                  {},
+                );
+            }
+            return Reflect.get(transcriptions, method, receiver);
+          },
+        });
+      }
+      return Reflect.get(target, prop, receiver);
+    },
+  });
 }

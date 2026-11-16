@@ -220,10 +220,126 @@ export type MistralClassifiers = {
 };
 
 export type MistralClient = {
+  audio?: MistralAudio;
+  ocr?: MistralOCR;
   chat?: MistralChat;
   fim?: MistralFim;
   agents?: MistralAgents;
   embeddings?: MistralEmbeddings;
   classifiers?: MistralClassifiers;
   [key: string]: unknown;
+};
+
+// Narrow surfaces shared by the manual wrapper and invocation hooks.
+export type MistralTranscriptionParams = {
+  model: string;
+  file?:
+    | Blob
+    | {
+        fileName: string;
+        content: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array>;
+      };
+  fileUrl?: string | null;
+  fileId?: string | null;
+  language?: string | null;
+  temperature?: number | null;
+  diarize?: boolean;
+  contextBias?: string[];
+  timestampGranularities?: string[];
+};
+export type MistralTranscriptionResponse = {
+  model?: string;
+  text?: string;
+  language?: string | null;
+  segments?: Array<{
+    text: string;
+    start: number | null;
+    end: number | null;
+    speakerId?: string | null;
+  }>;
+  usage?: Record<string, unknown>;
+};
+export type MistralTranscriptionEvent = {
+  data: MistralTranscriptionResponse & {
+    type: string;
+    start?: number | null;
+    end?: number | null;
+    speakerId?: string | null;
+  };
+};
+export type MistralSpeechParams = {
+  model?: string | null;
+  input: string;
+  voiceId?: string | null;
+  refAudio?: string | null;
+  stream?: boolean;
+  responseFormat?: string;
+};
+export type MistralSpeechResponse = { audioData: string };
+export type MistralSpeechEvent = {
+  data: { type: string; audioData?: string; usage?: Record<string, unknown> };
+};
+export type MistralSpeechResult =
+  | MistralSpeechResponse
+  | AsyncIterable<MistralSpeechEvent>;
+export type MistralAudio = {
+  transcriptions?: {
+    complete(
+      request: MistralTranscriptionParams,
+      options?: unknown,
+    ): Promise<MistralTranscriptionResponse>;
+    stream(
+      request: MistralTranscriptionParams,
+      options?: unknown,
+    ): Promise<AsyncIterable<MistralTranscriptionEvent>>;
+  };
+  speech?: {
+    complete(
+      request: MistralSpeechParams,
+      options?: unknown,
+    ): Promise<MistralSpeechResult>;
+  };
+};
+export type MistralOCRParams = {
+  model: string | null;
+  document: {
+    type?: string;
+    documentUrl?: string;
+    documentName?: string | null;
+    imageUrl?: string;
+    fileId?: string;
+  };
+  pages?: number[] | string | null;
+  includeImageBase64?: boolean | null;
+  imageLimit?: number | null;
+  tableFormat?: string | null;
+};
+export type MistralOCRResponse = {
+  model?: string;
+  documentAnnotation?: string | null;
+  pages: Array<{
+    index: number;
+    markdown: string;
+    header?: string | null;
+    footer?: string | null;
+    dimensions?: { dpi: number; height: number; width: number } | null;
+    tables?: Array<{ id: string; content: string; format: string }>;
+    hyperlinks?: string[];
+    images: Array<{
+      id: string;
+      topLeftX?: number | null;
+      topLeftY?: number | null;
+      bottomRightX?: number | null;
+      bottomRightY?: number | null;
+      imageBase64?: string | null;
+      imageAnnotation?: string | null;
+    }>;
+  }>;
+  usageInfo?: { pagesProcessed?: number; docSizeBytes?: number | null };
+};
+export type MistralOCR = {
+  process(
+    request: MistralOCRParams,
+    options?: unknown,
+  ): Promise<MistralOCRResponse>;
 };
