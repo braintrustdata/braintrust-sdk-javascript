@@ -14,6 +14,7 @@ import { cloudflareAIChatChannels } from "./cloudflare-ai-chat-interceptors";
 import { cloudflareThinkChannels } from "./cloudflare-think-interceptors";
 import { cohereChannels } from "./cohere-interceptors";
 import { cursorSDKChannels } from "./cursor-sdk-interceptors";
+import { falChannels } from "./fal-interceptors";
 import { flueChannels } from "./flue-interceptors";
 import { genkitChannels, genkitCoreChannels } from "./genkit-interceptors";
 import { gitHubCopilotChannels } from "./github-copilot-interceptors";
@@ -63,6 +64,7 @@ describe("wrapping definitions are independent of span provenance", () => {
     ],
     [cohereChannels.chat, INSTRUMENTATION_NAMES.COHERE],
     [cursorSDKChannels.create, INSTRUMENTATION_NAMES.CURSOR_SDK],
+    [falChannels.run, INSTRUMENTATION_NAMES.FAL],
     [flueChannels.createContext, INSTRUMENTATION_NAMES.FLUE],
     [genkitChannels.generate, INSTRUMENTATION_NAMES.GENKIT],
     [genkitCoreChannels.actionSpan, INSTRUMENTATION_NAMES.GENKIT],

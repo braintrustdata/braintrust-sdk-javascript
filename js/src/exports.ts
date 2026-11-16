@@ -392,3 +392,5 @@ export type {
 } from "./instrumentation";
 
 export { wrapElevenLabs } from "./wrappers/elevenlabs";
+
+export { wrapFal } from "./wrappers/fal";

@@ -27,6 +27,7 @@ import { LangChainPlugin } from "./plugins/langchain-plugin";
 import { LangSmithPlugin } from "./plugins/langsmith-plugin";
 import { PiCodingAgentPlugin } from "./plugins/pi-coding-agent-plugin";
 import { StrandsAgentSDKPlugin } from "./plugins/strands-agent-sdk-plugin";
+import { FalPlugin } from "./plugins/fal-plugin";
 import { ElevenLabsPlugin } from "./plugins/elevenlabs-plugin";
 import { LiveKitPlugin } from "./plugins/livekit-plugin";
 import { MCPPlugin } from "./plugins/mcp-plugin";
@@ -99,6 +100,7 @@ export class BraintrustPlugin extends BasePlugin {
   private langSmithPlugin: LangSmithPlugin | null = null;
   private piCodingAgentPlugin: PiCodingAgentPlugin | null = null;
   private strandsAgentSDKPlugin: StrandsAgentSDKPlugin | null = null;
+  private falPlugin: FalPlugin | null = null;
   private elevenLabsPlugin: ElevenLabsPlugin | null = null;
   private liveKitPlugin: LiveKitPlugin | null = null;
   private voyageAIPlugin: VoyageAIPlugin | null = null;
@@ -217,6 +219,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (integrations.cohere !== false) {
       this.coherePlugin = new CoherePlugin();
       this.coherePlugin.enable();
+    }
+
+    if (integrations.fal !== false) {
+      this.falPlugin = new FalPlugin();
+      this.falPlugin.enable();
     }
 
     if (integrations.elevenlabs !== false) {
@@ -433,6 +440,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.coherePlugin) {
       this.coherePlugin.disable();
       this.coherePlugin = null;
+    }
+
+    if (this.falPlugin) {
+      this.falPlugin.disable();
+      this.falPlugin = null;
     }
 
     if (this.elevenLabsPlugin) {
