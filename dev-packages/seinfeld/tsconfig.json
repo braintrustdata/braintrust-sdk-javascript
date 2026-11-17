@@ -21,6 +21,6 @@
     "rootDir": "./",
     "types": ["node"]
   },
-  "include": ["src/**/*", "tsup.config.ts", "eslint.config.js"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "examples"]
 }

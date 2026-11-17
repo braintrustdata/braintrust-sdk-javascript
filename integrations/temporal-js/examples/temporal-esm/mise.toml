@@ -1,5 +1,5 @@
 [settings]
-experimental=true
+experimental = true
 
 [env]
 _.file = ".env"

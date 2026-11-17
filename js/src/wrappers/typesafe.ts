@@ -1,5 +1,6 @@
+import { registerInstrumentation } from "../instrumentation/registrations/typesafe";
 import { debugLogger } from "../debug-logger";
-import { typeSafeChannels } from "../instrumentation/plugins/typesafe-interceptors";
+import { typeSafeChannels } from "../instrumentation/providers/typesafe-interceptors";
 import type {
   TypeSafeClient,
   TypeSafeSystemOneRequest,
@@ -8,6 +9,7 @@ import type {
 /** Wrap a TypeSafe client so systemOne calls pass through Braintrust tracing. */
 export function wrapTypeSafe<T>(client: T): T;
 export function wrapTypeSafe(client: unknown): unknown {
+  registerInstrumentation();
   if (!isSupportedTypeSafeClient(client)) {
     debugLogger.notice.warn("Unsupported TypeSafe AI library. Not wrapping.");
     return client;

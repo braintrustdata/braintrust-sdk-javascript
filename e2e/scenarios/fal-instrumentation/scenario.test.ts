@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "vite-plus/test";
 import {
   effectiveScenarioTimeoutMs,
   prepareScenarioDir,
@@ -17,7 +17,7 @@ const scenarioDir = await prepareScenarioDir({
   scenarioDir: originalScenarioDir,
 });
 for (const variant of ["fal-v1", "fal-v1-latest"]) {
-  describe.sequential(variant, () => {
+  describe(variant, { concurrent: false }, () => {
     for (const mode of ["wrapped", "auto", "wrapped-auto"]) {
       test(
         mode,
@@ -33,7 +33,7 @@ for (const variant of ["fal-v1", "fal-v1-latest"]) {
               env: {
                 FAL_PACKAGE_NAME: variant.replace("fal-", "fal-sdk-"),
                 FAL_WRAP: mode.includes("wrapped") ? "1" : "0",
-                BRAINTRUST_CAPTURE_ATTACHMENTS: "true",
+                BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "true",
                 BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS: "false",
                 BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS: "false",
               },

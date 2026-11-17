@@ -1,4 +1,4 @@
-import type { ExpectStatic } from "vitest";
+import type { ExpectStatic } from "vite-plus/test";
 import { matchFileSnapshot } from "./file-snapshot";
 import type { CapturedLogEvent } from "./mock-braintrust-server";
 import {

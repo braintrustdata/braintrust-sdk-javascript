@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { openAIChannels } from "../../instrumentation/plugins/openai-interceptors";
+import { openAIChannels } from "../../instrumentation/providers/openai-interceptors";
 
 /**
  * Instrumentation configurations for the OpenAI SDK.

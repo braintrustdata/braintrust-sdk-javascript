@@ -1,7 +1,7 @@
 import type { Context } from "@temporalio/activity";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vite-plus/test";
 import { createBraintrustActivityInterceptor } from "./interceptors";
-import { BRAINTRUST_SPAN_HEADER, serializeHeaderValue } from "./utils";
+import { serializeTraceContext } from "./utils";
 
 const mock = vi.hoisted(() => {
   const span = { log: vi.fn(), end: vi.fn() };
@@ -34,7 +34,9 @@ describe.each([
     const interceptor = createBraintrustActivityInterceptor(context).inbound!;
     const input = {
       args: ["prompt"],
-      headers: { [BRAINTRUST_SPAN_HEADER]: serializeHeaderValue("parent") },
+      headers: serializeTraceContext({
+        traceparent: "00-11111111111111111111111111111111-2222222222222222-01",
+      }),
     };
     const output = { text: "result" };
     const next = vi.fn().mockResolvedValue(output);
@@ -43,7 +45,10 @@ describe.each([
     expect(next).toHaveBeenCalledExactlyOnceWith(input);
     expect(mock.startSpan).toHaveBeenCalledWith(
       expect.objectContaining({
-        parent: "parent",
+        parent: {
+          traceparent:
+            "00-11111111111111111111111111111111-2222222222222222-01",
+        },
         event: {
           metadata: {
             "temporal.activity_type": "generate",

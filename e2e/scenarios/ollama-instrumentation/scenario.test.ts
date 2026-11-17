@@ -1,4 +1,4 @@
-import { describe } from "vitest";
+import { describe } from "vite-plus/test";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -30,9 +30,9 @@ const ollamaScenarios = await Promise.all(
   })),
 );
 
-describe.sequential("variants", () => {
+describe("variants", { concurrent: false }, () => {
   for (const scenario of ollamaScenarios) {
-    describe.sequential(`ollama sdk ${scenario.version}`, () => {
+    describe(`ollama sdk ${scenario.version}`, { concurrent: false }, () => {
       defineOllamaInstrumentationAssertions({
         name: "wrapped instrumentation",
         runScenario: async ({ runScenarioDir }) => {

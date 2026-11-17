@@ -1,5 +1,6 @@
+import { registerInstrumentation } from "../instrumentation/registrations/cloudflareAIChat";
 import { debugLogger } from "../debug-logger";
-import { instrumentCloudflareAIChatAgent } from "../instrumentation/plugins/cloudflare-ai-chat-instrumentation";
+import { instrumentCloudflareAIChatAgent } from "../instrumentation/providers/cloudflare-ai-chat-instrumentation";
 import type {
   CloudflareAIChatAgent,
   CloudflareAIChatAgentConstructor,
@@ -16,6 +17,7 @@ const wrappedClasses = new WeakMap<object, CloudflareAIChatAgentConstructor>();
  * diagnostic-channel events as automatic instrumentation.
  */
 export function wrapCloudflareAIChat<T>(module: T): T {
+  registerInstrumentation();
   if (!module || typeof module !== "object") {
     return module;
   }

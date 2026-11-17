@@ -1,5 +1,6 @@
+import { registerInstrumentation } from "../instrumentation/registrations/mistral";
 import { debugLogger } from "../debug-logger";
-import { mistralChannels } from "../instrumentation/plugins/mistral-interceptors";
+import { mistralChannels } from "../instrumentation/providers/mistral-interceptors";
 import type {
   MistralAgents,
   MistralAgentsCompletionResponse,
@@ -28,6 +29,7 @@ import type {
  * Wrap a Mistral client (created with `new Mistral(...)`) with Braintrust tracing.
  */
 export function wrapMistral<T>(mistral: T): T {
+  registerInstrumentation();
   if (isSupportedMistralClient(mistral)) {
     return mistralProxy(mistral) as T;
   }

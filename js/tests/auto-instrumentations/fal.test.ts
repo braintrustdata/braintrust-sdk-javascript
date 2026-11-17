@@ -1,12 +1,15 @@
 import { runInThisContext } from "node:vm";
-import { beforeAll, beforeEach, afterEach, expect, it } from "vitest";
+import { beforeAll, beforeEach, afterEach, expect, it } from "vite-plus/test";
 import { InstrumentationMatcher } from "../../src/auto-instrumentations/orchestrion-js";
 import { falConfigs } from "../../src/auto-instrumentations/configs/fal";
-import { _exportsForTestingOnly, initLogger } from "../../src/logger";
+import { initLogger } from "../../src/logger/core";
+import { _exportsForTestingOnly } from "../../src/logger/testing";
+import { registerInstrumentation } from "../../src/instrumentation/registrations/fal";
 import { configureNode } from "../../src/node/config";
 import { wrapFal } from "../../src/wrappers/fal";
 
 configureNode();
+registerInstrumentation();
 let logger: ReturnType<typeof _exportsForTestingOnly.useTestBackgroundLogger>;
 beforeAll(async () => {
   await _exportsForTestingOnly.simulateLoginForTests();

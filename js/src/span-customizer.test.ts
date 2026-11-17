@@ -6,26 +6,26 @@ import {
   expectTypeOf,
   test,
   vi,
-} from "vitest";
+} from "vite-plus/test";
+import { _exportsForTestingOnly } from "./logger/testing";
 import {
-  _exportsForTestingOnly,
   _internalGetGlobalState,
   Attachment,
   BraintrustState,
-  Dataset,
   initLogger,
   SpanImpl,
   updateSpan,
   type TestBackgroundLogger,
-} from "./logger";
-import { configureInstrumentation, registry } from "./instrumentation/registry";
+} from "./logger/core";
+import { Dataset } from "./logger/datasets";
+import { setSpanCustomizers } from "./span-customizer";
 import { configureNode } from "./node/config";
 import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
 } from "./span-origin";
 import vm from "node:vm";
-import type { SpanCustomizer, SpanExportData } from "./exports";
+import type { SpanCustomizer, SpanExportData } from "./instrumentation";
 import {
   customizeSpanExport,
   mergeCustomizedSpanRecords,
@@ -49,13 +49,12 @@ describe("onSpanExport", () => {
 
   beforeEach(async () => {
     vi.stubEnv("BRAINTRUST_DEBUG_LOG_LEVEL", "error");
-    registry.disable();
     await _exportsForTestingOnly.simulateLoginForTests();
     memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();
   });
 
   afterEach(() => {
-    configureInstrumentation({ spanCustomizers: [] });
+    setSpanCustomizers([]);
     _exportsForTestingOnly.clearTestBackgroundLogger();
     resetSpanCustomizerFailureLoggingForTests();
     vi.unstubAllEnvs();
@@ -76,16 +75,14 @@ describe("onSpanExport", () => {
   }
 
   test("adds a field to outgoing span records", async () => {
-    configureInstrumentation({
-      spanCustomizers: [
-        {
-          onSpanExport(data) {
-            data.custom_field = "added";
-            return data;
-          },
+    setSpanCustomizers([
+      {
+        onSpanExport(data) {
+          data.custom_field = "added";
+          return data;
         },
-      ],
-    });
+      },
+    ]);
 
     const span = startInstrumentedSpan();
     span.log({ output: "result" });
@@ -103,16 +100,14 @@ describe("onSpanExport", () => {
   });
 
   test("alters an existing field in outgoing span records", async () => {
-    configureInstrumentation({
-      spanCustomizers: [
-        {
-          onSpanExport(data) {
-            if ("output" in data) data.output = "[redacted]";
-            return data;
-          },
+    setSpanCustomizers([
+      {
+        onSpanExport(data) {
+          if ("output" in data) data.output = "[redacted]";
+          return data;
         },
-      ],
-    });
+      },
+    ]);
 
     const span = startInstrumentedSpan();
     span.log({ output: "sensitive response" });
@@ -124,16 +119,14 @@ describe("onSpanExport", () => {
   });
 
   test("deletes a field from outgoing span records", async () => {
-    configureInstrumentation({
-      spanCustomizers: [
-        {
-          onSpanExport(data) {
-            delete data.error;
-            return data;
-          },
+    setSpanCustomizers([
+      {
+        onSpanExport(data) {
+          delete data.error;
+          return data;
         },
-      ],
-    });
+      },
+    ]);
 
     const span = startInstrumentedSpan();
     span.log({ error: "sensitive error", output: "safe response" });
@@ -147,23 +140,21 @@ describe("onSpanExport", () => {
   });
 
   test("passes replacement records through later customizers", async () => {
-    configureInstrumentation({
-      spanCustomizers: [
-        {
-          onSpanExport(data) {
-            return "output" in data ? { ...data, output: "replacement" } : data;
-          },
+    setSpanCustomizers([
+      {
+        onSpanExport(data) {
+          return "output" in data ? { ...data, output: "replacement" } : data;
         },
-        {
-          onSpanExport(data) {
-            if (typeof data.output === "string") {
-              data.output = data.output.toUpperCase();
-            }
-            return data;
-          },
+      },
+      {
+        onSpanExport(data) {
+          if (typeof data.output === "string") {
+            data.output = data.output.toUpperCase();
+          }
+          return data;
         },
-      ],
-    });
+      },
+    ]);
 
     const span = startInstrumentedSpan();
     span.log({ output: "original" });
@@ -179,17 +170,15 @@ describe("onSpanExport", () => {
   });
 
   test("customizes manual roots and children as well as instrumented spans", async () => {
-    configureInstrumentation({
-      spanCustomizers: [
-        {
-          onSpanExport(data) {
-            data.tags = ["customized"];
-            if ("output" in data) data.output = "[redacted]";
-            return data;
-          },
+    setSpanCustomizers([
+      {
+        onSpanExport(data) {
+          data.tags = ["customized"];
+          if ("output" in data) data.output = "[redacted]";
+          return data;
         },
-      ],
-    });
+      },
+    ]);
 
     const root = initLogger({
       projectName: "customizer-project",
@@ -247,7 +236,7 @@ describe("onSpanExport", () => {
       data.tags = ["customized"];
       return data;
     });
-    configureInstrumentation({ spanCustomizers: [{ onSpanExport }] });
+    setSpanCustomizers([{ onSpanExport }]);
     const logger = initLogger({
       projectName: "customizer-project",
       projectId: "customizer-project",
@@ -296,7 +285,6 @@ describe("onSpanExport", () => {
         },
       })),
       undefined,
-      false,
     );
     const datasetId = dataset.insert({
       input: "dataset input",
@@ -390,7 +378,7 @@ describe("onSpanExport", () => {
           _is_merge: false,
         };
       });
-      configureInstrumentation({ spanCustomizers: [{ onSpanExport }] });
+      setSpanCustomizers([{ onSpanExport }]);
       const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
       update({ output: "sensitive", metadata: { secret: "sensitive" } });
 
@@ -492,18 +480,16 @@ describe("onSpanExport", () => {
     async (_name, invalidResult) => {
       const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
       const laterHook = vi.fn((data: SpanExportData) => data);
-      configureInstrumentation({
-        spanCustomizers: [
-          {
-            // @ts-expect-error Exercise invalid callback results from JavaScript.
-            onSpanExport(data) {
-              if (data.output === "private") return invalidResult();
-              return data;
-            },
+      setSpanCustomizers([
+        {
+          // @ts-expect-error Exercise invalid callback results from JavaScript.
+          onSpanExport(data) {
+            if (data.output === "private") return invalidResult();
+            return data;
           },
-          { onSpanExport: laterHook },
-        ],
-      });
+        },
+        { onSpanExport: laterHook },
+      ]);
       const span = startInstrumentedSpan();
       span.log({ output: "private" });
       const manual = span.startSpan({ name: "manual" });
@@ -625,36 +611,33 @@ describe("onSpanExport", () => {
   );
 
   test("restores mutable protocol fields between successful callbacks", () => {
-    configureInstrumentation({
-      spanCustomizers: [
-        {
-          onSpanExport(data) {
-            if (Array.isArray(data.span_parents))
-              data.span_parents.push("wrong");
-            if (Array.isArray(data._merge_paths))
-              data._merge_paths[0].push("wrong");
-            delete data.id;
-            delete data.project_id;
-            data._is_merge = false;
-            data.dataset_id = "wrong";
-            data._object_delete = true;
-            return data;
-          },
+    setSpanCustomizers([
+      {
+        onSpanExport(data) {
+          if (Array.isArray(data.span_parents)) data.span_parents.push("wrong");
+          if (Array.isArray(data._merge_paths))
+            data._merge_paths[0].push("wrong");
+          delete data.id;
+          delete data.project_id;
+          data._is_merge = false;
+          data.dataset_id = "wrong";
+          data._object_delete = true;
+          return data;
         },
-        {
-          onSpanExport(data) {
-            // These fields feed the next callback, not just the final exporter.
-            data.output = {
-              id: data.id,
-              parents: data.span_parents,
-              paths: data._merge_paths,
-              merge: data._is_merge,
-            };
-            return Object.freeze(data);
-          },
+      },
+      {
+        onSpanExport(data) {
+          // These fields feed the next callback, not just the final exporter.
+          data.output = {
+            id: data.id,
+            parents: data.span_parents,
+            paths: data._merge_paths,
+            merge: data._is_merge,
+          };
+          return Object.freeze(data);
         },
-      ],
-    });
+      },
+    ]);
     const result = customizeSpanExport({
       id: "original",
       span_id: "span",
@@ -689,9 +672,7 @@ describe("onSpanExport", () => {
       throw new Error("private failure");
     });
     const laterHook = vi.fn((data: SpanExportData) => data);
-    configureInstrumentation({
-      spanCustomizers: [{ onSpanExport }, { onSpanExport: laterHook }],
-    });
+    setSpanCustomizers([{ onSpanExport }, { onSpanExport: laterHook }]);
     const enqueue = vi.spyOn(memoryLogger, "log");
     const span = startInstrumentedSpan();
     const records = enqueue.mock.calls.flatMap(([items]) => items);
@@ -765,22 +746,20 @@ describe("onSpanExport", () => {
       contentType: "text/plain",
     });
     const seenAttachments: unknown[] = [];
-    configureInstrumentation({
-      spanCustomizers: [
-        {
-          onSpanExport(data) {
-            const metadata = data.metadata as Record<string, unknown>;
-            const input = data.input as unknown[];
-            if (!metadata || !input) return data;
-            seenAttachments.push(input[1]);
-            delete metadata.secret;
-            input.push("injected");
-            if (metadata.fail) throw new Error("fail after mutation");
-            return data;
-          },
+    setSpanCustomizers([
+      {
+        onSpanExport(data) {
+          const metadata = data.metadata as Record<string, unknown>;
+          const input = data.input as unknown[];
+          if (!metadata || !input) return data;
+          seenAttachments.push(input[1]);
+          delete metadata.secret;
+          input.push("injected");
+          if (metadata.fail) throw new Error("fail after mutation");
+          return data;
         },
-      ],
-    });
+      },
+    ]);
     const experiment = _exportsForTestingOnly.initTestExperiment(
       "customizer-experiment",
       "customizer-project",
@@ -837,15 +816,13 @@ describe("onSpanExport", () => {
   test("logs the failure once logging is enabled after a silenced failure", () => {
     const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
     const state = _internalGetGlobalState();
-    configureInstrumentation({
-      spanCustomizers: [
-        {
-          onSpanExport(): SpanExportData {
-            throw new Error("private exception detail");
-          },
+    setSpanCustomizers([
+      {
+        onSpanExport(): SpanExportData {
+          throw new Error("private exception detail");
         },
-      ],
-    });
+      },
+    ]);
 
     state.setDebugLogLevel(false);
     customizeSpanExport({ id: "silenced" });
@@ -873,7 +850,7 @@ describe("onSpanExport", () => {
       },
     ];
     for (let i = 0; i < 3; i++) {
-      configureInstrumentation({ spanCustomizers: customizers });
+      setSpanCustomizers(customizers);
       expect(customizeSpanExport({ id: "row", output: "private" })).toEqual({
         id: "row",
         context: { customizer_error: true },
@@ -904,7 +881,7 @@ describe("onSpanExport", () => {
       const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
       const onSpanExport = vi.fn((data: SpanExportData) => data);
       if (withCustomizers) {
-        configureInstrumentation({ spanCustomizers: [{ onSpanExport }] });
+        setSpanCustomizers([{ onSpanExport }]);
       }
       const span = new SpanImpl({
         state: _internalGetGlobalState(),
@@ -951,26 +928,22 @@ describe("onSpanExport", () => {
       return Object.freeze(payload);
     });
     let hookCalls = 0;
-    configureInstrumentation({
-      spanCustomizers: [
-        {
-          // @ts-expect-error Async customizers are unsupported, but must be contained.
-          onSpanExport(data) {
-            hookCalls++;
-            if (data.output === "private") {
-              delete data.id;
-              data.metrics = { start: 999, end: 999, tokens: 999 };
-              data.context = { secret: "private mutated context" };
-              return Promise.reject(
-                new Error("private async exception detail"),
-              );
-            }
-            return data;
-          },
+    setSpanCustomizers([
+      {
+        // @ts-expect-error Async customizers are unsupported, but must be contained.
+        onSpanExport(data) {
+          hookCalls++;
+          if (data.output === "private") {
+            delete data.id;
+            data.metrics = { start: 999, end: 999, tokens: 999 };
+            data.context = { secret: "private mutated context" };
+            return Promise.reject(new Error("private async exception detail"));
+          }
+          return data;
         },
-        { onSpanExport: laterHook },
-      ],
-    });
+      },
+      { onSpanExport: laterHook },
+    ]);
 
     // Keep both spans in the same flush chunk, rather than auto-flushing the
     // manual span's initial row before the instrumented child is created.
@@ -986,7 +959,6 @@ describe("onSpanExport", () => {
       appUrl: "https://customizer.test",
       apiKey: "test-key",
       orgName: "test-org",
-      asyncFlush: false,
       fetch: async (url, options) => {
         const pathname = new URL(String(url)).pathname;
         if (pathname === "/api/apikey/login") {
@@ -1141,19 +1113,22 @@ describe("onSpanExport", () => {
     expect(groups[1][0]).toBe(a2);
   });
 
-  function initHttpLogger(onLogs: (rows: SpanExportData[]) => Response) {
+  function initHttpLogger(
+    onLogs: (rows: SpanExportData[]) => Response,
+    autoCaptureAttachments?: boolean,
+  ) {
     // Keep all records in one flush chunk.
     vi.stubEnv("BRAINTRUST_SYNC_FLUSH", "1");
     vi.stubEnv("BRAINTRUST_NUM_RETRIES", "0");
     const state = new BraintrustState({ noExitFlush: true });
     const logger = initLogger({
       state,
+      autoCaptureAttachments,
       projectName: "customizer-project",
       projectId: "customizer-project",
       appUrl: "https://customizer.test",
       apiKey: "test-key",
       orgName: "test-org",
-      asyncFlush: false,
       fetch: async (url, options) => {
         const pathname = new URL(String(url)).pathname;
         if (pathname === "/api/apikey/login") {
@@ -1180,16 +1155,14 @@ describe("onSpanExport", () => {
   test("stops sending later ordered groups after a group fails", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     vi.spyOn(console, "warn").mockImplementation(() => {});
-    configureInstrumentation({
-      spanCustomizers: [
-        {
-          onSpanExport(data) {
-            if (data.output === "private") throw new Error("private failure");
-            return data;
-          },
+    setSpanCustomizers([
+      {
+        onSpanExport(data) {
+          if (data.output === "private") throw new Error("private failure");
+          return data;
         },
-      ],
-    });
+      },
+    ]);
     const requests: SpanExportData[][] = [];
     const { logger } = initHttpLogger((rows) => {
       requests.push(rows);
@@ -1212,7 +1185,7 @@ describe("onSpanExport", () => {
   });
 
   test("decision customizer removal uploads only surviving media", async () => {
-    vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", "true");
+    vi.stubEnv("BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS", "true");
     const upload = vi
       .spyOn(Attachment.prototype, "upload")
       .mockResolvedValue({ upload_status: "done" });
@@ -1221,23 +1194,21 @@ describe("onSpanExport", () => {
       rows.push(...batch);
       return Response.json({});
     });
-    configureInstrumentation({
-      spanCustomizers: [
-        {
-          onSpanExport(data) {
-            if (
-              data.input &&
-              typeof data.input === "object" &&
-              "state" in data.input &&
-              Array.isArray(data.input.state)
-            ) {
-              data.input.state.splice(0, 1);
-            }
-            return data;
-          },
+    setSpanCustomizers([
+      {
+        onSpanExport(data) {
+          if (
+            data.input &&
+            typeof data.input === "object" &&
+            "state" in data.input &&
+            Array.isArray(data.input.state)
+          ) {
+            data.input.state.splice(0, 1);
+          }
+          return data;
         },
-      ],
-    });
+      },
+    ]);
     const input = {
       state: [
         {
@@ -1284,7 +1255,7 @@ describe("onSpanExport", () => {
     test.each(["customizer", "masking", "upload failure"])(
       `${type} media survives export with %s and never uploads redacted media`,
       async (mode) => {
-        vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", "true");
+        vi.stubEnv("BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS", "true");
         const media =
           "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKElEQVR4nO3NsQ0AAAzCMP5/un0CNkuZ41wybXsHAAAAAAAAAAAAxR4yw/wuPL6QkAAAAABJRU5ErkJggg==";
         const upload = vi
@@ -1298,16 +1269,14 @@ describe("onSpanExport", () => {
         const redact = (value: unknown) =>
           JSON.parse(JSON.stringify(value).replaceAll(media, "[redacted]"));
         if (mode === "customizer") {
-          configureInstrumentation({
-            spanCustomizers: [
-              {
-                onSpanExport(data) {
-                  if (data.input) data.input = redact(data.input);
-                  return data;
-                },
+          setSpanCustomizers([
+            {
+              onSpanExport(data) {
+                if (data.input) data.input = redact(data.input);
+                return data;
               },
-            ],
-          });
+            },
+          ]);
         } else if (mode === "masking") {
           state.setMaskingFunction(redact);
         }
@@ -1382,19 +1351,17 @@ describe("onSpanExport", () => {
             };
           }),
         );
-      configureInstrumentation({
-        spanCustomizers: [
-          {
-            onSpanExport(data) {
-              if (data.input) {
-                const value = data.input as typeof input;
-                value.state[0].content[1].image_url = "[redacted]";
-              }
-              return data;
-            },
+      setSpanCustomizers([
+        {
+          onSpanExport(data) {
+            if (data.input) {
+              const value = data.input as typeof input;
+              value.state[0].content[1].image_url = "[redacted]";
+            }
+            return data;
           },
-        ],
-      });
+        },
+      ]);
       const rows: SpanExportData[] = [];
       const { logger } = initHttpLogger((batch) => {
         rows.push(...batch);
@@ -1465,6 +1432,48 @@ describe("onSpanExport", () => {
     },
   );
 
+  test.each([true, false])(
+    "keeps scoped typed attachment capture=%s through background export and masking",
+    async (capture) => {
+      vi.stubEnv("BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS", String(!capture));
+      const upload = vi
+        .spyOn(Attachment.prototype, "upload")
+        .mockResolvedValue({ upload_status: "done" });
+      setSpanCustomizers([{ onSpanExport: (data) => ({ ...data }) }]);
+      const rows: SpanExportData[] = [];
+      const { state, logger } = initHttpLogger((batch) => {
+        rows.push(...batch);
+        return Response.json({});
+      }, capture);
+      state.setMaskingFunction((value) => structuredClone(value));
+      const input = {
+        state: [{ type: "file", data: "data:text/plain;base64,aGVsbG8=" }],
+        questions: [{ id: "visible", type: "boolean" }],
+      };
+      const span = logger.startSpan({ name: "typed.call" });
+      span.log({ input });
+      span.end();
+      await logger.flush();
+      const exported = rows.find((row) => row.id === span.id)!;
+      if (capture) {
+        expect(exported.input).toMatchObject({
+          state: [
+            {
+              data: {
+                type: "braintrust_attachment",
+                content_type: "text/plain",
+              },
+            },
+          ],
+        });
+        expect(upload).toHaveBeenCalledOnce();
+      } else {
+        expect(exported.input).toEqual(input);
+        expect(upload).not.toHaveBeenCalled();
+      }
+    },
+  );
+
   test("does not upload attachments whose references were masked away", async () => {
     const masked = new Attachment({
       data: new ArrayBuffer(1),
@@ -1510,12 +1519,10 @@ describe("OpenTelemetry compat mode", () => {
     onSpanExport: (data: SpanExportData) => ({ ...data, output: "redacted" }),
   };
 
-  beforeEach(() => registry.disable());
-
   afterEach(() => {
     globalThis.BRAINTRUST_CONTEXT_MANAGER = undefined;
     vi.unstubAllEnvs();
-    configureInstrumentation({ spanCustomizers: [] });
+    setSpanCustomizers([]);
     vi.restoreAllMocks();
   });
 
@@ -1530,23 +1537,21 @@ describe("OpenTelemetry compat mode", () => {
   ])("registers and clears customizers under %s", (_name, enableCompat) => {
     const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
     enableCompat();
-    configureInstrumentation({ spanCustomizers: [customizer] });
+    setSpanCustomizers([customizer]);
     expect(customizeSpanExport({ id: "row", output: "private" })).toEqual({
       id: "row",
       output: "redacted",
     });
-    configureInstrumentation({
-      spanCustomizers: [
-        { onSpanExport: (data) => ({ ...data, output: "replacement" }) },
-      ],
-    });
+    setSpanCustomizers([
+      { onSpanExport: (data) => ({ ...data, output: "replacement" }) },
+    ]);
     expect(customizeSpanExport({ output: "private" })).toEqual({
       output: "replacement",
     });
-    configureInstrumentation({ spanCustomizers: [] });
+    setSpanCustomizers([]);
     const record = { output: "original" };
     expect(customizeSpanExport(record)).toBe(record);
-    configureInstrumentation({ spanCustomizers: undefined });
+    setSpanCustomizers(undefined);
     expect(errorLog).not.toHaveBeenCalled();
   });
 });

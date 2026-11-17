@@ -16,7 +16,13 @@ async function runJest() {
   await new Promise((resolve, reject) => {
     const child = spawn(
       process.execPath,
-      [jestCliPath, "--config", "jest.config.cjs", "--runInBand"],
+      [
+        "--experimental-vm-modules",
+        jestCliPath,
+        "--config",
+        "jest.config.cjs",
+        "--runInBand",
+      ],
       {
         cwd: scenarioDir,
         env: process.env,

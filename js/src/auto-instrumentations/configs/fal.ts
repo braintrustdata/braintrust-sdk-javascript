@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { falChannels } from "../../instrumentation/plugins/fal-interceptors";
+import { falChannels } from "../../instrumentation/providers/fal-interceptors";
 
 export const falConfigs: InstrumentationConfig[] = [
   {

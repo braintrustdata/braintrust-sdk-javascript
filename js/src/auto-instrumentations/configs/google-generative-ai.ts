@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { googleGenerativeAIChannels } from "../../instrumentation/plugins/google-generative-ai-interceptors";
+import { googleGenerativeAIChannels } from "../../instrumentation/providers/google-generative-ai-interceptors";
 
 export const googleGenerativeAIConfigs: InstrumentationConfig[] = [
   "dist/index.js",

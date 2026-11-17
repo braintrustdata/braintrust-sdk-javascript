@@ -1,0 +1,11 @@
+{
+  "name": "@braintrust/e2e-otel-v1-latest",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@opentelemetry/api": "1.9.0",
+    "@opentelemetry/sdk-trace-base": "1.30.1",
+    "@opentelemetry/context-async-hooks": "1.30.1",
+    "@opentelemetry/exporter-trace-otlp-http": "0.57.2"
+  }
+}

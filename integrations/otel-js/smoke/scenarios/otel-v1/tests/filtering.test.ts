@@ -1,14 +1,19 @@
+import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
+import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { setTimeout as delay } from "node:timers/promises";
 import { trace } from "@opentelemetry/api";
 import { NodeSDK } from "@opentelemetry/sdk-node";
-import type { SpanProcessor } from "@opentelemetry/sdk-trace-base";
-import { BraintrustSpanProcessor } from "@braintrust/otel";
+import {
+  BraintrustSpanProcessor,
+  BraintrustExporter,
+  braintrustOtlpConfig,
+} from "@braintrust/otel";
 import { setupMockOtlpCollector } from "../src/test-helpers.js";
 import {
   displayTestResults,
   hasFailures,
   type TestResult,
-} from "../../../../../../js/smoke/shared/dist/index.mjs";
+} from "../../../../../../js/smoke/shared/dist/index.js";
 
 type OtelPayload = {
   resourceSpans?: Array<{
@@ -39,9 +44,18 @@ async function main() {
     const sdk = new NodeSDK({
       serviceName: "filtering-test",
       spanProcessor: new BraintrustSpanProcessor({
-        apiKey: "smoke-test-api-key",
+        processor: new BatchSpanProcessor(
+          new BraintrustExporter({
+            exporter: new OTLPTraceExporter(
+              braintrustOtlpConfig({
+                apiKey: "smoke-test-api-key",
+                parent: "project_name:smoke-test",
+              }),
+            ),
+          }),
+        ),
         filterAISpans: true,
-      }) as unknown as SpanProcessor,
+      }),
     });
 
     await sdk.start();

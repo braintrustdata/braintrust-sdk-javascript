@@ -7,10 +7,11 @@ import {
   expect,
   test,
   vi,
-} from "vitest";
+} from "vite-plus/test";
 import OpenAI from "openai";
 import { configureNode } from "../src/node/config";
-import { _exportsForTestingOnly, Attachment, initLogger } from "../src/logger";
+import { _exportsForTestingOnly } from "../src/logger/testing";
+import { Attachment, initLogger } from "../src/logger/core";
 import { wrapClaudeAgentSDK } from "../src/wrappers/claude-agent-sdk/claude-agent-sdk";
 import { wrapGoogleGenAI } from "../src/wrappers/google-genai";
 import { wrapOpenAI } from "../src/wrappers/oai";
@@ -74,10 +75,10 @@ describe("provider wrapper", () => {
     _exportsForTestingOnly.clearTestBackgroundLogger();
   });
 
-  test("OpenAI responses image outputs are converted to attachments when enabled", async () => {
+  test("OpenAI responses image outputs are converted to attachments", async () => {
     const originalAutoCaptureAttachments =
-      process.env.BRAINTRUST_CAPTURE_ATTACHMENTS;
-    process.env.BRAINTRUST_CAPTURE_ATTACHMENTS = "true";
+      process.env.BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS;
+    process.env.BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS = "true";
     expect(await backgroundLogger.drain()).toHaveLength(0);
 
     const rawClient = new OpenAI({ apiKey: "sk-test" });
@@ -122,9 +123,9 @@ describe("provider wrapper", () => {
     } finally {
       client.responses.create = originalCreate;
       if (originalAutoCaptureAttachments === undefined) {
-        delete process.env.BRAINTRUST_CAPTURE_ATTACHMENTS;
+        delete process.env.BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS;
       } else {
-        process.env.BRAINTRUST_CAPTURE_ATTACHMENTS =
+        process.env.BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS =
           originalAutoCaptureAttachments;
       }
     }
@@ -132,8 +133,8 @@ describe("provider wrapper", () => {
 
   test("OpenAI responses image data is omitted by default", async () => {
     const originalAutoCaptureAttachments =
-      process.env.BRAINTRUST_CAPTURE_ATTACHMENTS;
-    delete process.env.BRAINTRUST_CAPTURE_ATTACHMENTS;
+      process.env.BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS;
+    delete process.env.BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS;
     const rawClient = new OpenAI({ apiKey: "sk-test" });
     const client = wrapOpenAI(rawClient);
     const mockData = {
@@ -157,13 +158,15 @@ describe("provider wrapper", () => {
       ).toEqual(mockData);
       const spans = await backgroundLogger.drain();
       expect(spans).toHaveLength(1);
-      expect(spans[0].output[0].result).toBe("<omitted>");
+      expect(spans[0].output).toEqual([
+        { type: "image_generation_call", output_format: "png" },
+      ]);
     } finally {
       client.responses.create = originalCreate;
       if (originalAutoCaptureAttachments === undefined) {
-        delete process.env.BRAINTRUST_CAPTURE_ATTACHMENTS;
+        delete process.env.BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS;
       } else {
-        process.env.BRAINTRUST_CAPTURE_ATTACHMENTS =
+        process.env.BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS =
           originalAutoCaptureAttachments;
       }
     }

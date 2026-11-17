@@ -1,6 +1,6 @@
-import { expect, test, vi } from "vitest";
+import { expect, test, vi } from "vite-plus/test";
 import { wrapLiveKit } from "./livekit";
-import { livekitChannels } from "../instrumentation/plugins/livekit-interceptors";
+import { livekitChannels } from "../instrumentation/providers/livekit-interceptors";
 
 test("wraps ESM namespaces and preserves return identity when wrapped twice", () => {
   const result = Promise.resolve();

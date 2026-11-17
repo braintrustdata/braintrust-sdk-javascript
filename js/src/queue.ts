@@ -24,7 +24,7 @@ export class Queue<T> {
    * Set queue size limit enforcement. When enabled, the queue will drop new items
    * when it reaches maxSize. When disabled (default), the queue can grow unlimited.
    */
-  enforceQueueSizeLimit(enforce: boolean) {
+  enforceQueueSizeLimit(enforce: boolean): void {
     this.enforceSizeLimit = enforce;
   }
 

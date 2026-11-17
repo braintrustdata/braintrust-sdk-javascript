@@ -1,6 +1,7 @@
+import { registerInstrumentation } from "../instrumentation/registrations/fal";
 import { isObject } from "../../util";
 import { debugLogger } from "../debug-logger";
-import { falChannels } from "../instrumentation/plugins/fal-interceptors";
+import { falChannels } from "../instrumentation/providers/fal-interceptors";
 import type { FalArgs, FalClient } from "../vendor-sdk-types/fal";
 
 const clients = new WeakMap<object, object>();
@@ -9,6 +10,7 @@ const clients = new WeakMap<object, object>();
  * subscribe, queue lifecycle, storage, and realtime APIs are not instrumented.
  */
 export function wrapFal<T>(client: T): T {
+  registerInstrumentation();
   if (
     !isObject(client) ||
     typeof client.run !== "function" ||

@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { fastMCPChannels } from "../../instrumentation/plugins/fastmcp-interceptors";
+import { fastMCPChannels } from "../../instrumentation/providers/fastmcp-interceptors";
 
 export const fastMCPConfigs: InstrumentationConfig[] = [
   // FastMCP publishes its session class in content-hashed ESM/CJS chunks.
