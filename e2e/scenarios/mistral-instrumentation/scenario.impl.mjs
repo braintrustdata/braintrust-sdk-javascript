@@ -1,3 +1,5 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { wrapMistral } from "braintrust";
 import {
   collectAsync,
@@ -376,12 +378,83 @@ async function runMistralInstrumentationScenario(
     serverURL: process.env.MISTRAL_BASE_URL || process.env.MISTRAL_API_URL,
   });
   const client = decorateClient ? decorateClient(baseClient) : baseClient;
+  // Keep the legacy 1.3.4 chat pin while exercising media on its first tested v1 release.
+  const mediaBaseClient = baseClient.audio?.transcriptions
+    ? baseClient
+    : new (await import("mistral-sdk-v1-media")).Mistral({
+        apiKey: process.env.MISTRAL_API_KEY,
+        serverURL: process.env.MISTRAL_BASE_URL || process.env.MISTRAL_API_URL,
+      });
+  const mediaClient = decorateClient
+    ? decorateClient(mediaBaseClient)
+    : mediaBaseClient;
+  const audio = await readFile(new URL("./test-audio.wav", import.meta.url));
+  const document = await readFile(
+    new URL("./test-document.pdf", import.meta.url),
+  );
   const classifyModel = nonEmptyString(process.env.MISTRAL_CLASSIFIER_MODEL);
   const { agentId, cleanup } = await resolveAgentRuntime(baseClient);
 
   try {
     await runTracedScenario({
       callback: async () => {
+        await runOperation("ocr", "ocr", async () => {
+          const result = await mediaClient.ocr.process({
+            model: "mistral-ocr-latest",
+            document: {
+              type: "document_url",
+              documentUrl: `data:application/pdf;base64,${document.toString("base64")}`,
+            },
+            includeImageBase64: true,
+          });
+          assert.ok(result.pages[0].markdown.length);
+        });
+        const params = {
+          model: "voxtral-mini-latest",
+          file: { fileName: "test-audio.wav", content: audio },
+          language: "en",
+        };
+        await runOperation("transcription", "transcription", async () => {
+          const result =
+            await mediaClient.audio.transcriptions.complete(params);
+          assert.equal(typeof result.text, "string");
+        });
+        await runOperation(
+          "transcription-stream",
+          "transcription-stream",
+          async () => {
+            const stream =
+              await mediaClient.audio.transcriptions.stream(params);
+            let done = false;
+            for await (const event of stream)
+              if (event.data.type === "transcription.done") done = true;
+            assert.ok(done);
+          },
+        );
+        if (mediaClient.audio.speech) {
+          const speech = {
+            model: "voxtral-mini-tts-2603",
+            input: "Hello from Braintrust.",
+            voiceId: "c69964a6-ab8b-4f8a-9465-ec0925096ec8",
+            responseFormat: "mp3",
+          };
+          await runOperation("speech", "speech", async () => {
+            const result = await mediaClient.audio.speech.complete(speech);
+            assert.ok(result.audioData.length);
+          });
+          await runOperation("speech-stream", "speech-stream", async () => {
+            const stream = await mediaClient.audio.speech.complete({
+              ...speech,
+              stream: true,
+            });
+            let bytes = 0;
+            for await (const event of stream)
+              if (event.data.type === "speech.audio.delta")
+                bytes += event.data.audioData.length;
+            assert.ok(bytes);
+          });
+        }
+
         await runOperation(
           "mistral-chat-complete-operation",
           "chat-complete",

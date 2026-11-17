@@ -209,19 +209,19 @@ span_tree:
 │   │       ]
 │   │       output: [
 │   │         {
-│   │           "finish_reason": "length",
+│   │           "finish_reason": "stop",
 │   │           "index": 0,
 │   │           "logprobs": null,
 │   │           "message": {
 │   │             "annotations": [],
-│   │             "content": "I can't access the content of the document to summarize it. If you can provide text or details from it, I'd be",
+│   │             "content": "Honeybees are essential for pollinating flowers and aiding fruit production.",
 │   │             "refusal": null,
 │   │             "role": "assistant"
 │   │           }
 │   │         }
 │   │       ]
 │   │       metadata: {
-│   │         "max_tokens": 24,
+│   │         "max_tokens": 64,
 │   │         "model": "gpt-4o-mini-2024-07-18",
 │   │         "provider": "openai",
 │   │         "served_service_tier": "default",
@@ -232,12 +232,12 @@ span_tree:
 │   │         "completion_audio_tokens": 0,
 │   │         "completion_reasoning_tokens": 0,
 │   │         "completion_rejected_prediction_tokens": 0,
-│   │         "completion_tokens": 24,
+│   │         "completion_tokens": 14,
 │   │         "prompt_audio_tokens": 0,
 │   │         "prompt_cached_tokens": 0,
-│   │         "prompt_tokens": 236,
+│   │         "prompt_tokens": 245,
 │   │         "time_to_first_token": 0,
-│   │         "tokens": 260
+│   │         "tokens": 259
 │   │       }
 │   ├── openai-chat-tool-operation
 │   │   metadata: {

@@ -630,7 +630,7 @@ function injectTracingHooks(
     invocation,
   ) => {
     try {
-      await existingHooks.onSessionEnd?.(input, invocation);
+      return await existingHooks.onSessionEnd?.(input, invocation);
     } finally {
       handleSessionEnd(state, input.reason, input.error);
       state.unsubscribeEvents?.();

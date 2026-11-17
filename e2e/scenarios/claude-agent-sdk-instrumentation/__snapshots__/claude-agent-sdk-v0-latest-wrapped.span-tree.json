@@ -873,22 +873,6 @@
                   }
                 },
                 {
-                  "name": "Agent: Display a greeting message",
-                  "type": "task",
-                  "children": [],
-                  "output": {
-                    "summary": "Display a greeting message"
-                  },
-                  "metadata": {
-                    "claude_agent_sdk.description": "Display a greeting message",
-                    "claude_agent_sdk.summary": "Display a greeting message",
-                    "claude_agent_sdk.task_id": "<claude_agent_sdk.task_id:1>",
-                    "claude_agent_sdk.task_status": "completed",
-                    "claude_agent_sdk.task_type": "local_bash",
-                    "claude_agent_sdk.tool_use_id": "toolu_01WBnqyHoLV4Ccn5ovLGEYq8"
-                  }
-                },
-                {
                   "name": "anthropic.messages.create",
                   "type": "llm",
                   "children": [],
