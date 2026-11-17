@@ -312,7 +312,10 @@ jobs:
             exit 0
           fi
 
-          git push origin "${to_push[@]}"
+          # Repository rules limit each push to five branches or tags.
+          for ref in "${to_push[@]}"; do
+            git push origin "$ref"
+          done
       - name: Create GitHub Releases
         if: ${{ !inputs.prerelease }}
         uses: braintrustdata/sdk-actions/actions/release/create-package-github-releases@337c5475631d724441403f5a4d8ad0b32ce12e29
