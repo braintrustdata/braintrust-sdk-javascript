@@ -1,3 +1,4 @@
+import { resetInstrumentationForTest } from "../instrumentation/test-utils/reset";
 import {
   afterEach,
   beforeAll,
@@ -6,9 +7,10 @@ import {
   expect,
   it,
   vi,
-} from "vitest";
+} from "vite-plus/test";
 import { debugLogger } from "../debug-logger";
-import { _exportsForTestingOnly, initLogger, traced } from "../logger";
+import { _exportsForTestingOnly } from "../logger/testing";
+import { initLogger, traced } from "../logger/core";
 import { configureNode } from "../node/config";
 import { registry } from "../instrumentation/registry";
 import type {
@@ -63,9 +65,8 @@ describe("FastMCP wrapper", () => {
     await _exportsForTestingOnly.simulateLoginForTests();
   });
   beforeEach(() => {
-    registry.disable();
+    resetInstrumentationForTest();
     registry.configure({ integrations: { mcp: false, fastmcp: true } });
-    registry.enable();
     backgroundLogger = _exportsForTestingOnly.useTestBackgroundLogger();
     initLogger({
       projectName: "fastmcp.test.ts",
@@ -132,9 +133,8 @@ describe("FastMCP wrapper", () => {
   });
 
   it("passes through when the FastMCP integration is disabled", async () => {
-    registry.disable();
+    resetInstrumentationForTest();
     registry.configure({ integrations: { mcp: false, fastmcp: false } });
-    registry.enable();
     const module = wrapFastMCP(createModule());
     const session = new module.FastMCPSession();
     const transport = { start() {}, send() {} };

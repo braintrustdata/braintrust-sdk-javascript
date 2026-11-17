@@ -1,4 +1,5 @@
-import { describe } from "vitest";
+import { defineAttachmentCaptureTests } from "../../helpers/attachment-capture-assertions";
+import { describe } from "vite-plus/test";
 import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
@@ -79,6 +80,7 @@ describe.concurrent("variants", () => {
           await runScenarioDir({
             entry: scenario.wrapperEntry,
             env: {
+              BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "true",
               ANTHROPIC_PACKAGE_NAME: scenario.dependencyName,
               ANTHROPIC_SUPPORTS_TEMPERATURE: String(
                 scenario.supportsTemperature ?? true,
@@ -108,6 +110,7 @@ describe.concurrent("variants", () => {
           await runNodeScenarioDir({
             entry: scenario.autoEntry,
             env: {
+              BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "true",
               ANTHROPIC_PACKAGE_NAME: scenario.dependencyName,
               ANTHROPIC_SUPPORTS_TEMPERATURE: String(
                 scenario.supportsTemperature ?? true,
@@ -134,3 +137,14 @@ describe.concurrent("variants", () => {
     });
   }
 });
+
+for (const scenario of anthropicScenarios) {
+  defineAttachmentCaptureTests({
+    scenarioDir,
+    originalScenarioDir,
+    provider: "anthropic",
+    packageName: scenario.dependencyName,
+    variantKey: scenario.snapshotName,
+    supportsTemperature: scenario.supportsTemperature,
+  });
+}

@@ -1,5 +1,5 @@
-import { BraintrustExporter } from "@braintrust/otel";
-import { trace } from "@opentelemetry/api";
+import { OTLPHttpJsonTraceExporter } from "@vercel/otel";
+import { BraintrustExporter, braintrustOtlpConfig } from "@braintrust/otel";
 import {
   BasicTracerProvider,
   SimpleSpanProcessor,
@@ -33,54 +33,20 @@ export function scopedName(base: string): string {
   return `${base}-${suffix}`;
 }
 
-function createTracerProvider(processors: unknown[]) {
-  if (
-    typeof (new BasicTracerProvider() as { addSpanProcessor?: unknown })
-      .addSpanProcessor === "function"
-  ) {
-    const provider = new BasicTracerProvider() as {
-      addSpanProcessor: (processor: unknown) => void;
-      getTracer: (name: string) => {
-        startActiveSpan: (
-          name: string,
-          callback: (span: {
-            end: () => void;
-            setAttribute: (key: string, value: string) => void;
-          }) => Promise<void> | void,
-        ) => Promise<void>;
-      };
-      shutdown?: () => Promise<void>;
-    };
-    processors.forEach((processor) => provider.addSpanProcessor(processor));
-    return provider;
-  }
-
-  return new BasicTracerProvider({
-    spanProcessors: processors as never,
-  }) as {
-    getTracer: (name: string) => {
-      startActiveSpan: (
-        name: string,
-        callback: (span: {
-          end: () => void;
-          setAttribute: (key: string, value: string) => void;
-        }) => Promise<void> | void,
-      ) => Promise<void>;
-    };
-    shutdown?: () => Promise<void>;
-  };
-}
-
 async function emitOtelSpan(runtime: Runtime, testRunId: string) {
   const exporter = new BraintrustExporter({
-    apiKey: requiredEnv("BRAINTRUST_API_KEY"),
-    apiUrl: requiredEnv("BRAINTRUST_API_URL"),
-    parent: `project_name:${scopedName("e2e-nextjs-instrumentation")}`,
+    exporter: new OTLPHttpJsonTraceExporter(
+      braintrustOtlpConfig({
+        apiKey: requiredEnv("BRAINTRUST_API_KEY"),
+        apiUrl: requiredEnv("BRAINTRUST_API_URL"),
+        parent: `project_name:${scopedName("e2e-nextjs-instrumentation")}`,
+      }),
+    ),
     filterAISpans: false,
   });
 
-  const provider = createTracerProvider([new SimpleSpanProcessor(exporter)]);
-  trace.setGlobalTracerProvider(provider as never);
+  const processor = new SimpleSpanProcessor(exporter);
+  const provider = new BasicTracerProvider({ spanProcessors: [processor] });
 
   await provider
     .getTracer("nextjs-instrumentation-e2e")
@@ -91,9 +57,8 @@ async function emitOtelSpan(runtime: Runtime, testRunId: string) {
       span.end();
     });
 
-  await exporter.forceFlush();
-  await provider.shutdown?.();
-  await new Promise((resolve) => setTimeout(resolve, 250));
+  await processor.forceFlush();
+  await provider.shutdown();
 }
 
 export async function runRuntimeCheck(runtime: Runtime) {

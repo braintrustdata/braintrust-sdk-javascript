@@ -1,5 +1,6 @@
+import { registerInstrumentation } from "../instrumentation/registrations/strandsAgentSDK";
 import { debugLogger } from "../debug-logger";
-import { strandsAgentSDKChannels } from "../instrumentation/plugins/strands-agent-sdk-interceptors";
+import { strandsAgentSDKChannels } from "../instrumentation/providers/strands-agent-sdk-interceptors";
 import type {
   StrandsAgent,
   StrandsAgentConstructor,
@@ -26,6 +27,7 @@ const WRAPPED_INSTANCE = Symbol.for(
  * typed instrumentation channels; the Strands plugin owns span lifecycle.
  */
 export function wrapStrandsAgentSDK<T>(sdk: T): T {
+  registerInstrumentation();
   if (!sdk || typeof sdk !== "object") {
     return sdk;
   }

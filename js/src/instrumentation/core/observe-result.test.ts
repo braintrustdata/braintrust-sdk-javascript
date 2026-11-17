@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vite-plus/test";
 import { observeResult } from "./observe-result";
 
 vi.mock("../../debug-logger", () => ({ debugLogger: { error: vi.fn() } }));

@@ -1,5 +1,12 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { BraintrustState } from "./logger";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vite-plus/test";
+import { BraintrustState } from "./logger/core";
 import { configureNode } from "./node/config";
 import { Queue } from "./queue";
 import { LazyValue } from "./util";

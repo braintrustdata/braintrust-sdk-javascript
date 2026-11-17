@@ -1,4 +1,12 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { installGlobalHookErrorReporter } from "./debug-logger";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vite-plus/test";
 
 import {
   debugLogger,
@@ -9,14 +17,10 @@ import {
   newGlobalInvocationHook,
   GLOBAL_INSTRUMENTATION_HOOKS_KEY,
 } from "./global-instrumentation-hooks";
-import {
-  BraintrustState,
-  _exportsForTestingOnly,
-  initLogger,
-  login,
-} from "./logger";
+import { BraintrustState, initLogger, login } from "./logger/core";
+import { _exportsForTestingOnly } from "./logger/testing";
 import { configureNode } from "./node/config";
-import iso from "./isomorph";
+import iso from "#braintrust-platform";
 
 configureNode();
 
@@ -79,6 +83,7 @@ describe("debug logger", () => {
   test("invalid global hooks are reported without changing the provider call", () => {
     process.env.BRAINTRUST_DEBUG_LOG_LEVEL = "error";
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    installGlobalHookErrorReporter();
     const name = `test:debug-logger:${Math.random()}`;
     newGlobalInvocationHook(name);
     const registry = (

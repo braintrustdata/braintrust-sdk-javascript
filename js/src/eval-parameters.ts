@@ -1,35 +1,27 @@
 import { debugLogger } from "./debug-logger";
-import { z } from "zod/v3";
-import * as z4 from "zod/v4";
 import Ajv from "ajv";
-import { Prompt, RemoteEvalParameters } from "./logger";
+import { Prompt, RemoteEvalParameters } from "./logger/prompts";
 import {
-  promptDefinitionWithToolsSchema,
   promptDefinitionToPromptData,
+  type PromptDefinitionWithTools,
 } from "./prompt-schemas";
-import { PromptData as promptDataSchema } from "./generated_types";
+import { PromptData as promptDataSchema } from "./sdk-schemas";
+
+export type EvalParameters = Record<
+  string,
+  | {
+      type: "prompt";
+      default?: PromptDefinitionWithTools;
+      description?: string;
+    }
+  | {
+      type: "model";
+      default?: string;
+      description?: string;
+    }
+  | ZodSchema
+>;
 import type { ZodSchema } from "./zod/utils";
-
-// Schema for evaluation parameters
-export const evalParametersSchema = z.record(
-  z.string(),
-  z.union([
-    z.object({
-      type: z.literal("prompt"),
-      default: promptDefinitionWithToolsSchema.optional(),
-      description: z.string().optional(),
-    }),
-    z.object({
-      type: z.literal("model"),
-      default: z.string().optional(),
-      description: z.string().optional(),
-    }),
-    z.instanceof(z.ZodType),
-    z.instanceof(z4.ZodType),
-  ]),
-);
-
-export type EvalParameters = z.infer<typeof evalParametersSchema>;
 
 // Type helper to infer the type of a parameter value
 type InferParameterValue<T> = T extends { type: "prompt" }

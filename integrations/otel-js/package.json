@@ -3,26 +3,25 @@
   "version": "1.1.0",
   "description": "SDK for integrating Braintrust with OpenTelemetry",
   "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "module": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "default": "./dist/index.js"
     }
   },
   "scripts": {
-    "build": "tsup",
+    "build": "vp run compile",
     "check:typings": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
-    "watch": "tsup --watch",
+    "watch": "vp pack --watch",
     "clean": "rm -r dist/*",
-    "test": "pnpm test:v1 && pnpm test:v2",
+    "test": "pnpm test:v1 && pnpm test:v2 && pnpm test:v3",
     "test:v1": "cd otel-v1 && pnpm test",
     "test:v2": "cd otel-v2 && pnpm test",
-    "yalc:publish": "yalc publish"
+    "yalc:publish": "yalc publish",
+    "test:v3": "cd otel-v3 && pnpm test"
   },
   "author": "Braintrust Data Inc.",
   "license": "MIT",
@@ -30,33 +29,17 @@
     "@opentelemetry/context-async-hooks": "2.6.1",
     "@types/node": "^22.15.21",
     "braintrust": "workspace:*",
-    "tsup": "^8.5.0",
     "typescript": "5.5.4",
-    "vitest": "4.1.11"
+    "vite-plus": "catalog:",
+    "@opentelemetry/api": "1.9.0",
+    "@opentelemetry/core": "2.0.0",
+    "@opentelemetry/sdk-trace-base": "2.0.0",
+    "@opentelemetry/exporter-trace-otlp-http": "0.200.0",
+    "@opentelemetry/resources": "2.0.0"
   },
   "peerDependencies": {
-    "@opentelemetry/api": ">=1.9.0",
-    "@opentelemetry/core": ">=1.9.0",
-    "@opentelemetry/exporter-trace-otlp-http": ">=0.35.0",
-    "@opentelemetry/sdk-trace-base": ">=1.9.0",
-    "braintrust": ">=1.0.0-0"
-  },
-  "peerDependenciesMeta": {
-    "braintrust": {
-      "optional": false
-    },
-    "@opentelemetry/api": {
-      "optional": false
-    },
-    "@opentelemetry/exporter-trace-otlp-http": {
-      "optional": false
-    },
-    "@opentelemetry/sdk-trace-base": {
-      "optional": false
-    },
-    "@opentelemetry/core": {
-      "optional": false
-    }
+    "@opentelemetry/api": "^1.9.0",
+    "braintrust": "workspace:^"
   },
   "repository": {
     "type": "git",
@@ -68,5 +51,13 @@
     "access": "public",
     "registry": "https://registry.npmjs.org/",
     "provenance": true
-  }
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ]
 }

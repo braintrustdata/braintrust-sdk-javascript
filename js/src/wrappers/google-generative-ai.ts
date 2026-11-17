@@ -1,4 +1,5 @@
-import { googleGenerativeAIChannels } from "../instrumentation/plugins/google-generative-ai-interceptors";
+import { registerInstrumentation } from "../instrumentation/registrations/googleGenerativeAI";
+import { googleGenerativeAIChannels } from "../instrumentation/providers/google-generative-ai-interceptors";
 import { isObject } from "../util";
 import type {
   GenerativeAIClient,
@@ -8,6 +9,7 @@ import type {
 
 /** Trace @google/generative-ai model and chat calls through Braintrust. */
 export function wrapGoogleGenerativeAI<T>(client: T): T {
+  registerInstrumentation();
   if (!isObject(client) || typeof client.getGenerativeModel !== "function")
     return client;
   return wrapClient(client as unknown as GenerativeAIClient) as T;

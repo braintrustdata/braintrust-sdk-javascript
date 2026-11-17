@@ -29,20 +29,19 @@ import {
   type OneOrMoreScores,
   runEvaluator,
 } from "./framework";
-import iso from "./isomorph";
+import iso from "#braintrust-platform";
 import {
   type BaseMetadata,
   type DefaultMetadataType,
   type EvalCase,
-  type Experiment,
-  type ExperimentSummary,
   NOOP_SPAN,
   type Span,
   _internalResumeSpan,
   _internalStartSpanWithInitialMerge,
   logError as logSpanError,
   newId,
-} from "./logger";
+} from "./logger/core";
+import { type Experiment, type ExperimentSummary } from "./logger/experiments";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -94,20 +93,23 @@ export class WorkflowEvalMemoryStore implements WorkflowEvalStore {
     this.values.set(key, value.slice());
   }
 
-  async getOrSet(key: string, value: Uint8Array) {
+  async getOrSet(
+    key: string,
+    value: Uint8Array,
+  ): Promise<{ value: Uint8Array; created: boolean }> {
     const existing = this.values.get(key);
     if (existing) return { value: existing.slice(), created: false };
     this.values.set(key, value.slice());
     return { value: value.slice(), created: true };
   }
 
-  async addToSet(key: string, member: string) {
+  async addToSet(key: string, member: string): Promise<void> {
     let members = this.sets.get(key);
     if (!members) this.sets.set(key, (members = new Set()));
     members.add(member);
   }
 
-  async getSetSize(key: string) {
+  async getSetSize(key: string): Promise<number> {
     return this.sets.get(key)?.size ?? 0;
   }
 }
@@ -181,7 +183,10 @@ export class WorkflowEvalRedisStore implements WorkflowEvalStore {
     }
   }
 
-  async getOrSet(key: string, value: Uint8Array) {
+  async getOrSet(
+    key: string,
+    value: Uint8Array,
+  ): Promise<{ value: Uint8Array; created: boolean }> {
     const redisKey = `${this.keyPrefix}${key}`;
     const encoded = uint8ArrayToBase64(value);
     const client = this.client as typeof this.client & {
@@ -214,7 +219,7 @@ export class WorkflowEvalRedisStore implements WorkflowEvalStore {
     return { value: base64ToUint8Array(existing), created: false };
   }
 
-  async addToSet(key: string, member: string) {
+  async addToSet(key: string, member: string): Promise<void> {
     await this.evalSet(
       "redis.call('SADD', KEYS[1], ARGV[1]); redis.call('PEXPIRE', KEYS[1], ARGV[2]); return 1",
       key,
@@ -222,7 +227,7 @@ export class WorkflowEvalRedisStore implements WorkflowEvalStore {
     );
   }
 
-  async getSetSize(key: string) {
+  async getSetSize(key: string): Promise<number> {
     return this.evalSet("return redis.call('SCARD', KEYS[1])", key, []);
   }
 
@@ -1029,7 +1034,6 @@ async function startWorkflowEval<
         stop: () => undefined,
         increment: () => undefined,
       },
-      [],
       undefined,
       parameters,
       true,

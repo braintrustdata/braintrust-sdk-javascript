@@ -1,3 +1,4 @@
+import { registerInstrumentation } from "../../instrumentation/registrations/aisdk";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { SpanTypeAttribute } from "../../../util";
@@ -6,7 +7,7 @@ import {
   codeModeChannels,
   BRAINTRUST_WRAPPED_AI_SDK_MODEL,
   harnessAgentChannels,
-} from "../../instrumentation/plugins/ai-sdk-interceptors";
+} from "../../instrumentation/providers/ai-sdk-interceptors";
 import type {
   AISDK,
   AISDKAgentClass,
@@ -123,6 +124,7 @@ function isModuleNamespace(obj: unknown): obj is AISDKNamespaceObject {
  * ```
  */
 export function wrapAISDK<T>(aiSDK: T, options: WrapAISDKOptions = {}): T {
+  registerInstrumentation();
   // Handle null/undefined early - can't create Proxy with non-objects
   if (!aiSDK || typeof aiSDK !== "object") {
     return aiSDK;
@@ -356,6 +358,7 @@ export const wrapAgentClass = (
   AgentClass: any,
   options: WrapAISDKOptions = {},
 ): any => {
+  registerInstrumentation();
   const typedAgentClass = AgentClass as
     | AISDKAgentClass
     | AISDKWorkflowAgentClass;

@@ -4,11 +4,12 @@
   "description": "Test infrastructure for Vitest wrapper",
   "scripts": {
     "check:typings": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run"
+    "test": "vp test run"
   },
   "devDependencies": {
     "@types/node": "^20.10.5",
     "typescript": "5.4.4",
-    "vitest": "4.1.11"
+    "vitest": "catalog:",
+    "vite-plus": "catalog:"
   }
 }

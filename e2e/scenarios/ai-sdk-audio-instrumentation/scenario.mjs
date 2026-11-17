@@ -22,7 +22,6 @@ runMain(async () => {
     callback: async () => {
       const parent = currentSpan().spanId;
       for (const capture of [false, true]) {
-        process.env.BRAINTRUST_CAPTURE_ATTACHMENTS = "true";
         process.env.BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS = String(capture);
         process.env.BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS =
           String(capture);

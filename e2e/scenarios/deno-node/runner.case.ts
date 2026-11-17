@@ -1,6 +1,5 @@
 import * as braintrust from "braintrust";
 import {
-  expectBuildType,
   expectEvalWorks,
   expectMustacheTemplate,
   expectNamedExports,
@@ -27,10 +26,8 @@ Deno.test("deno-node exposes the expected node runtime surface", () => {
     "initLogger",
     "currentSpan",
     "startSpan",
-    "log",
     "flush",
     "initDataset",
-    "initExperiment",
     "loadPrompt",
     "Prompt",
     "Eval",
@@ -40,14 +37,10 @@ Deno.test("deno-node exposes the expected node runtime surface", () => {
     "Attachment",
     "invoke",
     "initFunction",
-    "Project",
-    "PromptBuilder",
-    "IDGenerator",
+    "projects",
     "BraintrustState",
     "login",
-    "_exportsForTestingOnly",
   ]);
-  expectBuildType(braintrust, "node");
   expectMustacheTemplate(braintrust);
   expectNunjucksTemplateUnavailable(braintrust);
 });

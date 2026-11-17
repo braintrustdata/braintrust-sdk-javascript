@@ -6,7 +6,7 @@ import type { ResultOf } from "../instrumentation/core/tracing-types";
 import type {
   OpenAIAsyncChannel,
   OpenAIChannel,
-} from "../instrumentation/plugins/openai-interceptors";
+} from "../instrumentation/providers/openai-interceptors";
 
 export type EnhancedResponse<T> = {
   response: Response;

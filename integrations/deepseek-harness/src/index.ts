@@ -7,6 +7,7 @@ import type {} from "@deepseek-ai/dsh-session";
 import type {} from "@deepseek-ai/dsh-tools";
 import z from "@deepseek-ai/schemastery";
 import {
+  _internalCaptureAttachmentsEnabled,
   Attachment,
   initLogger,
   NOOP_SPAN,
@@ -36,7 +37,7 @@ const INSTRUMENTATION_SYMBOL = Symbol.for("braintrust.spanInstrumentationName");
 export const name = "braintrust";
 
 /** Harness services whose event seams this plugin instruments. */
-export const inject = ["sessions", "llm", "tools"];
+export const inject: string[] = ["sessions", "llm", "tools"];
 
 export interface Config {
   /** Braintrust API key. Falls back to BRAINTRUST_API_KEY when omitted. */
@@ -49,6 +50,11 @@ export interface Config {
   orgName?: string;
   /** Optional Braintrust deployment URL. */
   appUrl?: string;
+  /**
+   * Capture inline Harness images as attachments.
+   * Falls back to BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS when omitted.
+   */
+  autoCaptureAttachments?: boolean;
 }
 
 export const Config: z<Config> = z.object({
@@ -57,6 +63,7 @@ export const Config: z<Config> = z.object({
   metadata: z.dict(z.any()),
   orgName: z.string(),
   appUrl: z.string(),
+  autoCaptureAttachments: z.boolean(),
 });
 
 type TokenMetrics = Record<string, number> & {
@@ -373,6 +380,7 @@ export function apply(ctx: Context, config: Config = {}): void {
     projectName: config.projectName ?? DEFAULT_PROJECT_NAME,
     ...(config.orgName ? { orgName: config.orgName } : {}),
     ...(config.appUrl ? { appUrl: config.appUrl } : {}),
+    autoCaptureAttachments: config.autoCaptureAttachments,
     setCurrent: false,
   });
   const turns = new Map<string, Map<number, TurnState>>();
@@ -394,6 +402,7 @@ export function apply(ctx: Context, config: Config = {}): void {
   const resolveImage = async (
     ref: HarnessImageAttachmentRef,
   ): Promise<Attachment | undefined> => {
+    if (!_internalCaptureAttachmentsEnabled(logger)) return undefined;
     const attachmentStore = (
       ctx as Context & { attachments?: HarnessAttachmentStore }
     ).attachments;

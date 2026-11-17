@@ -3,7 +3,7 @@
  * Keeping them in one place prevents the two subsystems from drifting.
  */
 
-export const TRANSPORT_HEADERS = [
+export const TRANSPORT_HEADERS: string[] = [
   "content-encoding",
   "transfer-encoding",
   "connection",
@@ -11,7 +11,7 @@ export const TRANSPORT_HEADERS = [
 ];
 
 /** Auth/session headers — stripped during matching and masked during redaction. */
-export const AUTH_HEADERS = [
+export const AUTH_HEADERS: string[] = [
   "authorization",
   "api-key",
   "x-api-key",
@@ -22,10 +22,10 @@ export const AUTH_HEADERS = [
   "proxy-authorization",
 ];
 
-export const RATE_LIMIT_HEADERS = [
+export const RATE_LIMIT_HEADERS: Array<string | RegExp> = [
   /^x-ratelimit-/i,
   /^x-rate-limit-/i,
   "retry-after",
-] as Array<string | RegExp>;
+];
 
-export const FINGERPRINT_HEADERS = ["user-agent"];
+export const FINGERPRINT_HEADERS: string[] = ["user-agent"];

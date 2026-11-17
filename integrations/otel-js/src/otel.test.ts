@@ -1,7 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 import { readFileSync } from "node:fs";
-import { describe, it, expect, beforeEach, afterEach, vi, test } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  vi,
+  test,
+} from "vite-plus/test";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -18,22 +26,21 @@ import {
   CompositePropagator,
 } from "@opentelemetry/core";
 import {
-  AISpanProcessor,
   BraintrustSpanProcessor,
-  BraintrustExporter,
   addSpanParentToBaggage,
   addParentToBaggage,
   parentFromHeaders,
   isRootSpan,
 } from "./otel";
-import { _exportsForTestingOnly, initLogger } from "braintrust";
+import { initLogger } from "braintrust";
+import { SpanComponentsV3, SpanComponentsV4 } from "../../../js/util";
+import { _exportsForTestingOnly } from "../../../js/src/logger/testing";
 import {
   base64ToUint8Array,
   getExportVersion,
   createTracerProvider,
 } from "../tests/utils";
-import { SpanComponentsV3, SpanComponentsV4 } from "braintrust/util";
-import { setupOtelCompat, resetOtelCompat } from ".";
+import { setupOtelCompat, resetOtelCompat } from "./";
 
 const packageJson = JSON.parse(
   readFileSync(path.join(__dirname, "../package.json"), "utf8"),
@@ -48,23 +55,24 @@ async function withBraintrustEnvFile<T>(
   try {
     await writeFile(path.join(tempDir, ".env.braintrust"), content);
     process.chdir(tempDir);
-    return fn();
+    return await fn();
   } finally {
     process.chdir(originalCwd);
     await rm(tempDir, { force: true, recursive: true });
   }
 }
 
-async function withEmptyBraintrustEnvFile<T>(
-  fn: () => T | Promise<T>,
-): Promise<T> {
-  return withBraintrustEnvFile("", fn);
+function restoreEnvironment(snapshot: NodeJS.ProcessEnv): void {
+  for (const name of Object.keys(process.env)) {
+    if (!(name in snapshot)) delete process.env[name];
+  }
+  Object.assign(process.env, snapshot);
 }
 
-describe("AISpanProcessor", () => {
+describe("BraintrustSpanProcessor filtering", () => {
   let memoryExporter: InMemorySpanExporter;
   let provider: BasicTracerProvider;
-  let filterProcessor: AISpanProcessor;
+  let filterProcessor: BraintrustSpanProcessor<ReadableSpan>;
   let tracer: Tracer;
   let baseProcessor: SimpleSpanProcessor;
 
@@ -73,7 +81,10 @@ describe("AISpanProcessor", () => {
 
     // Create processor with our filtering logic
     baseProcessor = new SimpleSpanProcessor(memoryExporter);
-    filterProcessor = new AISpanProcessor(baseProcessor);
+    filterProcessor = new BraintrustSpanProcessor({
+      processor: baseProcessor,
+      filterAISpans: true,
+    });
 
     provider = createTracerProvider(BasicTracerProvider, [filterProcessor]);
 
@@ -225,10 +236,11 @@ describe("AISpanProcessor", () => {
     };
 
     const customMemoryExporter = new InMemorySpanExporter();
-    const customFilterProcessor = new AISpanProcessor(
-      new SimpleSpanProcessor(customMemoryExporter),
+    const customFilterProcessor = new BraintrustSpanProcessor({
+      processor: new SimpleSpanProcessor(customMemoryExporter),
+      filterAISpans: true,
       customFilter,
-    );
+    });
     const customProvider = createTracerProvider(BasicTracerProvider, [
       customFilterProcessor,
     ]);
@@ -259,10 +271,11 @@ describe("AISpanProcessor", () => {
     };
 
     const customMemoryExporter = new InMemorySpanExporter();
-    const customFilterProcessor = new AISpanProcessor(
-      new SimpleSpanProcessor(customMemoryExporter),
+    const customFilterProcessor = new BraintrustSpanProcessor({
+      processor: new SimpleSpanProcessor(customMemoryExporter),
+      filterAISpans: true,
       customFilter,
-    );
+    });
     const customProvider = createTracerProvider(BasicTracerProvider, [
       customFilterProcessor,
     ]);
@@ -303,10 +316,11 @@ describe("AISpanProcessor", () => {
     };
 
     const customMemoryExporter = new InMemorySpanExporter();
-    const customFilterProcessor = new AISpanProcessor(
-      new SimpleSpanProcessor(customMemoryExporter),
+    const customFilterProcessor = new BraintrustSpanProcessor({
+      processor: new SimpleSpanProcessor(customMemoryExporter),
+      filterAISpans: true,
       customFilter,
-    );
+    });
     const customProvider = createTracerProvider(BasicTracerProvider, [
       customFilterProcessor,
     ]);
@@ -345,10 +359,11 @@ describe("AISpanProcessor", () => {
     };
 
     const customMemoryExporter = new InMemorySpanExporter();
-    const customFilterProcessor = new AISpanProcessor(
-      new SimpleSpanProcessor(customMemoryExporter),
+    const customFilterProcessor = new BraintrustSpanProcessor({
+      processor: new SimpleSpanProcessor(customMemoryExporter),
+      filterAISpans: true,
       customFilter,
-    );
+    });
     const customProvider = createTracerProvider(BasicTracerProvider, [
       customFilterProcessor,
     ]);
@@ -391,10 +406,11 @@ describe("AISpanProcessor", () => {
     };
 
     const customMemoryExporter = new InMemorySpanExporter();
-    const customFilterProcessor = new AISpanProcessor(
-      new SimpleSpanProcessor(customMemoryExporter),
+    const customFilterProcessor = new BraintrustSpanProcessor({
+      processor: new SimpleSpanProcessor(customMemoryExporter),
+      filterAISpans: true,
       customFilter,
-    );
+    });
     const customProvider = createTracerProvider(BasicTracerProvider, [
       customFilterProcessor,
     ]);
@@ -558,7 +574,16 @@ describe("AISpanProcessor", () => {
         expected,
         reason,
       }) => {
-        const filterProcessor = new AISpanProcessor({} as any);
+        const onEnd = vi.fn();
+        const filterProcessor = new BraintrustSpanProcessor({
+          processor: {
+            onEnd,
+            onStart() {},
+            async forceFlush() {},
+            async shutdown() {},
+          },
+          filterAISpans: true,
+        });
 
         const mockSpan = {
           name: spanName,
@@ -585,11 +610,9 @@ describe("AISpanProcessor", () => {
           droppedLinksCount: 0,
         } as unknown as ReadableSpan;
 
-        const result = (filterProcessor as any).shouldKeepFilteredSpan(
-          mockSpan,
-        );
-
-        expect(result).toBe(expected);
+        filterProcessor.onEnd(mockSpan);
+        expect(onEnd).toHaveBeenCalledTimes(expected ? 1 : 0);
+        void filterProcessor.shutdown();
       },
     );
   });
@@ -605,194 +628,10 @@ describe("BraintrustSpanProcessor", () => {
   });
 
   afterEach(() => {
-    process.env = originalEnv;
+    restoreEnvironment(originalEnv);
     vi.restoreAllMocks();
     _exportsForTestingOnly.clearTestBackgroundLogger();
     _exportsForTestingOnly.simulateLogoutForTests();
-  });
-
-  it("should create BraintrustSpanProcessor with API key from environment", () => {
-    process.env.BRAINTRUST_API_KEY = "test-api-key";
-
-    expect(() => {
-      new BraintrustSpanProcessor();
-    }).not.toThrow();
-  });
-
-  it("should create BraintrustSpanProcessor with API key from options", () => {
-    expect(() => {
-      new BraintrustSpanProcessor({
-        apiKey: "test-api-key",
-      });
-    }).not.toThrow();
-  });
-
-  it("should reject forceFlush when no API key is provided", async () => {
-    delete process.env.BRAINTRUST_API_KEY;
-
-    await withEmptyBraintrustEnvFile(async () => {
-      const processor = new BraintrustSpanProcessor();
-      await expect(processor.forceFlush()).rejects.toThrow(
-        "Braintrust API key is required",
-      );
-    });
-  });
-
-  it("should create BraintrustSpanProcessor with API key from .env.braintrust", async () => {
-    delete process.env.BRAINTRUST_API_KEY;
-    const originalCwd = process.cwd();
-    const tempDir = await mkdtemp(path.join(tmpdir(), "braintrust-otel-env-"));
-    try {
-      await writeFile(
-        path.join(tempDir, ".env.braintrust"),
-        "BRAINTRUST_API_KEY=file-api-key\n",
-      );
-      process.chdir(tempDir);
-
-      const processor = new BraintrustSpanProcessor();
-      await expect(processor.forceFlush()).resolves.toBeUndefined();
-    } finally {
-      process.chdir(originalCwd);
-      await rm(tempDir, { force: true, recursive: true });
-    }
-  });
-
-  it("should use default API URL when not provided", () => {
-    process.env.BRAINTRUST_API_KEY = "test-api-key";
-
-    const processor = new BraintrustSpanProcessor();
-    expect(processor).toBeDefined();
-  });
-
-  it("should use custom API URL when provided", () => {
-    const processor = new BraintrustSpanProcessor({
-      apiKey: "test-api-key",
-      apiUrl: "https://custom.api.url",
-    });
-    expect(processor).toBeDefined();
-  });
-
-  it("should support custom headers", () => {
-    const processor = new BraintrustSpanProcessor({
-      apiKey: "test-api-key",
-      headers: {
-        "X-Custom-Header": "custom-value",
-      },
-    });
-    expect(processor).toBeDefined();
-  });
-
-  it("should support custom filter function", () => {
-    const customFilter = (span: ReadableSpan) => {
-      return span.name.includes("important");
-    };
-
-    const processor = new BraintrustSpanProcessor({
-      apiKey: "test-api-key",
-      customFilter,
-    });
-    expect(processor).toBeDefined();
-  });
-
-  it("should support parent option", () => {
-    const processor = new BraintrustSpanProcessor({
-      apiKey: "test-api-key",
-      parent: "project_name:otel_examples",
-    });
-    expect(processor).toBeDefined();
-  });
-
-  it("should use BRAINTRUST_PARENT environment variable", () => {
-    process.env.BRAINTRUST_API_KEY = "test-api-key";
-    process.env.BRAINTRUST_PARENT = "project_name:env_examples";
-
-    const processor = new BraintrustSpanProcessor();
-    expect(processor).toBeDefined();
-  });
-
-  it("should use BRAINTRUST_API_URL environment variable", () => {
-    process.env.BRAINTRUST_API_KEY = "test-api-key";
-    process.env.BRAINTRUST_API_URL = "https://custom.env.url";
-
-    const processor = new BraintrustSpanProcessor();
-    expect(processor).toBeDefined();
-  });
-
-  it("should prioritize options over environment variables", () => {
-    process.env.BRAINTRUST_API_KEY = "env-api-key";
-    process.env.BRAINTRUST_PARENT = "env-parent";
-    process.env.BRAINTRUST_API_URL = "https://env.url";
-
-    const processor = new BraintrustSpanProcessor({
-      apiKey: "option-api-key",
-      parent: "option-parent",
-      apiUrl: "https://option.url",
-    });
-    expect(processor).toBeDefined();
-  });
-
-  it("should disable filtering by default", () => {
-    const processor = new BraintrustSpanProcessor({
-      apiKey: "test-api-key",
-    });
-    expect(processor).toBeDefined();
-  });
-
-  it("should enable filtering when filterAISpans is true", () => {
-    const processor = new BraintrustSpanProcessor({
-      apiKey: "test-api-key",
-      filterAISpans: true,
-    });
-    expect(processor).toBeDefined();
-  });
-
-  it("should disable filtering when filterAISpans is false", () => {
-    const processor = new BraintrustSpanProcessor({
-      apiKey: "test-api-key",
-      filterAISpans: false,
-    });
-    expect(processor).toBeDefined();
-  });
-
-  it("should implement SpanProcessor interface", () => {
-    process.env.BRAINTRUST_API_KEY = "test-api-key";
-
-    const processor = new BraintrustSpanProcessor();
-
-    expect(typeof processor.onStart).toBe("function");
-    expect(typeof processor.onEnd).toBe("function");
-    expect(typeof processor.shutdown).toBe("function");
-    expect(typeof processor.forceFlush).toBe("function");
-  });
-
-  it("should forward span lifecycle methods to AISpanProcessor", async () => {
-    process.env.BRAINTRUST_API_KEY = "test-api-key";
-
-    const processor = new BraintrustSpanProcessor();
-
-    // Create a mock span
-    const mockSpan = {
-      spanContext: () => ({ traceId: "test-trace", spanId: "test-span" }),
-      end: vi.fn(),
-      setAttributes: vi.fn(),
-      name: "test-span",
-      attributes: {},
-      parentSpanContext: undefined,
-    } as any;
-
-    // Test onStart
-    expect(() => {
-      processor.onStart(mockSpan, context.active());
-    }).not.toThrow();
-
-    // Test onEnd
-    expect(() => {
-      processor.onEnd(mockSpan);
-    }).not.toThrow();
-
-    // Test shutdown and forceFlush
-    await expect(processor.shutdown()).resolves.toBeUndefined();
-    await expect(processor.forceFlush()).resolves.toBeUndefined();
   });
 
   it("should merge span origin with context_json set after span start", () => {
@@ -807,8 +646,7 @@ describe("BraintrustSpanProcessor", () => {
     };
 
     const processor = new BraintrustSpanProcessor({
-      apiKey: "test-api-key",
-      _spanProcessor: innerProcessor as any,
+      processor: innerProcessor as any,
     });
 
     const mockSpan = {
@@ -851,8 +689,7 @@ describe("BraintrustSpanProcessor", () => {
     };
 
     const processor = new BraintrustSpanProcessor({
-      apiKey: "test-api-key",
-      _spanProcessor: innerProcessor as any,
+      processor: innerProcessor as any,
     });
 
     const mockSpan = {
@@ -890,8 +727,7 @@ describe("BraintrustSpanProcessor", () => {
         };
 
         const processor = new BraintrustSpanProcessor({
-          apiKey: "test-api-key",
-          _spanProcessor: innerProcessor as any,
+          processor: innerProcessor as any,
         });
 
         const mockSpan = {
@@ -929,8 +765,7 @@ describe("BraintrustSpanProcessor", () => {
     };
 
     const processor = new BraintrustSpanProcessor({
-      apiKey: "test-api-key",
-      _spanProcessor: innerProcessor as any,
+      processor: innerProcessor as any,
     });
 
     const mockSpan = {
@@ -948,364 +783,6 @@ describe("BraintrustSpanProcessor", () => {
       endedSpan?.attributes["braintrust.context_json"] as string,
     );
     expect(parsed.span_origin.environment).toEqual({ name: "preview" });
-  });
-
-  it("should use default parent when none is provided", () => {
-    process.env.BRAINTRUST_API_KEY = "test-api-key";
-    delete process.env.BRAINTRUST_PARENT;
-
-    const consoleSpy = vi.spyOn(console, "info");
-
-    const processor = new BraintrustSpanProcessor();
-
-    expect(processor).toBeDefined();
-    expect(consoleSpy).toHaveBeenCalledWith(
-      "No parent specified, using default: project_name:default-otel-project. " +
-        "Configure with BRAINTRUST_PARENT environment variable or parent parameter.",
-    );
-
-    consoleSpy.mockRestore();
-  });
-
-  it("should not use default parent when BRAINTRUST_PARENT is set", () => {
-    process.env.BRAINTRUST_API_KEY = "test-api-key";
-    process.env.BRAINTRUST_PARENT = "my-project:my-experiment";
-
-    const consoleSpy = vi.spyOn(console, "info");
-
-    const processor = new BraintrustSpanProcessor();
-
-    expect(processor).toBeDefined();
-    expect(consoleSpy).not.toHaveBeenCalled();
-
-    consoleSpy.mockRestore();
-  });
-
-  it("should not use default parent when parent option is provided", () => {
-    process.env.BRAINTRUST_API_KEY = "test-api-key";
-    delete process.env.BRAINTRUST_PARENT;
-
-    const consoleSpy = vi.spyOn(console, "info");
-
-    const processor = new BraintrustSpanProcessor({
-      parent: "option-project:option-experiment",
-    });
-
-    expect(processor).toBeDefined();
-    expect(consoleSpy).not.toHaveBeenCalled();
-
-    consoleSpy.mockRestore();
-  });
-});
-
-describe("BraintrustExporter", () => {
-  let originalEnv: NodeJS.ProcessEnv;
-
-  beforeEach(async () => {
-    originalEnv = { ...process.env };
-    await _exportsForTestingOnly.simulateLoginForTests();
-    _exportsForTestingOnly.useTestBackgroundLogger();
-  });
-
-  afterEach(() => {
-    process.env = originalEnv;
-    vi.restoreAllMocks();
-    _exportsForTestingOnly.clearTestBackgroundLogger();
-    _exportsForTestingOnly.simulateLogoutForTests();
-  });
-
-  it("should create BraintrustExporter with API key from environment", () => {
-    process.env.BRAINTRUST_API_KEY = "test-api-key";
-
-    expect(() => {
-      new BraintrustExporter();
-    }).not.toThrow();
-  });
-
-  it("should create BraintrustExporter with API key from options", () => {
-    expect(() => {
-      new BraintrustExporter({
-        apiKey: "test-api-key",
-      });
-    }).not.toThrow();
-  });
-
-  it("should reject forceFlush when no API key is provided", async () => {
-    delete process.env.BRAINTRUST_API_KEY;
-
-    await withEmptyBraintrustEnvFile(async () => {
-      const exporter = new BraintrustExporter();
-      await expect(exporter.forceFlush()).rejects.toThrow(
-        "Braintrust API key is required",
-      );
-    });
-  });
-
-  it("should use same options as BraintrustSpanProcessor", () => {
-    const options = {
-      apiKey: "test-api-key",
-      apiUrl: "https://custom.api.url",
-      parent: "project_name:test",
-      filterAISpans: true,
-      customFilter: (span: ReadableSpan) => span.name.includes("important"),
-      headers: { "X-Custom": "value" },
-    };
-
-    expect(() => {
-      new BraintrustExporter(options);
-    }).not.toThrow();
-  });
-
-  it("should implement exporter interface", () => {
-    process.env.BRAINTRUST_API_KEY = "test-api-key";
-
-    const exporter = new BraintrustExporter();
-
-    expect(typeof exporter.export).toBe("function");
-    expect(typeof exporter.shutdown).toBe("function");
-    expect(typeof exporter.forceFlush).toBe("function");
-  });
-
-  it("should export spans successfully", async () => {
-    process.env.BRAINTRUST_API_KEY = "test-api-key";
-
-    const exporter = new BraintrustExporter();
-    const mockSpans = [
-      {
-        name: "test-span",
-        spanContext: () => ({ traceId: "test-trace", spanId: "test-span" }),
-        attributes: {},
-        parentSpanContext: undefined,
-      },
-    ] as unknown as ReadableSpan[];
-
-    return new Promise<void>((resolve, reject) => {
-      exporter.export(mockSpans, (result) => {
-        try {
-          expect(result.code).toBe(0); // SUCCESS
-          resolve();
-        } catch (error) {
-          reject(error);
-        }
-      });
-    });
-  });
-
-  it("should handle export errors gracefully", async () => {
-    process.env.BRAINTRUST_API_KEY = "test-api-key";
-
-    const exporter = new BraintrustExporter();
-
-    // Mock the processor to throw an error
-    (exporter as any).processor = {
-      onEnd: vi.fn().mockImplementation(() => {
-        throw new Error("Test error");
-      }),
-      forceFlush: vi.fn(),
-      shutdown: vi.fn(),
-    };
-
-    const mockSpans = [
-      {
-        name: "test-span",
-        spanContext: () => ({ traceId: "test-trace", spanId: "test-span" }),
-        attributes: {},
-        parentSpanContext: undefined,
-      },
-    ] as unknown as ReadableSpan[];
-
-    return new Promise<void>((resolve, reject) => {
-      exporter.export(mockSpans, (result) => {
-        try {
-          expect(result.code).toBe(1); // FAILURE
-          expect(result.error).toBeDefined();
-          resolve();
-        } catch (error) {
-          reject(error);
-        }
-      });
-    });
-  });
-
-  it("should handle forceFlush errors gracefully", async () => {
-    process.env.BRAINTRUST_API_KEY = "test-api-key";
-
-    const exporter = new BraintrustExporter();
-
-    // Mock the processor to have forceFlush fail
-    (exporter as any).processor = {
-      onEnd: vi.fn(),
-      forceFlush: vi.fn().mockRejectedValue(new Error("Flush error")),
-      shutdown: vi.fn(),
-    };
-
-    const mockSpans = [
-      {
-        name: "test-span",
-        spanContext: () => ({ traceId: "test-trace", spanId: "test-span" }),
-        attributes: {},
-        parentSpanContext: undefined,
-      },
-    ] as unknown as ReadableSpan[];
-
-    return new Promise<void>((resolve, reject) => {
-      exporter.export(mockSpans, (result) => {
-        try {
-          expect(result.code).toBe(1); // FAILURE
-          expect(result.error).toBeDefined();
-          resolve();
-        } catch (error) {
-          reject(error);
-        }
-      });
-    });
-  });
-
-  it("should forward shutdown to processor", async () => {
-    process.env.BRAINTRUST_API_KEY = "test-api-key";
-
-    const exporter = new BraintrustExporter();
-    const shutdownSpy = vi.spyOn((exporter as any).processor, "shutdown");
-
-    await exporter.shutdown();
-
-    expect(shutdownSpy).toHaveBeenCalled();
-  });
-
-  it("should forward forceFlush to processor", async () => {
-    process.env.BRAINTRUST_API_KEY = "test-api-key";
-
-    const exporter = new BraintrustExporter();
-    const flushSpy = vi.spyOn((exporter as any).processor, "forceFlush");
-
-    await exporter.forceFlush();
-
-    expect(flushSpy).toHaveBeenCalled();
-  });
-
-  it("should process multiple spans", async () => {
-    process.env.BRAINTRUST_API_KEY = "test-api-key";
-
-    const exporter = new BraintrustExporter();
-    const onEndSpy = vi.spyOn((exporter as any).processor, "onEnd");
-
-    const mockSpans = [
-      {
-        name: "test-span-1",
-        spanContext: () => ({ traceId: "test-trace", spanId: "test-span-1" }),
-        attributes: {},
-        parentSpanContext: undefined,
-      },
-      {
-        name: "test-span-2",
-        spanContext: () => ({ traceId: "test-trace", spanId: "test-span-2" }),
-        attributes: {},
-        parentSpanContext: undefined,
-      },
-    ] as unknown as ReadableSpan[];
-
-    return new Promise<void>((resolve, reject) => {
-      exporter.export(mockSpans, (result) => {
-        try {
-          expect(result.code).toBe(0); // SUCCESS
-          expect(onEndSpy).toHaveBeenCalledTimes(2);
-          expect(onEndSpy).toHaveBeenCalledWith(mockSpans[0]);
-          expect(onEndSpy).toHaveBeenCalledWith(mockSpans[1]);
-          resolve();
-        } catch (error) {
-          reject(error);
-        }
-      });
-    });
-  });
-
-  it("should support filtering options", () => {
-    const exporter = new BraintrustExporter({
-      apiKey: "test-api-key",
-      filterAISpans: true,
-      customFilter: (span: ReadableSpan) => span.name.includes("important"),
-    });
-
-    expect(exporter).toBeDefined();
-  });
-
-  it("should support all configuration options", () => {
-    process.env.BRAINTRUST_API_KEY = "env-key";
-    process.env.BRAINTRUST_PARENT = "env-parent";
-    process.env.BRAINTRUST_API_URL = "https://env.url";
-
-    const exporter = new BraintrustExporter({
-      apiKey: "option-key",
-      parent: "option-parent",
-      apiUrl: "https://option.url",
-      filterAISpans: false,
-      headers: { "X-Custom": "value" },
-    });
-
-    expect(exporter).toBeDefined();
-  });
-
-  it("should use default parent when none is provided", () => {
-    process.env.BRAINTRUST_API_KEY = "test-api-key";
-    delete process.env.BRAINTRUST_PARENT;
-
-    const consoleSpy = vi.spyOn(console, "info");
-
-    const exporter = new BraintrustExporter();
-
-    expect(exporter).toBeDefined();
-    expect(consoleSpy).toHaveBeenCalledWith(
-      "No parent specified, using default: project_name:default-otel-project. " +
-        "Configure with BRAINTRUST_PARENT environment variable or parent parameter.",
-    );
-
-    consoleSpy.mockRestore();
-  });
-
-  it("exporter handles spans with common v1/v2 attributes", () => {
-    process.env.BRAINTRUST_API_KEY = "test-api-key";
-
-    const exporter = new BraintrustExporter();
-    const processor = (exporter as any).processor;
-    const batchProcessor = (processor as any).processor;
-    const baseExporter = (batchProcessor as any)._exporter;
-
-    const mockExport = vi.fn();
-    baseExporter.export = mockExport;
-
-    const testSpan = {
-      name: "gen_ai.completion",
-      spanContext: () => ({ traceId: "trace-123", spanId: "span-456" }),
-      parentSpanId: "parent-789",
-      instrumentationLibrary: { name: "openai", version: "1.0.0" },
-      resource: {
-        attributes: {
-          "service.name": "test-service",
-        },
-      },
-    } as any;
-
-    baseExporter.export([testSpan], () => {});
-    expect(mockExport).toHaveBeenCalledOnce();
-    const [exportedSpans] = mockExport.mock.calls[0];
-
-    expect(exportedSpans).toHaveLength(1);
-    const exportedSpan = exportedSpans[0];
-
-    // Check attributes that exist in both v1 and v2
-    expect(exportedSpan.name).toBe("gen_ai.completion");
-    expect(exportedSpan.spanContext).toBeTypeOf("function");
-    expect(exportedSpan.spanContext()).toEqual({
-      traceId: "trace-123",
-      spanId: "span-456",
-    });
-    expect(exportedSpan.instrumentationLibrary).toEqual({
-      name: "openai",
-      version: "1.0.0",
-    });
-    expect(exportedSpan.resource.attributes).toEqual({
-      "service.name": "test-service",
-    });
   });
 });
 
@@ -1392,211 +869,58 @@ describe("otel namespace helpers", () => {
   });
 
   describe("parentFromHeaders", () => {
-    describe("valid inputs", () => {
-      it("should extract parent from headers with valid traceparent and braintrust.parent baggage", () => {
-        const headers = {
-          traceparent:
-            "00-12345678901234567890123456789012-1234567890123456-01",
-          baggage: "braintrust.parent=project_name:test",
-        };
-
-        const parent = parentFromHeaders(headers);
-        expect(parent).toBeDefined();
-        // Parent string is base64-encoded SpanComponentsV4
-        expect(typeof parent).toBe("string");
-        expect(parent!.length).toBeGreaterThan(0);
-      });
-
-      it("should extract parent with project_id", () => {
-        const headers = {
-          traceparent:
-            "00-abcdef12345678901234567890123456-fedcba9876543210-01",
-          baggage: "braintrust.parent=project_id:my-project-id",
-        };
-
-        const parent = parentFromHeaders(headers);
-        expect(parent).toBeDefined();
-        expect(typeof parent).toBe("string");
-        expect(parent!.length).toBeGreaterThan(0);
-      });
-
-      it("should extract parent with experiment_id", () => {
-        const headers = {
-          traceparent:
-            "00-11111111111111111111111111111111-2222222222222222-01",
-          baggage: "braintrust.parent=experiment_id:my-experiment-id",
-        };
-
-        const parent = parentFromHeaders(headers);
-        expect(parent).toBeDefined();
-        expect(typeof parent).toBe("string");
-        expect(parent!.length).toBeGreaterThan(0);
-      });
+    it("returns the opaque W3C context", () => {
+      const headers = {
+        traceparent: "00-12345678901234567890123456789012-1234567890123456-01",
+        tracestate: "vendor=value",
+        baggage: "braintrust.parent=project_name%3Atest",
+      };
+      expect(parentFromHeaders(headers)).toEqual(headers);
     });
 
-    describe("invalid inputs", () => {
-      it("should return undefined when traceparent is missing", () => {
-        const consoleSpy = vi
-          .spyOn(console, "error")
-          .mockImplementation(() => {});
-        const headers = {
-          baggage: "braintrust.parent=project_name:test",
-        };
+    it("keeps a valid trace context without Braintrust baggage", () => {
+      const headers = {
+        traceparent: "00-12345678901234567890123456789012-1234567890123456-01",
+      };
+      expect(parentFromHeaders(headers)).toEqual(headers);
+    });
 
-        const parent = parentFromHeaders(headers);
-        expect(parent).toBeUndefined();
-        expect(consoleSpy).toHaveBeenCalledWith(
-          "parentFromHeaders: No valid span context in headers",
-        );
-
-        consoleSpy.mockRestore();
-      });
-
-      it("should return undefined when baggage is missing", () => {
-        const consoleSpy = vi
-          .spyOn(console, "warn")
-          .mockImplementation(() => {});
-        const headers = {
-          traceparent:
-            "00-12345678901234567890123456789012-1234567890123456-01",
-        };
-
-        const parent = parentFromHeaders(headers);
-        expect(parent).toBeUndefined();
-        expect(consoleSpy).toHaveBeenCalled();
-        expect(consoleSpy.mock.calls[0][0]).toContain(
-          "braintrust.parent not found",
-        );
-
-        consoleSpy.mockRestore();
-      });
-
-      it("should return undefined when braintrust.parent is missing from baggage", () => {
-        const consoleSpy = vi
-          .spyOn(console, "warn")
-          .mockImplementation(() => {});
-        const headers = {
-          traceparent:
-            "00-12345678901234567890123456789012-1234567890123456-01",
-          baggage: "foo=bar,baz=qux",
-        };
-
-        const parent = parentFromHeaders(headers);
-        expect(parent).toBeUndefined();
-        expect(consoleSpy).toHaveBeenCalled();
-        expect(consoleSpy.mock.calls[0][0]).toContain(
-          "braintrust.parent not found",
-        );
-
-        consoleSpy.mockRestore();
-      });
-
-      it("should reject oversized baggage before propagation", () => {
+    it.each([
+      `braintrust.parent=project_name%3Atest,extra=${"x".repeat(8192)}`,
+      Array.from({ length: 181 }, (_, index) => `k${index}=v`).join(","),
+      `braintrust.parent=project_name%3Atest,extra=${"é".repeat(4096)}`,
+    ])(
+      "keeps oversized baggage opaque without invoking the OTEL parser",
+      (baggage) => {
         const extractSpy = vi.spyOn(propagation, "extract");
-        const headers = {
-          traceparent:
-            "00-12345678901234567890123456789012-1234567890123456-01",
-          baggage: `braintrust.parent=project_name:test,extra=${"x".repeat(8192)}`,
-        };
+        try {
+          const parent = parentFromHeaders({
+            traceparent:
+              "00-12345678901234567890123456789012-1234567890123456-01",
+            baggage,
+          });
+          expect(parent?.traceparent).toBeDefined();
+          expect(parent?.baggage).toBe(baggage);
+          expect(extractSpy).not.toHaveBeenCalled();
+        } finally {
+          extractSpy.mockRestore();
+        }
+      },
+    );
 
-        expect(parentFromHeaders(headers)).toBeUndefined();
-        expect(extractSpy).not.toHaveBeenCalled();
-
-        extractSpy.mockRestore();
-      });
-
-      it("should reject baggage with too many members before propagation", () => {
-        const extractSpy = vi.spyOn(propagation, "extract");
-        const headers = {
-          traceparent:
-            "00-12345678901234567890123456789012-1234567890123456-01",
-          baggage: Array.from(
-            { length: 181 },
-            (_, index) => `k${index}=v`,
-          ).join(","),
-        };
-
-        expect(parentFromHeaders(headers)).toBeUndefined();
-        expect(extractSpy).not.toHaveBeenCalled();
-
-        extractSpy.mockRestore();
-      });
-
-      it("should return undefined when traceparent format is invalid", () => {
-        const consoleSpy = vi
-          .spyOn(console, "error")
-          .mockImplementation(() => {});
-        const headers = {
-          traceparent: "invalid-traceparent",
-          baggage: "braintrust.parent=project_name:test",
-        };
-
-        const parent = parentFromHeaders(headers);
-        expect(parent).toBeUndefined();
-        expect(consoleSpy).toHaveBeenCalledWith(
-          "parentFromHeaders: No valid span context in headers",
-        );
-
-        consoleSpy.mockRestore();
-      });
-
-      it("should return undefined when trace_id is all zeros", () => {
-        const consoleSpy = vi
-          .spyOn(console, "error")
-          .mockImplementation(() => {});
-        const headers = {
-          traceparent:
-            "00-00000000000000000000000000000000-1234567890123456-01",
-          baggage: "braintrust.parent=project_name:test",
-        };
-
-        const parent = parentFromHeaders(headers);
-        expect(parent).toBeUndefined();
-        // OTEL's extract() validates and rejects invalid trace_id
-        expect(consoleSpy).toHaveBeenCalledWith(
-          "parentFromHeaders: No valid span context in headers",
-        );
-
-        consoleSpy.mockRestore();
-      });
-
-      it("should return undefined when span_id is all zeros", () => {
-        const consoleSpy = vi
-          .spyOn(console, "error")
-          .mockImplementation(() => {});
-        const headers = {
-          traceparent:
-            "00-12345678901234567890123456789012-0000000000000000-01",
-          baggage: "braintrust.parent=project_name:test",
-        };
-
-        const parent = parentFromHeaders(headers);
-        expect(parent).toBeUndefined();
-        // OTEL's extract() validates and rejects invalid span_id
-        expect(consoleSpy).toHaveBeenCalledWith(
-          "parentFromHeaders: No valid span context in headers",
-        );
-
-        consoleSpy.mockRestore();
-      });
-
-      it("should return undefined when braintrust.parent format is invalid", () => {
-        const consoleSpy = vi
-          .spyOn(console, "error")
-          .mockImplementation(() => {});
-        const headers = {
-          traceparent:
-            "00-12345678901234567890123456789012-1234567890123456-01",
-          baggage: "braintrust.parent=invalid",
-        };
-
-        const parent = parentFromHeaders(headers);
-        expect(parent).toBeUndefined();
-        // Should reach our validation if span context is valid, otherwise OTEL rejects it
-        expect(consoleSpy).toHaveBeenCalled();
-
-        consoleSpy.mockRestore();
-      });
+    it.each([
+      {},
+      { traceparent: "invalid-traceparent" },
+      {
+        traceparent: "00-00000000000000000000000000000000-1234567890123456-01",
+      },
+      {
+        traceparent: "00-12345678901234567890123456789012-0000000000000000-01",
+      },
+    ])("returns undefined for an invalid traceparent", (headers) => {
+      expect(
+        parentFromHeaders(headers as Record<string, string>),
+      ).toBeUndefined();
     });
   });
 });
@@ -1766,7 +1090,9 @@ describe("Otel Compat tests Integration", () => {
       expect(uuidSpan.spanId).toMatch(uuidRegex);
       uuidSpan.end();
 
-      // Switch to OTEL compat (hex, wins over legacy).
+      // Switch to the default hex ID mode. OTEL compat only changes context
+      // management now; it does not override the core ID generator.
+      delete process.env.BRAINTRUST_LEGACY_IDS;
       setupOtelCompat();
       _exportsForTestingOnly.resetIdGenStateForTests();
 
@@ -1970,26 +1296,6 @@ describe("export() format selection based on if otel is initialized", () => {
 
     const v4Parsed = SpanComponentsV4.fromStr(exportedV4);
     expect(v4Parsed.data.object_type).toBeDefined();
-  });
-
-  test("exported V4 span can be used as parent", async () => {
-    const testLogger = initLogger({
-      projectName: "test-v4-parent",
-      apiKey: "test-key",
-    });
-
-    const parentSpan = testLogger.startSpan({ name: "parent-span-v4" });
-    const exported = await parentSpan.export();
-    parentSpan.end();
-
-    // Should be able to use V4 exported string as parent
-    const childSpan = testLogger.startSpan({
-      name: "child-span-v4",
-      parent: exported,
-    });
-
-    expect(childSpan.rootSpanId).toBe(parentSpan.rootSpanId);
-    childSpan.end();
   });
 
   test("V4 format uses hex IDs (not UUIDs) when otel is initialized", async () => {

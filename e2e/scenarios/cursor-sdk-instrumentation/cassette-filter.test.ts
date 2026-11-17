@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { expect, test } from "vitest";
+import { expect, test } from "vite-plus/test";
 import { redact } from "./cassette-filter.mjs";
 
 test("redacts Mapbox credentials from binary Statsig configuration", () => {

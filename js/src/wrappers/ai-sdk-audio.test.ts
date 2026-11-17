@@ -1,17 +1,22 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
-  _exportsForTestingOnly,
-  currentSpan,
-  initLogger,
-  TestBackgroundLogger,
-} from "../logger";
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vite-plus/test";
+import { currentSpan, initLogger } from "../logger/core";
+import { _exportsForTestingOnly } from "../logger/testing";
 import { configureNode } from "../node/config";
 import { wrapAISDK } from "./ai-sdk/ai-sdk";
 
 configureNode();
 
-let backgroundLogger: TestBackgroundLogger;
+let backgroundLogger: ReturnType<
+  typeof _exportsForTestingOnly.useTestBackgroundLogger
+>;
 beforeEach(async () => {
   await _exportsForTestingOnly.simulateLoginForTests();
   backgroundLogger = _exportsForTestingOnly.useTestBackgroundLogger();
@@ -19,7 +24,7 @@ beforeEach(async () => {
     projectName: "ai-sdk-audio.test.ts",
     projectId: "test-project-id",
   });
-  vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", "");
+  vi.stubEnv("BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS", "");
   vi.stubEnv("BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS", "");
   vi.stubEnv("BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS", "");
 });
@@ -99,7 +104,7 @@ for (const [shared, direction, capture] of [
   ["1", "1", true],
 ] as const) {
   test(`speech capture requires both flags (${shared}, ${direction})`, async () => {
-    vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", shared);
+    vi.stubEnv("BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS", shared);
     vi.stubEnv("BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS", direction);
     const bytes = vi.fn(() => new Uint8Array([1, 2, 3]));
     const audio = {
@@ -160,7 +165,7 @@ for (const audio of [
   new URL("data:audio/wav;base64,AQID"),
 ]) {
   test(`captures transcription input ${audio.constructor.name} only with user consent`, async () => {
-    vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", "true");
+    vi.stubEnv("BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS", "true");
     vi.stubEnv("BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS", "true");
     const operation = vi.fn(
       async (params: { audio: unknown; model: typeof model }) => {
@@ -196,7 +201,7 @@ test("retains remote references without fetching them", async () => {
 });
 
 test("honors span_info and denyOutputPaths", async () => {
-  vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", "true");
+  vi.stubEnv("BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS", "true");
   vi.stubEnv("BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS", "true");
   const bytes = vi.fn(() => new Uint8Array([1, 2, 3]));
   const operation = vi.fn(async (_params: unknown) => ({
@@ -249,7 +254,7 @@ for (const synchronous of [false, true]) {
 }
 
 test("captures v4 mimeType and snapshots only the returned byte range", async () => {
-  vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", "true");
+  vi.stubEnv("BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS", "true");
   vi.stubEnv("BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS", "true");
   const backing = new Uint8Array([9, 1, 2, 3, 9]);
   const audio = { mimeType: "audio/mp3", uint8Array: backing.subarray(1, 4) };

@@ -1,5 +1,6 @@
+import { registerInstrumentation } from "../instrumentation/registrations/mcpHandler";
 import { debugLogger } from "../debug-logger";
-import { mcpHandlerChannels } from "../instrumentation/plugins/mcp-handler-interceptors";
+import { mcpHandlerChannels } from "../instrumentation/providers/mcp-handler-interceptors";
 import type { MCPHandlerCreator } from "../vendor-sdk-types/mcp-handler";
 
 const wrappers = new WeakMap<MCPHandlerCreator, MCPHandlerCreator>();
@@ -26,6 +27,7 @@ export function wrapMCPHandler<T>(createMcpHandler: T): T {
     debugLogger.notice.warn("Unsupported MCP handler factory. Not wrapping.");
     return createMcpHandler;
   }
+  registerInstrumentation();
   const factory = createMcpHandler as MCPHandlerCreator;
   const cached = wrappers.get(factory);
   if (cached) return cached as T;

@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { langGraphSDKChannels } from "../../instrumentation/plugins/langgraph-sdk-interceptors";
+import { langGraphSDKChannels } from "../../instrumentation/providers/langgraph-sdk-interceptors";
 
 // Both entrypoints share RunsClient. v2 bundles the subclients into client.*.
 export const langGraphSDKConfigs: InstrumentationConfig[] = [

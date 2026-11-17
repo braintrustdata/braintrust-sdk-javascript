@@ -151,7 +151,6 @@
                     "url": "https://eve.dev/docs/guides/instrumentation"
                   },
                   "metadata": {
-                    "eve.action_kind": "tool-call",
                     "eve.session_id": "<eve.session_id:1>",
                     "scenario": "eve-instrumentation",
                     "testRunId": "<run:1>"
@@ -259,6 +258,13 @@
                 "scenario": "eve-instrumentation",
                 "testRunId": "<run:1>"
               },
+              "metrics": {
+                "completion_tokens": 337,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 2980,
+                "tokens": 3317
+              },
               "context": {
                 "caller_filename": "<node-internal>",
                 "caller_functionname": "<node-internal>",
@@ -271,7 +277,6 @@
           },
           "output": "Started task researcher-<id>. Its result will arrive in a <task_result> message. To send it another message, call researcher again with taskId researcher-<id>.",
           "metadata": {
-            "eve.action_kind": "tool-call",
             "eve.session_id": "<eve.session_id:1>",
             "scenario": "eve-instrumentation",
             "testRunId": "<run:1>"
@@ -296,7 +301,6 @@
             "url": "https://eve.dev/docs/guides/instrumentation"
           },
           "metadata": {
-            "eve.action_kind": "tool-call",
             "eve.session_id": "<eve.session_id:1>",
             "scenario": "eve-instrumentation",
             "testRunId": "<run:1>"
@@ -429,7 +433,6 @@
           "children": [],
           "output": "researcher-<id> completed; its result follows.",
           "metadata": {
-            "eve.action_kind": "tool-call",
             "eve.session_id": "<eve.session_id:1>",
             "scenario": "eve-instrumentation",
             "testRunId": "<run:1>"
@@ -595,6 +598,13 @@
         "eve.session_id": "<eve.session_id:1>",
         "scenario": "eve-instrumentation",
         "testRunId": "<run:1>"
+      },
+      "metrics": {
+        "completion_tokens": 1227,
+        "prompt_cache_creation_tokens": 0,
+        "prompt_cached_tokens": 0,
+        "prompt_tokens": 8323,
+        "tokens": 9550
       },
       "context": {
         "caller_filename": "<node-internal>",
@@ -864,7 +874,6 @@
                     "url": "https://eve.dev/docs/guides/instrumentation"
                   },
                   "metadata": {
-                    "eve.action_kind": "tool-call",
                     "eve.session_id": "<eve.session_id:1>",
                     "scenario": "eve-instrumentation",
                     "testRunId": "<run:1>"
@@ -972,6 +981,13 @@
                 "scenario": "eve-instrumentation",
                 "testRunId": "<run:1>"
               },
+              "metrics": {
+                "completion_tokens": 347,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 2996,
+                "tokens": 3343
+              },
               "context": {
                 "caller_filename": "<node-internal>",
                 "caller_functionname": "<node-internal>",
@@ -984,7 +1000,6 @@
           },
           "output": "Started task researcher-<id>. Its result will arrive in a <task_result> message. To send it another message, call researcher again with taskId researcher-<id>.",
           "metadata": {
-            "eve.action_kind": "tool-call",
             "eve.session_id": "<eve.session_id:1>",
             "scenario": "eve-instrumentation",
             "testRunId": "<run:1>"
@@ -1009,7 +1024,6 @@
             "url": "https://eve.dev/docs/guides/instrumentation"
           },
           "metadata": {
-            "eve.action_kind": "tool-call",
             "eve.session_id": "<eve.session_id:1>",
             "scenario": "eve-instrumentation",
             "testRunId": "<run:1>"
@@ -1253,7 +1267,6 @@
           "children": [],
           "output": "researcher-<id> completed; its result follows.",
           "metadata": {
-            "eve.action_kind": "tool-call",
             "eve.session_id": "<eve.session_id:1>",
             "scenario": "eve-instrumentation",
             "testRunId": "<run:1>"
@@ -1531,6 +1544,13 @@
         "scenario": "eve-instrumentation",
         "testRunId": "<run:1>"
       },
+      "metrics": {
+        "completion_tokens": 1020,
+        "prompt_cache_creation_tokens": 0,
+        "prompt_cached_tokens": 0,
+        "prompt_tokens": 9594,
+        "tokens": 10614
+      },
       "context": {
         "caller_filename": "<node-internal>",
         "caller_functionname": "<node-internal>",
@@ -1692,7 +1712,6 @@
                         "url": "https://eve.dev/docs/guides/instrumentation"
                       },
                       "metadata": {
-                        "eve.action_kind": "tool-call",
                         "eve.session_id": "<eve.session_id:1>",
                         "scenario": "eve-instrumentation",
                         "testRunId": "<run:1>"
@@ -1800,6 +1819,13 @@
                     "scenario": "eve-instrumentation",
                     "testRunId": "<run:1>"
                   },
+                  "metrics": {
+                    "completion_tokens": 298,
+                    "prompt_cache_creation_tokens": 0,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 2980,
+                    "tokens": 3278
+                  },
                   "context": {
                     "caller_filename": "<node-internal>",
                     "caller_functionname": "<node-internal>",
@@ -1812,7 +1838,6 @@
               },
               "output": "Started task researcher-<id>. Its result will arrive in a <task_result> message. To send it another message, call researcher again with taskId researcher-<id>.",
               "metadata": {
-                "eve.action_kind": "tool-call",
                 "eve.session_id": "<eve.session_id:1>",
                 "scenario": "eve-instrumentation",
                 "testRunId": "<run:1>"
@@ -1837,7 +1862,6 @@
                 "url": "https://eve.dev/docs/guides/instrumentation"
               },
               "metadata": {
-                "eve.action_kind": "tool-call",
                 "eve.session_id": "<eve.session_id:1>",
                 "scenario": "eve-instrumentation",
                 "testRunId": "<run:1>"
@@ -1970,7 +1994,6 @@
               "children": [],
               "output": "researcher-<id> completed; its result follows.",
               "metadata": {
-                "eve.action_kind": "tool-call",
                 "eve.session_id": "<eve.session_id:1>",
                 "scenario": "eve-instrumentation",
                 "testRunId": "<run:1>"
@@ -2136,6 +2159,13 @@
             "eve.session_id": "<eve.session_id:1>",
             "scenario": "eve-instrumentation",
             "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "completion_tokens": 1579,
+            "prompt_cache_creation_tokens": 0,
+            "prompt_cached_tokens": 0,
+            "prompt_tokens": 8247,
+            "tokens": 9826
           },
           "context": {
             "caller_filename": "<node-internal>",

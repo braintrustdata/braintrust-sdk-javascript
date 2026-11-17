@@ -1,6 +1,6 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vite-plus/test";
 import { debugLogger } from "../debug-logger";
-import { ollamaChannels } from "../instrumentation/plugins/ollama-interceptors";
+import { ollamaChannels } from "../instrumentation/providers/ollama-interceptors";
 import type { OllamaClient } from "../vendor-sdk-types/ollama";
 import { wrapOllama } from "./ollama";
 

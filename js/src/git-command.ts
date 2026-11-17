@@ -16,7 +16,7 @@ function executableSearchPath(): string | undefined {
 }
 
 export async function findGitExecutable(
-  searchPath = executableSearchPath(),
+  searchPath: string | undefined = executableSearchPath(),
 ): Promise<string | undefined> {
   if (!searchPath) {
     return undefined;
