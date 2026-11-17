@@ -6491,7 +6491,6 @@ span_tree:
     │           }
     │         },
     │         "temperature": 0,
-    │         "toolChoice": "required",
     │         "tools": {
     │           "lookup_signups": {
     │             "description": "Look up today's signups",
@@ -6534,38 +6533,21 @@ span_tree:
     │             "type": "tool-result"
     │           },
     │           {
-    │             "input": {},
     │             "providerMetadata": {
     │               "openai": {
-    │                 "itemId": "<itemId:6>"
+    │                 "itemId": "<itemId:5>",
+    │                 "phase": "final_answer"
     │               }
     │             },
-    │             "toolCallId": "<toolCallId:5>",
-    │             "toolName": "lookup_signups",
-    │             "type": "tool-call"
-    │           },
-    │           {
-    │             "dynamic": false,
-    │             "input": {},
-    │             "output": {
-    │               "type": "text",
-    │               "value": "1 signup; rows hidden from the model"
-    │             },
-    │             "providerMetadata": {
-    │               "openai": {
-    │                 "itemId": "<itemId:6>"
-    │               }
-    │             },
-    │             "toolCallId": "<toolCallId:5>",
-    │             "toolName": "lookup_signups",
-    │             "type": "tool-result"
+    │             "text": "1",
+    │             "type": "text"
     │           }
     │         ],
-    │         "finishReason": "tool-calls",
+    │         "finishReason": "stop",
     │         "providerMetadata": {
     │           "openai": {
     │             "reasoningContext": "current_turn",
-    │             "responseId": "<responseId:7>",
+    │             "responseId": "<responseId:6>",
     │             "serviceTier": "default"
     │           }
     │         },
@@ -6574,37 +6556,17 @@ span_tree:
     │             {
     │               "content": [
     │                 {
-    │                   "input": {},
     │                   "providerOptions": {
     │                     "openai": {
-    │                       "itemId": "<itemId:6>"
+    │                       "itemId": "<itemId:5>",
+    │                       "phase": "final_answer"
     │                     }
     │                   },
-    │                   "toolCallId": "<toolCallId:5>",
-    │                   "toolName": "lookup_signups",
-    │                   "type": "tool-call"
+    │                   "text": "1",
+    │                   "type": "text"
     │                 }
     │               ],
     │               "role": "assistant"
-    │             },
-    │             {
-    │               "content": [
-    │                 {
-    │                   "output": {
-    │                     "type": "text",
-    │                     "value": "1 signup; rows hidden from the model"
-    │                   },
-    │                   "providerOptions": {
-    │                     "openai": {
-    │                       "itemId": "<itemId:6>"
-    │                     }
-    │                   },
-    │                   "toolCallId": "<toolCallId:5>",
-    │                   "toolName": "lookup_signups",
-    │                   "type": "tool-result"
-    │                 }
-    │               ],
-    │               "role": "tool"
     │             }
     │           ],
     │           "modelId": "gpt-5.4-nano-2026-03-17",
@@ -6715,6 +6677,10 @@ span_tree:
     │                 "input_tokens": 56,
     │                 "input_tokens_details": {
     │                   "cache_write_tokens": 0,
+    │                   "cache_write_tokens_details": {
+    │                     "ttl_12h_tokens": 0,
+    │                     "ttl_30m_tokens": 0
+    │                   },
     │                   "cached_tokens": 0
     │                 },
     │                 "output_tokens": 15,
@@ -6737,34 +6703,17 @@ span_tree:
     │             "callId": "<callId:1>",
     │             "content": [
     │               {
-    │                 "input": {},
     │                 "providerMetadata": {
     │                   "openai": {
-    │                     "itemId": "<itemId:6>"
+    │                     "itemId": "<itemId:5>",
+    │                     "phase": "final_answer"
     │                   }
     │                 },
-    │                 "toolCallId": "<toolCallId:5>",
-    │                 "toolName": "lookup_signups",
-    │                 "type": "tool-call"
-    │               },
-    │               {
-    │                 "dynamic": false,
-    │                 "input": {},
-    │                 "output": {
-    │                   "type": "text",
-    │                   "value": "1 signup; rows hidden from the model"
-    │                 },
-    │                 "providerMetadata": {
-    │                   "openai": {
-    │                     "itemId": "<itemId:6>"
-    │                   }
-    │                 },
-    │                 "toolCallId": "<toolCallId:5>",
-    │                 "toolName": "lookup_signups",
-    │                 "type": "tool-result"
+    │                 "text": "1",
+    │                 "type": "text"
     │               }
     │             ],
-    │             "finishReason": "tool-calls",
+    │             "finishReason": "stop",
     │             "model": {
     │               "modelId": "gpt-5.4-nano-2026-03-17",
     │               "provider": "openai.responses"
@@ -6772,7 +6721,7 @@ span_tree:
     │             "providerMetadata": {
     │               "openai": {
     │                 "reasoningContext": "current_turn",
-    │                 "responseId": "<responseId:7>",
+    │                 "responseId": "<responseId:6>",
     │                 "serviceTier": "default"
     │               }
     │             },
@@ -6781,37 +6730,17 @@ span_tree:
     │                 {
     │                   "content": [
     │                     {
-    │                       "input": {},
     │                       "providerOptions": {
     │                         "openai": {
-    │                           "itemId": "<itemId:6>"
+    │                           "itemId": "<itemId:5>",
+    │                           "phase": "final_answer"
     │                         }
     │                       },
-    │                       "toolCallId": "<toolCallId:5>",
-    │                       "toolName": "lookup_signups",
-    │                       "type": "tool-call"
+    │                       "text": "1",
+    │                       "type": "text"
     │                     }
     │                   ],
     │                   "role": "assistant"
-    │                 },
-    │                 {
-    │                   "content": [
-    │                     {
-    │                       "output": {
-    │                         "type": "text",
-    │                         "value": "1 signup; rows hidden from the model"
-    │                       },
-    │                       "providerOptions": {
-    │                         "openai": {
-    │                           "itemId": "<itemId:6>"
-    │                         }
-    │                       },
-    │                       "toolCallId": "<toolCallId:5>",
-    │                       "toolName": "lookup_signups",
-    │                       "type": "tool-result"
-    │                     }
-    │                   ],
-    │                   "role": "tool"
     │                 }
     │               ],
     │               "modelId": "gpt-5.4-nano-2026-03-17",
@@ -6829,22 +6758,26 @@ span_tree:
     │               "inputTokens": 91,
     │               "outputTokenDetails": {
     │                 "reasoningTokens": 0,
-    │                 "textTokens": 15
+    │                 "textTokens": 5
     │               },
-    │               "outputTokens": 15,
+    │               "outputTokens": 5,
     │               "raw": {
     │                 "input_tokens": 91,
     │                 "input_tokens_details": {
     │                   "cache_write_tokens": 0,
+    │                   "cache_write_tokens_details": {
+    │                     "ttl_12h_tokens": 0,
+    │                     "ttl_30m_tokens": 0
+    │                   },
     │                   "cached_tokens": 0
     │                 },
-    │                 "output_tokens": 15,
+    │                 "output_tokens": 5,
     │                 "output_tokens_details": {
     │                   "reasoning_tokens": 0
     │                 },
-    │                 "total_tokens": 106
+    │                 "total_tokens": 96
     │               },
-    │               "totalTokens": 106
+    │               "totalTokens": 96
     │             },
     │             "warnings": [
     │               {
@@ -6855,7 +6788,7 @@ span_tree:
     │             ]
     │           }
     │         ],
-    │         "text": "",
+    │         "text": "1",
     │         "toolCalls": [
     │           {
     │             "input": {},
@@ -6865,17 +6798,6 @@ span_tree:
     │               }
     │             },
     │             "toolCallId": "<toolCallId:2>",
-    │             "toolName": "lookup_signups",
-    │             "type": "tool-call"
-    │           },
-    │           {
-    │             "input": {},
-    │             "providerMetadata": {
-    │               "openai": {
-    │                 "itemId": "<itemId:6>"
-    │               }
-    │             },
-    │             "toolCallId": "<toolCallId:5>",
     │             "toolName": "lookup_signups",
     │             "type": "tool-call"
     │           }
@@ -6896,22 +6818,6 @@ span_tree:
     │             "toolCallId": "<toolCallId:2>",
     │             "toolName": "lookup_signups",
     │             "type": "tool-result"
-    │           },
-    │           {
-    │             "dynamic": false,
-    │             "input": {},
-    │             "output": {
-    │               "type": "text",
-    │               "value": "1 signup; rows hidden from the model"
-    │             },
-    │             "providerMetadata": {
-    │               "openai": {
-    │                 "itemId": "<itemId:6>"
-    │               }
-    │             },
-    │             "toolCallId": "<toolCallId:5>",
-    │             "toolName": "lookup_signups",
-    │             "type": "tool-result"
     │           }
     │         ],
     │         "totalUsage": {
@@ -6923,10 +6829,10 @@ span_tree:
     │           "inputTokens": 147,
     │           "outputTokenDetails": {
     │             "reasoningTokens": 0,
-    │             "textTokens": 30
+    │             "textTokens": 20
     │           },
-    │           "outputTokens": 30,
-    │           "totalTokens": 177
+    │           "outputTokens": 20,
+    │           "totalTokens": 167
     │         },
     │         "usage": {
     │           "inputTokenDetails": {
@@ -6937,10 +6843,10 @@ span_tree:
     │           "inputTokens": 147,
     │           "outputTokenDetails": {
     │             "reasoningTokens": 0,
-    │             "textTokens": 30
+    │             "textTokens": 20
     │           },
-    │           "outputTokens": 30,
-    │           "totalTokens": 177
+    │           "outputTokens": 20,
+    │           "totalTokens": 167
     │         },
     │         "warnings": [
     │           {
@@ -7030,6 +6936,10 @@ span_tree:
     │       │         "input_tokens": 56,
     │       │         "input_tokens_details": {
     │       │           "cache_write_tokens": 0,
+    │       │           "cache_write_tokens_details": {
+    │       │             "ttl_12h_tokens": 0,
+    │       │             "ttl_30m_tokens": 0
+    │       │           },
     │       │           "cached_tokens": 0
     │       │         },
     │       │         "output_tokens": 15,
@@ -7070,147 +6980,137 @@ span_tree:
     │       │     "toolCallId": "<toolCallId:1>",
     │       │     "toolName": "lookup_signups"
     │       │   }
-    │       ├── doGenerate [llm]
-    │       │   input: {
-    │       │     "maxOutputTokens": 32,
-    │       │     "messages": [
-    │       │       {
-    │       │         "content": "Use the lookup_signups tool to count today's signups, then reply with the count only.",
-    │       │         "role": "user"
-    │       │       },
-    │       │       {
-    │       │         "content": [
-    │       │           {
-    │       │             "input": {},
-    │       │             "providerOptions": {
-    │       │               "openai": {
-    │       │                 "itemId": "<itemId:2>"
-    │       │               }
-    │       │             },
-    │       │             "toolCallId": "<toolCallId:1>",
-    │       │             "toolName": "lookup_signups",
-    │       │             "type": "tool-call"
-    │       │           }
-    │       │         ],
-    │       │         "role": "assistant"
-    │       │       },
-    │       │       {
-    │       │         "content": [
-    │       │           {
-    │       │             "output": {
-    │       │               "type": "text",
-    │       │               "value": "1 signup; rows hidden from the model"
-    │       │             },
-    │       │             "providerOptions": {
-    │       │               "openai": {
-    │       │                 "itemId": "<itemId:2>"
-    │       │               }
-    │       │             },
-    │       │             "toolCallId": "<toolCallId:1>",
-    │       │             "toolName": "lookup_signups",
-    │       │             "type": "tool-result"
-    │       │           }
-    │       │         ],
-    │       │         "role": "tool"
-    │       │       }
-    │       │     ],
-    │       │     "model": {
-    │       │       "modelId": "gpt-5.4-nano-2026-03-17",
-    │       │       "provider": "openai.responses"
-    │       │     },
-    │       │     "temperature": 0,
-    │       │     "tools": [
-    │       │       {
-    │       │         "description": "Look up today's signups",
-    │       │         "inputSchema": {
-    │       │           "$schema": "http://json-schema.org/draft-07/schema#",
-    │       │           "additionalProperties": false,
-    │       │           "properties": {},
-    │       │           "type": "object"
-    │       │         },
-    │       │         "name": "lookup_signups",
-    │       │         "type": "function"
-    │       │       }
-    │       │     ]
-    │       │   }
-    │       │   output: {
-    │       │     "content": [
-    │       │       {
-    │       │         "input": {},
-    │       │         "providerMetadata": {
-    │       │           "openai": {
-    │       │             "itemId": "<itemId:3>"
-    │       │           }
-    │       │         },
-    │       │         "toolCallId": "<toolCallId:2>",
-    │       │         "toolName": "lookup_signups",
-    │       │         "type": "tool-call"
-    │       │       }
-    │       │     ],
-    │       │     "finishReason": "tool-calls",
-    │       │     "providerMetadata": {
-    │       │       "openai": {
-    │       │         "reasoningContext": "current_turn",
-    │       │         "responseId": "<responseId:1>",
-    │       │         "serviceTier": "default"
-    │       │       }
-    │       │     },
-    │       │     "response": {},
-    │       │     "usage": {
-    │       │       "inputTokenDetails": {
-    │       │         "cacheReadTokens": 0,
-    │       │         "cacheWriteTokens": 0,
-    │       │         "noCacheTokens": 91
-    │       │       },
-    │       │       "inputTokens": 91,
-    │       │       "outputTokenDetails": {
-    │       │         "reasoningTokens": 0,
-    │       │         "textTokens": 15
-    │       │       },
-    │       │       "outputTokens": 15,
-    │       │       "raw": {
-    │       │         "input_tokens": 91,
-    │       │         "input_tokens_details": {
-    │       │           "cache_write_tokens": 0,
-    │       │           "cached_tokens": 0
-    │       │         },
-    │       │         "output_tokens": 15,
-    │       │         "output_tokens_details": {
-    │       │           "reasoning_tokens": 0
-    │       │         },
-    │       │         "total_tokens": 106
-    │       │       },
-    │       │       "totalTokens": 106
-    │       │     }
-    │       │   }
-    │       │   metadata: {
-    │       │     "braintrust": {
-    │       │       "integration_name": "ai-sdk",
-    │       │       "sdk_language": "typescript"
-    │       │     },
-    │       │     "model": "gpt-5.4-nano-2026-03-17",
-    │       │     "provider": "openai.responses",
-    │       │     "served_service_tier": "default"
-    │       │   }
-    │       │   metrics: {
-    │       │     "completion_tokens": 15,
-    │       │     "prompt_cache_creation_tokens": 0,
-    │       │     "prompt_cached_tokens": 0,
-    │       │     "prompt_tokens": 91,
-    │       │     "tokens": 106
-    │       │   }
-    │       └── lookup_signups [tool]
+    │       └── doGenerate [llm]
+    │           input: {
+    │             "maxOutputTokens": 32,
+    │             "messages": [
+    │               {
+    │                 "content": "Use the lookup_signups tool to count today's signups, then reply with the count only.",
+    │                 "role": "user"
+    │               },
+    │               {
+    │                 "content": [
+    │                   {
+    │                     "input": {},
+    │                     "providerOptions": {
+    │                       "openai": {
+    │                         "itemId": "<itemId:2>"
+    │                       }
+    │                     },
+    │                     "toolCallId": "<toolCallId:1>",
+    │                     "toolName": "lookup_signups",
+    │                     "type": "tool-call"
+    │                   }
+    │                 ],
+    │                 "role": "assistant"
+    │               },
+    │               {
+    │                 "content": [
+    │                   {
+    │                     "output": {
+    │                       "type": "text",
+    │                       "value": "1 signup; rows hidden from the model"
+    │                     },
+    │                     "providerOptions": {
+    │                       "openai": {
+    │                         "itemId": "<itemId:2>"
+    │                       }
+    │                     },
+    │                     "toolCallId": "<toolCallId:1>",
+    │                     "toolName": "lookup_signups",
+    │                     "type": "tool-result"
+    │                   }
+    │                 ],
+    │                 "role": "tool"
+    │               }
+    │             ],
+    │             "model": {
+    │               "modelId": "gpt-5.4-nano-2026-03-17",
+    │               "provider": "openai.responses"
+    │             },
+    │             "temperature": 0,
+    │             "tools": [
+    │               {
+    │                 "description": "Look up today's signups",
+    │                 "inputSchema": {
+    │                   "$schema": "http://json-schema.org/draft-07/schema#",
+    │                   "additionalProperties": false,
+    │                   "properties": {},
+    │                   "type": "object"
+    │                 },
+    │                 "name": "lookup_signups",
+    │                 "type": "function"
+    │               }
+    │             ]
+    │           }
     │           output: {
-    │             "type": "text",
-    │             "value": "1 signup; rows hidden from the model"
+    │             "content": [
+    │               {
+    │                 "providerMetadata": {
+    │                   "openai": {
+    │                     "itemId": "<itemId:2>",
+    │                     "phase": "final_answer"
+    │                   }
+    │                 },
+    │                 "text": "1",
+    │                 "type": "text"
+    │               }
+    │             ],
+    │             "finishReason": "stop",
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "reasoningContext": "current_turn",
+    │                 "responseId": "<responseId:1>",
+    │                 "serviceTier": "default"
+    │               }
+    │             },
+    │             "response": {},
+    │             "usage": {
+    │               "inputTokenDetails": {
+    │                 "cacheReadTokens": 0,
+    │                 "cacheWriteTokens": 0,
+    │                 "noCacheTokens": 91
+    │               },
+    │               "inputTokens": 91,
+    │               "outputTokenDetails": {
+    │                 "reasoningTokens": 0,
+    │                 "textTokens": 5
+    │               },
+    │               "outputTokens": 5,
+    │               "raw": {
+    │                 "input_tokens": 91,
+    │                 "input_tokens_details": {
+    │                   "cache_write_tokens": 0,
+    │                   "cache_write_tokens_details": {
+    │                     "ttl_12h_tokens": 0,
+    │                     "ttl_30m_tokens": 0
+    │                   },
+    │                   "cached_tokens": 0
+    │                 },
+    │                 "output_tokens": 5,
+    │                 "output_tokens_details": {
+    │                   "reasoning_tokens": 0
+    │                 },
+    │                 "total_tokens": 96
+    │               },
+    │               "totalTokens": 96
+    │             }
     │           }
     │           metadata: {
     │             "braintrust": {
     │               "integration_name": "ai-sdk",
     │               "sdk_language": "typescript"
     │             },
-    │             "toolCallId": "<toolCallId:1>",
-    │             "toolName": "lookup_signups"
+    │             "model": "gpt-5.4-nano-2026-03-17",
+    │             "provider": "openai.responses",
+    │             "served_service_tier": "default"
+    │           }
+    │           metrics: {
+    │             "completion_tokens": 5,
+    │             "prompt_cache_creation_tokens": 0,
+    │             "prompt_cached_tokens": 0,
+    │             "prompt_tokens": 91,
+    │             "tokens": 96
     │           }
     ├── ai-sdk-tool-model-output-stream-operation
     │   metadata: {
@@ -7237,7 +7137,6 @@ span_tree:
     │           }
     │         },
     │         "temperature": 0,
-    │         "toolChoice": "required",
     │         "tools": {
     │           "lookup_signups": {
     │             "description": "Look up today's signups",
@@ -7280,38 +7179,21 @@ span_tree:
     │             "type": "tool-result"
     │           },
     │           {
-    │             "input": {},
     │             "providerMetadata": {
     │               "openai": {
-    │                 "itemId": "<itemId:6>"
+    │                 "itemId": "<itemId:5>",
+    │                 "phase": "final_answer"
     │               }
     │             },
-    │             "toolCallId": "<toolCallId:5>",
-    │             "toolName": "lookup_signups",
-    │             "type": "tool-call"
-    │           },
-    │           {
-    │             "dynamic": false,
-    │             "input": {},
-    │             "output": {
-    │               "type": "text",
-    │               "value": "1 signup; rows hidden from the model"
-    │             },
-    │             "providerMetadata": {
-    │               "openai": {
-    │                 "itemId": "<itemId:6>"
-    │               }
-    │             },
-    │             "toolCallId": "<toolCallId:5>",
-    │             "toolName": "lookup_signups",
-    │             "type": "tool-result"
+    │             "text": "1",
+    │             "type": "text"
     │           }
     │         ],
-    │         "finishReason": "tool-calls",
+    │         "finishReason": "stop",
     │         "providerMetadata": {
     │           "openai": {
     │             "reasoningContext": "current_turn",
-    │             "responseId": "<responseId:7>",
+    │             "responseId": "<responseId:6>",
     │             "serviceTier": "default"
     │           }
     │         },
@@ -7320,37 +7202,17 @@ span_tree:
     │             {
     │               "content": [
     │                 {
-    │                   "input": {},
     │                   "providerOptions": {
     │                     "openai": {
-    │                       "itemId": "<itemId:6>"
+    │                       "itemId": "<itemId:5>",
+    │                       "phase": "final_answer"
     │                     }
     │                   },
-    │                   "toolCallId": "<toolCallId:5>",
-    │                   "toolName": "lookup_signups",
-    │                   "type": "tool-call"
+    │                   "text": "1",
+    │                   "type": "text"
     │                 }
     │               ],
     │               "role": "assistant"
-    │             },
-    │             {
-    │               "content": [
-    │                 {
-    │                   "output": {
-    │                     "type": "text",
-    │                     "value": "1 signup; rows hidden from the model"
-    │                   },
-    │                   "providerOptions": {
-    │                     "openai": {
-    │                       "itemId": "<itemId:6>"
-    │                     }
-    │                   },
-    │                   "toolCallId": "<toolCallId:5>",
-    │                   "toolName": "lookup_signups",
-    │                   "type": "tool-result"
-    │                 }
-    │               ],
-    │               "role": "tool"
     │             }
     │           ],
     │           "modelId": "gpt-5.4-nano-2026-03-17",
@@ -7461,6 +7323,10 @@ span_tree:
     │                 "input_tokens": 56,
     │                 "input_tokens_details": {
     │                   "cache_write_tokens": 0,
+    │                   "cache_write_tokens_details": {
+    │                     "ttl_12h_tokens": 0,
+    │                     "ttl_30m_tokens": 0
+    │                   },
     │                   "cached_tokens": 0
     │                 },
     │                 "output_tokens": 15,
@@ -7483,34 +7349,17 @@ span_tree:
     │             "callId": "<callId:1>",
     │             "content": [
     │               {
-    │                 "input": {},
     │                 "providerMetadata": {
     │                   "openai": {
-    │                     "itemId": "<itemId:6>"
+    │                     "itemId": "<itemId:5>",
+    │                     "phase": "final_answer"
     │                   }
     │                 },
-    │                 "toolCallId": "<toolCallId:5>",
-    │                 "toolName": "lookup_signups",
-    │                 "type": "tool-call"
-    │               },
-    │               {
-    │                 "dynamic": false,
-    │                 "input": {},
-    │                 "output": {
-    │                   "type": "text",
-    │                   "value": "1 signup; rows hidden from the model"
-    │                 },
-    │                 "providerMetadata": {
-    │                   "openai": {
-    │                     "itemId": "<itemId:6>"
-    │                   }
-    │                 },
-    │                 "toolCallId": "<toolCallId:5>",
-    │                 "toolName": "lookup_signups",
-    │                 "type": "tool-result"
+    │                 "text": "1",
+    │                 "type": "text"
     │               }
     │             ],
-    │             "finishReason": "tool-calls",
+    │             "finishReason": "stop",
     │             "model": {
     │               "modelId": "gpt-5.4-nano-2026-03-17",
     │               "provider": "openai.responses"
@@ -7518,7 +7367,7 @@ span_tree:
     │             "providerMetadata": {
     │               "openai": {
     │                 "reasoningContext": "current_turn",
-    │                 "responseId": "<responseId:7>",
+    │                 "responseId": "<responseId:6>",
     │                 "serviceTier": "default"
     │               }
     │             },
@@ -7527,37 +7376,17 @@ span_tree:
     │                 {
     │                   "content": [
     │                     {
-    │                       "input": {},
     │                       "providerOptions": {
     │                         "openai": {
-    │                           "itemId": "<itemId:6>"
+    │                           "itemId": "<itemId:5>",
+    │                           "phase": "final_answer"
     │                         }
     │                       },
-    │                       "toolCallId": "<toolCallId:5>",
-    │                       "toolName": "lookup_signups",
-    │                       "type": "tool-call"
+    │                       "text": "1",
+    │                       "type": "text"
     │                     }
     │                   ],
     │                   "role": "assistant"
-    │                 },
-    │                 {
-    │                   "content": [
-    │                     {
-    │                       "output": {
-    │                         "type": "text",
-    │                         "value": "1 signup; rows hidden from the model"
-    │                       },
-    │                       "providerOptions": {
-    │                         "openai": {
-    │                           "itemId": "<itemId:6>"
-    │                         }
-    │                       },
-    │                       "toolCallId": "<toolCallId:5>",
-    │                       "toolName": "lookup_signups",
-    │                       "type": "tool-result"
-    │                     }
-    │                   ],
-    │                   "role": "tool"
     │                 }
     │               ],
     │               "modelId": "gpt-5.4-nano-2026-03-17",
@@ -7575,22 +7404,26 @@ span_tree:
     │               "inputTokens": 91,
     │               "outputTokenDetails": {
     │                 "reasoningTokens": 0,
-    │                 "textTokens": 15
+    │                 "textTokens": 5
     │               },
-    │               "outputTokens": 15,
+    │               "outputTokens": 5,
     │               "raw": {
     │                 "input_tokens": 91,
     │                 "input_tokens_details": {
     │                   "cache_write_tokens": 0,
+    │                   "cache_write_tokens_details": {
+    │                     "ttl_12h_tokens": 0,
+    │                     "ttl_30m_tokens": 0
+    │                   },
     │                   "cached_tokens": 0
     │                 },
-    │                 "output_tokens": 15,
+    │                 "output_tokens": 5,
     │                 "output_tokens_details": {
     │                   "reasoning_tokens": 0
     │                 },
-    │                 "total_tokens": 106
+    │                 "total_tokens": 96
     │               },
-    │               "totalTokens": 106
+    │               "totalTokens": 96
     │             },
     │             "warnings": [
     │               {
@@ -7601,7 +7434,7 @@ span_tree:
     │             ]
     │           }
     │         ],
-    │         "text": "",
+    │         "text": "1",
     │         "toolCalls": [
     │           {
     │             "input": {},
@@ -7611,17 +7444,6 @@ span_tree:
     │               }
     │             },
     │             "toolCallId": "<toolCallId:2>",
-    │             "toolName": "lookup_signups",
-    │             "type": "tool-call"
-    │           },
-    │           {
-    │             "input": {},
-    │             "providerMetadata": {
-    │               "openai": {
-    │                 "itemId": "<itemId:6>"
-    │               }
-    │             },
-    │             "toolCallId": "<toolCallId:5>",
     │             "toolName": "lookup_signups",
     │             "type": "tool-call"
     │           }
@@ -7642,22 +7464,6 @@ span_tree:
     │             "toolCallId": "<toolCallId:2>",
     │             "toolName": "lookup_signups",
     │             "type": "tool-result"
-    │           },
-    │           {
-    │             "dynamic": false,
-    │             "input": {},
-    │             "output": {
-    │               "type": "text",
-    │               "value": "1 signup; rows hidden from the model"
-    │             },
-    │             "providerMetadata": {
-    │               "openai": {
-    │                 "itemId": "<itemId:6>"
-    │               }
-    │             },
-    │             "toolCallId": "<toolCallId:5>",
-    │             "toolName": "lookup_signups",
-    │             "type": "tool-result"
     │           }
     │         ],
     │         "totalUsage": {
@@ -7669,10 +7475,10 @@ span_tree:
     │           "inputTokens": 147,
     │           "outputTokenDetails": {
     │             "reasoningTokens": 0,
-    │             "textTokens": 30
+    │             "textTokens": 20
     │           },
-    │           "outputTokens": 30,
-    │           "totalTokens": 177
+    │           "outputTokens": 20,
+    │           "totalTokens": 167
     │         },
     │         "usage": {
     │           "inputTokenDetails": {
@@ -7683,10 +7489,10 @@ span_tree:
     │           "inputTokens": 147,
     │           "outputTokenDetails": {
     │             "reasoningTokens": 0,
-    │             "textTokens": 30
+    │             "textTokens": 20
     │           },
-    │           "outputTokens": 30,
-    │           "totalTokens": 177
+    │           "outputTokens": 20,
+    │           "totalTokens": 167
     │         },
     │         "warnings": [
     │           {
@@ -7779,6 +7585,10 @@ span_tree:
     │       │         "input_tokens": 56,
     │       │         "input_tokens_details": {
     │       │           "cache_write_tokens": 0,
+    │       │           "cache_write_tokens_details": {
+    │       │             "ttl_12h_tokens": 0,
+    │       │             "ttl_30m_tokens": 0
+    │       │           },
     │       │           "cached_tokens": 0
     │       │         },
     │       │         "output_tokens": 15,
@@ -7819,147 +7629,137 @@ span_tree:
     │       │     "toolCallId": "<toolCallId:1>",
     │       │     "toolName": "lookup_signups"
     │       │   }
-    │       ├── doStream [llm]
-    │       │   input: {
-    │       │     "maxOutputTokens": 32,
-    │       │     "messages": [
-    │       │       {
-    │       │         "content": "Use the lookup_signups tool to count today's signups, then reply with the count only.",
-    │       │         "role": "user"
-    │       │       },
-    │       │       {
-    │       │         "content": [
-    │       │           {
-    │       │             "input": {},
-    │       │             "providerOptions": {
-    │       │               "openai": {
-    │       │                 "itemId": "<itemId:2>"
-    │       │               }
-    │       │             },
-    │       │             "toolCallId": "<toolCallId:1>",
-    │       │             "toolName": "lookup_signups",
-    │       │             "type": "tool-call"
-    │       │           }
-    │       │         ],
-    │       │         "role": "assistant"
-    │       │       },
-    │       │       {
-    │       │         "content": [
-    │       │           {
-    │       │             "output": {
-    │       │               "type": "text",
-    │       │               "value": "1 signup; rows hidden from the model"
-    │       │             },
-    │       │             "providerOptions": {
-    │       │               "openai": {
-    │       │                 "itemId": "<itemId:2>"
-    │       │               }
-    │       │             },
-    │       │             "toolCallId": "<toolCallId:1>",
-    │       │             "toolName": "lookup_signups",
-    │       │             "type": "tool-result"
-    │       │           }
-    │       │         ],
-    │       │         "role": "tool"
-    │       │       }
-    │       │     ],
-    │       │     "model": {
-    │       │       "modelId": "gpt-5.4-nano-2026-03-17",
-    │       │       "provider": "openai.responses"
-    │       │     },
-    │       │     "temperature": 0,
-    │       │     "tools": [
-    │       │       {
-    │       │         "description": "Look up today's signups",
-    │       │         "inputSchema": {
-    │       │           "$schema": "http://json-schema.org/draft-07/schema#",
-    │       │           "additionalProperties": false,
-    │       │           "properties": {},
-    │       │           "type": "object"
-    │       │         },
-    │       │         "name": "lookup_signups",
-    │       │         "type": "function"
-    │       │       }
-    │       │     ]
-    │       │   }
-    │       │   output: {
-    │       │     "content": [
-    │       │       {
-    │       │         "input": {},
-    │       │         "providerMetadata": {
-    │       │           "openai": {
-    │       │             "itemId": "<itemId:3>"
-    │       │           }
-    │       │         },
-    │       │         "toolCallId": "<toolCallId:2>",
-    │       │         "toolName": "lookup_signups",
-    │       │         "type": "tool-call"
-    │       │       }
-    │       │     ],
-    │       │     "finishReason": "tool-calls",
-    │       │     "providerMetadata": {
-    │       │       "openai": {
-    │       │         "reasoningContext": "current_turn",
-    │       │         "responseId": "<responseId:1>",
-    │       │         "serviceTier": "default"
-    │       │       }
-    │       │     },
-    │       │     "response": {},
-    │       │     "usage": {
-    │       │       "inputTokenDetails": {
-    │       │         "cacheReadTokens": 0,
-    │       │         "cacheWriteTokens": 0,
-    │       │         "noCacheTokens": 91
-    │       │       },
-    │       │       "inputTokens": 91,
-    │       │       "outputTokenDetails": {
-    │       │         "reasoningTokens": 0,
-    │       │         "textTokens": 15
-    │       │       },
-    │       │       "outputTokens": 15,
-    │       │       "raw": {
-    │       │         "input_tokens": 91,
-    │       │         "input_tokens_details": {
-    │       │           "cache_write_tokens": 0,
-    │       │           "cached_tokens": 0
-    │       │         },
-    │       │         "output_tokens": 15,
-    │       │         "output_tokens_details": {
-    │       │           "reasoning_tokens": 0
-    │       │         },
-    │       │         "total_tokens": 106
-    │       │       },
-    │       │       "totalTokens": 106
-    │       │     }
-    │       │   }
-    │       │   metadata: {
-    │       │     "braintrust": {
-    │       │       "integration_name": "ai-sdk",
-    │       │       "sdk_language": "typescript"
-    │       │     },
-    │       │     "model": "gpt-5.4-nano-2026-03-17",
-    │       │     "provider": "openai.responses",
-    │       │     "served_service_tier": "default"
-    │       │   }
-    │       │   metrics: {
-    │       │     "completion_tokens": 15,
-    │       │     "prompt_cache_creation_tokens": 0,
-    │       │     "prompt_cached_tokens": 0,
-    │       │     "prompt_tokens": 91,
-    │       │     "tokens": 106
-    │       │   }
-    │       └── lookup_signups [tool]
+    │       └── doStream [llm]
+    │           input: {
+    │             "maxOutputTokens": 32,
+    │             "messages": [
+    │               {
+    │                 "content": "Use the lookup_signups tool to count today's signups, then reply with the count only.",
+    │                 "role": "user"
+    │               },
+    │               {
+    │                 "content": [
+    │                   {
+    │                     "input": {},
+    │                     "providerOptions": {
+    │                       "openai": {
+    │                         "itemId": "<itemId:2>"
+    │                       }
+    │                     },
+    │                     "toolCallId": "<toolCallId:1>",
+    │                     "toolName": "lookup_signups",
+    │                     "type": "tool-call"
+    │                   }
+    │                 ],
+    │                 "role": "assistant"
+    │               },
+    │               {
+    │                 "content": [
+    │                   {
+    │                     "output": {
+    │                       "type": "text",
+    │                       "value": "1 signup; rows hidden from the model"
+    │                     },
+    │                     "providerOptions": {
+    │                       "openai": {
+    │                         "itemId": "<itemId:2>"
+    │                       }
+    │                     },
+    │                     "toolCallId": "<toolCallId:1>",
+    │                     "toolName": "lookup_signups",
+    │                     "type": "tool-result"
+    │                   }
+    │                 ],
+    │                 "role": "tool"
+    │               }
+    │             ],
+    │             "model": {
+    │               "modelId": "gpt-5.4-nano-2026-03-17",
+    │               "provider": "openai.responses"
+    │             },
+    │             "temperature": 0,
+    │             "tools": [
+    │               {
+    │                 "description": "Look up today's signups",
+    │                 "inputSchema": {
+    │                   "$schema": "http://json-schema.org/draft-07/schema#",
+    │                   "additionalProperties": false,
+    │                   "properties": {},
+    │                   "type": "object"
+    │                 },
+    │                 "name": "lookup_signups",
+    │                 "type": "function"
+    │               }
+    │             ]
+    │           }
     │           output: {
-    │             "type": "text",
-    │             "value": "1 signup; rows hidden from the model"
+    │             "content": [
+    │               {
+    │                 "providerMetadata": {
+    │                   "openai": {
+    │                     "itemId": "<itemId:2>",
+    │                     "phase": "final_answer"
+    │                   }
+    │                 },
+    │                 "text": "1",
+    │                 "type": "text"
+    │               }
+    │             ],
+    │             "finishReason": "stop",
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "reasoningContext": "current_turn",
+    │                 "responseId": "<responseId:1>",
+    │                 "serviceTier": "default"
+    │               }
+    │             },
+    │             "response": {},
+    │             "usage": {
+    │               "inputTokenDetails": {
+    │                 "cacheReadTokens": 0,
+    │                 "cacheWriteTokens": 0,
+    │                 "noCacheTokens": 91
+    │               },
+    │               "inputTokens": 91,
+    │               "outputTokenDetails": {
+    │                 "reasoningTokens": 0,
+    │                 "textTokens": 5
+    │               },
+    │               "outputTokens": 5,
+    │               "raw": {
+    │                 "input_tokens": 91,
+    │                 "input_tokens_details": {
+    │                   "cache_write_tokens": 0,
+    │                   "cache_write_tokens_details": {
+    │                     "ttl_12h_tokens": 0,
+    │                     "ttl_30m_tokens": 0
+    │                   },
+    │                   "cached_tokens": 0
+    │                 },
+    │                 "output_tokens": 5,
+    │                 "output_tokens_details": {
+    │                   "reasoning_tokens": 0
+    │                 },
+    │                 "total_tokens": 96
+    │               },
+    │               "totalTokens": 96
+    │             }
     │           }
     │           metadata: {
     │             "braintrust": {
     │               "integration_name": "ai-sdk",
     │               "sdk_language": "typescript"
     │             },
-    │             "toolCallId": "<toolCallId:1>",
-    │             "toolName": "lookup_signups"
+    │             "model": "gpt-5.4-nano-2026-03-17",
+    │             "provider": "openai.responses",
+    │             "served_service_tier": "default"
+    │           }
+    │           metrics: {
+    │             "completion_tokens": 5,
+    │             "prompt_cache_creation_tokens": 0,
+    │             "prompt_cached_tokens": 0,
+    │             "prompt_tokens": 91,
+    │             "tokens": 96
     │           }
     ├── generateText [function]
     │   input: {

@@ -1066,6 +1066,12 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
               task.metadata?.["claude_agent_sdk.tool_use_id"],
           );
           expect(bash).toBeDefined();
+          expect(task.metadata?.["claude_agent_sdk.description"]).toEqual(
+            expect.any(String),
+          );
+          expect(bash?.input).toMatchObject({
+            description: task.metadata?.["claude_agent_sdk.description"],
+          });
           expect(isDescendantOf(events, bash, taskRoot?.span.id)).toBe(true);
           expect(task.span.type).toBe("task");
           expect(task.span.ended).toBe(true);

@@ -1,3 +1,4 @@
+import assert from "node:assert/strict";
 import { wrapAISDK } from "braintrust";
 import { z } from "zod";
 import {
@@ -430,7 +431,10 @@ async function runToolModelOutputOperations({
     // Send prior tool items inline instead of referencing stored responses.
     providerOptions: { openai: { store: false } },
     temperature: 0,
-    toolChoice: "required",
+    // Force the lookup first, then reserve the second step for the answer.
+    prepareStep: ({ stepNumber }) => ({
+      toolChoice: stepNumber === 0 ? "required" : "none",
+    }),
     stopWhen: ai.stepCountIs(2),
     tools: {
       lookup_signups: createModelOutputTool(ai, sdkMajorVersion),
@@ -442,7 +446,9 @@ async function runToolModelOutputOperations({
     "ai-sdk-tool-model-output-operation",
     "tool-model-output",
     async () => {
-      await instrumentedAI.generateText(createRequest());
+      const result = await instrumentedAI.generateText(createRequest());
+      assert.equal(result.text, "1");
+      assert.equal(result.finishReason, "stop");
     },
   );
 
@@ -453,6 +459,8 @@ async function runToolModelOutputOperations({
       const result = await instrumentedAI.streamText(createRequest());
       for await (const _chunk of result.textStream) {
       }
+      assert.equal(await result.text, "1");
+      assert.equal(await result.finishReason, "stop");
     },
   );
 }
