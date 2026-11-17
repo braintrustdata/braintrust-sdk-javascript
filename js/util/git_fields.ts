@@ -1,4 +1,4 @@
-import { GitMetadataSettingsType as GitMetadataSettings } from "./generated_types";
+import type { GitMetadataSettings } from "../src/sdk-types";
 
 export function mergeGitMetadataSettings(
   s1: GitMetadataSettings,

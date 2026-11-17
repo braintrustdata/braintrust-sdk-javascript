@@ -1,6 +1,6 @@
 import { readFile, rm } from "node:fs/promises";
 import { join } from "node:path";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "vite-plus/test";
 import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import {
   prepareScenarioDir,
@@ -19,7 +19,7 @@ const recording = ["record", "record-missing"].includes(
 );
 const timeoutMs = recording ? 22 * 60 * 1000 : 120_000;
 
-describe.sequential("AI SDK batch instrumentation", () => {
+describe("AI SDK batch instrumentation", { concurrent: false }, () => {
   for (const variantKey of ["ai-sdk-v7", "ai-sdk-v7-latest"]) {
     for (const mode of ["manual", "manual-with-auto"]) {
       test(

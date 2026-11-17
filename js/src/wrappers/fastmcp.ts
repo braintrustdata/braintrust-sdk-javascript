@@ -1,5 +1,6 @@
+import { registerInstrumentation } from "../instrumentation/registrations/fastmcp";
 import { debugLogger } from "../debug-logger";
-import { fastMCPChannels } from "../instrumentation/plugins/fastmcp-interceptors";
+import { fastMCPChannels } from "../instrumentation/providers/fastmcp-interceptors";
 import type {
   FastMCPModule,
   FastMCPSession,
@@ -32,6 +33,7 @@ export function wrapFastMCP<T>(module: T): T {
     debugLogger.notice.warn("Unsupported FastMCP module. Not wrapping.");
     return module;
   }
+  registerInstrumentation();
   const fastmcp = module as unknown as FastMCPModule;
   const prototype = fastmcp.FastMCPSession.prototype;
   const original = prototype.connect;

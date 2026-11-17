@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "vite-plus/test";
 import {
   prepareScenarioDir,
   resolveScenarioDir,
@@ -25,7 +25,7 @@ for (const version of [
 ]) {
   const variant = `deepgram-${version}`;
   const modern = version.startsWith("v5");
-  describe.sequential(variant, () => {
+  describe(variant, { concurrent: false }, () => {
     for (const mode of ["wrapped", "auto", "wrapped-auto"])
       test(
         mode,
@@ -41,7 +41,7 @@ for (const version of [
               env: {
                 DEEPGRAM_PACKAGE_NAME: `deepgram-sdk-${version}`,
                 DEEPGRAM_WRAP: mode.includes("wrapped") ? "1" : "0",
-                BRAINTRUST_CAPTURE_ATTACHMENTS: "true",
+                BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "true",
                 BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS: "true",
                 BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS: "true",
               },

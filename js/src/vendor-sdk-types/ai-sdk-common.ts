@@ -398,6 +398,9 @@ export interface AISDKProviderResolver {
 }
 
 export interface AISDKNamespaceBase {
+  Agent?: AISDKAgentClass;
+  Experimental_Agent?: AISDKAgentClass;
+  ToolLoopAgent?: AISDKAgentClass;
   experimental_evaluate?: AISDKEvaluateFunction;
   experimental_decide?: AISDKEvaluateFunction;
   generateText: AISDKGenerateFunction;

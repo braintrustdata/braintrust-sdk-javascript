@@ -1,8 +1,8 @@
-import * as vitest from "vitest";
+import * as vitest from "vite-plus/test";
 import { configureNode } from "../../node/config";
 import { wrapVitest } from "./index";
-import { _exportsForTestingOnly } from "../../logger";
-import * as logger from "../../logger";
+import { _exportsForTestingOnly } from "../../logger/testing";
+import * as experiments from "../../logger/experiments";
 
 configureNode();
 
@@ -11,7 +11,7 @@ await _exportsForTestingOnly.simulateLoginForTests();
 const moduleBackgroundLogger = _exportsForTestingOnly.useTestBackgroundLogger();
 
 vitest.vi
-  .spyOn(logger, "initExperiment")
+  .spyOn(experiments, "init")
   .mockImplementation((projectName: string, options?: any) => {
     return _exportsForTestingOnly.initTestExperiment(
       options?.experiment || "test-experiment",

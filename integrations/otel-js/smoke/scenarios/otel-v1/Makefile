@@ -13,7 +13,7 @@ setup:
 		echo "==> Using BRAINTRUST_TAR: $(BRAINTRUST_TAR)"; \
 	else \
 		echo "==> Building SDK"; \
-		cd ../../../.. && pnpm exec turbo build --filter=braintrust && mkdir -p artifacts && pnpm pack --pack-destination artifacts; \
+		cd ../../../.. && pnpm --filter=braintrust run build && mkdir -p artifacts && pnpm pack --pack-destination artifacts; \
 		\
 		for f in artifacts/braintrust-*.tgz; do \
 			if [ "$$(basename $$f)" != "braintrust-latest.tgz" ] && \
@@ -35,7 +35,7 @@ setup:
 		echo "==> Using BRAINTRUST_OTEL_TAR: $(BRAINTRUST_OTEL_TAR)"; \
 	else \
 		echo "==> Building @braintrust/otel package"; \
-		cd ../../../../../integrations/otel-js && pnpm exec turbo build --filter=@braintrust/otel && pnpm pack --pack-destination ../../js/artifacts; \
+		cd ../../../../../integrations/otel-js && pnpm --filter=@braintrust/otel run build && pnpm pack --pack-destination ../../js/artifacts; \
 		\
 		for f in ../../../js/artifacts/braintrust-otel-*.tgz; do \
 			if [ "$$(basename $$f)" != "braintrust-otel-latest.tgz" ]; then \

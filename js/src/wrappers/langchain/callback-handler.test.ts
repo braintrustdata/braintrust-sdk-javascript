@@ -1,7 +1,7 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vite-plus/test";
 import { BraintrustLangChainCallbackHandler } from "./callback-handler";
 
-import { deepCopyEvent, type StartSpanArgs } from "../../logger";
+import { deepCopyEvent, type StartSpanArgs } from "../../logger/core";
 import type { LangChainCaptureOptions } from "../../vendor-sdk-types/langchain";
 
 function createHarness(options: LangChainCaptureOptions = {}) {

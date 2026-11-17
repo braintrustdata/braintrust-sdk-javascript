@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { strandsAgentSDKChannels } from "../../instrumentation/plugins/strands-agent-sdk-interceptors";
+import { strandsAgentSDKChannels } from "../../instrumentation/providers/strands-agent-sdk-interceptors";
 
 const strandsAgentSDKVersionRange = ">=1.0.0 <2.0.0";
 

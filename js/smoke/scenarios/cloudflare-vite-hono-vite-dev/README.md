@@ -10,7 +10,7 @@ Tests whether the Braintrust SDK (browser build) can be loaded in Vite's dev ser
 
 **Hono framework:** Uses Hono for elegant routing instead of raw Worker API.
 
-**Browser build:** Uses `braintrust/browser` import since Cloudflare Workers don't support Node.js APIs.
+**Browser build:** Imports `braintrust`; the package's browser condition selects the browser-safe build because Cloudflare Workers don't support Node.js APIs.
 
 ## Test Suite
 

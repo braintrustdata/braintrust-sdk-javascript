@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, test } from "vitest";
+import { beforeAll, describe, expect, test } from "vite-plus/test";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import type { Json } from "../../helpers/normalize";
 import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";

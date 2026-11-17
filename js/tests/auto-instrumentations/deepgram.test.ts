@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { InstrumentationMatcher } from "../../src/auto-instrumentations/orchestrion-js";
 import { deepgramConfigs } from "../../src/auto-instrumentations/configs/deepgram";
-import { deepgramChannels } from "../../src/instrumentation/plugins/deepgram-interceptors";
+import { deepgramChannels } from "../../src/instrumentation/providers/deepgram-interceptors";
 
 // Execute transformed public methods, including the CJS and ESM layouts
 // present in the published SDKs. Real transport coverage lives in e2e.

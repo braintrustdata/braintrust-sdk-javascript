@@ -1,5 +1,5 @@
-import { afterEach, expect, test, vi } from "vitest";
-import { NOOP_SPAN } from "../../logger";
+import { afterEach, expect, test, vi } from "vite-plus/test";
+import { NOOP_SPAN } from "../../logger/core";
 import { runScorers } from "./scorers";
 import type { ScorerFunction } from "./types";
 

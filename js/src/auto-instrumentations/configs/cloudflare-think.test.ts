@@ -1,5 +1,5 @@
 import { InstrumentationMatcher } from "../orchestrion-js";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { cloudflareThinkConfigs } from "./cloudflare-think";
 
 describe("Cloudflare Think transformation", () => {

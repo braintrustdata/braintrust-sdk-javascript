@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { deepgramChannels } from "../../instrumentation/plugins/deepgram-interceptors";
+import { deepgramChannels } from "../../instrumentation/providers/deepgram-interceptors";
 
 export const deepgramConfigs: InstrumentationConfig[] = [
   ...(["main", "module"] as const).flatMap((format) =>

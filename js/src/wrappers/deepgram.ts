@@ -1,6 +1,7 @@
+import { registerInstrumentation } from "../instrumentation/registrations/deepgram";
 import { isObject } from "../../util";
 import { debugLogger } from "../debug-logger";
-import { deepgramChannels } from "../instrumentation/plugins/deepgram-interceptors";
+import { deepgramChannels } from "../instrumentation/providers/deepgram-interceptors";
 import type {
   ArgsOf,
   ReturnOf,
@@ -12,10 +13,11 @@ const clients = new WeakMap<object, object>();
 /**
  * Trace finite transcription, HTTP speech, and text analysis requests from
  * @deepgram/sdk 3.13+, 4.x and 5.x. Callback and realtime APIs are excluded.
- * Audio capture requires BRAINTRUST_CAPTURE_ATTACHMENTS and the corresponding
+ * Audio capture requires BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS and the corresponding
  * BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS or BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS flag.
  */
 export function wrapDeepgram<T>(client: T): T {
+  registerInstrumentation();
   if (
     !isObject(client) ||
     !isObject(client.listen) ||

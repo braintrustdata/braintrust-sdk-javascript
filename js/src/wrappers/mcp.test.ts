@@ -1,3 +1,4 @@
+import { _exportsForTestingOnly } from "../logger/testing";
 import { debugLogger } from "../debug-logger";
 import {
   afterEach,
@@ -7,10 +8,10 @@ import {
   expect,
   it,
   vi,
-} from "vitest";
-import { _exportsForTestingOnly, initLogger } from "../logger";
+} from "vite-plus/test";
+import { initLogger } from "../logger/core";
 import { configureNode } from "../node/config";
-import { mcpSDKChannels } from "../instrumentation/plugins/mcp-interceptors";
+import { mcpSDKChannels } from "../instrumentation/providers/mcp-interceptors";
 import type {
   MCPProtocol,
   MCPRequestHandler,
@@ -20,6 +21,7 @@ import type {
 import { wrapMCPServer } from "./mcp";
 import { wrapMCPHandler } from "./mcp-handler";
 import { registry } from "../instrumentation/registry";
+import { resetInstrumentationForTest } from "../instrumentation/test-utils/reset";
 
 try {
   configureNode();
@@ -62,6 +64,7 @@ describe("MCP server wrapper", () => {
   });
 
   beforeEach(() => {
+    resetInstrumentationForTest();
     backgroundLogger = _exportsForTestingOnly.useTestBackgroundLogger();
     initLogger({
       projectName: "mcp.test.ts",
@@ -196,19 +199,15 @@ describe("MCP server wrapper", () => {
   });
 
   it("passes factory arguments through unchanged when instrumentation is disabled", () => {
-    registry.disable();
-    try {
-      const initialize = () => {};
-      const handler = () => {};
-      const factory = vi.fn(() => handler);
-      const options = {};
-      expect(
-        Reflect.apply(wrapMCPHandler(factory), null, [initialize, options]),
-      ).toBe(handler);
-      expect(factory).toHaveBeenCalledWith(initialize, options);
-    } finally {
-      registry.enable();
-    }
+    registry.configure({ integrations: { mcpHandler: false } });
+    const initialize = () => {};
+    const handler = () => {};
+    const factory = vi.fn(() => handler);
+    const options = {};
+    expect(
+      Reflect.apply(wrapMCPHandler(factory), null, [initialize, options]),
+    ).toBe(handler);
+    expect(factory).toHaveBeenCalledWith(initialize, options);
   });
 
   it("returns unsupported MCP handler factories unchanged", () => {
