@@ -235,6 +235,26 @@ async function runClaudeAgentSDKScenario({ decorateSDK, sdk }) {
               prompt:
                 'You MUST call the Agent tool now with subagent_type="echo" and description "echo greeting". Do not call Bash yourself. Do not answer with text yourself; delegate to the echo sub-agent.',
               options: {
+                hooks: {
+                  PreToolUse: [
+                    {
+                      matcher: "Bash",
+                      hooks: [
+                        async (input) => ({
+                          hookSpecificOutput: {
+                            hookEventName: "PreToolUse",
+                            updatedInput: {
+                              ...input.tool_input,
+                              // Cross Claude's two-second task threshold on
+                              // every runner, not only on slow CI machines.
+                              command: `sleep 3; ${input.tool_input.command}`,
+                            },
+                          },
+                        }),
+                      ],
+                    },
+                  ],
+                },
                 agents: {
                   echo: {
                     description: "Runs one bash echo and reports back.",
