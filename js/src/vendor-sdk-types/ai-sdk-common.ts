@@ -399,7 +399,7 @@ export interface AISDKProviderResolver {
 
 // Speech and transcription are experimental exports in ai 4.3.6–6 and
 // stable exports (with deprecated aliases) in ai 7.
-export interface AISDKAudioParams {
+interface AISDKAudioParams {
   model: string | { modelId?: string; provider?: string };
   providerOptions?: Record<string, unknown>;
   [key: string]: unknown;
@@ -431,10 +431,10 @@ export interface AISDKTranscriptionResult {
   durationInSeconds?: number;
 }
 
-export type AISDKGenerateSpeechFunction = (
+type AISDKGenerateSpeechFunction = (
   params: AISDKGenerateSpeechParams,
 ) => PromiseLike<AISDKSpeechResult>;
-export type AISDKTranscribeFunction = (
+type AISDKTranscribeFunction = (
   params: AISDKTranscribeParams,
 ) => PromiseLike<AISDKTranscriptionResult>;
 
