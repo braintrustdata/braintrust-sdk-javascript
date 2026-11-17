@@ -49,6 +49,7 @@ export const INSTRUMENTATION_NAMES = {
   TYPESAFE: "typesafe",
   WORKERS_AI: "workers-ai",
   VOYAGEAI: "voyageai",
+  FAL: "fal",
   ELEVENLABS: "elevenlabs",
 } as const;
 

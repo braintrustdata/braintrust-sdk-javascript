@@ -1233,5 +1233,20 @@
         "label": "v7 latest"
       }
     ]
+  },
+  {
+    "scenarioDirName": "fal-instrumentation",
+    "label": "fal Instrumentation",
+    "metadataScenario": "fal-instrumentation",
+    "variants": [
+      {
+        "variantKey": "fal-v1",
+        "label": "v1.10 pinned"
+      },
+      {
+        "variantKey": "fal-v1-latest",
+        "label": "v1 latest"
+      }
+    ]
   }
 ]

@@ -34,6 +34,7 @@ import { openRouterConfigs } from "./openrouter";
 import { openRouterAgentConfigs } from "./openrouter-agent";
 import { piCodingAgentConfigs } from "./pi-coding-agent";
 import { strandsAgentSDKConfigs } from "./strands-agent-sdk";
+import { falConfigs } from "./fal";
 import { elevenLabsConfigs } from "./elevenlabs";
 import { voyageAIConfigs } from "./voyageai";
 import { mcpConfigs } from "./mcp";
@@ -109,6 +110,7 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
     { integrations: ["langgraphSDK"], configs: langGraphSDKConfigs },
     { integrations: ["ollama"], configs: ollamaConfigs },
     { integrations: ["googleADK"], configs: googleADKConfigs },
+    { integrations: ["fal"], configs: falConfigs },
     { integrations: ["cohere"], configs: cohereConfigs },
     { integrations: ["groq"], configs: groqConfigs },
     {

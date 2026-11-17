@@ -58,6 +58,7 @@ export interface InstrumentationIntegrationsConfig {
   voyageai?: boolean;
   typesafe?: boolean;
   workersAI?: boolean;
+  fal?: boolean;
   elevenlabs?: boolean;
   /** Set to false to disable, or pass options; options keep LiveKit enabled. */
   livekit?: boolean | LiveKitIntegrationConfig;
@@ -256,6 +257,8 @@ const envIntegrationAliases: Record<
   typesafe: "typesafe",
   "typesafe-ai": "typesafe",
   "@typesafe-ai/sdk": "typesafe",
+  fal: "fal",
+  "@fal-ai/client": "fal",
   elevenlabs: "elevenlabs",
   "@elevenlabs/elevenlabs-js": "elevenlabs",
   livekit: "livekit",

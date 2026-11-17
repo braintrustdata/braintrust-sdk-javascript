@@ -163,3 +163,5 @@ export type { Trace } from "./trace";
 export { LocalTrace } from "./trace";
 
 export { wrapElevenLabs } from "./wrappers/elevenlabs";
+
+export { wrapFal } from "./wrappers/fal";

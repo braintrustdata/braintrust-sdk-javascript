@@ -12,6 +12,7 @@ const registrations = vi.hoisted(() => ({
   cloudflareAIChat: vi.fn(),
   cloudflareThink: vi.fn(),
   cohere: vi.fn(),
+  fal: vi.fn(),
   cursorSDK: vi.fn(),
   genkit: vi.fn(),
   gitHubCopilot: vi.fn(),
@@ -54,6 +55,9 @@ vi.mock("./providers/cloudflare-ai-chat-consumer", () => ({
 }));
 vi.mock("./providers/cloudflare-think-instrumentation", () => ({
   registerCloudflareThinkInstrumentation: registrations.cloudflareThink,
+}));
+vi.mock("./providers/fal-instrumentation", () => ({
+  registerFalInstrumentation: registrations.fal,
 }));
 vi.mock("./providers/cohere-instrumentation", () => ({
   registerCohereInstrumentation: registrations.cohere,
@@ -136,6 +140,7 @@ const integrationCases: Array<
   ["cloudflareAIChat", [registrations.cloudflareAIChat]],
   ["cloudflareThink", [registrations.cloudflareThink]],
   ["cohere", [registrations.cohere]],
+  ["fal", [registrations.fal]],
   ["cursorSDK", [registrations.cursorSDK]],
   ["genkit", [registrations.genkit]],
   ["gitHubCopilot", [registrations.gitHubCopilot]],
