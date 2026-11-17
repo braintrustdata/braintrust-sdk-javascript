@@ -2,7 +2,7 @@ export type ApplicationLogOptions = {
   metadata?: Record<string, unknown>;
 };
 
-const LOG_TEMPLATE = Symbol.for("braintrust.logTemplate");
+const LOG_TEMPLATE: unique symbol = Symbol.for("braintrust.logTemplate");
 
 export type ApplicationLogTemplate = {
   readonly [LOG_TEMPLATE]: true;
@@ -42,7 +42,10 @@ function isLogTemplate(body: unknown): body is ApplicationLogTemplate {
   );
 }
 
-export function renderLogBody(body: unknown, options?: ApplicationLogOptions) {
+export function renderLogBody(
+  body: unknown,
+  options?: ApplicationLogOptions,
+): { body: unknown; metadata?: Record<string, unknown> } {
   if (!isLogTemplate(body)) return { body, metadata: options?.metadata };
   return {
     body: body.body,

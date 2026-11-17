@@ -26,111 +26,58 @@ const headCommit = execFileSync("git", ["rev-parse", "HEAD"], {
 }).trim();
 const title = getTitle(mode);
 
-if (statusPath) {
-  handleStatusManifest({
-    headCommit,
-    mode,
-    outputPath,
-    statusPath,
-    title,
-  });
+const packages = orderPackagesForPublish(
+  statusPath ? getStatusReleasePackages() : getStableReleasePackages(),
+);
+const hasWork = packages.length > 0;
+const releaseManifest = {
+  mode,
+  commit: headCommit,
+  packages,
+};
+
+writeFileSync(
+  outputPath,
+  `${JSON.stringify(releaseManifest, null, 2)}\n`,
+  "utf8",
+);
+
+writeGithubOutput("has_work", hasWork);
+writeGithubOutput("needs_artifacts", hasWork);
+writeGithubOutput("package_count", packages.length);
+writeGithubOutput("manifest_json", JSON.stringify(releaseManifest));
+writeGithubOutput("title", title);
+writeGithubOutput("markdown", packagesToMarkdown(packages));
+writeGithubOutput("plain", packagesToPlain(packages));
+
+if (!hasWork) {
+  console.log(`No ${mode} release work was found at this ref.`);
 } else {
-  handleStableManifest({
-    headCommit,
-    mode,
-    outputPath,
-    title,
-  });
+  console.log(
+    `${mode} release work detected for ${packages.length} package version(s):\n${formatPackageList(packages)}`,
+  );
 }
 
-function handleStatusManifest({
-  headCommit,
-  mode: currentMode,
-  outputPath: currentOutputPath,
-  statusPath: currentStatusPath,
-  title: currentTitle,
-}) {
-  const status = JSON.parse(readFileSync(currentStatusPath, "utf8"));
-  const releases = filterPublishableReleases(status);
-  const packages = releases.map((release) => {
+function getStatusReleasePackages() {
+  const status = JSON.parse(readFileSync(statusPath, "utf8"));
+  return filterPublishableReleases(status).map((release) => {
     const approved = getApprovedPackageByName(release.name);
-    if (!approved) {
+    const packageJson = readPackage(approved.dir);
+    if (mode !== "prerelease" || !packageJson.version.includes("-rc.")) {
       throw new Error(
-        `Unapproved publishable package in status file: ${release.name}`,
+        `Expected an rc snapshot version for ${packageJson.name}, found ${packageJson.version}`,
       );
     }
 
-    const manifest = readPackage(approved.dir);
     return {
-      dir: approved.dir,
-      name: manifest.name,
-      version: manifest.version,
+      ...buildPackageEntry(
+        approved.dir,
+        packageJson,
+        isPublishedToNpm(packageJson.name, packageJson.version),
+      ),
       type: release.type,
-      tag: getReleaseTag(manifest.name, manifest.version),
     };
   });
-
-  writeManifestFile(currentOutputPath, {
-    mode: currentMode,
-    commit: headCommit,
-    packages,
-  });
-
-  const markdownList = packagesToMarkdown(packages);
-  const plainList = packagesToPlain(packages);
-
-  writeGithubOutput("has_packages", packages.length > 0);
-  writeGithubOutput("package_count", packages.length);
-  writeGithubOutput("title", currentTitle);
-  writeGithubOutput("markdown", markdownList);
-  writeGithubOutput("plain", plainList);
-
-  if (packages.length === 0) {
-    const message = `No publishable packages would be released for ${currentMode}.`;
-    console.log(message);
-    process.exit(0);
-  }
-
-  console.log(
-    `${packages.length} publishable package(s) would be released for ${currentMode}:\n${formatPackageList(packages)}`,
-  );
-}
-
-function handleStableManifest({
-  headCommit,
-  mode: currentMode,
-  outputPath: currentOutputPath,
-  title: currentTitle,
-}) {
-  const packages = orderPackagesForPublish(getStableReleasePackages());
-  const hasWork = packages.length > 0;
-  const releaseManifest = {
-    mode: currentMode,
-    commit: headCommit,
-    packages,
-  };
-
-  writeManifestFile(currentOutputPath, releaseManifest);
-
-  const markdownList = packagesToMarkdown(packages);
-  const plainList = packagesToPlain(packages);
-
-  writeGithubOutput("has_work", hasWork);
-  writeGithubOutput("needs_artifacts", hasWork);
-  writeGithubOutput("package_count", packages.length);
-  writeGithubOutput("manifest_json", JSON.stringify(releaseManifest));
-  writeGithubOutput("title", currentTitle);
-  writeGithubOutput("markdown", markdownList);
-  writeGithubOutput("plain", plainList);
-
-  if (!hasWork) {
-    console.log("No stable release work was found at this ref.");
-    process.exit(0);
-  }
-
-  console.log(
-    `Stable release work detected for ${packages.length} package version(s):\n${formatPackageList(packages)}`,
-  );
 }
 
 function getStableReleasePackages() {
@@ -162,11 +109,7 @@ function getStableReleasePackages() {
     }
 
     packages.push(
-      buildStablePackageEntry(
-        approvedPackage.dir,
-        packageJson,
-        alreadyPublished,
-      ),
+      buildPackageEntry(approvedPackage.dir, packageJson, alreadyPublished),
     );
   }
 
@@ -197,13 +140,13 @@ function getTagCommit(tag) {
   }).trim();
 }
 
-function buildStablePackageEntry(dir, packageJson, alreadyPublished) {
+function buildPackageEntry(dir, packageJson, alreadyPublished) {
   const tag = getReleaseTag(packageJson.name, packageJson.version);
   const artifactBase = packageArtifactBase(
     packageJson.name,
     packageJson.version,
   );
-  const channel = "latest";
+  const channel = mode === "prerelease" ? "rc" : "latest";
   const npmVersionUrl = `https://www.npmjs.com/package/${encodeURIComponent(packageJson.name)}/v/${packageJson.version}`;
 
   return {
@@ -232,14 +175,6 @@ function buildStablePackageEntry(dir, packageJson, alreadyPublished) {
       },
     },
   };
-}
-
-function writeManifestFile(currentOutputPath, manifest) {
-  writeFileSync(
-    currentOutputPath,
-    `${JSON.stringify(manifest, null, 2)}\n`,
-    "utf8",
-  );
 }
 
 function packagesToMarkdown(packages) {

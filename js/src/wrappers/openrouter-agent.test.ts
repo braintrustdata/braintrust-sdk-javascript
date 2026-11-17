@@ -1,7 +1,7 @@
 import { debugLogger } from "../debug-logger";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { wrapOpenRouterAgent } from "./openrouter-agent";
-import { openRouterAgentChannels } from "../instrumentation/plugins/openrouter-agent-interceptors";
+import { openRouterAgentChannels } from "../instrumentation/providers/openrouter-agent-interceptors";
 
 describe("wrapOpenRouterAgent", () => {
   afterEach(() => {

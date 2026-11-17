@@ -1,7 +1,7 @@
 import type { ArgsOf } from "../instrumentation/core/interceptor-definitions";
 import type { ResultOf } from "../instrumentation/core/tracing-types";
 import type { ChannelSpanInfo } from "../instrumentation/core/types";
-import { openAIChannels } from "../instrumentation/plugins/openai-interceptors";
+import { openAIChannels } from "../instrumentation/providers/openai-interceptors";
 import { parseMetricsFromUsage } from "../openai-utils";
 import {
   APIPromise,
@@ -17,7 +17,7 @@ type SpanInfo = {
   span_info?: ChannelSpanInfo;
 };
 
-export function responsesProxy(openai: any) {
+export function responsesProxy(openai: any): any {
   // This was added in v4.87.0 of the openai-node library
   if (!openai.responses) {
     return openai;

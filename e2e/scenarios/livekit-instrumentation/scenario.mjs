@@ -64,7 +64,7 @@ function oggDurationMs(file) {
   const view = new DataView(file.buffer, file.byteOffset, file.byteLength);
   const preSkip = view.getUint16(28 + 10, true);
   let granule = 0;
-  for (let at = 0; at < file.length; ) {
+  for (let at = 0; at < file.length;) {
     granule = Number(view.getBigUint64(at + 6, true));
     const count = file[at + 26];
     at += file

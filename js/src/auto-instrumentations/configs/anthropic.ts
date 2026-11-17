@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { anthropicChannels } from "../../instrumentation/plugins/anthropic-interceptors";
+import { anthropicChannels } from "../../instrumentation/providers/anthropic-interceptors";
 
 /**
  * Instrumentation configurations for the Anthropic SDK.
@@ -125,33 +125,28 @@ export const anthropicConfigs: InstrumentationConfig[] = [
   // Managed Agents Sessions event streams are discovered automatically, but
   // remain passive until the user calls collectAnthropicSession() on the
   // returned stream.
-  ...["mjs", "js"].map(
-    (extension): InstrumentationConfig => ({
-      channelName: anthropicChannels.betaSessionsEventsStream.channelName,
-      module: {
-        name: "@anthropic-ai/sdk",
-        versionRange: ">=0.86.0",
-        filePath: `resources/beta/sessions/events.${extension}`,
-      },
-      functionQuery: {
-        className: "Events",
-        methodName: "stream",
-      },
-    }),
-  ),
-  ...["mjs", "js"].map(
-    (extension): InstrumentationConfig => ({
-      channelName:
-        anthropicChannels.betaSessionsThreadsEventsStream.channelName,
-      module: {
-        name: "@anthropic-ai/sdk",
-        versionRange: ">=0.86.0",
-        filePath: `resources/beta/sessions/threads/events.${extension}`,
-      },
-      functionQuery: {
-        className: "Events",
-        methodName: "stream",
-      },
-    }),
-  ),
+  ...["mjs", "js"].map((extension): InstrumentationConfig => ({
+    channelName: anthropicChannels.betaSessionsEventsStream.channelName,
+    module: {
+      name: "@anthropic-ai/sdk",
+      versionRange: ">=0.86.0",
+      filePath: `resources/beta/sessions/events.${extension}`,
+    },
+    functionQuery: {
+      className: "Events",
+      methodName: "stream",
+    },
+  })),
+  ...["mjs", "js"].map((extension): InstrumentationConfig => ({
+    channelName: anthropicChannels.betaSessionsThreadsEventsStream.channelName,
+    module: {
+      name: "@anthropic-ai/sdk",
+      versionRange: ">=0.86.0",
+      filePath: `resources/beta/sessions/threads/events.${extension}`,
+    },
+    functionQuery: {
+      className: "Events",
+      methodName: "stream",
+    },
+  })),
 ];

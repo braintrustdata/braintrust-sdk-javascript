@@ -1,6 +1,7 @@
+import { registerInstrumentation } from "../instrumentation/registrations/mcp";
 import { debugLogger } from "../debug-logger";
 import { isObject } from "../../util/index";
-import { wrapMCPProtocol } from "../instrumentation/plugins/mcp-interceptors";
+import { wrapMCPProtocol } from "../instrumentation/providers/mcp-interceptors";
 import type { MCPProtocol } from "../vendor-sdk-types/mcp";
 
 /**
@@ -19,6 +20,7 @@ export function wrapMCPServer<T>(server: T): T {
     debugLogger.notice.warn("Unsupported MCP server. Not wrapping.");
     return server;
   }
+  registerInstrumentation();
   wrapMCPProtocol(protocol as MCPProtocol);
   return server;
 }

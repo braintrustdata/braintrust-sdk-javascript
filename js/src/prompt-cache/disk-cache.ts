@@ -1,5 +1,5 @@
 import { debugLogger } from "../debug-logger";
-import iso from "../isomorph";
+import iso from "#braintrust-platform";
 
 export function canUseDiskCache(): boolean {
   return !!(

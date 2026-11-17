@@ -151,7 +151,6 @@
                     "url": "https://eve.dev/docs/guides/instrumentation"
                   },
                   "metadata": {
-                    "eve.action_kind": "tool-call",
                     "eve.session_id": "<eve.session_id:1>",
                     "scenario": "eve-instrumentation",
                     "testRunId": "<run:1>"
@@ -259,6 +258,13 @@
                 "scenario": "eve-instrumentation",
                 "testRunId": "<run:1>"
               },
+              "metrics": {
+                "completion_tokens": 319,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 6358,
+                "tokens": 6677
+              },
               "context": {
                 "caller_filename": "<node-internal>",
                 "caller_functionname": "<node-internal>",
@@ -271,7 +277,6 @@
           },
           "output": "Researcher result: The Braintrust Eve instrumentation end-to-end scenario is documented in the [Eve instrumentation guide](https://eve.dev/docs/guides/instrumentation).",
           "metadata": {
-            "eve.action_kind": "subagent-call",
             "eve.session_id": "<eve.session_id:1>",
             "scenario": "eve-instrumentation",
             "testRunId": "<run:1>"
@@ -296,7 +301,6 @@
             "url": "https://eve.dev/docs/guides/instrumentation"
           },
           "metadata": {
-            "eve.action_kind": "tool-call",
             "eve.session_id": "<eve.session_id:1>",
             "scenario": "eve-instrumentation",
             "testRunId": "<run:1>"
@@ -426,6 +430,13 @@
         "eve.session_id": "<eve.session_id:1>",
         "scenario": "eve-instrumentation",
         "testRunId": "<run:1>"
+      },
+      "metrics": {
+        "completion_tokens": 669,
+        "prompt_cache_creation_tokens": 0,
+        "prompt_cached_tokens": 0,
+        "prompt_tokens": 7919,
+        "tokens": 8588
       },
       "context": {
         "caller_filename": "<node-internal>",
@@ -659,7 +670,6 @@
                     "url": "https://eve.dev/docs/guides/instrumentation"
                   },
                   "metadata": {
-                    "eve.action_kind": "tool-call",
                     "eve.session_id": "<eve.session_id:1>",
                     "scenario": "eve-instrumentation",
                     "testRunId": "<run:1>"
@@ -767,6 +777,13 @@
                 "scenario": "eve-instrumentation",
                 "testRunId": "<run:1>"
               },
+              "metrics": {
+                "completion_tokens": 307,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 6342,
+                "tokens": 6649
+              },
               "context": {
                 "caller_filename": "<node-internal>",
                 "caller_functionname": "<node-internal>",
@@ -779,7 +796,6 @@
           },
           "output": "Researcher result: Eve instrumentation https://eve.dev/docs/guides/instrumentation",
           "metadata": {
-            "eve.action_kind": "subagent-call",
             "eve.session_id": "<eve.session_id:1>",
             "scenario": "eve-instrumentation",
             "testRunId": "<run:1>"
@@ -804,7 +820,6 @@
             "url": "https://eve.dev/docs/guides/instrumentation"
           },
           "metadata": {
-            "eve.action_kind": "tool-call",
             "eve.session_id": "<eve.session_id:1>",
             "scenario": "eve-instrumentation",
             "testRunId": "<run:1>"
@@ -1010,6 +1025,13 @@
         "scenario": "eve-instrumentation",
         "testRunId": "<run:1>"
       },
+      "metrics": {
+        "completion_tokens": 620,
+        "prompt_cache_creation_tokens": 0,
+        "prompt_cached_tokens": 0,
+        "prompt_tokens": 8453,
+        "tokens": 9073
+      },
       "context": {
         "caller_filename": "<node-internal>",
         "caller_functionname": "<node-internal>",
@@ -1161,6 +1183,13 @@
                     "scenario": "eve-instrumentation",
                     "testRunId": "<run:1>"
                   },
+                  "metrics": {
+                    "completion_tokens": 358,
+                    "prompt_cache_creation_tokens": 0,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 3077,
+                    "tokens": 3435
+                  },
                   "context": {
                     "caller_filename": "<node-internal>",
                     "caller_functionname": "<node-internal>",
@@ -1173,7 +1202,6 @@
               },
               "output": "Researcher result: Braintrust Eve Instrumentation E2E Scenario Guide (https://docs.eve.dev/instrumentation/e2e-testing)",
               "metadata": {
-                "eve.action_kind": "subagent-call",
                 "eve.session_id": "<eve.session_id:1>",
                 "scenario": "eve-instrumentation",
                 "testRunId": "<run:1>"
@@ -1198,7 +1226,6 @@
                 "url": "https://eve.dev/docs/guides/instrumentation"
               },
               "metadata": {
-                "eve.action_kind": "tool-call",
                 "eve.session_id": "<eve.session_id:1>",
                 "scenario": "eve-instrumentation",
                 "testRunId": "<run:1>"
@@ -1328,6 +1355,13 @@
             "eve.session_id": "<eve.session_id:1>",
             "scenario": "eve-instrumentation",
             "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "completion_tokens": 652,
+            "prompt_cache_creation_tokens": 0,
+            "prompt_cached_tokens": 0,
+            "prompt_tokens": 7908,
+            "tokens": 8560
           },
           "context": {
             "caller_filename": "<node-internal>",

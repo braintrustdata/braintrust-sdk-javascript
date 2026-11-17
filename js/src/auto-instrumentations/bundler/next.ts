@@ -1,6 +1,6 @@
 import { createRequire } from "node:module";
-import { join } from "node:path";
-import { webpackPlugin } from "./webpack";
+import { dirname, join } from "node:path";
+import { braintrustWebpackPlugin } from "./webpack";
 
 type MaybePromise<T> = T | Promise<T>;
 type NextConfigFunction = (
@@ -155,7 +155,7 @@ function wrapWebpackConfig(
         : "server"
       : "client";
 
-    const plugin = webpackPlugin({
+    const plugin = braintrustWebpackPlugin({
       browser: runtime === "client" || runtime === "edge",
     });
 
@@ -244,11 +244,8 @@ function addBraintrustTurbopackRule(
 }
 
 function getWebpackLoaderPath(): string {
-  try {
-    return requireFromProject.resolve("braintrust/webpack-loader");
-  } catch {
-    return "braintrust/webpack-loader";
-  }
+  const packageJsonPath = requireFromProject.resolve("braintrust/package.json");
+  return join(dirname(packageJsonPath), "dist/loaders/webpack-loader.cjs");
 }
 
 function getNextMajorVersion(): number | undefined {

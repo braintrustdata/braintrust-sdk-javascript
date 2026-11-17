@@ -7,8 +7,9 @@ import {
   expect,
   it,
   vi,
-} from "vitest";
-import { _exportsForTestingOnly, initLogger } from "../logger";
+} from "vite-plus/test";
+import { _exportsForTestingOnly } from "../logger/testing";
+import { initLogger } from "../logger/core";
 import { configureNode } from "../node/config";
 import { wrapVoyageAI } from "./voyageai";
 

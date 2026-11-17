@@ -2,7 +2,7 @@ import {
   runTests,
   testMustacheTemplate,
   testNunjucksTemplate,
-} from "../../../../../../js/smoke/shared/dist/index.mjs";
+} from "../../../../../../js/smoke/shared/dist/index.js";
 import * as braintrust from "braintrust";
 import { nunjucksPlugin } from "@braintrust/templates-nunjucks-js";
 

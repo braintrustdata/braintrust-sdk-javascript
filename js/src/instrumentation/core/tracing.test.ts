@@ -6,15 +6,15 @@ import {
   expect,
   it,
   vi,
-} from "vitest";
+} from "vite-plus/test";
 import {
   NOOP_SPAN,
-  _exportsForTestingOnly,
   currentSpan,
   initLogger,
   type Span,
   type TestBackgroundLogger,
-} from "../../logger";
+} from "../../logger/core";
+import { _exportsForTestingOnly } from "../../logger/testing";
 import { configureNode } from "../../node/config";
 import {
   INSTRUMENTATION_NAMES,
