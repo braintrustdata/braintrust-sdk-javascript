@@ -1044,43 +1044,57 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
       expect(tool?.span.parentIds).not.toContain(llm?.span.id ?? "");
     });
 
-    test("validates optional Bash task lifecycle spans", testConfig, () => {
-      for (const event of events.filter(
-        (event) =>
-          event.metadata?.["claude_agent_sdk.task_type"] === "local_bash",
-      )) {
-        const tool = findAllSpans(events, "tool: Bash").find(
-          (tool) =>
-            tool.metadata?.["gen_ai.tool.call.id"] ===
-            event.metadata?.["claude_agent_sdk.tool_use_id"],
-        );
-        expect(tool).toBeDefined();
-        expect(event.span.type).toBe("task");
-        expect(event.metadata).toMatchObject({
-          "claude_agent_sdk.task_status": "completed",
-          "claude_agent_sdk.description": expect.any(String),
-        });
-        expect(tool?.input).toMatchObject({
-          description: event.metadata?.["claude_agent_sdk.description"],
-        });
-        expect(event.output).toEqual({
-          summary: event.metadata?.["claude_agent_sdk.description"],
-        });
-      }
-    });
-
     test(
       "matches the shared span tree snapshot",
       testConfig,
       async ({ expect }) => {
+        // Claude may register a local_bash task when shell startup is slow.
+        // Check that optional lifecycle span without making the snapshot depend
+        // on whether the command crossed the SDK's progress threshold.
+        const bashTasks = events.filter(
+          (event) =>
+            event.metadata?.["claude_agent_sdk.task_type"] === "local_bash",
+        );
+        const taskRoot = findOperationTaskRoot(
+          events,
+          "claude-agent-subagent-built-in-tool-operation",
+        );
+        for (const task of bashTasks) {
+          const bash = findAllSpans(events, "tool: Bash").find(
+            (event) =>
+              event.metadata?.["gen_ai.tool.call.id"] ===
+              task.metadata?.["claude_agent_sdk.tool_use_id"],
+          );
+          expect(bash).toBeDefined();
+          expect(task.metadata?.["claude_agent_sdk.description"]).toEqual(
+            expect.any(String),
+          );
+          expect(bash?.input).toMatchObject({
+            description: task.metadata?.["claude_agent_sdk.description"],
+          });
+          expect(isDescendantOf(events, bash, taskRoot?.span.id)).toBe(true);
+          expect(task.span.type).toBe("task");
+          expect(task.span.ended).toBe(true);
+          expect(task.span.parentIds).toEqual([taskRoot?.span.id]);
+          expect(task.metadata?.["claude_agent_sdk.task_status"]).toBe(
+            "completed",
+          );
+          expect(task.output).toEqual({
+            summary: task.metadata?.["claude_agent_sdk.description"],
+          });
+          expect(task.row.error).toBeUndefined();
+          expect(
+            events.some((event) =>
+              event.span.parentIds.includes(task.span.id ?? ""),
+            ),
+          ).toBe(false);
+        }
         await matchSpanTreeSnapshot(
           events.filter(
             (event) =>
               event.span.name !== "claude-agent-basic-partial-usage" &&
               event.span.name !== "claude-agent-result-usage" &&
-              // Claude registers a local_bash task only when shell execution
-              // exceeds two seconds. Validate it separately from the stable tree.
-              event.metadata?.["claude_agent_sdk.task_type"] !== "local_bash",
+              !bashTasks.includes(event),
           ),
           snapshotPath,
           {

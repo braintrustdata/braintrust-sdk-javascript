@@ -1,3 +1,13 @@
+import { DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES } from "../config";
+import {
+  extractMistralOCRInput,
+  extractMistralOCROutput,
+  mistralMediaMetrics,
+  mistralMediaMetadata,
+  extractMistralTranscriptionInput,
+  extractMistralTranscriptionOutput,
+  traceMistralAudio,
+} from "./mistral-media";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
 import { INSTRUMENTATION_NAMES } from "../../span-origin";
 import { getCurrentUnixTimestamp } from "../../util";
@@ -17,10 +27,61 @@ import { traceAsyncCall, traceStreamingCall } from "../core/tracing";
 import { mistralChannels } from "./mistral-interceptors";
 
 class MistralInstrumentationConsumer {
+  constructor(
+    private streamingAttachmentBufferBytes = DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES,
+  ) {}
   public register(): void {
     this.subscribeToMistralChannels();
   }
   private subscribeToMistralChannels(): void {
+    mistralChannels.ocrProcess.intercept((target, receiver, args, additional) =>
+      traceAsyncCall<typeof mistralChannels.ocrProcess>(
+        () => Reflect.apply(target, receiver, args),
+        { ...additional, arguments: args, self: receiver },
+        {
+          name: "mistral.ocr.process",
+          type: SpanTypeAttribute.LLM,
+          instrumentationName: INSTRUMENTATION_NAMES.MISTRAL,
+          extractInput: extractMistralOCRInput,
+          extractOutput: extractMistralOCROutput,
+          extractMetrics: () => ({}),
+          extractMetadata: mistralMediaMetadata,
+        },
+      ),
+    );
+    mistralChannels.transcriptionsComplete.intercept(
+      (target, receiver, args, additional) =>
+        traceAsyncCall<typeof mistralChannels.transcriptionsComplete>(
+          () => Reflect.apply(target, receiver, args),
+          { ...additional, arguments: args, self: receiver },
+          {
+            name: "mistral.audio.transcriptions.complete",
+            type: SpanTypeAttribute.LLM,
+            instrumentationName: INSTRUMENTATION_NAMES.MISTRAL,
+            extractInput: extractMistralTranscriptionInput,
+            extractOutput: extractMistralTranscriptionOutput,
+            extractMetrics: (result) => mistralMediaMetrics(result.usage),
+            extractMetadata: mistralMediaMetadata,
+          },
+        ),
+    );
+    mistralChannels.transcriptionsStream.intercept(
+      (target, receiver, args, additional) =>
+        traceMistralAudio(
+          () => Reflect.apply(target, receiver, args),
+          { ...additional, arguments: args, self: receiver },
+          this.streamingAttachmentBufferBytes,
+        ),
+    );
+    mistralChannels.speechComplete.intercept(
+      (target, receiver, args, additional) =>
+        traceMistralAudio(
+          () => Reflect.apply(target, receiver, args),
+          { ...additional, arguments: args, self: receiver },
+          this.streamingAttachmentBufferBytes,
+        ),
+    );
+
     mistralChannels.chatComplete.intercept(
       (target, receiver, args, additional) =>
         traceStreamingCall<typeof mistralChannels.chatComplete>(
@@ -973,7 +1034,11 @@ export function aggregateMistralStreamChunks(
 
 let mistralInstrumentationConsumer: MistralInstrumentationConsumer | undefined;
 
-export function registerMistralInstrumentation(): void {
-  mistralInstrumentationConsumer ??= new MistralInstrumentationConsumer();
+export function registerMistralInstrumentation(
+  streamingAttachmentBufferBytes = DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES,
+): void {
+  mistralInstrumentationConsumer ??= new MistralInstrumentationConsumer(
+    streamingAttachmentBufferBytes,
+  );
   mistralInstrumentationConsumer.register();
 }

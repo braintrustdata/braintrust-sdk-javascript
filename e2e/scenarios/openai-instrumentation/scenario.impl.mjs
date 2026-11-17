@@ -1,7 +1,4 @@
-import {
-  MINIMAL_PDF_BASE64,
-  MINIMAL_PNG_BASE64,
-} from "../../helpers/media-fixtures.mjs";
+import { MINIMAL_PNG_BASE64 } from "../../helpers/media-fixtures.mjs";
 import {
   collectAsync,
   runOperation,
@@ -16,6 +13,7 @@ import {
 } from "braintrust";
 import "./configure.mjs";
 import { once } from "node:events";
+import { readFileSync } from "node:fs";
 import { Writable } from "node:stream";
 
 const OPENAI_MODEL = "gpt-4o-mini-2024-07-18";
@@ -23,6 +21,10 @@ const OPENAI_AUDIO_MODEL = "gpt-audio-1.5";
 const OPENAI_IMAGE_MODEL = "gpt-image-2";
 const EMBEDDING_MODEL = "text-embedding-3-small";
 const MODERATION_MODEL = "omni-moderation-2024-09-26";
+// Contains: Honeybees pollinate flowers and help plants produce fruit.
+const PDF_BASE64 = readFileSync(
+  new URL("./test-document.pdf", import.meta.url),
+).toString("base64");
 const ROOT_NAME = "openai-instrumentation-root";
 const SCENARIO_NAME = "openai-instrumentation";
 const CHAT_TOOLS = [
@@ -644,14 +646,14 @@ export async function runOpenAIInstrumentationScenario(options) {
                     {
                       type: "file",
                       file: {
-                        file_data: `data:application/pdf;base64,${MINIMAL_PDF_BASE64}`,
+                        file_data: `data:application/pdf;base64,${PDF_BASE64}`,
                         filename: "document.pdf",
                       },
                     },
                   ],
                 },
               ],
-              max_tokens: 24,
+              max_tokens: 64,
               temperature: 0,
             });
           },

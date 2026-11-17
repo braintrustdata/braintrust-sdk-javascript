@@ -1,3 +1,5 @@
+import { promises as fs } from "node:fs";
+import path from "node:path";
 import { beforeAll, describe, expect, test } from "vite-plus/test";
 import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import type {
@@ -23,6 +25,24 @@ const originalScenarioDir = resolveScenarioDir(import.meta.url);
 const scenarioDir = await prepareScenarioDir({
   scenarioDir: originalScenarioDir,
 });
+// Stable Eve v1 needs a newer AI SDK whose step output is incompatible with v0.
+// Keep separate install roots so each Eve line resolves its supported peer.
+const v1SourceDir = path.resolve(
+  originalScenarioDir,
+  "../../.bt-tmp/generated-scenarios/eve-instrumentation-v1",
+);
+await fs.rm(v1SourceDir, { force: true, recursive: true });
+await fs.cp(originalScenarioDir, v1SourceDir, {
+  recursive: true,
+  filter: (source) =>
+    !["node_modules", "versions", "__cassettes__", "__snapshots__"].includes(
+      path.basename(source),
+    ),
+});
+await fs.cp(path.join(originalScenarioDir, "versions/v1"), v1SourceDir, {
+  recursive: true,
+});
+const v1ScenarioDir = await prepareScenarioDir({ scenarioDir: v1SourceDir });
 const eveScenarios = await Promise.all(
   [
     {
@@ -74,13 +94,19 @@ const eveScenarios = await Promise.all(
       tasks: true,
       variantKey: "eve-v1-latest",
     },
-  ].map(async (scenario) => ({
-    ...scenario,
-    version: await readInstalledPackageVersion(
-      scenarioDir,
-      scenario.dependencyName,
-    ),
-  })),
+  ].map(async (scenario) => {
+    const variantDir = scenario.dependencyName.startsWith("eve-v1")
+      ? v1ScenarioDir
+      : scenarioDir;
+    return {
+      ...scenario,
+      scenarioDir: variantDir,
+      version: await readInstalledPackageVersion(
+        variantDir,
+        scenario.dependencyName,
+      ),
+    };
+  }),
 );
 const TIMEOUT_MS =
   process.env.BRAINTRUST_E2E_CASSETTE_MODE === "record" ? 300_000 : 120_000;
@@ -113,7 +139,7 @@ describe("eve instrumentation variants", { concurrent: false }, () => {
                 originalScenarioDir,
                 variantKey: scenario.variantKey,
               },
-              scenarioDir,
+              scenarioDir: scenario.scenarioDir,
               timeoutMs: TIMEOUT_MS,
             });
             events = harnessEvents();
@@ -313,7 +339,7 @@ describe("eve instrumentation variants", { concurrent: false }, () => {
             ? "Started task researcher-"
             : "Researcher result",
         );
-        expect(researcher?.error).toBeUndefined();
+        expect(researcher?.row.error).toBeUndefined();
 
         expect(childTurn).toBeDefined();
         expect(childTurn?.span.parentIds).toEqual([researcher?.span.id]);
@@ -472,7 +498,7 @@ describe("eve instrumentation variants", { concurrent: false }, () => {
         ]);
         expect(secondResearcher?.span.type).toBe("tool");
         expect(secondResearcher?.span.ended).toBe(true);
-        expect(secondResearcher?.error).toBeUndefined();
+        expect(secondResearcher?.row.error).toBeUndefined();
         expect(secondResearcher?.span.parentIds).toEqual([secondRoot?.span.id]);
         expect(secondResearcher?.metadata).toMatchObject({
           "eve.session_id": secondRoot?.metadata?.["eve.session_id"],

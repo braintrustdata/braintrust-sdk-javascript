@@ -1,7 +1,9 @@
-name: Publish Stable Release
+# Keep this filename: npm trusted publishing is configured for it.
+name: Publish Release
+run-name: Publish ${{ inputs.prerelease && 'prerelease' || 'stable release' }} (${{ inputs.release_sha }})
 
 on:
-  workflow_call:
+  workflow_dispatch:
     inputs:
       release_sha:
         description: Full commit SHA to publish
@@ -11,15 +13,6 @@ on:
         description: Publish an rc snapshot
         default: false
         type: boolean
-    secrets:
-      SLACK_BOT_TOKEN:
-        required: true
-  workflow_dispatch:
-    inputs:
-      release_sha:
-        description: Full commit SHA to publish
-        required: true
-        type: string
 
 concurrency:
   group: publish-release-${{ inputs.prerelease && 'rc' || 'latest' }}-${{ inputs.release_sha }}
@@ -426,4 +419,4 @@ jobs:
               - type: "section"
                 text:
                   type: "mrkdwn"
-                  text: "*Workflow:* `${{ inputs.prerelease && 'Publish Prerelease Snapshot' || 'Publish Stable Release' }}`\n*Release SHA:* `${{ inputs.release_sha }}`\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
+                  text: "*Workflow:* `${{ github.workflow }}`\n*Release SHA:* `${{ inputs.release_sha }}`\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"

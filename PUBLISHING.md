@@ -9,12 +9,13 @@ All package publishing happens in GitHub Actions. Do not publish from your local
 - For a stable release:
   - Run **Prepare Release** on `main`.
   - Review the generated prepare release PR.
-  - Run **Publish Stable Release** with the `release_sha` shown in the prepare workflow summary.
+  - Run **Publish Release** with the `release_sha` shown in the prepare workflow summary and leave `prerelease` unchecked.
   - Approve the `npm-publish` environment.
   - The publish workflow builds, packs, and attests the packages _before_ the gate, then (after approval) publishes from the exact commit SHA, creates tags and GitHub Releases for that commit, and comments on issues closed by released PRs.
   - Merge the prepare release PR after publishing succeeds.
 - For a prerelease from a branch:
-  - Run **Publish Prerelease Snapshot** with `ref=<branch, tag, or SHA>`.
+  - Run **Publish Release** with `release_sha=<full commit SHA to publish>` and `prerelease=true`.
+  - Approve the `npm-publish` environment.
   - Install from the `rc` tag, for example `npm install braintrust@rc`.
 
 ## Changesets
@@ -41,8 +42,9 @@ This is the normal production release flow.
    - opens a prepare release PR from that branch into `main`
    - writes the `release_sha` to the workflow summary
 4. Review the prepare release PR to confirm the package versions, changelogs, and consumed changeset deletions look right.
-5. Run **Publish Stable Release** with:
+5. Run **Publish Release** with:
    - `release_sha=<full commit SHA to publish>`
+   - `prerelease=false` (the default)
 6. Approve the `npm-publish` environment when GitHub asks.
 7. Merge the prepare release PR after publishing succeeds.
 
@@ -65,11 +67,13 @@ Stable releases publish to the npm `latest` dist-tag.
 
 Use this to publish a test build from a branch before merging to `main`.
 
-1. Run **Publish Prerelease Snapshot**.
+1. Run **Publish Release**.
 2. Set:
-   - `ref=<branch, tag, or SHA>`
-3. Wait for the workflow to finish.
-4. Install from `rc`, for example:
+   - `release_sha=<full commit SHA to publish>`
+   - `prerelease=true`
+3. Approve the `npm-publish` environment after the build and attestation checks.
+4. Wait for the workflow to finish.
+5. Install from `rc`, for example:
 
 ```bash
 npm install braintrust@rc
@@ -77,15 +81,15 @@ npm install braintrust@rc
 
 Prereleases:
 
-- publish only packages with releasable changesets on that ref
+- publish only packages with releasable changesets at that commit
 - publish to the npm `rc` dist-tag
-- do not create git tags
-- do not create GitHub Releases
+- create git tags and GitHub prereleases
 - do not commit version changes back to the repo
 
 ## Notes
 
 - **Prepare Release** must be run from `main`.
-- Stable publishing must use a full 40-character commit SHA, not a PR number. In the normal prepare release flow, use the `release_sha` from the **Prepare Release** summary.
+- Both release types use `publish-stable-release.yaml`, the workflow configured for npm trusted publishing.
+- Publishing must use a full 40-character commit SHA, not a PR number. In the normal prepare release flow, use the `release_sha` from the **Prepare Release** summary.
 - The old `release` branch and backsync workflow are no longer part of the release process.
-- Re-running **Publish Stable Release** for the same `release_sha` is safe after a partial failure. Already-published npm versions are skipped, but tags and GitHub Releases are still reconciled for the prepared release set.
+- Re-running **Publish Release** for the same `release_sha` is safe after a partial failure. Already-published npm versions are skipped, but tags and GitHub Releases are still reconciled for the prepared release set.
