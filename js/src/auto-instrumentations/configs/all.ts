@@ -34,6 +34,7 @@ import { openRouterConfigs } from "./openrouter";
 import { openRouterAgentConfigs } from "./openrouter-agent";
 import { piCodingAgentConfigs } from "./pi-coding-agent";
 import { strandsAgentSDKConfigs } from "./strands-agent-sdk";
+import { deepgramConfigs } from "./deepgram";
 import { falConfigs } from "./fal";
 import { elevenLabsConfigs } from "./elevenlabs";
 import { voyageAIConfigs } from "./voyageai";
@@ -132,6 +133,10 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
     {
       integrations: ["livekit"],
       configs: livekitConfigs,
+    },
+    {
+      integrations: ["deepgram"],
+      configs: deepgramConfigs,
     },
     {
       integrations: ["elevenlabs"],

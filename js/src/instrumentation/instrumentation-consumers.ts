@@ -31,6 +31,7 @@ import { registerInstrumentation as cloudflareAIChat } from "./registrations/clo
 import { registerInstrumentation as cloudflareAgents } from "./registrations/cloudflareAgents";
 import { registerInstrumentation as langchain } from "./registrations/langchain";
 import { registerInstrumentation as langsmith } from "./registrations/langsmith";
+import { registerInstrumentation as deepgram } from "./registrations/deepgram";
 import { registerInstrumentation as elevenlabs } from "./registrations/elevenlabs";
 import { registerInstrumentation as googleGenerativeAI } from "./registrations/googleGenerativeAI";
 import { registerInstrumentation as langgraphSDK } from "./registrations/langgraphSDK";
@@ -72,6 +73,7 @@ export function registerInstrumentationConsumers(): void {
   cloudflareAgents();
   langchain();
   langsmith();
+  deepgram();
   elevenlabs();
   googleGenerativeAI();
   langgraphSDK();
