@@ -578,7 +578,7 @@
     "variants": [
       {
         "variantKey": "mistral-v1",
-        "label": "v1 pinned"
+        "label": "v1 pinned (chat 1.3.4, media 1.9.17)"
       },
       {
         "variantKey": "mistral-v1-latest",
