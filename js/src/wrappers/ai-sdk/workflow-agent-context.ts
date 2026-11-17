@@ -1,4 +1,4 @@
-import { _internalGetGlobalState, type Span } from "../../logger";
+import { _internalGetGlobalState, type Span } from "../../logger/core";
 
 const workflowAgentWrapperSpans = new Map<string, Span>();
 

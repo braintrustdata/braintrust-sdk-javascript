@@ -1,4 +1,11 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vite-plus/test";
 
 const { requireFromProject } = vi.hoisted(() => ({
   requireFromProject: Object.assign(vi.fn(), {
@@ -12,14 +19,14 @@ vi.mock("node:module", async (importOriginal) => ({
 }));
 
 vi.mock("../../src/auto-instrumentations/bundler/webpack.js", () => ({
-  webpackPlugin: vi.fn((options: unknown) => ({
+  braintrustWebpackPlugin: vi.fn((options: unknown) => ({
     apply: () => {},
     name: "braintrust-test-webpack-plugin",
     options,
   })),
 }));
 
-import { webpackPlugin } from "../../src/auto-instrumentations/bundler/webpack.js";
+import { braintrustWebpackPlugin } from "../../src/auto-instrumentations/bundler/webpack.js";
 import { wrapNextjsConfigWithBraintrust } from "../../src/auto-instrumentations/bundler/next.js";
 
 const originalArgv = [...process.argv];
@@ -59,7 +66,7 @@ describe("wrapNextjsConfigWithBraintrust", () => {
     const result = config.webpack({ plugins: [] }, { isServer: false });
 
     expect(userWebpack).toHaveBeenCalledOnce();
-    expect(webpackPlugin).toHaveBeenCalledWith({ browser: true });
+    expect(braintrustWebpackPlugin).toHaveBeenCalledWith({ browser: true });
     expect(result.plugins).toHaveLength(2);
     expect(result.plugins[0]).toEqual({ name: "user-plugin" });
     expect(result.plugins[1].options).toEqual({ browser: true });

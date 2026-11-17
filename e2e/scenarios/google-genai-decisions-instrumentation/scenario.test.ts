@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "vite-plus/test";
 import {
   prepareScenarioDir,
   resolveScenarioDir,
@@ -14,7 +14,7 @@ const scenarioDir = await prepareScenarioDir({
 });
 
 for (const variant of ["v3", "v3-latest"]) {
-  describe.sequential(variant, () => {
+  describe(variant, { concurrent: false }, () => {
     for (const mode of ["wrapped", "auto-esm", "auto-cjs"]) {
       test(
         mode,
@@ -26,7 +26,7 @@ for (const variant of ["v3", "v3-latest"]) {
               env: {
                 GOOGLE_GENAI_PACKAGE_NAME: `google-genai-sdk-${variant}`,
                 GOOGLE_GENAI_MODE: mode,
-                BRAINTRUST_CAPTURE_ATTACHMENTS: "false",
+                BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "false",
               },
               nodeArgs:
                 mode === "wrapped" ? [] : ["--import", "braintrust/hook.mjs"],
@@ -79,10 +79,9 @@ for (const variant of ["v3", "v3-latest"]) {
               Array.isArray((event.input as any)?.state),
             )!;
             expect(media.input).toMatchObject({
-              state: [
-                { type: "image", mime_type: "image/png", data: "<omitted>" },
-              ],
+              state: [{ type: "image", mime_type: "image/png" }],
             });
+            expect((media.input as any).state[0]).not.toHaveProperty("data");
             await matchSpanTreeSnapshot(
               events.map((event) => ({
                 event,

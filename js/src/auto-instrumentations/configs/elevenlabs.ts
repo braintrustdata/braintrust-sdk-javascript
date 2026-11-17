@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { elevenLabsChannels } from "../../instrumentation/plugins/elevenlabs-interceptors";
+import { elevenLabsChannels } from "../../instrumentation/providers/elevenlabs-interceptors";
 
 export const elevenLabsConfigs: InstrumentationConfig[] = [
   ...(

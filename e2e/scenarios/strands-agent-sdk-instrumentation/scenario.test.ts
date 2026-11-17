@@ -1,4 +1,4 @@
-import { describe } from "vitest";
+import { describe } from "vite-plus/test";
 import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
@@ -50,7 +50,10 @@ describe.concurrent("variants", () => {
         runScenario: async ({ runScenarioDir }) => {
           await runScenarioDir({
             entry: scenario.wrapperEntry,
-            env: { STRANDS_AGENT_SDK_PACKAGE_NAME: scenario.dependencyName },
+            env: {
+              BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "true",
+              STRANDS_AGENT_SDK_PACKAGE_NAME: scenario.dependencyName,
+            },
             runContext: {
               variantKey: scenario.variantKey,
               originalScenarioDir,
@@ -69,7 +72,10 @@ describe.concurrent("variants", () => {
         runScenario: async ({ runNodeScenarioDir }) => {
           await runNodeScenarioDir({
             entry: scenario.autoEntry,
-            env: { STRANDS_AGENT_SDK_PACKAGE_NAME: scenario.dependencyName },
+            env: {
+              STRANDS_AGENT_SDK_PACKAGE_NAME: scenario.dependencyName,
+              BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "true",
+            },
             nodeArgs: ["--import", "braintrust/hook.mjs"],
             runContext: {
               variantKey: scenario.variantKey,

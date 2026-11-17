@@ -1,5 +1,6 @@
-import { openAIChannels } from "./instrumentation/plugins/openai-interceptors";
-import { getSpanParentObject } from "./logger";
+import { registerInstrumentation } from "./instrumentation/registrations/openai";
+import { openAIChannels } from "./instrumentation/providers/openai-interceptors";
+import { getSpanParentObject } from "./logger/core";
 import {
   createLazyAPIPromise,
   type EnhancedResponse,
@@ -126,6 +127,7 @@ export function openaiFilesCreateTraced<
 >(
   files: OpenAIFilesResource<TParams, TFile, TOptions>,
 ): (params: TParams, options?: TOptions) => OpenAIAPIPromise<TFile> {
+  registerInstrumentation();
   return (params, options) => {
     const parent = getSpanParentObject();
     const purpose = read(params, "purpose");
@@ -197,6 +199,7 @@ export function openaiBatchesRetrieveTraced<
 >(
   batches: OpenAIBatchesResource<TBatch, TOptions>,
 ): (batchId: string, options?: TOptions) => OpenAIAPIPromise<TBatch> {
+  registerInstrumentation();
   return (batchId, options) => {
     const apiPromise = batches.retrieve(batchId, options);
     let enhancedResponse: EnhancedResponse<TBatch> | undefined;
@@ -255,6 +258,7 @@ export function openaiBatchesRetrieveTraced<
 export async function completeOpenAIBatchTrace(
   args: CompleteOpenAIBatchTraceArgs,
 ): Promise<void> {
+  registerInstrumentation();
   const inputFileContent = Promise.resolve(args.inputFileContent);
   const outputFileContent =
     args.outputFileContent === undefined

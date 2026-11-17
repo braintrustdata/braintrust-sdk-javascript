@@ -1,10 +1,6 @@
 import { openaiProvider } from "pi-ai-v2/providers/openai";
-import {
-  braintrustFlueInstrumentation,
-  flush,
-  initLogger,
-  traced,
-} from "braintrust";
+import { flush, initLogger, traced } from "braintrust";
+import { braintrustFlueInstrumentation } from "braintrust/instrumentation";
 import * as v from "valibot";
 
 const SCENARIO_NAME = "flue-instrumentation";

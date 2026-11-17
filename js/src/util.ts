@@ -125,7 +125,7 @@ export class SyncLazyValue<T> {
 export function addAzureBlobHeaders(
   headers: Record<string, string>,
   url: string,
-) {
+): void {
   // According to https://stackoverflow.com/questions/37824136/put-on-sas-blob-url-without-specifying-x-ms-blob-type-header,
   // there is no way to avoid including this.
   if (url.includes("blob.core.windows.net")) {
@@ -142,7 +142,10 @@ export class InternalAbortError extends Error {
 }
 
 // Return a copy of record with the given keys removed.
-export function filterFrom(record: Record<string, any>, keys: string[]) {
+export function filterFrom(
+  record: Record<string, any>,
+  keys: string[],
+): Record<string, any> {
   const out: Record<string, any> = {};
   for (const k of Object.keys(record)) {
     if (!keys.includes(k)) {

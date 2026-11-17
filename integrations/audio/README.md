@@ -8,7 +8,7 @@ Provides audio plugins for audio instrumentation recordings, such as compression
 npm install @braintrust/audio
 ```
 
-Requires Node 20+ and `braintrust` 3.41+.
+Requires Node 22.18.0+ and `braintrust` 3.41+.
 
 When recording is activated with `BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS` or `BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS`, the SDK will automatically use this package if available.
 

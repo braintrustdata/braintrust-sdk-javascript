@@ -177,16 +177,8 @@
                         "type": "input_text"
                       },
                       {
-                        "image_url": "<omitted>",
-                        "type": "input_image"
-                      },
-                      {
                         "text": "Here is the second image.",
                         "type": "input_text"
-                      },
-                      {
-                        "image_url": "<omitted>",
-                        "type": "input_image"
                       }
                     ],
                     "role": "user"

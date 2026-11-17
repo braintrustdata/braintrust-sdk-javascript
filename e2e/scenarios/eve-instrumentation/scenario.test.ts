@@ -1,6 +1,6 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { beforeAll, describe, expect, test } from "vitest";
+import { beforeAll, describe, expect, test } from "vite-plus/test";
 import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import type {
   CapturedLogEvent,
@@ -45,13 +45,6 @@ await fs.cp(path.join(originalScenarioDir, "versions/v1"), v1SourceDir, {
 const v1ScenarioDir = await prepareScenarioDir({ scenarioDir: v1SourceDir });
 const eveScenarios = await Promise.all(
   [
-    {
-      dependencyName: "eve-v0",
-      label: "v0 pinned",
-      provider: false,
-      tasks: false,
-      variantKey: "eve-v0",
-    },
     {
       dependencyName: "eve-v0-provider",
       label: "v0 provider minimum",
@@ -118,7 +111,7 @@ const eveScenarios = await Promise.all(
 const TIMEOUT_MS =
   process.env.BRAINTRUST_E2E_CASSETTE_MODE === "record" ? 300_000 : 120_000;
 
-describe.sequential("eve instrumentation variants", () => {
+describe("eve instrumentation variants", { concurrent: false }, () => {
   for (const scenario of eveScenarios) {
     describe(`${scenario.label} (${scenario.version})`, () => {
       const [major, minor] = scenario.version.split(".").map(Number);
@@ -246,15 +239,9 @@ describe.sequential("eve instrumentation variants", () => {
           },
         ]);
         expect(root?.output).toContain("Final answer from read");
-        if (scenario.provider) {
-          expect(root?.metrics).not.toHaveProperty("completion_tokens");
-          expect(root?.metrics).not.toHaveProperty("prompt_tokens");
-          expect(root?.metrics).not.toHaveProperty("tokens");
-        } else {
-          expect(root?.metrics?.completion_tokens).toEqual(expect.any(Number));
-          expect(root?.metrics?.prompt_tokens).toEqual(expect.any(Number));
-          expect(root?.metrics?.tokens).toEqual(expect.any(Number));
-        }
+        expect(root?.metrics?.completion_tokens).toEqual(expect.any(Number));
+        expect(root?.metrics?.prompt_tokens).toEqual(expect.any(Number));
+        expect(root?.metrics?.tokens).toEqual(expect.any(Number));
 
         // Eve 0.70+ runs the researcher as a task, so the parent waits for its
         // result in an extra step before answering.

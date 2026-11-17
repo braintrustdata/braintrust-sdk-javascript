@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, test } from "vite-plus/test";
 import { objectNullish, parseNoStrip } from "./zod_util";
 import { z } from "zod/v3";
 

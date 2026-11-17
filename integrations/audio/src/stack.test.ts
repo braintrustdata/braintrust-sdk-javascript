@@ -1,4 +1,4 @@
-import { afterEach, expect, test, vi } from "vitest";
+import { afterEach, expect, test, vi } from "vite-plus/test";
 import { createStack } from "./stack";
 import type { AudioMiddleware, AudioSegmentMeta } from "./types";
 

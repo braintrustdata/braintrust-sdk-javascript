@@ -1,13 +1,20 @@
-import { expect, test, describe, beforeEach, afterEach, vi } from "vitest";
 import {
-  _exportsForTestingOnly,
+  expect,
+  test,
+  describe,
+  beforeEach,
+  afterEach,
+  vi,
+} from "vite-plus/test";
+import { _exportsForTestingOnly } from "./logger/testing";
+import {
   initLogger,
   wrapTraced,
   currentSpan,
   setMaskingFunction,
-} from "./logger";
+} from "./logger/core";
 import { configureNode } from "./node/config";
-import { configureInstrumentation, registry } from "./instrumentation/registry";
+import { setSpanCustomizers } from "./span-customizer";
 import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
@@ -19,13 +26,12 @@ describe("masking functionality", () => {
   let memoryLogger: any;
 
   beforeEach(async () => {
-    registry.disable();
     await _exportsForTestingOnly.simulateLoginForTests();
     memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();
   });
 
   afterEach(() => {
-    configureInstrumentation({ spanCustomizers: [] });
+    setSpanCustomizers([]);
     setMaskingFunction(null); // Clear masking function
     _exportsForTestingOnly.clearTestBackgroundLogger();
     vi.restoreAllMocks();
@@ -549,16 +555,14 @@ describe("masking functionality", () => {
 
   test("stripped customizer records bypass masking and remain independent of successful records", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
-    configureInstrumentation({
-      spanCustomizers: [
-        {
-          onSpanExport(data) {
-            if (data.output === "private") throw new Error("private failure");
-            return data;
-          },
+    setSpanCustomizers([
+      {
+        onSpanExport(data) {
+          if (data.output === "private") throw new Error("private failure");
+          return data;
         },
-      ],
-    });
+      },
+    ]);
     const mask = vi.fn((data: unknown) => {
       if (data && typeof data === "object" && "customizer_error" in data) {
         return { injected: "must not replace SDK diagnostics" };
@@ -607,16 +611,14 @@ describe("masking functionality", () => {
   test.each(["manual", "instrumented"])(
     "masking runs after %s span customizers and can be replaced or disabled independently",
     async (origin) => {
-      configureInstrumentation({
-        spanCustomizers: [
-          {
-            onSpanExport(data) {
-              if (typeof data.output === "string") data.output += ":customized";
-              return data;
-            },
+      setSpanCustomizers([
+        {
+          onSpanExport(data) {
+            if (typeof data.output === "string") data.output += ":customized";
+            return data;
           },
-        ],
-      });
+        },
+      ]);
       const logger = initLogger({
         projectName: "test",
         projectId: "test-project-id",
