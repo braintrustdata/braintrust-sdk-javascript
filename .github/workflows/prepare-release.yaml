@@ -145,7 +145,7 @@ jobs:
             echo
             echo "Created release PR: $pr_url"
             echo
-            echo "To publish this release, run the \`Publish Stable Release\` workflow with:"
+            echo "To publish this release, run the \`Publish Release\` workflow with:"
             echo
             echo "\`\`\`text"
             echo "release_sha: ${{ steps.release_commit.outputs.release_sha }}"
