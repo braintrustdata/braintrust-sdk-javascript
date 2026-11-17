@@ -1,3 +1,4 @@
+import { registerInstrumentation as fal } from "./registrations/fal";
 import { registerInstrumentation as mcpHandler } from "./registrations/mcpHandler";
 import { registerInstrumentation as fastmcp } from "./registrations/fastmcp";
 import { registerInstrumentation as mcp } from "./registrations/mcp";
@@ -60,6 +61,7 @@ export function registerInstrumentationConsumers(): void {
   ollama();
   googleADK();
   cohere();
+  fal();
   voyageai();
   groq();
   awsBedrockRuntime();

@@ -50,6 +50,7 @@ export const INSTRUMENTATION_NAMES = {
   WORKERS_AI: "workers-ai",
   VOYAGEAI: "voyageai",
   DEEPGRAM: "deepgram",
+  FAL: "fal",
   ELEVENLABS: "elevenlabs",
 } as const;
 

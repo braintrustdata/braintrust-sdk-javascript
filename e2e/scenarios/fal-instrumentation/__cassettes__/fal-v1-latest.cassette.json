@@ -1,0 +1,359 @@
+{
+  "entries": [
+    {
+      "callIndex": 0,
+      "id": "a908d816d681282c",
+      "matchKey": "POST fal.run/fal-ai/flux/schnell",
+      "recordedAt": "2026-11-16T14:50:07.404Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "image_size": {
+              "height": 256,
+              "width": 256
+            },
+            "num_inference_steps": 1,
+            "prompt": "A red cube on a white background",
+            "seed": 42
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://fal.run/fal-ai/flux/schnell"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "has_nsfw_concepts": [false],
+            "images": [
+              {
+                "content_type": "image/jpeg",
+                "height": 256,
+                "url": "https://v3b.fal.media/files/b/0ab2b59c/V4Ao1niAUcw_I3U3JW9NL.jpg",
+                "width": 256
+              }
+            ],
+            "prompt": "A red cube on a white background",
+            "seed": 42,
+            "timings": {
+              "inference": 0.06863761600016005
+            }
+          }
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "content-length": "266",
+          "content-type": "application/json",
+          "date": "Mon, 16 Nov 2026 14:50:06 GMT",
+          "server": "envoy",
+          "strict-transport-security": "max-age=31536000; includeSubDomains",
+          "vary": "origin, access-control-request-method, access-control-request-headers",
+          "x-fal-billable-units": "1",
+          "x-fal-request-id": "01a1e4d6-37ef-70f2-96aa-2a5234cb91c0",
+          "x-fal-served-from": "f3e543b5-74dd-4d0a-9424-ec781d55a295",
+          "x-ratelimit-limit": "2000",
+          "x-ratelimit-remaining": "2000",
+          "x-ratelimit-reset": "0",
+          "x-robots-tag": "noindex"
+        },
+        "status": 200
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "82a219d661eaea67",
+      "matchKey": "POST fal.run/fal-ai/kokoro/american-english",
+      "recordedAt": "2026-11-16T14:50:07.994Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "prompt": "Hello from Braintrust.",
+            "speed": 1,
+            "voice": "af_heart"
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://fal.run/fal-ai/kokoro/american-english"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "audio": {
+              "content_type": "audio/wav",
+              "file_name": "EfxtE5HKE9eRRtihfdaCL_fOS6G6cb.wav",
+              "file_size": null,
+              "url": "https://v3b.fal.media/files/b/0ab2b59c/EfxtE5HKE9eRRtihfdaCL_fOS6G6cb.wav"
+            }
+          }
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "content-length": "186",
+          "content-type": "application/json",
+          "date": "Mon, 16 Nov 2026 14:50:07 GMT",
+          "server": "envoy",
+          "strict-transport-security": "max-age=31536000; includeSubDomains",
+          "vary": "origin, access-control-request-method, access-control-request-headers",
+          "x-fal-billable-units": "1",
+          "x-fal-request-id": "01a1e4d6-3ade-76f0-8a1e-3cf16ab76f60",
+          "x-fal-served-from": "82d9357c-741e-4d8e-acc8-1bb704e11fbd",
+          "x-ratelimit-limit": "2000",
+          "x-ratelimit-remaining": "2000",
+          "x-ratelimit-reset": "0",
+          "x-robots-tag": "noindex"
+        },
+        "status": 200
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "cba290851f60d1fb",
+      "matchKey": "POST fal.run/fal-ai/ltx-video-13b-distilled/image-to-video",
+      "recordedAt": "2026-11-16T14:52:22.446Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "first_pass_num_inference_steps": 2,
+            "image_url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAIAAADTED8xAAAEXElEQVR4nO3TQY0DMBAEwcAJfzzHJQfCj9GqqzQALK3784Owz/oBsCQA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKSdD+Dv+7Xh1vd/JQATwGXzHxDf+v6vBGACuGz+A+Jb3/+VAEwAl81/QHzr+78SgAngsvkPiG99/1cCMAFcNv8B8a3v/0oAJoDL5j8gvvX9XwnABHDZ/AfEt77/KwGYAC6b/4D41vd/JQATwGXzHxDf+v6vBGACuGz+A+Jb3/+VAEwAl81/QHzr+78SgAngsvkPiG99/1cCMAFcNv8B8a3v/0oAJoDL5j8gvvX9XwnABHDZ/AfEt77/KwGYAC6b/4D41vd/JQATwGXzHxDf+v6vBGACuGz+A+Jb3/+VAEwAl81/QHzr+78SgAngsvkPiG99/1cCMAFcNv8B8a3v/0oAJoDL5j8gvvX9XwnABHDZ/AfEt77/KwGYAC6b/4D41vd/JQATwGXzHxDf+v6vBGACuGz+A+Jb3/+VAEwAl81/QHzr+78SgAngsvkPiG99/1cCMAFcNv8B8a3v/0oAJoDL5j8gvvX9XwnABHDZ/AfEt77/KwGYAC6b/4D41vd/JQATwGXzHxDf+v6vBGACuGz+A+Jb3/+VAEwAl81/QHzr+78SgAngsvkPiG99/1cCMAFcNv8B8a3v/0oAJoDL5j8gvvX9XwnABHDZ/AfEt77/KwGYAC6b/4D41vd/JQATwGXzHxDf+v6vBGACuGz+A+Jb3/+VAEwAl81/QHzr+78SgAngsvkPiG99/1cCMAFcNv8B8a3v/0oAJoDL5j8gvvX9XwnABHDZ/AfEt77/KwGYAC6b/4D41vd/JQATwGXzHxDf+v6vBGACuGz+A+Jb3/+VAEwAl81/QHzr+78SgAngsvkPiG99/1cCMAFcNv8B8a3v/0oAJoDL5j8gvvX9XwnABHDZ/AfEt77/KwGYAC6b/4D41vd/JQATwGXzHxDf+v6vBGACuGz+A+Jb3/+VAEwAl81/QHzr+78SgAngsvkPiG99/1cCMAFcNv8B8a3v/0oAJoDL5j8gvvX9XwnABHDZ/AfEt77/KwGYAKBKAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBp/z4F5fmQoMZDAAAAAElFTkSuQmCC",
+            "num_frames": 9,
+            "prompt": "The scene moves slowly. The camera stays still.",
+            "resolution": "480p",
+            "seed": 42
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://fal.run/fal-ai/ltx-video-13b-distilled/image-to-video"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "prompt": "The scene moves slowly. The camera stays still.",
+            "seed": 42,
+            "video": {
+              "content_type": "video/mp4",
+              "file_name": "mgod8A3efWjGGeU8RDD_g_OhbVrpoi.mp4",
+              "file_size": 8745,
+              "url": "https://v3b.fal.media/files/b/0ab2b5aa/mgod8A3efWjGGeU8RDD_g_OhbVrpoi.mp4"
+            }
+          }
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "content-length": "255",
+          "content-type": "application/json",
+          "date": "Mon, 16 Nov 2026 14:52:16 GMT",
+          "server": "envoy",
+          "strict-transport-security": "max-age=31536000; includeSubDomains",
+          "vary": "origin, access-control-request-method, access-control-request-headers",
+          "x-fal-billable-units": "0.375",
+          "x-fal-request-id": "01a1e4d6-3d29-7d50-9de2-983feef0db1b",
+          "x-fal-served-from": "4b185685-9bfe-49b6-8146-73b5979eaa37",
+          "x-ratelimit-limit": "2000",
+          "x-ratelimit-remaining": "2000",
+          "x-ratelimit-reset": "0",
+          "x-robots-tag": "noindex"
+        },
+        "status": 200
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "486d0c79e9957a67",
+      "matchKey": "POST fal.run/fal-ai/flux-lora/stream",
+      "recordedAt": "2026-11-16T14:52:23.523Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "image_size": {
+              "height": 256,
+              "width": 256
+            },
+            "num_inference_steps": 2,
+            "prompt": "A blue cube on a white background",
+            "seed": 42
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://fal.run/fal-ai/flux-lora/stream"
+      },
+      "response": {
+        "body": {
+          "contentType": "text/event-stream; charset=utf-8",
+          "kind": "binary",
+          "path": "fal-v1-latest.cassette.blobs/37ebc11ea88bfe573c722fb0acf3f655dfaf197d60c95be197cc9ef85cd6cf3d.bin",
+          "sha256": "37ebc11ea88bfe573c722fb0acf3f655dfaf197d60c95be197cc9ef85cd6cf3d"
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Mon, 16 Nov 2026 14:52:22 GMT",
+          "server": "envoy",
+          "strict-transport-security": "max-age=31536000; includeSubDomains",
+          "vary": "origin, access-control-request-method, access-control-request-headers",
+          "x-fal-billable-units": "1",
+          "x-fal-request-id": "01a1e4d8-4a5a-7972-9b06-a445e8172eb6",
+          "x-fal-served-from": "c0a2a443-18d6-4fdf-82b4-1fcc6614c99f",
+          "x-ratelimit-limit": "2000",
+          "x-ratelimit-remaining": "2000",
+          "x-ratelimit-reset": "0",
+          "x-robots-tag": "noindex"
+        },
+        "status": 200
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "8bad02c462b1979d",
+      "matchKey": "POST fal.run/fal-ai/flux-lora/stream",
+      "recordedAt": "2026-11-16T14:52:24.431Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "image_size": {
+              "height": 256,
+              "width": 256
+            },
+            "num_inference_steps": 2,
+            "prompt": "A blue cube on a white background",
+            "seed": 42
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://fal.run/fal-ai/flux-lora/stream"
+      },
+      "response": {
+        "body": {
+          "contentType": "text/event-stream; charset=utf-8",
+          "kind": "binary",
+          "path": "fal-v1-latest.cassette.blobs/37ebc11ea88bfe573c722fb0acf3f655dfaf197d60c95be197cc9ef85cd6cf3d.bin",
+          "sha256": "37ebc11ea88bfe573c722fb0acf3f655dfaf197d60c95be197cc9ef85cd6cf3d"
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Mon, 16 Nov 2026 14:52:23 GMT",
+          "server": "envoy",
+          "strict-transport-security": "max-age=31536000; includeSubDomains",
+          "vary": "origin, access-control-request-method, access-control-request-headers",
+          "x-fal-billable-units": "1",
+          "x-fal-request-id": "01a1e4d8-4ebc-7462-8e8a-9cd393b3a102",
+          "x-fal-served-from": "c0a2a443-18d6-4fdf-82b4-1fcc6614c99f",
+          "x-ratelimit-limit": "2000",
+          "x-ratelimit-remaining": "2000",
+          "x-ratelimit-reset": "0",
+          "x-robots-tag": "noindex"
+        },
+        "status": 200
+      }
+    },
+    {
+      "callIndex": 2,
+      "id": "ee8e014fb4e10b3a",
+      "matchKey": "POST fal.run/fal-ai/flux-lora/stream",
+      "recordedAt": "2026-11-16T14:52:28.310Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "image_size": {
+              "height": 256,
+              "width": 256
+            },
+            "num_inference_steps": 2,
+            "prompt": "A blue cube on a white background",
+            "seed": 42
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://fal.run/fal-ai/flux-lora/stream"
+      },
+      "response": {
+        "body": {
+          "contentType": "text/event-stream; charset=utf-8",
+          "kind": "binary",
+          "path": "fal-v1-latest.cassette.blobs/0244658356018a10133458b0a572af805d72d39ca47ba54f10133bb73e35c792.bin",
+          "sha256": "0244658356018a10133458b0a572af805d72d39ca47ba54f10133bb73e35c792"
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Mon, 16 Nov 2026 14:52:24 GMT",
+          "server": "envoy",
+          "strict-transport-security": "max-age=31536000; includeSubDomains",
+          "vary": "origin, access-control-request-method, access-control-request-headers",
+          "x-fal-billable-units": "1",
+          "x-fal-request-id": "01a1e4d8-5219-7c93-a85b-504ea0733357",
+          "x-fal-served-from": "da6d25f2-a7e5-4a5a-8692-12fe69fe6b61",
+          "x-ratelimit-limit": "2000",
+          "x-ratelimit-remaining": "2000",
+          "x-ratelimit-reset": "0",
+          "x-robots-tag": "noindex"
+        },
+        "status": 200
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "10ce2e7b03b66cba",
+      "matchKey": "POST fal.run/fal-ai/flux/schnell",
+      "recordedAt": "2026-11-16T14:52:28.700Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {}
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://fal.run/fal-ai/flux/schnell"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "detail": [
+              {
+                "input": {},
+                "loc": ["body", "prompt"],
+                "msg": "Field required",
+                "type": "missing"
+              }
+            ]
+          }
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "content-length": "89",
+          "content-type": "application/json",
+          "date": "Mon, 16 Nov 2026 14:52:27 GMT",
+          "server": "envoy",
+          "strict-transport-security": "max-age=31536000; includeSubDomains",
+          "vary": "origin, access-control-request-method, access-control-request-headers",
+          "x-fal-billable-units": "0",
+          "x-fal-request-id": "01a1e4d8-6140-7fa2-a708-33c62fa55119",
+          "x-fal-served-from": "6350e818-866b-4bb3-a8c8-f37a71868fd4",
+          "x-ratelimit-limit": "2000",
+          "x-ratelimit-remaining": "2000",
+          "x-ratelimit-reset": "0",
+          "x-robots-tag": "noindex"
+        },
+        "status": 422
+      }
+    }
+  ],
+  "meta": {
+    "createdAt": "2026-11-16T14:52:29.177Z"
+  }
+}
