@@ -17,7 +17,21 @@
   {
     "scenarioDirName": "trace-primitives-basic",
     "label": "Trace primitives and project caching",
-    "metadataScenario": "trace-primitives-basic"
+    "metadataScenario": "trace-primitives-basic",
+    "variants": [
+      {
+        "variantKey": "api-key",
+        "label": "API key"
+      },
+      {
+        "variantKey": "ingest-key",
+        "label": "Ingest key (Node)"
+      },
+      {
+        "variantKey": "ingest-key-browser",
+        "label": "Ingest key (browser)"
+      }
+    ]
   },
   {
     "scenarioDirName": "ts-exec-loader",

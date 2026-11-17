@@ -1,0 +1,20 @@
+span_tree:
+└── ingest-key-root [task]
+    input: {
+      "testRunId": "<run:1>"
+    }
+    output: "updated remotely"
+    metadata: {
+      "scenario": "trace-primitives-basic",
+      "testRunId": "<run:1>",
+      "variant": "ingest-key"
+    }
+    ├── ingest-key-child
+    │   input: {
+    │     "attachment": "[Attachment blocked by ingest key policy]",
+    │     "testRunId": "<run:1>"
+    │   }
+    └── ingest-key-remote
+        input: {
+          "testRunId": "<run:1>"
+        }

@@ -1,4 +1,5 @@
 /// <reference lib="dom" />
+import { parseIngestKey, blockIngestKeyAttachments } from "../ingest-key";
 import { TypedAttachmentProcessor } from "../typed-attachments";
 import {
   formatLogTemplate,
@@ -247,7 +248,7 @@ export interface Span extends Exportable {
   getParentInfo():
     | {
         objectType: SpanObjectTypeV3;
-        objectId: LazyValue<string>;
+        objectId: LazyValue<string | undefined>;
         computeObjectMetadataArgs: Record<string, unknown> | undefined;
       }
     | undefined;
@@ -757,6 +758,8 @@ export class BraintrustState {
   private readonly _otelFlushCallbacks = new Set<() => Promise<void>>();
   public spanOriginEnvironment: SpanOriginEnvironment | undefined;
   private traceContextSigningSecret: string | undefined;
+  private ingestKeyCredential: string | undefined;
+  private credentialIsIngestKey = false;
   private loaderLoginCache = new WeakMap<
     typeof globalThis.fetch,
     LRUCache<string, Promise<LoaderRequestState>>
@@ -832,6 +835,40 @@ export class BraintrustState {
     )?.trim();
   }
 
+  /** @internal Whether the configured credential selects its own log destination. */
+  public get isIngestKey(): boolean {
+    const credential =
+      this.loginToken ??
+      this.traceContextSigningSecret ??
+      this.loginParams.apiKey ??
+      iso.getEnv("BRAINTRUST_API_KEY");
+    if (credential !== this.ingestKeyCredential) {
+      this.credentialIsIngestKey = credential
+        ? parseIngestKey(credential) !== undefined
+        : false;
+      this.ingestKeyCredential = credential;
+    }
+    return this.credentialIsIngestKey;
+  }
+
+  /** @internal Resolve file-based credentials before exporting a parent without login. */
+  public async _internalResolveIngestKey(): Promise<boolean> {
+    if (!this.traceContextSigningSecret && !this.loginToken) {
+      this._internalSetTraceContextSigningSecret(
+        await iso.getBraintrustApiKey(),
+      );
+    }
+    // A forced login may be pending on the logger's lazy metadata. Resolve it
+    // before choosing an export shape when either credential is an ingest key.
+    return (
+      this.isIngestKey ||
+      Boolean(
+        this.traceContextSigningSecret &&
+        parseIngestKey(this.traceContextSigningSecret),
+      )
+    );
+  }
+
   public resetLoginInfo(): void {
     this.loginGeneration++;
     this.loginQueueTail = undefined;
@@ -880,6 +917,11 @@ export class BraintrustState {
       );
     }
     const normalizedApiKey = HTTPConnection.sanitize_token(resolvedApiKey);
+    if (parseIngestKey(normalizedApiKey)) {
+      throw new Error(
+        "Ingest keys cannot load prompts or other Braintrust objects.",
+      );
+    }
     const usesActiveCredential =
       this.loggedIn && normalizedApiKey === this.loginToken;
     const requestedOrgName =
@@ -1045,6 +1087,10 @@ export class BraintrustState {
   }
 
   public serialize(): SerializedBraintrustState {
+    if (this.isIngestKey)
+      throw new Error(
+        "Ingest-key state cannot be serialized. Configure the receiving SDK with its own key.",
+      );
     if (!this.loggedIn) {
       throw new Error(
         "Cannot serialize BraintrustState without being logged in",
@@ -1277,6 +1323,8 @@ export class BraintrustState {
   }
 
   public appConn(): HTTPConnection {
+    if (this.isIngestKey)
+      throw new Error("Ingest keys can only send project logs.");
     if (!this._appConn) {
       if (!this.appUrl) {
         throw new Error("Must initialize appUrl before requesting appConn");
@@ -1291,12 +1339,19 @@ export class BraintrustState {
       if (!this.apiUrl) {
         throw new Error("Must initialize apiUrl before requesting apiConn");
       }
-      this._apiConn = new HTTPConnection(this.apiUrl, this.fetch);
+      this._apiConn = new HTTPConnection(
+        this.apiUrl,
+        this.fetch,
+        false,
+        this.isIngestKey ? this.apiUrl : undefined,
+      );
     }
     return this._apiConn!;
   }
 
   public proxyConn(): HTTPConnection {
+    if (this.isIngestKey)
+      throw new Error("Ingest keys cannot call the model proxy.");
     if (!this.proxyUrl) {
       return this.apiConn();
     }
@@ -1540,6 +1595,8 @@ export class HTTPConnection {
     base_url: string,
     fetch: typeof globalThis.fetch,
     private readonly classifyTransportErrors = false,
+    /** @internal Exact endpoint for an ingestion-only connection. */
+    readonly ingestEndpoint?: string,
   ) {
     this.base_url = base_url;
     this.token = null;
@@ -1592,6 +1649,8 @@ export class HTTPConnection {
       | undefined = undefined,
     config?: RequestInit,
   ): Promise<Response> {
+    if (this.ingestEndpoint)
+      throw new Error("Ingest keys can only send project logs.");
     const { headers, ...rest } = config || {};
     const url = new URL(_urljoin(this.base_url, path));
     url.search = new URLSearchParams(
@@ -1639,6 +1698,9 @@ export class HTTPConnection {
     config?: RequestInit,
     retries: number = 0,
   ): Promise<Response> {
+    if (this.ingestEndpoint && path !== "logs3") {
+      throw new Error("Ingest keys can only send project logs.");
+    }
     const { headers, ...rest } = config || {};
     // On platforms like Cloudflare, we lose "this" when we make an async call,
     // so we need to bind it again.
@@ -1651,23 +1713,27 @@ export class HTTPConnection {
       try {
         let response: Response;
         try {
-          response = await this_fetch(_urljoin(this_base_url, path), {
-            method: "POST",
-            headers: {
-              Accept: "application/json",
-              "Content-Type": "application/json",
-              ...this_headers,
-              ...headers,
+          response = await this_fetch(
+            this.ingestEndpoint ?? _urljoin(this_base_url, path),
+            {
+              method: "POST",
+              headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                ...this_headers,
+                ...headers,
+              },
+              body:
+                typeof params === "string"
+                  ? params
+                  : params
+                    ? JSON.stringify(params)
+                    : undefined,
+              keepalive: true,
+              ...rest,
+              ...(this.ingestEndpoint ? { redirect: "error" as const } : {}),
             },
-            body:
-              typeof params === "string"
-                ? params
-                : params
-                  ? JSON.stringify(params)
-                  : undefined,
-            keepalive: true,
-            ...rest,
-          });
+          );
         } catch (error) {
           if (config?.signal?.aborted) {
             throw getAbortReason(config.signal);
@@ -1781,8 +1847,8 @@ export interface ProjectDatasetMetadata {
 }
 
 interface OrgProjectMetadata {
-  org_id: string;
-  project: ObjectMetadata;
+  org_id?: string;
+  project?: ObjectMetadata;
 }
 
 interface LinkArgs {
@@ -2002,6 +2068,8 @@ export class Attachment extends BaseAttachment {
       const state = this.state ?? _internalGetGlobalState();
       await withRetry(() => state.login({}));
 
+      if (state.isIngestKey)
+        throw new Error("Ingest keys do not support attachment uploads.");
       const conn = state.apiConn();
       const orgId = state.orgId ?? "";
 
@@ -2343,10 +2411,28 @@ export class JSONAttachment extends Attachment {
   }
 }
 
+async function logParentFields(
+  state: BraintrustState,
+  objectType: SpanObjectTypeV3,
+  objectId: LazyValue<string | undefined>,
+) {
+  const id = await objectId.get();
+  if (state.isIngestKey) {
+    if (objectType !== SpanObjectTypeV3.PROJECT_LOGS) {
+      throw new Error("Ingest keys can only send project logs.");
+    }
+    return { log_id: "g" as const };
+  }
+  return new SpanComponentsV3({
+    object_type: objectType,
+    object_id: id,
+  }).objectIdFields();
+}
+
 export function logFeedbackImpl(
   state: BraintrustState,
   parentObjectType: SpanObjectTypeV3,
-  parentObjectId: LazyValue<string>,
+  parentObjectId: LazyValue<string | undefined>,
   {
     id,
     expected,
@@ -2386,11 +2472,17 @@ export function logFeedbackImpl(
     Object.entries(rawUpdateEvent).filter(([_, v]) => !isEmpty(v)),
   );
 
-  const parentIds = async () =>
-    new SpanComponentsV3({
+  const parentIds = async () => {
+    const objectId = await parentObjectId.get();
+    if (state.isIngestKey)
+      throw new Error(
+        "Ingest keys do not support feedback. Use updateSpan to update log data.",
+      );
+    return new SpanComponentsV3({
       object_type: parentObjectType,
-      object_id: await parentObjectId.get(),
+      object_id: objectId,
     }).objectIdFields();
+  };
 
   if (Object.keys(updateEvent).length > 0) {
     const record = new LazyValue(async () => {
@@ -2439,7 +2531,7 @@ export function updateSpanImpl({
 }: {
   state: BraintrustState;
   parentObjectType: SpanObjectTypeV3;
-  parentObjectId: LazyValue<string>;
+  parentObjectId: LazyValue<string | undefined>;
   id: string;
   root_span_id: string | undefined;
   span_id: string | undefined;
@@ -2458,11 +2550,8 @@ export function updateSpanImpl({
     } as Partial<ExperimentEvent>),
   );
 
-  const parentIds = async () =>
-    new SpanComponentsV3({
-      object_type: parentObjectType,
-      object_id: await parentObjectId.get(),
-    }).objectIdFields();
+  const parentIds = () =>
+    logParentFields(state, parentObjectType, parentObjectId);
 
   const record = new LazyValue(
     async () =>
@@ -2568,10 +2657,24 @@ export interface MultiParentSpanIds {
 function spanComponentsToObjectIdLambda(
   state: BraintrustState,
   components: SpanComponentsV3,
-): () => Promise<string> {
+): () => Promise<string | undefined> {
   if (components.data.object_id) {
     const ret = components.data.object_id;
     return async () => ret;
+  }
+  if (
+    !components.data.object_id &&
+    !components.data.compute_object_metadata_args &&
+    components.data.object_type === SpanObjectTypeV3.PROJECT_LOGS
+  ) {
+    return async () => {
+      if (state.currentLogger) return state.currentLogger.id;
+      await state.login({});
+      if (state.isIngestKey) return undefined;
+      throw new Error(
+        "Configure a logger to receive trace context without a project destination.",
+      );
+    };
   }
   if (!components.data.compute_object_metadata_args) {
     throw new Error(
@@ -2593,7 +2696,7 @@ function spanComponentsToObjectIdLambda(
           await computeLoggerMetadata(state, {
             ...components.data.compute_object_metadata_args,
           })
-        ).project.id;
+        ).project?.id;
     default:
       const x: never = components.data.object_type;
       throw new Error(`Unknown object type: ${x}`);
@@ -2610,10 +2713,13 @@ export async function spanComponentsToObjectId({
   components: SpanComponentsV3;
   state?: BraintrustState;
 }): Promise<string> {
-  return await spanComponentsToObjectIdLambda(
+  const id = await spanComponentsToObjectIdLambda(
     state ?? _internalGetGlobalState(),
     components,
   )();
+  if (!id)
+    throw new Error("Project metadata is unavailable with an ingest key.");
+  return id;
 }
 
 export const ERR_PERMALINK = "https://braintrust.dev/error-generating-link";
@@ -2735,26 +2841,26 @@ export function startSpanParentArgs(args: {
   // (from `extractTraceContextFromHeaders`).
   parent: string | PropagationContext | undefined;
   parentObjectType: SpanObjectTypeV3;
-  parentObjectId: LazyValue<string>;
+  parentObjectId: LazyValue<string | undefined>;
   parentComputeObjectMetadataArgs: Record<string, any> | undefined;
   parentSpanIds: ParentSpanIds | MultiParentSpanIds | undefined;
   propagatedEvent: StartSpanEventArgs | undefined;
   propagatedState?: PropagatedState | undefined;
 }): {
   parentObjectType: SpanObjectTypeV3;
-  parentObjectId: LazyValue<string>;
+  parentObjectId: LazyValue<string | undefined>;
   parentComputeObjectMetadataArgs: Record<string, any> | undefined;
   parentSpanIds: ParentSpanIds | MultiParentSpanIds | undefined;
   propagatedEvent: StartSpanEventArgs | undefined;
   propagatedState: PropagatedState | undefined;
 } {
-  let argParentObjectId: LazyValue<string> | undefined = undefined;
+  let argParentObjectId: LazyValue<string | undefined> | undefined = undefined;
   let argParentSpanIds: ParentSpanIds | MultiParentSpanIds | undefined =
     undefined;
   let argPropagatedEvent: StartSpanEventArgs | undefined = undefined;
   let argPropagatedState: PropagatedState | undefined = undefined;
   const { parentSlug, propagatedState: parentPropagatedState } =
-    normalizeParent(args.parent, args.state);
+    normalizeParent(args.parent, args.state, args.parentObjectType);
   if (parentSlug) {
     if (args.parentSpanIds) {
       throw new Error("Cannot specify both parent and parentSpanIds");
@@ -2819,7 +2925,7 @@ export class Logger implements Exportable {
   private computeMetadataArgs: ProjectMetadataArgs | undefined;
   private linkArgs: LinkArgs | undefined;
   private lastStartTime: number;
-  private lazyId: LazyValue<string>;
+  private lazyId: LazyValue<string | undefined>;
   private calledStartSpan: boolean;
   private baselineTraceId?: string;
   private readonly autoCaptureAttachments: boolean | undefined;
@@ -2846,20 +2952,23 @@ export class Logger implements Exportable {
     this.state = state;
   }
 
-  public get org_id(): Promise<string> {
+  /** Undefined when an ingest key selects the project on the server. */
+  public get org_id(): Promise<string | undefined> {
     return (async () => {
       return (await this.lazyMetadata.get()).org_id;
     })();
   }
 
-  public get project(): Promise<ObjectMetadata> {
+  /** Undefined when an ingest key selects the project on the server. */
+  public get project(): Promise<ObjectMetadata | undefined> {
     return (async () => {
       return (await this.lazyMetadata.get()).project;
     })();
   }
 
-  public get id(): Promise<string> {
-    return (async () => (await this.project).id)();
+  /** Undefined when an ingest key selects the project on the server. */
+  public get id(): Promise<string | undefined> {
+    return (async () => (await this.project)?.id)();
   }
 
   public get loggingState(): BraintrustState {
@@ -3119,6 +3228,12 @@ export class Logger implements Exportable {
     // `has_computed` is the same as the one we are passing into the span
     // logging functions. So that if the spans actually do get logged, then this
     // `_lazy_id` object specifically will also be marked as computed.
+    if (await this.state._internalResolveIngestKey()) await this.lazyId.get();
+    if (this.state.isIngestKey) {
+      return new (getSpanComponentsClass())({
+        object_type: this.parentObjectType(),
+      }).toStr();
+    }
     return new (getSpanComponentsClass())({
       object_type: this.parentObjectType(),
       ...(this.computeMetadataArgs && !this.lazyId.hasSucceeded
@@ -3149,6 +3264,7 @@ export class Logger implements Exportable {
    * undefined when it cannot be determined synchronously.
    */
   public _getOtelParent(): string | undefined {
+    if (this.state.isIngestKey) return undefined;
     const id =
       this.computeMetadataArgs?.project_id || this.lazyId.getSync().value;
     if (id) {
@@ -3716,6 +3832,12 @@ class HTTPBackgroundLogger implements BackgroundLogger {
         let serverLimit: number | null = null;
         try {
           const conn = await this.apiConn.get();
+          if (conn.ingestEndpoint)
+            return {
+              maxRequestSize:
+                this.maxRequestSizeOverride ?? DEFAULT_MAX_REQUEST_SIZE,
+              canUseOverflow: false,
+            };
           const versionInfo = await conn.get_json("version");
           serverLimit =
             z
@@ -3789,13 +3911,23 @@ class HTTPBackgroundLogger implements BackgroundLogger {
       return;
     }
 
-    const [allItems, attachments] = await this.unwrapLazyValues(wrappedItems);
+    const [allItems, extractedAttachments] =
+      await this.unwrapLazyValues(wrappedItems);
+    const ingestKey = Boolean((await this.apiConn.get()).ingestEndpoint);
+    const attachments = ingestKey ? [] : extractedAttachments;
+    if (ingestKey) {
+      for (const group of allItems) {
+        for (let i = 0; i < group.length; i++) {
+          group[i] = blockIngestKeyAttachments(group[i]) as BackgroundLogEvent;
+        }
+      }
+    }
     // Decision/extraction media is converted only after customizers/masking. Commit each
     // record's references only after every automatic upload succeeds, so errors
     // retain the customized original payload and never prevent span export.
     for (const group of allItems) {
       for (let i = 0; i < group.length; i++) {
-        if ("span_id" in group[i]) {
+        if (!ingestKey && "span_id" in group[i]) {
           group[i] = await this.typedAttachments.process(
             group[i],
             Reflect.get(group[i], CAPTURE_ATTACHMENTS),
@@ -3862,7 +3994,8 @@ class HTTPBackgroundLogger implements BackgroundLogger {
         items,
         batchMaxNumItems: batchSize,
         batchMaxNumBytes: maxRequestSizeResult.maxRequestSize / 2,
-        getByteSize: (item) => item.str.length,
+        getByteSize: (item) =>
+          ingestKey ? utf8ByteLength(item.str) : item.str.length,
       });
       results.push(
         ...(await Promise.all(
@@ -4034,6 +4167,11 @@ class HTTPBackgroundLogger implements BackgroundLogger {
     const conn = await this.apiConn.get();
     const dataStr = constructLogs3Data(items);
     const payloadBytes = utf8ByteLength(dataStr);
+    if (conn.ingestEndpoint && payloadBytes > maxRequestSize) {
+      throw new Error(
+        "Ingest-key log payload exceeds the request size limit; overflow uploads are not supported.",
+      );
+    }
     const useOverflow = canUseOverflow && payloadBytes > maxRequestSize;
     if (this.allPublishPayloadsDir) {
       await HTTPBackgroundLogger.writePayloadToDir({
@@ -4301,6 +4439,8 @@ class HTTPBackgroundLogger implements BackgroundLogger {
   // Should only be called by BraintrustState.
   public internalReplaceApiConn(apiConn: HTTPConnection): void {
     this.apiConn = new LazyValue(async () => apiConn);
+    this._maxRequestSizePromise = null;
+    this.automaticAttachmentsDisabled = false;
   }
 
   public disable(): void {
@@ -4328,6 +4468,7 @@ async function computeLoggerMetadata(
   { project_name, project_id, project_group_name }: ProjectMetadataArgs,
 ) {
   await state.login({});
+  if (state.isIngestKey) return {};
   const org_id = state.orgId!;
   if (!isEmpty(project_id) && !isEmpty(project_name)) {
     return {
@@ -4429,7 +4570,9 @@ export type InitLoggerOptions = FullLoginOptions & {
    * omitting it preserves that default. Explicitly logged attachments are unaffected.
    */
   autoCaptureAttachments?: boolean;
+  /** Project name. Ignored when using an ingest key. */
   projectName?: string;
+  /** Project ID. Ignored when using an ingest key. */
   projectId?: string;
   _createInProjectGroup?: string;
   environment?: SpanOriginEnvironment;
@@ -4528,7 +4671,8 @@ export interface LoginOptions {
    */
   appUrl?: string;
   /**
-   * The API key to use. If the parameter is not specified, will try to use the `BRAINTRUST_API_KEY` environment variable. In Node.js, if that is unset, will try the nearest `.env.braintrust` file in the current working directory or parent directories.
+   * An API key or complete ingest key URL. Ingest keys send project logs directly without login or project discovery and do not support attachments.
+   * If the parameter is not specified, will try to use the `BRAINTRUST_API_KEY` environment variable. In Node.js, if that is unset, will try the nearest `.env.braintrust` file in the current working directory or parent directories.
    */
   apiKey?: string;
   /**
@@ -4622,7 +4766,7 @@ export async function login(
     ) {
       if (!isEmpty(arg) && !isEmpty(orig) && arg !== orig) {
         throw new Error(
-          `Re-logging in with different ${varname} (${arg}) than original (${orig}). To force re-login, pass \`forceLogin: true\``,
+          `Re-logging in with different ${varname}. To force re-login, pass \`forceLogin: true\``,
         );
       }
     }
@@ -4716,11 +4860,20 @@ export async function loginToState(
   state.appPublicUrl = appPublicUrl;
 
   let conn = null;
+  const ingestKey = apiKey ? parseIngestKey(apiKey) : undefined;
 
   if (!apiKey) {
     throw new Error(
       "Please specify an api key (e.g. by setting BRAINTRUST_API_KEY).",
     );
+  } else if (ingestKey) {
+    state.apiUrl = ingestKey.endpoint;
+    state.loginToken = apiKey.trim();
+    state.loggedIn = true;
+    conn = state.apiConn();
+    conn.set_token(ingestKey.token);
+    state.loginReplaceApiConn(conn);
+    return state;
   } else if (apiKey === TEST_API_KEY) {
     // This is a weird hook that lets us skip logging in and mocking out the org info.
     const testOrgInfo = [
@@ -4952,6 +5105,14 @@ export function _internalExportParentSynchronously(
     if (!parentInfo) {
       return undefined;
     }
+    if (parent.state()?.isIngestKey) {
+      return new SpanComponentsV4({
+        object_type: parentInfo.objectType,
+        row_id: parent.id,
+        root_span_id: parent.rootSpanId,
+        span_id: parent.spanId,
+      }).toStr();
+    }
     const objectId = parentInfo.objectId.getSync().value;
     if (!objectId && !parentInfo.computeObjectMetadataArgs) {
       return undefined;
@@ -4970,6 +5131,11 @@ export function _internalExportParentSynchronously(
     }).toStr();
   }
 
+  if (parent.kind === "logger" && parent.loggingState.isIngestKey) {
+    return new SpanComponentsV4({
+      object_type: SpanObjectTypeV3.PROJECT_LOGS,
+    }).toStr();
+  }
   const components = braintrustParentToComponents(parent._getOtelParent());
   if (!components) {
     return undefined;
@@ -5352,6 +5518,7 @@ export function extractTraceContextFromHeaders(
 function resolveW3cParent(
   context: PropagationContext,
   state?: BraintrustState,
+  fallbackObjectType?: SpanObjectTypeV3,
 ): {
   parentSlug: string | undefined;
   propagatedState: PropagatedState | undefined;
@@ -5372,7 +5539,12 @@ function resolveW3cParent(
   if (!braintrustParent) {
     braintrustParent = currentBraintrustParent(state);
   }
-  if (!braintrustParent) {
+  const receiverType =
+    fallbackObjectType ??
+    (state?.currentLogger || state?.isIngestKey
+      ? SpanObjectTypeV3.PROJECT_LOGS
+      : undefined);
+  if (!braintrustParent && !receiverType) {
     debugLogger.warn(
       "Received traceparent without a braintrust.parent and no active logger/experiment; " +
         "cannot route the trace. Starting a fresh local span instead.",
@@ -5380,7 +5552,16 @@ function resolveW3cParent(
     return { parentSlug: undefined, propagatedState: undefined };
   }
 
-  const parsedParent = braintrustParentToComponents(braintrustParent);
+  const parsedParent =
+    braintrustParent && !state?.isIngestKey
+      ? braintrustParentToComponents(braintrustParent)
+      : receiverType
+        ? {
+            objectType: receiverType,
+            objectId: undefined,
+            computeArgs: undefined,
+          }
+        : undefined;
   if (parsedParent === undefined) {
     debugLogger.warn(
       `Invalid braintrust.parent: ${JSON.stringify(braintrustParent)}`,
@@ -5424,12 +5605,13 @@ function resolveW3cParent(
 function normalizeParent(
   parent: string | PropagationContext | undefined | null,
   state?: BraintrustState,
+  fallbackObjectType?: SpanObjectTypeV3,
 ): {
   parentSlug: string | undefined;
   propagatedState: PropagatedState | undefined;
 } {
   if (parent && typeof parent === "object") {
-    return resolveW3cParent(parent, state);
+    return resolveW3cParent(parent, state, fallbackObjectType);
   }
   return {
     parentSlug: parent ?? undefined,
@@ -6484,7 +6666,7 @@ export class SpanImpl implements Span {
 
   // For internal use only.
   private parentObjectType: SpanObjectTypeV3;
-  private parentObjectId: LazyValue<string>;
+  private parentObjectId: LazyValue<string | undefined>;
   private parentComputeObjectMetadataArgs: Record<string, any> | undefined;
 
   private _id: string;
@@ -6505,7 +6687,7 @@ export class SpanImpl implements Span {
     args: {
       state: BraintrustState;
       parentObjectType: SpanObjectTypeV3;
-      parentObjectId: LazyValue<string>;
+      parentObjectId: LazyValue<string | undefined>;
       parentComputeObjectMetadataArgs: Record<string, any> | undefined;
       parentSpanIds: ParentSpanIds | MultiParentSpanIds | undefined;
       defaultRootType?: SpanType;
@@ -6609,7 +6791,7 @@ export class SpanImpl implements Span {
 
   public getParentInfo(): {
     objectType: SpanObjectTypeV3;
-    objectId: LazyValue<string>;
+    objectId: LazyValue<string | undefined>;
     computeObjectMetadataArgs: { [x: string]: any } | undefined;
   } {
     return {
@@ -6712,10 +6894,11 @@ export class SpanImpl implements Span {
             ]),
           ),
         ),
-        ...new SpanComponentsV3({
-          object_type: this.parentObjectType,
-          object_id: await this.parentObjectId.get(),
-        }).objectIdFields(),
+        ...(await logParentFields(
+          this._state,
+          this.parentObjectType,
+          this.parentObjectId,
+        )),
       };
       // Customize inside the memoized lazy value, before attachment processing,
       // merging, and masking. Retries reuse the customized or stripped record.
@@ -6825,13 +7008,20 @@ export class SpanImpl implements Span {
     // Disable span cache since remote function spans won't be in the local cache
     this._state.spanCache.disable();
 
+    if (await this._state._internalResolveIngestKey())
+      await this.parentObjectId.get();
     return new (getSpanComponentsClass())({
       object_type: this.parentObjectType,
 
-      ...(this.parentComputeObjectMetadataArgs &&
-      !this.parentObjectId.hasSucceeded
-        ? { compute_object_metadata_args: this.parentComputeObjectMetadataArgs }
-        : { object_id: await this.parentObjectId.get() }),
+      ...(this._state.isIngestKey
+        ? {}
+        : this.parentComputeObjectMetadataArgs &&
+            !this.parentObjectId.hasSucceeded
+          ? {
+              compute_object_metadata_args:
+                this.parentComputeObjectMetadataArgs,
+            }
+          : { object_id: await this.parentObjectId.get() }),
       row_id: this.id,
       span_id: this._spanId,
       root_span_id: this._rootSpanId,
@@ -6845,6 +7035,7 @@ export class SpanImpl implements Span {
    * baggage entry, or undefined when it cannot be determined synchronously.
    */
   public _getOtelParent(): string | undefined {
+    if (this._state.isIngestKey) return undefined;
     if (this.parentObjectType === SpanObjectTypeV3.PROJECT_LOGS) {
       const id =
         this.parentComputeObjectMetadataArgs?.project_id ||
@@ -6873,9 +7064,10 @@ export class SpanImpl implements Span {
   ): T | Record<string, string> {
     const resolvedCarrier = carrier ?? {};
     try {
-      const braintrustParent =
-        this._getOtelParent() ?? this._propagatedState?.braintrustParent;
-      if (!braintrustParent) {
+      const braintrustParent = this._state.isIngestKey
+        ? undefined
+        : (this._getOtelParent() ?? this._propagatedState?.braintrustParent);
+      if (!braintrustParent && !this._state.isIngestKey) {
         // Symmetric with the receive-side warning in resolveW3cParent:
         // surface this in the process that caused it, rather than leaving the
         // consumer to debug a trace that arrived with no destination.
@@ -6938,6 +7130,8 @@ export class SpanImpl implements Span {
   }
 
   _link(baseUrl: string): string {
+    if (this._state.isIngestKey)
+      return getErrPermlink("project-metadata-unavailable-with-ingest-key");
     // NOTE[matt]: I believe lazy values should not exist in the span or the logger.
     // Nothing in this module should have the possibility of blocking with the lone exception of
     // flush() which should be a clear exception. We shouldn't build on it and

@@ -31,7 +31,14 @@ test("trace-primitives-basic collects a minimal manual trace tree", async () => 
     async ({ requestCursor, requestsAfter, runScenarioDir, testRunEvents }) => {
       const cursor = requestCursor();
 
-      await runScenarioDir({ scenarioDir });
+      await runScenarioDir({
+        scenarioDir,
+        runContext: {
+          variantKey: "api-key",
+          originalScenarioDir: resolveScenarioDir(import.meta.url),
+          cassette: false,
+        },
+      });
 
       const capturedEvents = testRunEvents();
       const root = findLatestSpan(capturedEvents, "trace-primitives-root");
@@ -81,3 +88,66 @@ test("trace-primitives-basic collects a minimal manual trace tree", async () => 
     },
   );
 });
+
+test.each(["ingest-key", "ingest-key-browser"])(
+  "%s sends traces without login or project discovery",
+  async (variantKey) => {
+    await withScenarioHarness(
+      async ({
+        requestCursor,
+        requestsAfter,
+        runScenarioDir,
+        runNodeScenarioDir,
+        events,
+      }) => {
+        const cursor = requestCursor();
+        const run =
+          variantKey === "ingest-key-browser"
+            ? runNodeScenarioDir
+            : runScenarioDir;
+        await run({
+          nodeArgs: ["--conditions=browser", "--import", "tsx"],
+          scenarioDir,
+          entry: "ingest-key.ts",
+          runContext: {
+            variantKey,
+            originalScenarioDir: resolveScenarioDir(import.meta.url),
+            cassette: false,
+          },
+        });
+        const requests = requestsAfter(cursor);
+        expect(requests.length).toBeGreaterThan(0);
+        expect(
+          requests.every(
+            (request) => request.method === "POST" && request.path === "/logs3",
+          ),
+        ).toBe(true);
+        for (const request of requests) {
+          expect(request.headers.authorization).toBe("Bearer bt-ik-e2e-test");
+          expect(request.rawBody).not.toContain("ignored-project");
+          const rows = (request.jsonBody as { rows: Record<string, unknown>[] })
+            .rows;
+          expect(
+            rows.every(
+              (row) => row.project_id === undefined && row.log_id === "g",
+            ),
+          ).toBe(true);
+        }
+        const capturedEvents = events();
+        const root = findLatestSpan(capturedEvents, "ingest-key-root");
+        const remote = findLatestSpan(capturedEvents, "ingest-key-remote");
+        const child = findLatestSpan(capturedEvents, "ingest-key-child");
+        expect(root?.output).toBe("updated remotely");
+        expect(remote?.span.rootId).toBe(root?.span.rootId);
+        expect(remote?.span.parentIds).toEqual([root?.span.id]);
+        expect(child?.input).toMatchObject({
+          attachment: "[Attachment blocked by ingest key policy]",
+        });
+        await matchSpanTreeSnapshot(
+          capturedEvents,
+          resolveFileSnapshotPath(import.meta.url, "ingest-key.span-tree.json"),
+        );
+      },
+    );
+  },
+);
