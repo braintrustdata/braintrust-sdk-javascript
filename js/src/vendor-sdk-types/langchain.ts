@@ -34,6 +34,12 @@ export interface LangChainCaptureOptions {
   captureChainOutputs?: boolean;
   /** Capture chat messages and LLM prompts. Defaults to true. */
   captureModelInputs?: boolean;
+  /**
+   * Capture tool and legacy function definitions in model invocation metadata.
+   * Defaults to captureModelInputs (true when unset). Does not affect tool calls
+   * in model outputs or spans from direct provider instrumentation.
+   */
+  captureModelToolDefinitions?: boolean;
   /** Capture chat model and LLM results. Defaults to true. */
   captureModelOutputs?: boolean;
   /**
