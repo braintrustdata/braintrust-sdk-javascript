@@ -1,5 +1,5 @@
-import { currentSpan } from "../../logger";
-import type { Span } from "../../logger";
+import { currentSpan } from "../../logger/core";
+import type { Span } from "../../logger/core";
 
 function proxyAssertion(
   assertion: object,
@@ -53,9 +53,9 @@ function proxyAssertion(
   });
 }
 
-export function wrapExpect<ExpectType extends (...args: unknown[]) => unknown>(
-  originalExpect: ExpectType,
-): ExpectType {
+export function wrapExpect<
+  ExpectType extends (value: unknown, message?: string) => unknown,
+>(originalExpect: ExpectType): ExpectType {
   const wrapped = function (value: unknown, message?: string) {
     // pass through unnamed expect
     if (message === undefined) {

@@ -17,7 +17,7 @@ ARG TEST_DIR
 # Validate that required build arguments are provided
 RUN if [ -z "$NODE_VERSION" ] || [ "$NODE_VERSION" = "REQUIRED" ]; then echo "Error: NODE_VERSION build arg is required (e.g., --build-arg NODE_VERSION=20)" && exit 1; fi
 RUN if [ -z "$TEST_DIR" ]; then echo "Error: TEST_DIR build arg is required (e.g., --build-arg TEST_DIR=otel-v1)" && exit 1; fi
-RUN if [ "$TEST_DIR" != "otel-v1" ] && [ "$TEST_DIR" != "otel-v2" ]; then echo "Error: TEST_DIR must be either 'otel-v1' or 'otel-v2', got: '$TEST_DIR'" && exit 1; fi
+RUN if [ "$TEST_DIR" != "otel-v1" ] && [ "$TEST_DIR" != "otel-v2" ] && [ "$TEST_DIR" != "otel-v3" ]; then echo "Error: TEST_DIR must be 'otel-v1', 'otel-v2' or 'otel-v3', got: '$TEST_DIR'" && exit 1; fi
 
 # Install pnpm (Corepack is not included in Node.js 26 images)
 RUN npm install --global pnpm@10
@@ -33,10 +33,10 @@ WORKDIR /workspace
 # Copy the entire SDK repository (build context is SDK repo root)
 COPY . .
 
-# Build both packages with the workspace lockfile so peer dependencies do not
-# resolve to untested releases. Tests install their own version-specific deps.
+# Build SDK packages with the workspace catalog and lockfile. The test packages
+# still install independently to keep their OpenTelemetry versions isolated.
 RUN pnpm install --frozen-lockfile
-RUN pnpm exec turbo run build --filter=braintrust --filter=@braintrust/otel
+RUN pnpm exec vp run --filter=braintrust --filter=@braintrust/otel build
 
 # Set the test directory as environment variable (available at runtime)
 ENV TEST_DIR=${TEST_DIR}

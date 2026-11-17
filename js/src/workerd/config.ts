@@ -1,49 +1,7 @@
-import iso from "../isomorph";
-import { _internalSetInitialState } from "../logger";
-import { resolveRuntimeAsyncLocalStorage } from "../runtime-async-local-storage";
-import { registry } from "../instrumentation/registry";
+import iso from "#braintrust-platform";
+import { createWorkerdIsomorph } from "./platform";
 
-let workerdConfigured = false;
-
-/**
- * Configure the isomorph for Cloudflare Workers (workerd) runtime.
- */
+/** @internal Configure source-level tests and compatibility integrations. */
 export function configureWorkerd(): void {
-  if (workerdConfigured) {
-    return;
-  }
-
-  iso.buildType = "workerd";
-
-  const runtimeAsyncLocalStorage = resolveRuntimeAsyncLocalStorage();
-
-  if (runtimeAsyncLocalStorage) {
-    iso.newAsyncLocalStorage = <T>() => new runtimeAsyncLocalStorage<T>();
-  }
-
-  iso.getEnv = (name: string) => {
-    if (typeof process === "undefined" || typeof process.env === "undefined") {
-      return undefined;
-    }
-    return process.env[name];
-  };
-  iso.getBraintrustApiKey = async () => {
-    const value = iso.getEnv("BRAINTRUST_API_KEY");
-    return value?.trim() ? value : undefined;
-  };
-
-  iso.hash = (data: string): string => {
-    let hash = 0;
-    for (let i = 0; i < data.length; i++) {
-      const char = data.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash;
-    }
-    const hashHex = (hash >>> 0).toString(16).padStart(8, "0");
-    return hashHex.repeat(8).substring(0, 64);
-  };
-
-  _internalSetInitialState();
-  registry.enable();
-  workerdConfigured = true;
+  Object.assign(iso, createWorkerdIsomorph());
 }

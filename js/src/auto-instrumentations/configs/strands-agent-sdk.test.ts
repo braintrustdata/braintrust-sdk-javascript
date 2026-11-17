@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { readDisabledInstrumentationEnvConfig } from "../../instrumentation/config";
 import { getDefaultInstrumentationConfigs } from "./all";
 import { strandsAgentSDKConfigs } from "./strands-agent-sdk";

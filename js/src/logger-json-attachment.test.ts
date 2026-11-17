@@ -2,10 +2,10 @@ import {
   JSONAttachment,
   Attachment,
   BraintrustState,
-  _exportsForTestingOnly,
   BaseAttachment,
-} from "./logger";
-import { afterEach, describe, expect, it, vi } from "vitest";
+} from "./logger/core";
+import { _exportsForTestingOnly } from "./logger/testing";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import { automaticAttachmentOriginals } from "./automatic-attachments";
 import { configureNode } from "./node/config";

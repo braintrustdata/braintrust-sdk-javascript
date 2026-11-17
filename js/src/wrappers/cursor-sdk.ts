@@ -1,9 +1,10 @@
+import { registerInstrumentation } from "../instrumentation/registrations/cursorSDK";
 import { debugLogger } from "../debug-logger";
 import { observeResult } from "../instrumentation/core/observe-result";
 import {
   cursorSDKChannels,
   patchCursorAgentInPlace,
-} from "../instrumentation/plugins/cursor-sdk-interceptors";
+} from "../instrumentation/providers/cursor-sdk-interceptors";
 import type {
   CursorSDKAgent,
   CursorSDKAgentClass,
@@ -18,6 +19,7 @@ const boundAgents = new WeakSet<CursorSDKAgent>();
  * invocation hooks; the Cursor SDK plugin owns span lifecycle.
  */
 export function wrapCursorSDK<T>(sdk: T): T {
+  registerInstrumentation();
   if (!sdk || typeof sdk !== "object") {
     return sdk;
   }

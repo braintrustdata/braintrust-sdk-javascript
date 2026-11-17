@@ -2,7 +2,7 @@ import {
   EMBEDDING_DIMENSIONS,
   GOOGLE_MULTIMODAL_EMBEDDING_MODEL,
 } from "./embeddings.mjs";
-import { beforeAll, describe, expect, test } from "vitest";
+import { beforeAll, describe, expect, test } from "vite-plus/test";
 import type { Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";

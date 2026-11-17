@@ -1,6 +1,7 @@
-import { describe, expect, test, beforeEach, afterEach } from "vitest";
+import { describe, expect, test, beforeEach, afterEach } from "vite-plus/test";
 import { initFunction } from "./invoke";
-import { _internalGetGlobalState, _exportsForTestingOnly } from "../logger";
+import { _internalGetGlobalState } from "../logger/core";
+import { _exportsForTestingOnly } from "../logger/testing";
 import { configureNode } from "../node/config";
 
 describe("initFunction", () => {
@@ -59,7 +60,7 @@ describe("registerOtelFlush", () => {
   });
 
   test("should register OTEL flush callback", async () => {
-    const { registerOtelFlush } = await import("../logger");
+    const { registerOtelFlush } = await import("../logger/core");
     const state = _internalGetGlobalState();
 
     let flushed = false;
@@ -81,4 +82,50 @@ describe("registerOtelFlush", () => {
     // Should not throw
     await state.flushOtel();
   });
+});
+
+test("OTel flush registrations coexist and can be removed independently", async () => {
+  _exportsForTestingOnly.setInitialTestState();
+  const { registerOtelFlush } = await import("../logger/core");
+  const state = _internalGetGlobalState();
+  const calls: string[] = [];
+  const removeFirst = registerOtelFlush(async () => {
+    calls.push("first");
+  });
+  const removeSecond = registerOtelFlush(async () => {
+    calls.push("second");
+  });
+  try {
+    await state.flushOtel();
+    expect(calls).toEqual(["first", "second"]);
+    removeFirst();
+    removeFirst();
+    calls.length = 0;
+    await state.flushOtel();
+    expect(calls).toEqual(["second"]);
+  } finally {
+    removeFirst();
+    removeSecond();
+  }
+});
+
+test("a failed OTel flush still starts every registered callback", async () => {
+  _exportsForTestingOnly.setInitialTestState();
+  const { registerOtelFlush } = await import("../logger/core");
+  const state = _internalGetGlobalState();
+  const error = new Error("flush failed");
+  let secondFlushed = false;
+  const removeFirst = registerOtelFlush(() => {
+    throw error;
+  });
+  const removeSecond = registerOtelFlush(async () => {
+    secondFlushed = true;
+  });
+  try {
+    await expect(state.flushOtel()).rejects.toBe(error);
+    expect(secondFlushed).toBe(true);
+  } finally {
+    removeFirst();
+    removeSecond();
+  }
 });

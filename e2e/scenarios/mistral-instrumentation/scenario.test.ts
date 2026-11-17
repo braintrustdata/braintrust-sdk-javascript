@@ -1,4 +1,4 @@
-import { describe } from "vitest";
+import { describe } from "vite-plus/test";
 import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
@@ -36,7 +36,7 @@ describe.concurrent("variants", () => {
             entry: scenario.wrapperEntry,
             env: {
               MISTRAL_PACKAGE_NAME: scenario.dependencyName,
-              BRAINTRUST_CAPTURE_ATTACHMENTS: "true",
+              BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "true",
               BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS: "true",
               BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS: "true",
             },
@@ -70,7 +70,7 @@ describe.concurrent("variants", () => {
             entry: scenario.autoEntry,
             env: {
               MISTRAL_PACKAGE_NAME: scenario.dependencyName,
-              BRAINTRUST_CAPTURE_ATTACHMENTS: "true",
+              BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "true",
               BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS: "true",
               BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS: "true",
             },

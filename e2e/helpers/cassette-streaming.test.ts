@@ -9,7 +9,7 @@ import {
   createCassetteServer,
   createJsonFileStore,
 } from "@braintrust/seinfeld";
-import { expect, test, vi } from "vitest";
+import { expect, test, vi } from "vite-plus/test";
 import { buildResponse } from "../../dev-packages/seinfeld/src/http";
 import { trackConnectRequest } from "../../dev-packages/seinfeld/src/internal/connect-request";
 

@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { mistralChannels } from "../../instrumentation/plugins/mistral-interceptors";
+import { mistralChannels } from "../../instrumentation/providers/mistral-interceptors";
 
 export const mistralConfigs: InstrumentationConfig[] = [
   {

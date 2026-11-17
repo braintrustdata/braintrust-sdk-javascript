@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, test } from "vitest";
+import { beforeAll, describe, expect, test } from "vite-plus/test";
 import { isObject } from "../../../js/util/type_util";
 import type {
   CapturedLogEvent,

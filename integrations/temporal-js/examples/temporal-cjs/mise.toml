@@ -1,6 +1,6 @@
 # Mise will automatically read and use .tool-versions files as well as this file.
 [settings]
-experimental=true
+experimental = true
 
 [env]
 # See env.example to configure API keys.

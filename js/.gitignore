@@ -13,3 +13,4 @@ braintrust-*.tgz
 vendor/
 
 playground.ts
+.vitest/
