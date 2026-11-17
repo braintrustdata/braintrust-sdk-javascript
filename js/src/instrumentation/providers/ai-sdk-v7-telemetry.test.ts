@@ -56,6 +56,28 @@ describe("braintrustAISDKTelemetry", () => {
     vi.unstubAllEnvs();
   });
 
+  it.each(["generateSpeech", "transcribe"])(
+    "does not duplicate %s spans inside a wrapped media call",
+    async (operation) => {
+      const telemetry = braintrustAISDKTelemetry();
+      const event = {
+        callId: "audio-call",
+        operationId: `ai.${operation}`,
+        provider: "openai",
+        modelId: "audio-model",
+      };
+      await runWithAutoInstrumentationSuppressed(async () => {
+        telemetry.onStart(event);
+        await Promise.resolve();
+        telemetry.onEnd(event);
+      });
+      expect(await backgroundLogger.drain()).toEqual([]);
+      telemetry.onStart(event);
+      telemetry.onEnd(event);
+      expect(await backgroundLogger.drain()).toHaveLength(1);
+    },
+  );
+
   it.each(["generateText", "streamText", "generateObject"])(
     "captures %s tiers with content capture disabled and resets them between steps",
     async (operation) => {

@@ -9,6 +9,10 @@ import type {
   AISDKEvaluateParams,
   AISDKEvaluationResult,
   AISDKGenerateImageParams,
+  AISDKGenerateSpeechParams,
+  AISDKSpeechResult,
+  AISDKTranscribeParams,
+  AISDKTranscriptionResult,
   AISDKHarnessAgentCallParams,
   AISDKHarnessAgentCreateSessionParams,
   AISDKHarnessAgentSession,
@@ -73,6 +77,16 @@ export const aiSDKChannels = defineInterceptor("ai", {
   >({
     channelName: "generateText",
   }),
+  generateSpeech: channel<
+    [AISDKGenerateSpeechParams],
+    PromiseLike<AISDKSpeechResult>,
+    AISDKChannelContext
+  >({ channelName: "generateSpeech" }),
+  transcribe: channel<
+    [AISDKTranscribeParams],
+    PromiseLike<AISDKTranscriptionResult>,
+    AISDKChannelContext
+  >({ channelName: "transcribe" }),
   generateImage: channel<
     [AISDKGenerateImageParams],
     PromiseLike<AISDKResult>,

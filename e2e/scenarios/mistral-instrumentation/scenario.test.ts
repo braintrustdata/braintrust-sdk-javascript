@@ -34,7 +34,12 @@ describe.concurrent("variants", () => {
         runScenario: async ({ runScenarioDir }) => {
           await runScenarioDir({
             entry: scenario.wrapperEntry,
-            env: { MISTRAL_PACKAGE_NAME: scenario.dependencyName },
+            env: {
+              MISTRAL_PACKAGE_NAME: scenario.dependencyName,
+              BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "true",
+              BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS: "true",
+              BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS: "true",
+            },
             runContext: {
               variantKey: scenario.snapshotName,
               originalScenarioDir,
@@ -44,6 +49,7 @@ describe.concurrent("variants", () => {
           });
         },
         snapshotName: scenario.snapshotName,
+        supportsSpeech: !scenario.dependencyName.startsWith("mistral-sdk-v1"),
         ...(scenario.supportsThinkingStream === false
           ? { supportsThinkingStream: false }
           : {}),
@@ -62,7 +68,12 @@ describe.concurrent("variants", () => {
         runScenario: async ({ runNodeScenarioDir }) => {
           await runNodeScenarioDir({
             entry: scenario.autoEntry,
-            env: { MISTRAL_PACKAGE_NAME: scenario.dependencyName },
+            env: {
+              MISTRAL_PACKAGE_NAME: scenario.dependencyName,
+              BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "true",
+              BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS: "true",
+              BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS: "true",
+            },
             nodeArgs: ["--import", "braintrust/hook.mjs"],
             runContext: {
               variantKey: scenario.snapshotName,
@@ -73,6 +84,7 @@ describe.concurrent("variants", () => {
           });
         },
         snapshotName: scenario.snapshotName,
+        supportsSpeech: !scenario.dependencyName.startsWith("mistral-sdk-v1"),
         ...(scenario.supportsThinkingStream === false
           ? { supportsThinkingStream: false }
           : {}),

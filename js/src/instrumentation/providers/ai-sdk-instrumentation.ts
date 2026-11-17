@@ -42,6 +42,7 @@ import {
 import {
   convertDataToBlob,
   getExtensionFromMediaType,
+  isEnvFlagEnabled,
   omitMediaData,
   processInputAttachments,
 } from "../../wrappers/attachment-utils";
@@ -83,6 +84,8 @@ import type {
   AISDKEmbeddingResult,
   AISDKGenerateImageParams,
   AISDKGeneratedFile,
+  AISDKGenerateSpeechParams,
+  AISDKTranscribeParams,
   AISDKHarnessAgentCallParams,
   AISDKHarnessAgentSettings,
   AISDKLanguageModel,
@@ -286,6 +289,91 @@ class AISDKInstrumentationConsumer {
           extractMetrics: (result, _startTime, endEvent) =>
             extractTopLevelAISDKMetrics(result, endEvent),
           aggregateChunks: aggregateAISDKChunks,
+        },
+      ),
+    );
+
+    aiSDKChannels.generateSpeech.intercept(
+      (target, receiver, args, additional) =>
+        traceAsyncCall<typeof aiSDKChannels.generateSpeech>(
+          () =>
+            runWithAutoInstrumentationSuppressed(() =>
+              Reflect.apply(target, receiver, args),
+            ),
+          { ...additional, arguments: args, self: receiver },
+          {
+            instrumentationName: INSTRUMENTATION_NAMES.AI_SDK,
+            name: "generateSpeech",
+            type: SpanTypeAttribute.LLM,
+            shouldTrace: () => shouldTraceAISDKAudio(args[0]),
+            extractInput: ([params]) => prepareAISDKAudioInput(params),
+            extractOutput: (result, event) => {
+              const audio = result.audio;
+              const reportedType = audio.mediaType ?? audio.mimeType;
+              // AI SDK v4 reports MP3 audio using this non-IANA alias.
+              const mediaType =
+                reportedType === "audio/mp3" ? "audio/mpeg" : reportedType;
+              const filename = `audio.${getExtensionFromMediaType(mediaType ?? "")}`;
+              const output = {
+                content: [
+                  {
+                    type: "file",
+                    file: {
+                      filename,
+                      file_data:
+                        mediaType &&
+                        _internalCaptureAttachmentsEnabled() &&
+                        isEnvFlagEnabled(
+                          "BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS",
+                        )
+                          ? serializeAISDKAudio(
+                              audio.uint8Array ?? audio.base64,
+                              mediaType,
+                            )
+                          : "<omitted>",
+                    },
+                  },
+                ],
+              };
+              for (const path of resolveDenyOutputPaths(
+                event,
+                denyOutputPaths,
+              )) {
+                omitAtPath(output, parsePath(path), false);
+              }
+              return output;
+            },
+            extractMetrics: () => ({}),
+          },
+        ),
+    );
+    aiSDKChannels.transcribe.intercept((target, receiver, args, additional) =>
+      traceAsyncCall<typeof aiSDKChannels.transcribe>(
+        () =>
+          runWithAutoInstrumentationSuppressed(() =>
+            Reflect.apply(target, receiver, args),
+          ),
+        { ...additional, arguments: args, self: receiver },
+        {
+          instrumentationName: INSTRUMENTATION_NAMES.AI_SDK,
+          name: "transcribe",
+          shouldTrace: () => shouldTraceAISDKAudio(args[0]),
+          type: SpanTypeAttribute.LLM,
+          extractInput: ([params]) => prepareAISDKAudioInput(params),
+          extractOutput: (result, event) =>
+            omit(
+              {
+                content: [{ type: "text", text: result.text }],
+                annotations: {
+                  segments: result.segments,
+                  words: result.words,
+                  language: result.language,
+                  duration: result.durationInSeconds,
+                },
+              },
+              resolveDenyOutputPaths(event, denyOutputPaths),
+            ),
+          extractMetrics: () => ({}),
         },
       ),
     );
@@ -2287,6 +2375,85 @@ function prepareAISDKEmbedInput(
     input: { ...params },
     metadata: extractMetadataFromEmbedParams(params, self),
   };
+}
+
+function shouldTraceAISDKAudio(
+  params: AISDKGenerateSpeechParams | AISDKTranscribeParams,
+): boolean {
+  // Older Deepgram speech adapters also forward callback to /v1/speak;
+  // newer releases reject it. Neither callback operation delivers audio/text inline.
+  const deepgram = params.providerOptions?.deepgram;
+  return !(isObject(deepgram) && deepgram.callback != null);
+}
+
+function prepareAISDKAudioInput(
+  params: AISDKGenerateSpeechParams | AISDKTranscribeParams,
+): { input: unknown; metadata: Record<string, unknown> } {
+  const model = params.model;
+  const metadata = {
+    model: typeof model === "string" ? model : model.modelId,
+    provider:
+      typeof model === "string"
+        ? model.includes("/")
+          ? model.split("/")[0]
+          : undefined
+        : model.provider?.replace(/\.(speech|transcription)$/, ""),
+  };
+  if ("audio" in params) {
+    const audio = params.audio;
+    return {
+      metadata,
+      input: {
+        operation: "transcribe",
+        content: [
+          {
+            type: "file",
+            file: {
+              filename: "audio.bin",
+              file_data:
+                audio instanceof URL &&
+                ["http:", "https:"].includes(audio.protocol)
+                  ? audio.href
+                  : _internalCaptureAttachmentsEnabled() &&
+                      isEnvFlagEnabled(
+                        "BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS",
+                      )
+                    ? // The API accepts bytes without a media type. Do not guess a codec.
+                      serializeAISDKAudio(
+                        audio instanceof URL ? audio.href : audio,
+                        "application/octet-stream",
+                      )
+                    : "<omitted>",
+            },
+          },
+        ],
+        parameters: { timestamp_granularities: params.timestampGranularities },
+      },
+    };
+  }
+  return {
+    metadata,
+    input: {
+      operation: "speech",
+      prompt: params.text,
+      parameters: {
+        voice: params.voice,
+        format: params.outputFormat,
+        speed: params.speed,
+        language: params.language,
+      },
+    },
+  };
+}
+
+function serializeAISDKAudio(data: unknown, mediaType: string): unknown {
+  const blob = convertDataToBlob(data, mediaType);
+  if (!blob) return "<omitted>";
+  return new Attachment({
+    data: blob,
+    contentType: mediaType,
+    filename: `audio.${getExtensionFromMediaType(mediaType)}`,
+  });
 }
 
 function prepareAISDKGenerateImageInput(

@@ -1,4 +1,4 @@
-/** Relevant LiveKit 1.9.x boundaries, vendored to avoid a runtime dependency. */
+/** Relevant LiveKit 1.9.x–1.10.x boundaries, vendored to avoid a runtime dependency. */
 export interface AudioFrame {
   data: Int16Array;
   sampleRate: number;

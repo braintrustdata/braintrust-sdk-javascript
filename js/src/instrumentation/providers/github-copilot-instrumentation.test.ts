@@ -1,8 +1,48 @@
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, it, vi } from "vite-plus/test";
+import { configureNode } from "../../node/config";
+import type { GitHubCopilotSessionConfig } from "../../vendor-sdk-types/github-copilot";
+import { wrapCopilotClient } from "../../wrappers/github-copilot";
 import {
   registerGitHubCopilotInstrumentation,
   extractMetricsFromUsage,
 } from "./github-copilot-instrumentation";
+
+configureNode();
+
+describe("session-end hooks", () => {
+  it.each([false, true])(
+    "preserves hook results (async: %s)",
+    async (asyncHook) => {
+      const result = {
+        suppressOutput: true,
+        cleanupActions: ["remove temporary files"],
+        sessionSummary: "Completed the session",
+      };
+      const onSessionEnd = vi.fn(() =>
+        asyncHook ? Promise.resolve(result) : result,
+      );
+      const config: GitHubCopilotSessionConfig = {
+        onPermissionRequest: () => ({}),
+        hooks: { onSessionEnd },
+      };
+      const unsubscribe = vi.fn();
+      const client = wrapCopilotClient({
+        createSession: async (_config: GitHubCopilotSessionConfig) => ({
+          on: () => unsubscribe,
+        }),
+        resumeSession: vi.fn(),
+      });
+      await client.createSession(config);
+      const input = { reason: "complete", cwd: "/tmp", timestamp: 0 };
+      const invocation = { sessionId: "test-session" };
+      expect(await config.hooks?.onSessionEnd?.(input, invocation)).toBe(
+        result,
+      );
+      expect(onSessionEnd).toHaveBeenCalledWith(input, invocation);
+      expect(unsubscribe).toHaveBeenCalledOnce();
+    },
+  );
+});
 
 describe("extractMetricsFromUsage", () => {
   it("maps input/output tokens to standard metric keys", () => {

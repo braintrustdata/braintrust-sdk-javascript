@@ -1,6 +1,14 @@
 import { channel, defineInterceptor } from "../core/interceptor-definitions";
 
 import type {
+  MistralOCRParams,
+  MistralOCRResponse,
+  MistralTranscriptionParams,
+  MistralTranscriptionResponse,
+  MistralTranscriptionEvent,
+  MistralSpeechParams,
+  MistralSpeechResult,
+  MistralSpeechEvent,
   MistralAgentsCompletionEvent,
   MistralAgentsCompletionResponse,
   MistralAgentsCreateParams,
@@ -22,6 +30,25 @@ import type {
 } from "../../vendor-sdk-types/mistral";
 
 export const mistralChannels = defineInterceptor("@mistralai/mistralai", {
+  ocrProcess: channel<[MistralOCRParams], PromiseLike<MistralOCRResponse>>({
+    channelName: "ocr.process",
+  }),
+  transcriptionsComplete: channel<
+    [MistralTranscriptionParams],
+    PromiseLike<MistralTranscriptionResponse>
+  >({ channelName: "audio.transcriptions.complete" }),
+  transcriptionsStream: channel<
+    [MistralTranscriptionParams],
+    PromiseLike<AsyncIterable<MistralTranscriptionEvent>>,
+    Record<string, unknown>,
+    MistralTranscriptionEvent
+  >({ channelName: "audio.transcriptions.stream" }),
+  speechComplete: channel<
+    [MistralSpeechParams],
+    PromiseLike<MistralSpeechResult>,
+    Record<string, unknown>,
+    MistralSpeechEvent
+  >({ channelName: "audio.speech.complete" }),
   chatComplete: channel<
     [MistralChatCreateParams],
     PromiseLike<MistralChatCompletionResponse>

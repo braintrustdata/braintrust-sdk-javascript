@@ -3,6 +3,70 @@ import { mistralChannels } from "../../instrumentation/providers/mistral-interce
 
 export const mistralConfigs: InstrumentationConfig[] = [
   {
+    channelName: mistralChannels.ocrProcess.channelName,
+    module: {
+      name: "@mistralai/mistralai",
+      versionRange: ">=1.6.0 <2.0.0",
+      filePath: "sdk/ocr.js",
+    },
+    functionQuery: { className: "Ocr", methodName: "process" },
+  },
+  {
+    channelName: mistralChannels.ocrProcess.channelName,
+    module: {
+      name: "@mistralai/mistralai",
+      versionRange: ">=2.0.0 <4.0.0",
+      filePath: "esm/sdk/ocr.js",
+    },
+    functionQuery: { className: "Ocr", methodName: "process" },
+  },
+  {
+    channelName: mistralChannels.transcriptionsComplete.channelName,
+    module: {
+      name: "@mistralai/mistralai",
+      versionRange: ">=1.9.17 <2.0.0",
+      filePath: "sdk/transcriptions.js",
+    },
+    functionQuery: { className: "Transcriptions", methodName: "complete" },
+  },
+  {
+    channelName: mistralChannels.transcriptionsComplete.channelName,
+    module: {
+      name: "@mistralai/mistralai",
+      versionRange: ">=2.0.0 <4.0.0",
+      filePath: "esm/sdk/transcriptions.js",
+    },
+    functionQuery: { className: "Transcriptions", methodName: "complete" },
+  },
+  {
+    channelName: mistralChannels.transcriptionsStream.channelName,
+    module: {
+      name: "@mistralai/mistralai",
+      versionRange: ">=1.9.17 <2.0.0",
+      filePath: "sdk/transcriptions.js",
+    },
+    functionQuery: { className: "Transcriptions", methodName: "stream" },
+  },
+  {
+    channelName: mistralChannels.transcriptionsStream.channelName,
+    module: {
+      name: "@mistralai/mistralai",
+      versionRange: ">=2.0.0 <4.0.0",
+      filePath: "esm/sdk/transcriptions.js",
+    },
+    functionQuery: { className: "Transcriptions", methodName: "stream" },
+  },
+  {
+    channelName: mistralChannels.speechComplete.channelName,
+    module: {
+      name: "@mistralai/mistralai",
+      versionRange: ">=2.1.2 <4.0.0",
+      filePath: "esm/sdk/speech.js",
+    },
+    functionQuery: { className: "Speech", methodName: "complete" },
+  },
+
+  {
     channelName: mistralChannels.chatComplete.channelName,
     module: {
       name: "@mistralai/mistralai",
