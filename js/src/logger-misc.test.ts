@@ -478,7 +478,12 @@ test("noop span permalink #BRA-1837", async () => {
 });
 
 test("disable logging", async () => {
-  const state = new BraintrustState({});
+  const state = new BraintrustState({
+    apiKey: "test-key",
+    fetch: vi.fn(async () => Response.json({})),
+    noExitFlush: true,
+  });
+  state.apiUrl = "https://api.test";
   const bgLogger = state.bgLogger();
 
   let submittedItems = [];

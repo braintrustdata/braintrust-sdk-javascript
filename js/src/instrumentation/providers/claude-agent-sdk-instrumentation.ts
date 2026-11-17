@@ -1373,6 +1373,13 @@ async function ensureSubAgentSpan(
     ? await parentToolSpan.export()
     : await rootSpan.export();
 
+  // A stream message and a tool hook can create the same subagent while parent
+  // export yields. Reuse the span created by the first caller to finish.
+  const racedSubAgentSpan = subAgentSpans.get(parentToolUseId);
+  if (racedSubAgentSpan) {
+    return racedSubAgentSpan;
+  }
+
   const subAgentSpan = startBaseSpan(
     withSpanInstrumentationName(
       {
