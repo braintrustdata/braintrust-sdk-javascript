@@ -3,6 +3,9 @@ export function parseIngestKey(
   value: string,
 ): { endpoint: string; token: string } | undefined {
   const credential = value.trim();
+  // Leave ordinary API keys on the normal login path. Validate URL-like values
+  // and bare ingest tokens below so malformed ingest keys fail here instead of
+  // being sent to the API-key login endpoint.
   if (!credential.includes("://") && !credential.startsWith("bt-ik-")) {
     return undefined;
   }
