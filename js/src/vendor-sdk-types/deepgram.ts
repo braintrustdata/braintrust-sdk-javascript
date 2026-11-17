@@ -28,7 +28,7 @@ export type DeepgramFile =
   | Uint8Array
   | AsyncIterable<Uint8Array>
   | ReadableStream<Uint8Array>;
-export interface DeepgramUsage {
+interface DeepgramUsage {
   model_uuid?: string;
   input_tokens?: number;
   output_tokens?: number;
