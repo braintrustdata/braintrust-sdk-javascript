@@ -8,7 +8,7 @@
     "eve": "1.0.0",
     "eve-v1": "npm:eve@1.0.0",
     "eve-v1-latest": "npm:eve@1.0.0",
-    "zod": "4.3.6"
+    "zod": "4.6.6"
   },
   "pnpm": {
     "overrides": {
