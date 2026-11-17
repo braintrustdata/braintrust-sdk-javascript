@@ -1048,11 +1048,47 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
       "matches the shared span tree snapshot",
       testConfig,
       async ({ expect }) => {
+        // Claude may register a local_bash task when shell startup is slow.
+        // Check that optional lifecycle span without making the snapshot depend
+        // on whether the command crossed the SDK's progress threshold.
+        const bashTasks = events.filter(
+          (event) =>
+            event.metadata?.["claude_agent_sdk.task_type"] === "local_bash",
+        );
+        const taskRoot = findOperationTaskRoot(
+          events,
+          "claude-agent-subagent-built-in-tool-operation",
+        );
+        for (const task of bashTasks) {
+          const bash = findAllSpans(events, "tool: Bash").find(
+            (event) =>
+              event.metadata?.["gen_ai.tool.call.id"] ===
+              task.metadata?.["claude_agent_sdk.tool_use_id"],
+          );
+          expect(bash).toBeDefined();
+          expect(isDescendantOf(events, bash, taskRoot?.span.id)).toBe(true);
+          expect(task.span.type).toBe("task");
+          expect(task.span.ended).toBe(true);
+          expect(task.span.parentIds).toEqual([taskRoot?.span.id]);
+          expect(task.metadata?.["claude_agent_sdk.task_status"]).toBe(
+            "completed",
+          );
+          expect(task.output).toEqual({
+            summary: task.metadata?.["claude_agent_sdk.description"],
+          });
+          expect(task.row.error).toBeUndefined();
+          expect(
+            events.some((event) =>
+              event.span.parentIds.includes(task.span.id ?? ""),
+            ),
+          ).toBe(false);
+        }
         await matchSpanTreeSnapshot(
           events.filter(
             (event) =>
               event.span.name !== "claude-agent-basic-partial-usage" &&
-              event.span.name !== "claude-agent-result-usage",
+              event.span.name !== "claude-agent-result-usage" &&
+              !bashTasks.includes(event),
           ),
           snapshotPath,
           {

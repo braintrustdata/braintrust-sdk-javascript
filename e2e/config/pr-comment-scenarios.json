@@ -1194,5 +1194,44 @@
         "label": "v3 latest"
       }
     ]
+  },
+  {
+    "scenarioDirName": "ai-sdk-audio-instrumentation",
+    "label": "AI SDK Speech and Transcription",
+    "metadataScenario": "ai-sdk-audio-instrumentation",
+    "variants": [
+      {
+        "variantKey": "ai-sdk-v4",
+        "label": "v4 pinned"
+      },
+      {
+        "variantKey": "ai-sdk-v4-latest",
+        "label": "v4 latest"
+      },
+      {
+        "variantKey": "ai-sdk-v5",
+        "label": "v5 pinned"
+      },
+      {
+        "variantKey": "ai-sdk-v5-latest",
+        "label": "v5 latest"
+      },
+      {
+        "variantKey": "ai-sdk-v6",
+        "label": "v6 pinned"
+      },
+      {
+        "variantKey": "ai-sdk-v6-latest",
+        "label": "v6 latest"
+      },
+      {
+        "variantKey": "ai-sdk-v7",
+        "label": "v7 pinned"
+      },
+      {
+        "variantKey": "ai-sdk-v7-latest",
+        "label": "v7 latest"
+      }
+    ]
   }
 ]
