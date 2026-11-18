@@ -1,11 +1,15 @@
 import { registerInstrumentation } from "../instrumentation/registrations/livekit";
 /* eslint-disable @typescript-eslint/consistent-type-assertions -- vendored LiveKit boundaries. */
 import { debugLogger } from "../debug-logger";
-import { livekitChannels } from "../instrumentation/providers/livekit-interceptors";
+import {
+  livekitChannels,
+  livekitOpenAIChannels,
+} from "../instrumentation/providers/livekit-interceptors";
 import type {
   AgentActivity,
   AgentSession,
   LiveKitModule,
+  LiveKitOpenAIPlugin,
 } from "../vendor-sdk-types/livekit";
 
 const wrapped = Symbol.for("braintrust.livekit.wrapped");
@@ -92,6 +96,62 @@ function wrapSession(session: AgentSession): AgentSession {
   return session;
 }
 
+/** Mechanical constructor hooks; actual client ownership is recorded by the plugin. */
+function wrapOpenAIPlugin<T extends object>(
+  module: T,
+  plugin: LiveKitOpenAIPlugin,
+): T {
+  const constructors = new Map<PropertyKey, unknown>();
+  for (const [kind, name] of [
+    ["llm", "LLM"],
+    ["stt", "STT"],
+    ["tts", "TTS"],
+  ] as const) {
+    const original = plugin[name];
+    if (Reflect.get(original, wrapped)) {
+      constructors.set(name, original);
+      continue;
+    }
+    const proxy = new Proxy(original, {
+      construct(target, args, newTarget) {
+        return livekitOpenAIChannels[kind].invoke(
+          (...forwarded) => Reflect.construct(target, forwarded, newTarget),
+          target,
+          args,
+          {},
+        );
+      },
+      get(target, key, receiver) {
+        if (key === wrapped) return true;
+        // Static factories close over the original constructor. Observe their
+        // public options and result through the same construction channel too.
+        const value = Reflect.get(target, key, receiver);
+        if (
+          typeof key !== "string" ||
+          !key.startsWith("with") ||
+          typeof value !== "function"
+        )
+          return value;
+        return (...args: unknown[]) =>
+          livekitOpenAIChannels[kind].invoke(
+            (...forwarded) => Reflect.apply(value, target, forwarded),
+            target,
+            args,
+            {},
+          );
+      },
+    });
+    constructors.set(name, proxy);
+  }
+  return new Proxy(module, {
+    get(target, key, receiver) {
+      return constructors.has(key)
+        ? constructors.get(key)
+        : Reflect.get(target, key, receiver);
+    },
+  });
+}
+
 /**
  * Trace a LiveKit Agents (1.9.x–1.10.x) module with Braintrust.
  *
@@ -101,16 +161,29 @@ function wrapSession(session: AgentSession): AgentSession {
  * BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS for agent audio. Recordings are
  * Ogg Opus when @braintrust/audio is installed, and raw PCM otherwise. Wrap the module before constructing
  * sessions; only sessions created through the wrapped module are traced.
+ * Also wrap the `@livekit/agents-plugin-openai` module before constructing its
+ * cascade adapters, so SDK ownership is observed through public client options.
+ * Enable/wrap the OpenAI integration alongside LiveKit for OpenAI SDK model spans.
  *
  * @example
  * ```ts
  * import * as agents from "@livekit/agents";
  * const { voice } = wrapLiveKit(agents);
- * const session = new voice.AgentSession({ stt, llm, tts });
+ * const openai = wrapLiveKit(await import("@livekit/agents-plugin-openai"));
+ * const client = wrapOpenAI(new OpenAI());
+ * const session = new voice.AgentSession({ stt: new openai.STT({ client }), llm, tts });
  * ```
  */
 export function wrapLiveKit<T extends object>(module: T): T {
   registerInstrumentation();
+  const plugin = module as unknown as Partial<LiveKitOpenAIPlugin> | undefined;
+  if (
+    plugin &&
+    typeof plugin.LLM === "function" &&
+    typeof plugin.STT === "function" &&
+    typeof plugin.TTS === "function"
+  )
+    return wrapOpenAIPlugin(module, plugin as LiveKitOpenAIPlugin);
   const livekit = module as unknown as Partial<LiveKitModule> | undefined;
   if (
     !livekit ||

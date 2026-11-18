@@ -92,3 +92,13 @@ export const livekitChannels = defineInterceptor("@livekit/agents", {
     channelName: "job.context",
   }),
 });
+
+/** Public OpenAI adapter constructors, separate from Agents invocation hooks. */
+export const livekitOpenAIChannels = defineInterceptor(
+  "@livekit/agents-plugin-openai",
+  {
+    llm: channel<unknown[], object>({ channelName: "llm.construct" }),
+    stt: channel<unknown[], object>({ channelName: "stt.construct" }),
+    tts: channel<unknown[], object>({ channelName: "tts.construct" }),
+  },
+);
