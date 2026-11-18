@@ -204,4 +204,73 @@ describe("registerOpenAIAgentsInstrumentation", () => {
       tokens: 6,
     });
   });
+
+  it("records reasoning tokens from response span usage", async () => {
+    const trace = {
+      type: "trace",
+      traceId: "trace-openai-agents-reasoning",
+      name: "Agent workflow",
+    };
+    const span = {
+      type: "trace.span",
+      traceId: trace.traceId,
+      spanId: "span-response-reasoning",
+      parentId: null,
+      startedAt: new Date(Date.now() - 100).toISOString(),
+      endedAt: new Date().toISOString(),
+      error: null,
+      spanData: {
+        type: "response",
+        response_id: "resp_reasoning",
+        _input: "What is 2+2?",
+        _response: {
+          id: "resp_reasoning",
+          output: [],
+          usage: {
+            input_tokens: 10,
+            input_tokens_details: { cached_tokens: 3 },
+            output_tokens: 8,
+            output_tokens_details: { reasoning_tokens: 6 },
+            total_tokens: 18,
+          },
+        },
+      },
+    };
+
+    await openAIAgentsCoreChannels.onTraceStart.invoke(
+      async () => undefined,
+      undefined,
+      [trace as any],
+      {},
+    );
+    await openAIAgentsCoreChannels.onSpanStart.invoke(
+      async () => undefined,
+      undefined,
+      [span as any],
+      {},
+    );
+    await openAIAgentsCoreChannels.onSpanEnd.invoke(
+      async () => undefined,
+      undefined,
+      [span as any],
+      {},
+    );
+    await openAIAgentsCoreChannels.onTraceEnd.invoke(
+      async () => undefined,
+      undefined,
+      [trace as any],
+      {},
+    );
+
+    const spans = (await backgroundLogger.drain()) as any[];
+    const responseSpan = spans.find((s) => s.span_attributes?.type === "llm");
+
+    expect(responseSpan?.metrics).toMatchObject({
+      prompt_tokens: 10,
+      prompt_cached_tokens: 3,
+      completion_tokens: 8,
+      completion_reasoning_tokens: 6,
+      tokens: 18,
+    });
+  });
 });

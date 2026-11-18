@@ -149,6 +149,7 @@ span_tree:
         │       │     "user": null
         │       │   }
         │       │   metrics: {
+        │       │     "completion_reasoning_tokens": 0,
         │       │     "completion_tokens": 7,
         │       │     "prompt_cached_tokens": 0,
         │       │     "prompt_tokens": 81,
@@ -292,6 +293,7 @@ span_tree:
         │             "user": null
         │           }
         │           metrics: {
+        │             "completion_reasoning_tokens": 0,
         │             "completion_tokens": 6,
         │             "prompt_cached_tokens": 0,
         │             "prompt_tokens": 96,

@@ -178,6 +178,14 @@ function parseUsageMetrics(usage: unknown): Record<string, number> {
     metrics.prompt_cache_creation_tokens = cacheWriteTokens;
   }
 
+  const reasoningTokens = getNumberProperty(
+    usage.output_tokens_details,
+    "reasoning_tokens",
+  );
+  if (reasoningTokens !== undefined) {
+    metrics.completion_reasoning_tokens = reasoningTokens;
+  }
+
   return metrics;
 }
 
