@@ -19,6 +19,11 @@
                   "metadata": {
                     "scenario": "livekit-instrumentation",
                     "testRunId": "<run:1>"
+                  },
+                  "context": {
+                    "caller_filename": "<node-internal>",
+                    "caller_functionname": "<node-internal>",
+                    "caller_lineno": 0
                   }
                 },
                 {
@@ -29,6 +34,11 @@
                     "contrib.livekit.agent_label": "default_agent",
                     "scenario": "livekit-instrumentation",
                     "testRunId": "<run:1>"
+                  },
+                  "context": {
+                    "caller_filename": "<node-internal>",
+                    "caller_functionname": "<node-internal>",
+                    "caller_lineno": 0
                   }
                 }
               ],
@@ -42,12 +52,22 @@
                 "provider": "<provider-host>",
                 "scenario": "livekit-instrumentation",
                 "testRunId": "<run:1>"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "scenario": "livekit-instrumentation",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<node-internal>",
+            "caller_functionname": "<node-internal>",
+            "caller_lineno": 0
           }
         },
         {
@@ -69,6 +89,11 @@
                 "scenario": "livekit-instrumentation",
                 "testRunId": "<run:1>",
                 "turn.id": "<span:1>"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             },
             {
@@ -86,6 +111,11 @@
                 "scenario": "livekit-instrumentation",
                 "testRunId": "<run:1>",
                 "turn.id": "<span:1>"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             },
             {
@@ -103,6 +133,11 @@
                 "scenario": "livekit-instrumentation",
                 "testRunId": "<run:1>",
                 "turn.id": "<span:1>"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             },
             {
@@ -120,6 +155,11 @@
                 "scenario": "livekit-instrumentation",
                 "testRunId": "<run:1>",
                 "turn.id": "<span:1>"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             },
             {
@@ -271,6 +311,11 @@
                 "scenario": "livekit-instrumentation",
                 "testRunId": "<run:1>",
                 "turn.id": "<span:1>"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             },
             {
@@ -282,6 +327,11 @@
                 "scenario": "livekit-instrumentation",
                 "testRunId": "<run:1>",
                 "turn.id": "<span:1>"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
@@ -315,6 +365,11 @@
             "scenario": "livekit-instrumentation",
             "testRunId": "<run:1>",
             "turn.id": "<span:1>"
+          },
+          "context": {
+            "caller_filename": "<node-internal>",
+            "caller_functionname": "<node-internal>",
+            "caller_lineno": 0
           }
         },
         {
@@ -336,6 +391,11 @@
                 "scenario": "livekit-instrumentation",
                 "testRunId": "<run:1>",
                 "turn.id": "<span:1>"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
@@ -350,6 +410,11 @@
             "scenario": "livekit-instrumentation",
             "testRunId": "<run:1>",
             "turn.id": "<span:1>"
+          },
+          "context": {
+            "caller_filename": "<node-internal>",
+            "caller_functionname": "<node-internal>",
+            "caller_lineno": 0
           }
         },
         {
@@ -373,6 +438,11 @@
                     "testRunId": "<run:1>",
                     "turn.id": "<span:1>",
                     "turn.reply_to": "<span:2>"
+                  },
+                  "context": {
+                    "caller_filename": "<node-internal>",
+                    "caller_functionname": "<node-internal>",
+                    "caller_lineno": 0
                   }
                 }
               ],
@@ -497,6 +567,11 @@
                 "prompt_tokens": 195,
                 "time_to_first_token": 0,
                 "tokens": 217
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             },
             {
@@ -516,6 +591,11 @@
                     "testRunId": "<run:1>",
                     "turn.id": "<span:1>",
                     "turn.reply_to": "<span:2>"
+                  },
+                  "context": {
+                    "caller_filename": "<node-internal>",
+                    "caller_functionname": "<node-internal>",
+                    "caller_lineno": 0
                   }
                 }
               ],
@@ -660,6 +740,11 @@
                 "prompt_tokens": 248,
                 "time_to_first_token": 0,
                 "tokens": 269
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             },
             {
@@ -698,6 +783,11 @@
                 "testRunId": "<run:1>",
                 "turn.id": "<span:1>",
                 "turn.reply_to": "<span:2>"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             },
             {
@@ -726,6 +816,11 @@
                                 "testRunId": "<run:1>",
                                 "turn.id": "<span:1>",
                                 "turn.reply_to": "<span:2>"
+                              },
+                              "context": {
+                                "caller_filename": "<node-internal>",
+                                "caller_functionname": "<node-internal>",
+                                "caller_lineno": 0
                               }
                             }
                           ],
@@ -754,6 +849,11 @@
                             "testRunId": "<run:1>",
                             "turn.id": "<span:1>",
                             "turn.reply_to": "<span:2>"
+                          },
+                          "context": {
+                            "caller_filename": "<node-internal>",
+                            "caller_functionname": "<node-internal>",
+                            "caller_lineno": 0
                           }
                         }
                       ],
@@ -766,6 +866,11 @@
                         "testRunId": "<run:1>",
                         "turn.id": "<span:1>",
                         "turn.reply_to": "<span:2>"
+                      },
+                      "context": {
+                        "caller_filename": "<node-internal>",
+                        "caller_functionname": "<node-internal>",
+                        "caller_lineno": 0
                       }
                     }
                   ],
@@ -794,6 +899,11 @@
                     "testRunId": "<run:1>",
                     "turn.id": "<span:1>",
                     "turn.reply_to": "<span:2>"
+                  },
+                  "context": {
+                    "caller_filename": "<node-internal>",
+                    "caller_functionname": "<node-internal>",
+                    "caller_lineno": 0
                   }
                 }
               ],
@@ -819,6 +929,11 @@
                 "testRunId": "<run:1>",
                 "turn.id": "<span:3>",
                 "turn.reply_to": "<span:4>"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             },
             {
@@ -858,6 +973,11 @@
                 "testRunId": "<run:1>",
                 "turn.id": "<span:3>",
                 "turn.reply_to": "<span:4>"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
@@ -910,6 +1030,11 @@
             "testRunId": "<run:1>",
             "turn.id": "<span:1>",
             "turn.reply_to": "<span:2>"
+          },
+          "context": {
+            "caller_filename": "<node-internal>",
+            "caller_functionname": "<node-internal>",
+            "caller_lineno": 0
           }
         },
         {
@@ -928,6 +1053,11 @@
                     "contrib.livekit.agent_label": "default_agent",
                     "scenario": "livekit-instrumentation",
                     "testRunId": "<run:1>"
+                  },
+                  "context": {
+                    "caller_filename": "<node-internal>",
+                    "caller_functionname": "<node-internal>",
+                    "caller_lineno": 0
                   }
                 }
               ],
@@ -935,6 +1065,11 @@
                 "contrib.livekit.agent_label": "default_agent",
                 "scenario": "livekit-instrumentation",
                 "testRunId": "<run:1>"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
@@ -943,6 +1078,11 @@
             "contrib.livekit.close_reason": "user_initiated",
             "scenario": "livekit-instrumentation",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<node-internal>",
+            "caller_functionname": "<node-internal>",
+            "caller_lineno": 0
           }
         }
       ],
@@ -1128,6 +1268,11 @@
         "gen_ai.workflow.name": "agent_session",
         "scenario": "livekit-instrumentation",
         "testRunId": "<run:1>"
+      },
+      "context": {
+        "caller_filename": "<node-internal>",
+        "caller_functionname": "<node-internal>",
+        "caller_lineno": 0
       }
     }
   ]

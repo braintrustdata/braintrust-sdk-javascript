@@ -18,6 +18,7 @@ import {
 import {
   convertDataToBlob,
   getExtensionFromMediaType,
+  isAudioCaptureEnabled,
 } from "../../wrappers/attachment-utils";
 import { isObject } from "../../../util/index";
 import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
@@ -666,7 +667,11 @@ export function traceOpenAIMedia(
   const additional = context.additional;
   if (isAutoInstrumentationSuppressed()) return call();
   const params = args[0];
-  const captureAttachments = _internalCaptureAttachmentsEnabled();
+  const captureAttachments = ["transcribe", "translate", "speech"].includes(
+    operation,
+  )
+    ? isAudioCaptureEnabled(operation === "speech" ? "agent" : "user")
+    : _internalCaptureAttachmentsEnabled();
   let span: Span;
   try {
     const { name, spanAttributes, spanInfoMetadata } = buildStartSpanArgs(

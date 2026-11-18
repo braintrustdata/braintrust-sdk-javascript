@@ -183,10 +183,20 @@ span_tree:
       "scenario": "livekit-instrumentation",
       "testRunId": "<run:1>"
     }
+    context: {
+      "caller_filename": "<node-internal>",
+      "caller_functionname": "<node-internal>",
+      "caller_lineno": 0
+    }
     ├── livekit.session_start [task]
     │   metadata: {
     │     "scenario": "livekit-instrumentation",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<node-internal>",
+    │     "caller_functionname": "<node-internal>",
+    │     "caller_lineno": 0
     │   }
     │   └── livekit.start_agent_activity [task]
     │       metadata: {
@@ -200,16 +210,31 @@ span_tree:
     │         "scenario": "livekit-instrumentation",
     │         "testRunId": "<run:1>"
     │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
     │       ├── livekit.setup_toolsets [task]
     │       │   metadata: {
     │       │     "scenario": "livekit-instrumentation",
     │       │     "testRunId": "<run:1>"
+    │       │   }
+    │       │   context: {
+    │       │     "caller_filename": "<node-internal>",
+    │       │     "caller_functionname": "<node-internal>",
+    │       │     "caller_lineno": 0
     │       │   }
     │       └── livekit.on_enter [task]
     │           metadata: {
     │             "contrib.livekit.agent_label": "default_agent",
     │             "scenario": "livekit-instrumentation",
     │             "testRunId": "<run:1>"
+    │           }
+    │           context: {
+    │             "caller_filename": "<node-internal>",
+    │             "caller_functionname": "<node-internal>",
+    │             "caller_lineno": 0
     │           }
     ├── user_turn [task]
     │   input: [
@@ -243,6 +268,11 @@ span_tree:
     │     "testRunId": "<run:1>",
     │     "turn.id": "<span:1>"
     │   }
+    │   context: {
+    │     "caller_filename": "<node-internal>",
+    │     "caller_functionname": "<node-internal>",
+    │     "caller_lineno": 0
+    │   }
     │   ├── user_speech [task]
     │   │   metadata: {
     │   │     "audio.selections": {
@@ -255,6 +285,11 @@ span_tree:
     │   │     "scenario": "livekit-instrumentation",
     │   │     "testRunId": "<run:1>",
     │   │     "turn.id": "<span:1>"
+    │   │   }
+    │   │   context: {
+    │   │     "caller_filename": "<node-internal>",
+    │   │     "caller_functionname": "<node-internal>",
+    │   │     "caller_lineno": 0
     │   │   }
     │   ├── user_speech [task]
     │   │   metadata: {
@@ -269,18 +304,10 @@ span_tree:
     │   │     "testRunId": "<run:1>",
     │   │     "turn.id": "<span:1>"
     │   │   }
-    │   ├── user_speech [task]
-    │   │   metadata: {
-    │   │     "audio.selections": {
-    │   │       "selection-0": {
-    │   │         "end_offset_ms": 0,
-    │   │         "start_offset_ms": 0
-    │   │       }
-    │   │     },
-    │   │     "audio.source_id": "session-input",
-    │   │     "scenario": "livekit-instrumentation",
-    │   │     "testRunId": "<run:1>",
-    │   │     "turn.id": "<span:1>"
+    │   │   context: {
+    │   │     "caller_filename": "<node-internal>",
+    │   │     "caller_functionname": "<node-internal>",
+    │   │     "caller_lineno": 0
     │   │   }
     │   ├── user_speech [task]
     │   │   metadata: {
@@ -294,6 +321,29 @@ span_tree:
     │   │     "scenario": "livekit-instrumentation",
     │   │     "testRunId": "<run:1>",
     │   │     "turn.id": "<span:1>"
+    │   │   }
+    │   │   context: {
+    │   │     "caller_filename": "<node-internal>",
+    │   │     "caller_functionname": "<node-internal>",
+    │   │     "caller_lineno": 0
+    │   │   }
+    │   ├── user_speech [task]
+    │   │   metadata: {
+    │   │     "audio.selections": {
+    │   │       "selection-0": {
+    │   │         "end_offset_ms": 0,
+    │   │         "start_offset_ms": 0
+    │   │       }
+    │   │     },
+    │   │     "audio.source_id": "session-input",
+    │   │     "scenario": "livekit-instrumentation",
+    │   │     "testRunId": "<run:1>",
+    │   │     "turn.id": "<span:1>"
+    │   │   }
+    │   │   context: {
+    │   │     "caller_filename": "<node-internal>",
+    │   │     "caller_functionname": "<node-internal>",
+    │   │     "caller_lineno": 0
     │   │   }
     │   ├── stt [task]
     │   │   output: [
@@ -422,12 +472,22 @@ span_tree:
     │   │     "testRunId": "<run:1>",
     │   │     "turn.id": "<span:1>"
     │   │   }
+    │   │   context: {
+    │   │     "caller_filename": "<node-internal>",
+    │   │     "caller_functionname": "<node-internal>",
+    │   │     "caller_lineno": 0
+    │   │   }
     │   └── livekit.on_user_turn_completed [task]
     │       metadata: {
     │         "contrib.livekit.agent_label": "default_agent",
     │         "scenario": "livekit-instrumentation",
     │         "testRunId": "<run:1>",
     │         "turn.id": "<span:1>"
+    │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
     │       }
     ├── user_turn [task]
     │   metadata: {
@@ -442,6 +502,11 @@ span_tree:
     │     "testRunId": "<run:1>",
     │     "turn.id": "<span:1>"
     │   }
+    │   context: {
+    │     "caller_filename": "<node-internal>",
+    │     "caller_functionname": "<node-internal>",
+    │     "caller_lineno": 0
+    │   }
     │   └── livekit.eou_wait [task]
     │       metadata: {
     │         "contrib.livekit.eou.canonical_omitted": "unobserved_speech_end",
@@ -454,6 +519,11 @@ span_tree:
     │         "scenario": "livekit-instrumentation",
     │         "testRunId": "<run:1>",
     │         "turn.id": "<span:1>"
+    │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
     │       }
     ├── agent_turn [task]
     │   input: [
@@ -505,6 +575,11 @@ span_tree:
     │     "testRunId": "<run:1>",
     │     "turn.id": "<span:1>",
     │     "turn.reply_to": "<span:2>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<node-internal>",
+    │     "caller_functionname": "<node-internal>",
+    │     "caller_lineno": 0
     │   }
     │   ├── llm_response [llm]
     │   │   input: [
@@ -629,6 +704,11 @@ span_tree:
     │   │     "time_to_first_token": 0,
     │   │     "tokens": 217
     │   │   }
+    │   │   context: {
+    │   │     "caller_filename": "<node-internal>",
+    │   │     "caller_functionname": "<node-internal>",
+    │   │     "caller_lineno": 0
+    │   │   }
     │   │   └── livekit.llm_request_run [task]
     │   │       metadata: {
     │   │         "contrib.livekit.provider_request_ids": [
@@ -639,6 +719,11 @@ span_tree:
     │   │         "testRunId": "<run:1>",
     │   │         "turn.id": "<span:1>",
     │   │         "turn.reply_to": "<span:2>"
+    │   │       }
+    │   │       context: {
+    │   │         "caller_filename": "<node-internal>",
+    │   │         "caller_functionname": "<node-internal>",
+    │   │         "caller_lineno": 0
     │   │       }
     │   ├── llm_response [llm]
     │   │   input: [
@@ -783,6 +868,11 @@ span_tree:
     │   │     "time_to_first_token": 0,
     │   │     "tokens": 269
     │   │   }
+    │   │   context: {
+    │   │     "caller_filename": "<node-internal>",
+    │   │     "caller_functionname": "<node-internal>",
+    │   │     "caller_lineno": 0
+    │   │   }
     │   │   └── livekit.llm_request_run [task]
     │   │       metadata: {
     │   │         "contrib.livekit.provider_request_ids": [
@@ -793,6 +883,11 @@ span_tree:
     │   │         "testRunId": "<run:1>",
     │   │         "turn.id": "<span:1>",
     │   │         "turn.reply_to": "<span:2>"
+    │   │       }
+    │   │       context: {
+    │   │         "caller_filename": "<node-internal>",
+    │   │         "caller_functionname": "<node-internal>",
+    │   │         "caller_lineno": 0
     │   │       }
     │   ├── lookup_order [tool]
     │   │   input: {
@@ -828,6 +923,11 @@ span_tree:
     │   │     "turn.id": "<span:1>",
     │   │     "turn.reply_to": "<span:2>"
     │   │   }
+    │   │   context: {
+    │   │     "caller_filename": "<node-internal>",
+    │   │     "caller_functionname": "<node-internal>",
+    │   │     "caller_lineno": 0
+    │   │   }
     │   ├── tts [task]
     │   │   metadata: {
     │   │     "contrib.livekit.response.ttfb": 0,
@@ -851,6 +951,11 @@ span_tree:
     │   │     "testRunId": "<run:1>",
     │   │     "turn.id": "<span:3>",
     │   │     "turn.reply_to": "<span:4>"
+    │   │   }
+    │   │   context: {
+    │   │     "caller_filename": "<node-internal>",
+    │   │     "caller_functionname": "<node-internal>",
+    │   │     "caller_lineno": 0
     │   │   }
     │   │   └── livekit.tts_request [task]
     │   │       metadata: {
@@ -879,6 +984,11 @@ span_tree:
     │   │         "turn.id": "<span:1>",
     │   │         "turn.reply_to": "<span:2>"
     │   │       }
+    │   │       context: {
+    │   │         "caller_filename": "<node-internal>",
+    │   │         "caller_functionname": "<node-internal>",
+    │   │         "caller_lineno": 0
+    │   │       }
     │   │       └── livekit.tts_request_run [task]
     │   │           metadata: {
     │   │             "contrib.livekit.provider_request_ids": [
@@ -889,6 +999,11 @@ span_tree:
     │   │             "testRunId": "<run:1>",
     │   │             "turn.id": "<span:1>",
     │   │             "turn.reply_to": "<span:2>"
+    │   │           }
+    │   │           context: {
+    │   │             "caller_filename": "<node-internal>",
+    │   │             "caller_functionname": "<node-internal>",
+    │   │             "caller_lineno": 0
     │   │           }
     │   │           └── livekit.tts_request [task]
     │   │               metadata: {
@@ -917,6 +1032,11 @@ span_tree:
     │   │                 "turn.id": "<span:1>",
     │   │                 "turn.reply_to": "<span:2>"
     │   │               }
+    │   │               context: {
+    │   │                 "caller_filename": "<node-internal>",
+    │   │                 "caller_functionname": "<node-internal>",
+    │   │                 "caller_lineno": 0
+    │   │               }
     │   │               └── livekit.tts_request_run [task]
     │   │                   metadata: {
     │   │                     "contrib.livekit.retry_count": 0,
@@ -924,6 +1044,11 @@ span_tree:
     │   │                     "testRunId": "<run:1>",
     │   │                     "turn.id": "<span:1>",
     │   │                     "turn.reply_to": "<span:2>"
+    │   │                   }
+    │   │                   context: {
+    │   │                     "caller_filename": "<node-internal>",
+    │   │                     "caller_functionname": "<node-internal>",
+    │   │                     "caller_lineno": 0
     │   │                   }
     │   └── agent_speech [task]
     │       output: [
@@ -960,6 +1085,11 @@ span_tree:
     │         "turn.id": "<span:3>",
     │         "turn.reply_to": "<span:4>"
     │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
     └── livekit.session_close [task]
         metadata: {
           "contrib.livekit.close.drain": false,
@@ -967,15 +1097,30 @@ span_tree:
           "scenario": "livekit-instrumentation",
           "testRunId": "<run:1>"
         }
+        context: {
+          "caller_filename": "<node-internal>",
+          "caller_functionname": "<node-internal>",
+          "caller_lineno": 0
+        }
         └── livekit.drain_agent_activity [task]
             metadata: {
               "contrib.livekit.agent_label": "default_agent",
               "scenario": "livekit-instrumentation",
               "testRunId": "<run:1>"
             }
+            context: {
+              "caller_filename": "<node-internal>",
+              "caller_functionname": "<node-internal>",
+              "caller_lineno": 0
+            }
             └── livekit.on_exit [task]
                 metadata: {
                   "contrib.livekit.agent_label": "default_agent",
                   "scenario": "livekit-instrumentation",
                   "testRunId": "<run:1>"
+                }
+                context: {
+                  "caller_filename": "<node-internal>",
+                  "caller_functionname": "<node-internal>",
+                  "caller_lineno": 0
                 }

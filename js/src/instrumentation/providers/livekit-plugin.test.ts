@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import OpenAI from "openai";
+import { wrapOpenAI } from "../../wrappers/oai";
 import {
   afterEach,
   beforeAll,
@@ -11,7 +13,12 @@ import {
 import { EventEmitter } from "node:events";
 import { z } from "zod/v3";
 import { configureNode } from "../../node/config";
-import { Attachment, SpanImpl, initLogger } from "../../logger/core";
+import {
+  currentSpan,
+  Attachment,
+  SpanImpl,
+  initLogger,
+} from "../../logger/core";
 import { _exportsForTestingOnly as logging } from "../../logger/testing";
 import type { LiveKitSpan, SpanTime } from "../../vendor-sdk-types/livekit";
 import type { AudioMiddleware } from "../../audio-middleware";
@@ -3332,7 +3339,7 @@ describe("PII", () => {
         "user_turn",
       ]);
       expect(one("llm_response")).toMatchObject({
-        metadata: { model: "gpt-5.4-nano", tool_choice: "auto" },
+        metadata: { model: "gpt-5.4-nano" },
         metrics: { prompt_tokens: 10 },
       });
       for (const name of ["user_turn", "agent_turn", "llm_response", "tts"])
@@ -3356,15 +3363,7 @@ describe("PII", () => {
         "contrib.livekit.participant_id": "PA_1",
         "contrib.livekit.participant_kind": "SIP",
       });
-      expect(one("session").metadata["audio.participants"]).toEqual({
-        "participant-1": {
-          type: "user",
-          attributes: {
-            "contrib.livekit.participant_id": "PA_1",
-            "contrib.livekit.participant_kind": "SIP",
-          },
-        },
-      });
+      expect(one("session").metadata["audio.participants"]).toBeUndefined();
     },
   );
 
@@ -3462,6 +3461,195 @@ describe("PII", () => {
     turn.end();
     const { all, one } = await rows();
     expect(JSON.stringify(all)).not.toContain("SECRET");
-    expect(one("llm_response").metadata).toMatchObject({ tool_choice: "auto" });
+    expect(one("llm_response").metadata.tool_choice).toBeUndefined();
+  });
+});
+
+describe("provider privacy across LiveKit scopes", () => {
+  test.each([
+    [false, false],
+    [true, false],
+    [false, true],
+    [true, true],
+  ])(
+    "chat voice parts honor user=%s agent=%s within the framework policy",
+    async (user, agent) => {
+      vi.stubEnv("BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS", "true");
+      vi.stubEnv("BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS", String(user));
+      vi.stubEnv("BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS", String(agent));
+      const root = start("agent_session");
+      const client = wrapOpenAI(
+        new OpenAI({
+          apiKey: "unit",
+          fetch: async () =>
+            new Response(
+              JSON.stringify({
+                choices: [
+                  {
+                    index: 0,
+                    finish_reason: "stop",
+                    message: {
+                      role: "assistant",
+                      content: null,
+                      audio: {
+                        id: "audio-1",
+                        data: "AQI=",
+                        transcript: "hello",
+                        expires_at: 1,
+                      },
+                    },
+                  },
+                ],
+              }),
+              { headers: { "content-type": "application/json" } },
+            ),
+        }),
+      );
+      await tracing.scope(
+        root,
+        async () =>
+          await client.chat.completions.create({
+            model: "unit",
+            messages: [
+              {
+                role: "user",
+                content: [
+                  {
+                    type: "input_audio",
+                    input_audio: { data: "AQI=", format: "wav" },
+                  },
+                ],
+              },
+            ],
+          }),
+      );
+      const child = (await rows()).one("Chat Completion");
+      expect(
+        child.input[0].content[0].input_audio.data instanceof Attachment,
+      ).toBe(user);
+      expect(child.output[0].message.audio.data instanceof Attachment).toBe(
+        agent,
+      );
+    },
+  );
+
+  test.each(["environment", "job", "session"] as const)(
+    "late %s redaction filters queued provider content after session cleanup",
+    async (source) => {
+      const root = start("agent_session");
+      const job = { _redactionEnabled: false };
+      // Capture the job object before starting the session, as a worker does.
+      if (source === "job") {
+        await tracing.shutdown();
+        tracing = new LiveKitTracing(DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES);
+        tracing.jobContext = () => job;
+      }
+      const session = source === "job" ? start("agent_session") : root;
+      const client = wrapOpenAI(
+        new OpenAI({
+          apiKey: "unit",
+          fetch: async () =>
+            new Response(
+              JSON.stringify({
+                choices: [
+                  {
+                    index: 0,
+                    finish_reason: "stop",
+                    message: { role: "assistant", content: "PRIVATE RESPONSE" },
+                  },
+                ],
+                service_tier: "priority",
+                usage: {
+                  prompt_tokens: 2,
+                  completion_tokens: 1,
+                  total_tokens: 3,
+                },
+              }),
+              { headers: { "content-type": "application/json" } },
+            ),
+        }),
+      );
+      await tracing.scope(
+        session,
+        async () =>
+          await client.chat.completions.create({
+            model: "unit",
+            messages: [{ role: "user", content: "PRIVATE INPUT" }],
+            tools: [
+              {
+                type: "function",
+                function: { name: "lookup", description: "PRIVATE TOOL" },
+              },
+            ],
+          }),
+      );
+      if (source === "environment")
+        vi.stubEnv("LIVEKIT_TELEMETRY_ALLOW_PII", "false");
+      if (source === "job") job._redactionEnabled = true;
+      if (source === "session")
+        session.setAttribute("lk.redaction.enabled", true);
+      session.end();
+      await tracing.closeSession(session);
+      const captured = await rows();
+      expect(JSON.stringify(captured.all)).not.toContain("PRIVATE");
+      const provider = captured.one("Chat Completion");
+      expect(provider.metadata).toEqual({
+        model: "unit",
+        provider: "openai",
+        served_service_tier: "priority",
+      });
+      expect(provider.metrics.tokens).toBe(3);
+      expect(provider.input).toBeUndefined();
+      expect(provider.output).toBeUndefined();
+    },
+  );
+
+  test("concurrent session privacy does not filter unrelated provider or manual spans", async () => {
+    const privateRoot = start("agent_session", undefined, {
+      "lk.redaction.enabled": true,
+    });
+    const publicRoot = start("agent_session");
+    const client = wrapOpenAI(
+      new OpenAI({
+        apiKey: "unit",
+        fetch: async () =>
+          new Response(
+            JSON.stringify({
+              choices: [
+                {
+                  index: 0,
+                  message: { role: "assistant", content: "answer" },
+                  finish_reason: "stop",
+                },
+              ],
+            }),
+            { headers: { "content-type": "application/json" } },
+          ),
+      }),
+    );
+    const params = {
+      model: "unit",
+      messages: [{ role: "user" as const, content: "question" }],
+    };
+    await Promise.all([
+      tracing.scope(privateRoot, async () => {
+        const manual = currentSpan().startSpan({
+          name: "customer",
+          event: { input: "customer data" },
+        });
+        manual.end();
+        await client.chat.completions.create(params);
+      }),
+      tracing.scope(
+        publicRoot,
+        async () => await client.chat.completions.create(params),
+      ),
+      client.chat.completions.create(params),
+    ]);
+    const captured = await rows();
+    const providers = captured.named("Chat Completion");
+    expect(providers).toHaveLength(3);
+    expect(providers.filter((p) => p.input)).toHaveLength(2);
+    expect(captured.one("customer").input).toBe("customer data");
   });
 });
