@@ -414,6 +414,116 @@ describe("BraintrustLangChainCallbackHandler model attribution", () => {
 });
 
 describe("LangChain capture options", () => {
+  it.each(["handleChatModelStart", "handleLLMStart"] as const)(
+    "%s controls tool definitions independently of messages and tool calls",
+    async (method) => {
+      for (const captureModelInputs of [undefined, true, false]) {
+        for (const captureModelToolDefinitions of [undefined, true, false]) {
+          const { handler, parent, logs } = createHarness({
+            captureModelInputs,
+            captureModelToolDefinitions,
+          });
+          const definitions = [
+            { name: "weather", parameters: { type: "object" } },
+          ];
+          const params = Object.freeze({
+            tools: definitions,
+            functions: definitions,
+            model: "requested-model",
+            service_tier: "flex",
+            temperature: 0,
+            tool_choice: "auto",
+          });
+          const extraParams = Object.freeze({
+            tools: definitions,
+            functions: definitions,
+            options: params,
+            invocation_params: params,
+            retained: "metadata",
+          });
+          await handler[method](
+            { name: "model" },
+            [],
+            "model",
+            undefined,
+            extraParams,
+          );
+          const event = parent.startSpan.mock.calls[0][0].event!;
+          const capture =
+            captureModelToolDefinitions ?? captureModelInputs ?? true;
+          for (const container of [
+            event.metadata,
+            event.metadata?.options,
+            event.metadata?.invocation_params,
+          ]) {
+            if (capture) {
+              expect(container).toHaveProperty("tools", definitions);
+              expect(container).toHaveProperty("functions", definitions);
+            } else {
+              expect(container).not.toHaveProperty("tools");
+              expect(container).not.toHaveProperty("functions");
+            }
+          }
+          expect("input" in event).toBe(captureModelInputs !== false);
+          expect(event.metadata).toMatchObject({
+            retained: "metadata",
+            model: "requested-model",
+            requested_service_tier: "flex",
+            options: { temperature: 0, tool_choice: "auto" },
+            invocation_params: { temperature: 0, tool_choice: "auto" },
+          });
+          expect(extraParams.options.tools).toBe(definitions);
+          const output = {
+            generations: [
+              [{ message: { tool_calls: [{ name: "weather", args: {} }] } }],
+            ],
+          };
+          await handler.handleLLMEnd(output, "model");
+          expect(logs[0]).toHaveProperty("output", output);
+        }
+      }
+    },
+  );
+
+  it.each(["handleChatModelStart", "handleLLMStart"] as const)(
+    "%s omits tool definitions before reading or serializing them",
+    async (method) => {
+      const readTools = vi.fn(() => {
+        throw new Error("must not read schemas");
+      });
+      const params = Object.defineProperties(
+        { temperature: 0 },
+        {
+          tools: { enumerable: true, get: readTools },
+          functions: { enumerable: true, get: readTools },
+        },
+      );
+      const { handler } = createHarness({ captureModelToolDefinitions: false });
+      await handler[method]({ name: "model" }, [], "model", undefined, {
+        options: params,
+        invocation_params: params,
+      });
+      expect(readTools).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([undefined, null, "invalid", [], {}])(
+    "preserves absent or non-record invocation containers (%j)",
+    async (value) => {
+      const { handler, parent } = createHarness({
+        captureModelToolDefinitions: false,
+      });
+      await handler.handleLLMStart({}, [], "model", undefined, {
+        options: value,
+        invocation_params: value,
+      });
+      expect(parent.startSpan.mock.calls[0][0].event?.metadata).toMatchObject({
+        options: value,
+        invocation_params: value,
+      });
+    },
+  );
+
   it.each([undefined, true, false])(
     "controls chain input and output independently (%s)",
     async (capture) => {

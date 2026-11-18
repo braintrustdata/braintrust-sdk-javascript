@@ -159,7 +159,12 @@ export class BraintrustLangChainCallbackHandler {
           serialized: llm,
           name: runName,
           metadata,
-          ...extraParams,
+          ...getModelInvocationMetadata(
+            extraParams,
+            this.options.captureModelToolDefinitions ??
+              this.options.captureModelInputs ??
+              true,
+          ),
           model: getModelNameFromInvocation(extraParams),
           ...getServiceTierFromInvocation(extraParams),
         },
@@ -237,7 +242,12 @@ export class BraintrustLangChainCallbackHandler {
           serialized: llm,
           name: runName,
           metadata,
-          ...extraParams,
+          ...getModelInvocationMetadata(
+            extraParams,
+            this.options.captureModelToolDefinitions ??
+              this.options.captureModelInputs ??
+              true,
+          ),
           model: getModelNameFromInvocation(extraParams),
           ...getServiceTierFromInvocation(extraParams),
         },
@@ -520,6 +530,37 @@ function walkGenerations(
     }
   }
   return result;
+}
+
+function getModelInvocationMetadata(
+  extraParams: Record<string, unknown> | undefined,
+  captureToolDefinitions: boolean,
+): Record<string, unknown> | undefined {
+  if (captureToolDefinitions || !extraParams) return extraParams;
+
+  // Only copy the invocation containers, never walk or serialize tool schemas.
+  // Leave the provider's request objects intact.
+  return Object.fromEntries(
+    Object.keys(extraParams)
+      .filter((key) => key !== "tools" && key !== "functions")
+      .map((key) => {
+        const value = extraParams[key];
+        if (
+          (key === "options" || key === "invocation_params") &&
+          isRecord(value)
+        ) {
+          return [
+            key,
+            Object.fromEntries(
+              Object.keys(value)
+                .filter((key) => key !== "tools" && key !== "functions")
+                .map((key) => [key, value[key]]),
+            ),
+          ];
+        }
+        return [key, value];
+      }),
+  );
 }
 
 function getServiceTierFromInvocation(

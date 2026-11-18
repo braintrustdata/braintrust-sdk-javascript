@@ -55,6 +55,7 @@ describe("registerLangChainInstrumentation", () => {
       captureChainInputs: false,
       captureChainOutputs: false,
       captureModelInputs: false,
+      captureModelToolDefinitions: false,
       captureModelOutputs: false,
       captureModelTokenUsage: false,
     });
@@ -141,7 +142,26 @@ it.each(["arguments", "result"] as const)(
     const end = vi.spyOn(boundary, "endSpan").mockImplementation(() => {});
     await handler.handleChainStart({}, { state: "input" }, "chain");
     await handler.handleChainEnd({ state: "output" }, "chain");
-    await handler.handleChatModelStart({}, [[{ content: "hello" }]], "model");
+    await handler.handleChatModelStart(
+      {},
+      [[{ content: "hello" }]],
+      "model",
+      undefined,
+      {
+        options: { tools: [{ name: "weather" }], temperature: 0 },
+        invocation_params: { tools: [{ name: "weather" }], model: "model" },
+      },
+    );
+    expect(start.mock.calls[1][0].event?.metadata).toMatchObject({
+      options: { temperature: 0 },
+      invocation_params: { model: "model" },
+    });
+    expect(start.mock.calls[1][0].event?.metadata?.options).not.toHaveProperty(
+      "tools",
+    );
+    expect(
+      start.mock.calls[1][0].event?.metadata?.invocation_params,
+    ).not.toHaveProperty("tools");
     await handler.handleLLMEnd(
       { llmOutput: { tokenUsage: { totalTokens: 10 } } },
       "model",

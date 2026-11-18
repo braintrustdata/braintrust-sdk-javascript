@@ -123,7 +123,8 @@ export const DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES: number =
 export interface InstrumentationConfig {
   /**
    * Capture settings for automatically injected LangChain/LangGraph handlers.
-   * All fields default to true. Disabled payloads are omitted before copying.
+   * Capture defaults to true. Tool definitions follow captureModelInputs unless
+   * captureModelToolDefinitions is set. Disabled payloads are omitted before copying.
    * Spans, timing, errors, and metadata remain available.
    * Configure before initializing the SDK or loading braintrust/hook.mjs.
    * Use provider instrumentation to capture model payloads and usage when
