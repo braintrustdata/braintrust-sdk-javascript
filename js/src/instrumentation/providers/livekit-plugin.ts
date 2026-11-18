@@ -23,6 +23,7 @@ import type {
 import iso from "#braintrust-platform";
 import { runInstrumentation } from "../core/observe-result";
 import { livekitChannels } from "./livekit-interceptors";
+import { wrapLiveKitModels } from "./livekit-wrapping";
 import {
   REDACTED_EXCEPTION_MESSAGE,
   REDACTION_ENABLED,
@@ -145,6 +146,7 @@ class LiveKitInstrumentationConsumer {
       ),
     );
     livekitChannels.activity.intercept((target, self, args) => {
+      runInstrumentation(() => wrapLiveKitModels(self as AgentActivity));
       const session = (self as AgentActivity).agentSession;
       runInstrumentation(() => tracing.output(session));
       return tracing.scope(session.sessionSpan, () =>
@@ -153,6 +155,7 @@ class LiveKitInstrumentationConsumer {
     });
     livekitChannels.pipeline.intercept((target, self, args) => {
       runInstrumentation(() => {
+        wrapLiveKitModels(self as AgentActivity);
         tracing.output((self as AgentActivity).agentSession);
         tracing.reply(args[0]);
       });
@@ -162,10 +165,12 @@ class LiveKitInstrumentationConsumer {
         runInstrumentation(() => requestMetadata(args[0])) ?? {},
       );
     });
-    livekitChannels.conversation.intercept((target, self, args) => {
-      runInstrumentation(() =>
-        tracing.conversation(self as AgentSession, args[0]),
-      );
+    livekitChannels.sessionEvent.intercept((target, self, args) => {
+      const event = args[1];
+      if (args[0] === "conversation_item_added" && isObject(event))
+        runInstrumentation(() =>
+          tracing.conversation(self as AgentSession, event.item as ChatMessage),
+        );
       return Reflect.apply(target, self, args);
     });
     livekitChannels.input.intercept((target, self, args) => {
