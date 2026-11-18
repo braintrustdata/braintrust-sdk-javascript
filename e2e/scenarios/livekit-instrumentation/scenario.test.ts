@@ -175,6 +175,98 @@ const spoken = (event: CapturedLogEvent | undefined, pattern: RegExp) =>
   );
 
 for (const variant of variants) {
+  // Real installed framework classes with synthetic lifecycle events, not providers.
+  for (const mode of ["auto", "wrapped", "wrapped-auto"] as const)
+    test(`${variant} ${mode} transcription lifecycle`, async () => {
+      await withScenarioHarness(async (harness) => {
+        const result = await harness.runNodeScenarioDir(
+          scenarioOptions(variant, {
+            mode,
+            entry: "lifecycle.mjs",
+            recording: false,
+          }),
+        );
+        const events = harness.events();
+        const roots = findAllSpans(events, "session");
+        expect(roots).toHaveLength(4);
+        const probes = result.stdout
+          .split("\n")
+          .filter((line) => line.startsWith('{"probe":'))
+          .map((line) => JSON.parse(line));
+        for (const probe of probes) {
+          const root = roots.find(
+            (row) =>
+              row.metadata?.["contrib.livekit.probe.case"] === probe.probe,
+          )!;
+          expect(root).toBeDefined();
+          const turns = findAllSpans(events, "user_turn").filter(
+            (row) => row.span.rootId === root.span.rootId,
+          );
+          expect(turns).toHaveLength(1);
+          const waits = findAllSpans(events, "eou_wait")
+            .filter((row) => row.span.rootId === root.span.rootId)
+            .sort(
+              (a, b) => Number(a.metrics?.start) - Number(b.metrics?.start),
+            );
+          expect(waits).toHaveLength(probe.start ? 1 : 2);
+          expect(
+            findAllSpans(events, "livekit.eou_wait")
+              .filter((row) => row.span.rootId === root.span.rootId)
+              // The selector filters by name before merging. An earlier flush
+              // can retain the diagnostic name for the same subsequently
+              // normalized row; count identities, not historical names.
+              .filter(
+                (row) => !waits.some((wait) => wait.span.id === row.span.id),
+              )
+              .map((row) => ({
+                probe: probe.probe,
+                metadata: row.metadata,
+                metrics: row.metrics,
+              })),
+          ).toEqual([]);
+          if (probe.start) {
+            expect(waits[0].metrics?.start).toBe(probe.start);
+            expect(waits[0].metadata?.["eou.outcome"]).toBe("committed");
+            expect(waits[0].metadata).not.toHaveProperty(
+              "eou.speech_end_source",
+            );
+          } else {
+            expect(Number(waits[0].metrics?.start) - probe.base).toBeCloseTo(2);
+            expect(Number(waits[0].metrics?.end) - probe.base).toBeCloseTo(2.3);
+            expect(Number(waits[1].metrics?.start) - probe.base).toBeCloseTo(
+              3.5,
+            );
+            if (!probe.probe.endsWith("shutdown"))
+              expect(Number(waits[1].metrics?.end) - probe.base).toBeCloseTo(4);
+            expect(waits[0].metadata?.["eou.outcome"]).toBe("user_resumed");
+            expect(waits[0].metadata).not.toHaveProperty(
+              "contrib.livekit.eou.native_start_unix_ms",
+            );
+            for (const row of waits)
+              expect(row.metadata?.["eou.speech_end_source"]).toBe("vad");
+            if (probe.probe.endsWith("shutdown")) {
+              expect(waits[1].metadata).not.toHaveProperty("eou.outcome");
+              expect(waits[1].metadata?.["contrib.livekit.incomplete"]).toBe(
+                true,
+              );
+            } else
+              expect(waits[1].metadata?.["eou.outcome"]).toBe(
+                probe.probe.endsWith("drop") ? "dropped" : "committed",
+              );
+          }
+          for (const row of waits) {
+            expect(row.span.parentIds).toEqual([turns[0].span.id]);
+            expect(row.metadata?.["turn.id"]).toBe(turns[0].span.id);
+            expect(row.metadata?.["audio.source_id"]).toBe("session-input");
+            expect(row.metadata).not.toHaveProperty("eou.end_reason");
+            expect(row.metadata).not.toHaveProperty("eou.detection_methods");
+            expect(row.metrics?.end).toEqual(expect.any(Number));
+          }
+        }
+        expect(probes).toHaveLength(4);
+      });
+    }, 120000);
+
   // Fixture playback through each setup path, including idempotent double wrapping.
   for (const mode of ["auto", "wrapped", "wrapped-auto"] as const)
     test(`${variant} ${mode} fixture recording`, async () => {
@@ -411,42 +503,60 @@ for (const variant of variants) {
       });
     }, 120000);
 
-  test(`${variant} streaming-cascade order conversation`, async () => {
-    await withScenarioHarness(async (harness) => {
-      await harness.runNodeScenarioDir(
-        scenarioOptions(variant, {
-          cassette: "streaming-cascade",
-          env: {
-            LIVEKIT_STREAMING_STT: "1",
-            LIVEKIT_WS_PATH: `${originalScenarioDir}/__cassettes__/${variant}-streaming-cascade.websocket.json`,
-            BRAINTRUST_E2E_CASSETTE_MODE:
-              process.env.BRAINTRUST_E2E_CASSETTE_MODE ?? "replay",
-            OPENAI_API_KEY: process.env.OPENAI_API_KEY ?? "replay",
-          },
-        }),
-      );
-      const events = assertAudioTrace(harness.events());
-      const user = findLatestSpan(events, "user_speech");
-      // User speech is observed audio: its source and its place on the
-      // timeline, from LiveKit's local VAD, but no text.
-      expect(user?.metadata?.["audio.source_id"]).toBe("session-input");
-      expect(user?.row.input).toBeUndefined();
-      expect(selectionsOf(user)).toHaveLength(1);
-      expect(
-        selectionsOf(
-          findAllSpans(events, "user_turn").find((e) => e.row.input),
-        ),
-      ).toHaveLength(1);
-      // LiveKit has no native STT span; each final transcript gets one, and the
-      // model's context links to the transcripts of the turn it answers.
-      const stt = findAllSpans(events, "stt");
-      expect(stt.length).toBeGreaterThan(0);
-      expect(contextLinks(findAllSpans(events, "llm_response")[0])).toEqual(
-        stt.map((span) => span.span.id),
-      );
-      await snapshotTrace(events, `${variant}-streaming-cascade`);
-    });
-  }, 120000);
+  for (const mode of ["auto", "wrapped", "wrapped-auto"] as const)
+    test(`${variant} ${mode} streaming-cascade order conversation`, async () => {
+      await withScenarioHarness(async (harness) => {
+        await harness.runNodeScenarioDir(
+          scenarioOptions(variant, {
+            cassette: "streaming-cascade",
+            mode,
+            env: {
+              LIVEKIT_STREAMING_STT: "1",
+              LIVEKIT_WS_PATH: `${originalScenarioDir}/__cassettes__/${variant}-streaming-cascade.websocket.json`,
+              BRAINTRUST_E2E_CASSETTE_MODE:
+                process.env.BRAINTRUST_E2E_CASSETTE_MODE ?? "replay",
+              OPENAI_API_KEY: process.env.OPENAI_API_KEY ?? "replay",
+            },
+          }),
+        );
+        const events = assertAudioTrace(harness.events());
+        const user = findLatestSpan(events, "user_speech");
+        // User speech is observed audio: its source and its place on the
+        // timeline, from LiveKit's local VAD, but no text.
+        expect(user?.metadata?.["audio.source_id"]).toBe("session-input");
+        expect(user?.row.input).toBeUndefined();
+        expect(selectionsOf(user)).toHaveLength(1);
+        expect(
+          selectionsOf(
+            findAllSpans(events, "user_turn").find((e) => e.row.input),
+          ),
+        ).toHaveLength(1);
+        // LiveKit has no native STT span; each final transcript gets one, and the
+        // model's context links to the transcripts of the turn it answers.
+        const stt = findAllSpans(events, "stt");
+        expect(stt.length).toBeGreaterThan(0);
+        expect(contextLinks(findAllSpans(events, "llm_response")[0])).toEqual(
+          stt.map((span) => span.span.id),
+        );
+        const waits = findAllSpans(events, "eou_wait");
+        expect(waits.length).toBeGreaterThan(0);
+        for (const wait of waits) {
+          expect(wait.span.type).toBe("task");
+          expect(wait.metadata).toMatchObject({
+            "eou.outcome": "committed",
+            "eou.speech_end_source": "vad",
+            "audio.source_id": "session-input",
+          });
+          expect(wait.metadata?.["turn.id"]).toBe(wait.span.parentIds[0]);
+          expect(wait.metadata).not.toHaveProperty("eou.end_reason");
+          expect(wait.metadata).not.toHaveProperty("eou.detection_methods");
+          expect(wait.metrics?.end).toBeGreaterThanOrEqual(
+            wait.metrics?.start as number,
+          );
+        }
+        await snapshotTrace(events, `${variant}-streaming-cascade`);
+      });
+    }, 120000);
 
   // Two callers share one microphone; diarized STT tells their voices apart.
   test(`${variant} diarized two-caller conversation`, async () => {

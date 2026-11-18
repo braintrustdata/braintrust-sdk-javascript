@@ -6,6 +6,9 @@ import type {
   TraceOptions,
   PipelineOptions,
   SpeechEvent,
+  SpeechEndEvent,
+  VadInferenceEvent,
+  EouWaitOptions,
 } from "../../vendor-sdk-types/livekit";
 import { channel, defineInterceptor } from "../core/interceptor-definitions";
 
@@ -50,6 +53,24 @@ export const livekitChannels = defineInterceptor("@livekit/agents", {
   }),
   speechStart: channel<[unknown?], void>({
     channelName: "activity.speechStart",
+  }),
+  vadInference: channel<[VadInferenceEvent], void>({
+    channelName: "activity.vadInference",
+  }),
+  speechEnd: channel<[SpeechEndEvent?], void>({
+    channelName: "activity.speechEnd",
+  }),
+  recognitionClose: channel<[], Promise<void>>({
+    channelName: "recognition.close",
+  }),
+  eouWait: channel<[LiveKitSpan, EouWaitOptions], LiveKitSpan>({
+    channelName: "recognition.eouWait",
+  }),
+  eouEvaluation: channel<[unknown, string?], void>({
+    channelName: "recognition.eouEvaluation",
+  }),
+  eouEnd: channel<[string, number?], void>({
+    channelName: "recognition.eouEnd",
   }),
   stt: channel<[SpeechEvent], void>({
     channelName: "recognition.stt",

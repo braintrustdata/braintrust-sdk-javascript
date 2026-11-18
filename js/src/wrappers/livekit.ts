@@ -43,16 +43,39 @@ function wrapActivity(activity: AgentActivity | undefined) {
   }
   // The recognizer exists once the activity starts, before it receives audio.
   wrapMethod(activity, "attachAudioInput", livekitChannels.input, () => {
-    if (activity.audioRecognition)
+    if (activity.audioRecognition) {
+      wrapMethod(
+        activity.audioRecognition,
+        "close",
+        livekitChannels.recognitionClose,
+      );
+      wrapMethod(
+        activity.audioRecognition,
+        "ensureEouWaitSpan",
+        livekitChannels.eouWait,
+      );
+      wrapMethod(
+        activity.audioRecognition,
+        "runEOUDetection",
+        livekitChannels.eouEvaluation,
+      );
+      wrapMethod(
+        activity.audioRecognition,
+        "endEouWaitSpan",
+        livekitChannels.eouEnd,
+      );
       wrapMethod(
         activity.audioRecognition,
         "processSTTEvent",
         livekitChannels.stt,
       );
+    }
   });
   wrapMethod(activity, "_startSessionImpl", livekitChannels.activity);
   wrapMethod(activity, "onEndOfTurn", livekitChannels.userTurn);
   wrapMethod(activity, "onStartOfSpeech", livekitChannels.speechStart);
+  wrapMethod(activity, "onEndOfSpeech", livekitChannels.speechEnd);
+  wrapMethod(activity, "onVADInferenceDone", livekitChannels.vadInference);
   wrapMethod(activity, "userTurnCompleted", livekitChannels.userCompleted);
   wrapMethod(activity, "_pipelineReplyTaskImpl", livekitChannels.pipeline);
 }

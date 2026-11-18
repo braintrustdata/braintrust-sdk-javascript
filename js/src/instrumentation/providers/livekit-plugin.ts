@@ -15,6 +15,9 @@ import type {
   PlaybackProgressedEvent,
   SpanTime,
   SpeechEvent,
+  SpeechEndEvent,
+  VadInferenceEvent,
+  EouWaitOptions,
   TraceOptions,
 } from "../../vendor-sdk-types/livekit";
 import iso from "#braintrust-platform";
@@ -83,6 +86,7 @@ const AUDIO_DEFAULTS: AudioEncodingDefaults = {
 // Native spans with a Braintrust name. Other session spans export as `livekit.<name>`.
 const SPANS = new Map<string, { name: string; type: "task" | "llm" | "tool" }>([
   ["agent_session", { name: "session", type: "task" }],
+  ["eou_wait", { name: "eou_wait", type: "task" }],
   ["user_turn", { name: "user_turn", type: "task" }],
   ["agent_turn", { name: "agent_turn", type: "task" }],
   ["user_speaking", { name: "user_speech", type: "task" }],
@@ -169,17 +173,58 @@ class LiveKitInstrumentationConsumer {
       );
       return Reflect.apply(target, self, args);
     });
-    livekitChannels.speechStart.intercept((target, self, args) =>
-      tracing.scope(
+    livekitChannels.speechStart.intercept((target, self, args) => {
+      runInstrumentation(() => tracing.vadSpeech(self as AgentActivity));
+      return tracing.scope(
         (self as AgentActivity).audioRecognition?.userTurnSpan,
         () => Reflect.apply(target, self, args),
-      ),
-    );
+      );
+    });
     livekitChannels.stt.intercept((target, self, args) => {
-      runInstrumentation(() => tracing.stt(self as AudioRecognition, args[0]));
-      return tracing.scope((self as AudioRecognition).userTurnSpan, () =>
+      return tracing.processSTT(self as AudioRecognition, args[0], () =>
+        tracing.scope((self as AudioRecognition).userTurnSpan, () =>
+          Reflect.apply(target, self, args),
+        ),
+      );
+    });
+    livekitChannels.vadInference.intercept((target, self, args) => {
+      runInstrumentation(() =>
+        tracing.vadSpeech(self as AgentActivity, args[0]),
+      );
+      return Reflect.apply(target, self, args);
+    });
+    livekitChannels.speechEnd.intercept((target, self, args) => {
+      const result = Reflect.apply(target, self, args);
+      runInstrumentation(() =>
+        tracing.speechEnd(self as AgentActivity, args[0]),
+      );
+      return result;
+    });
+    livekitChannels.recognitionClose.intercept((target, self, args) => {
+      runInstrumentation(() =>
+        tracing.recognitionClose(self as AudioRecognition),
+      );
+      return Reflect.apply(target, self, args);
+    });
+    livekitChannels.eouWait.intercept((target, self, args) => {
+      const span = tracing.waitFactory(self as AudioRecognition, () =>
         Reflect.apply(target, self, args),
       );
+      runInstrumentation(() =>
+        tracing.eouWait(self as AudioRecognition, span, args[1]),
+      );
+      return span;
+    });
+    livekitChannels.eouEvaluation.intercept((target, self, args) => {
+      const result = Reflect.apply(target, self, args);
+      runInstrumentation(() => tracing.eouEvaluation(self as AudioRecognition));
+      return result;
+    });
+    livekitChannels.eouEnd.intercept((target, self, args) => {
+      runInstrumentation(() =>
+        tracing.eouEnd(self as AudioRecognition, args[0], args[1]),
+      );
+      return Reflect.apply(target, self, args);
     });
     livekitChannels.userCompleted.intercept((target, self, args) =>
       tracing.scope(args[0].userTurnSpan, () =>
@@ -224,6 +269,16 @@ type Row = {
    * of what was heard, so LiveKit's text for it may include unplayed words.
    */
   unheard?: boolean;
+  /** A wait is canonical only with independently observed speech-end evidence. */
+  speechEnd?: { at: number; source?: "vad" | "stt" };
+  incomplete?: string;
+  /** Explicit native resume time; retained even if diagnostic events hit their cap. */
+  resumedAt?: number;
+  recognitionClosing?: boolean;
+  /** Present only once a native wait is associated with this pause. Seconds. */
+  nativeWaitStart?: number;
+  /** Observed wait completion when LiveKit skipped its native span. */
+  waitOutcome?: string;
   /** Confirmed playout on the session timeline, for this speech's selections. */
   played?: AudioInterval[];
   messages?: Map<string, string | undefined>;
@@ -281,6 +336,17 @@ class LiveKitTracing {
   jobContext?: () => JobContext | undefined;
   // Callbacks already handed to LiveKit can outlive interceptor unsubscription.
   private disabled = false;
+  private speechEnds = new WeakMap<
+    AudioRecognition,
+    { source: "vad" } | { at: number; source?: "stt" }
+  >();
+  // processSTTEvent synchronously calls onEndOfSpeech with a synthetic VAD event.
+  private processingSTT = new WeakMap<
+    AudioRecognition,
+    { waits: Map<LiveKitSpan, EouWaitOptions>; evaluated: boolean }
+  >();
+  private pauses = new WeakMap<AudioRecognition, Row>();
+  private creatingWait = iso.newAsyncLocalStorage<AudioRecognition>();
 
   constructor(
     private streamingAttachmentBufferBytes: number,
@@ -362,16 +428,37 @@ class LiveKitTracing {
     // LiveKit's span processors stamp its session metadata when a span starts.
     // Honor its redaction flag before starting publishes any of the span's content.
     const stamped = span.attributes?.[REDACTION_ENABLED] === true;
-    const row = this.start(
-      stamped
-        ? {
-            ...options,
-            attributes: { ...options.attributes, [REDACTION_ENABLED]: true },
-          }
-        : options,
-      this.rowOf(parent),
-    );
+    const recognition = this.creatingWait.getStore();
+    const pause = recognition && this.pauses.get(recognition);
+    // A transcript-delayed pause may already have an exported row. Associate
+    // the native span before observing its children, without exporting a duplicate.
+    const pending =
+      options.name === "eou_wait" &&
+      pause &&
+      !pause.ended &&
+      pause.nativeWaitStart === undefined
+        ? pause
+        : undefined;
+    const row =
+      pending ??
+      this.start(
+        stamped
+          ? {
+              ...options,
+              attributes: { ...options.attributes, [REDACTION_ENABLED]: true },
+            }
+          : options,
+        this.rowOf(parent),
+      );
     if (!row) return;
+    if (options.name === "eou_wait") {
+      row.nativeWaitStart = spanTimeSeconds(options.startTime);
+      if (pending) {
+        for (const [key, value] of Object.entries(options.attributes ?? {}))
+          row.attributes.set(key, value);
+        if (stamped) row.attributes.set(REDACTION_ENABLED, true);
+      }
+    }
     observedRows.set(span, row);
     this.observeRedaction(row);
     // Only model requests inside an llm_node contribute to their exported owner.
@@ -435,18 +522,25 @@ class LiveKitTracing {
         time?: SpanTime,
       ) {
         const result = addEvent.call(this, name, attributesOrTime, time);
-        if (!row.ended && row.events.length < MAX_EVENTS) {
+        if (!row.ended) {
           const attributes =
             isObject(attributesOrTime) && !(attributesOrTime instanceof Date)
               ? attributesOrTime
               : undefined;
-          row.events.push({
-            name,
-            attributes,
-            time: spanTimeSeconds(
-              time ?? (attributes ? undefined : (attributesOrTime as SpanTime)),
-            ),
-          });
+          const at =
+            time ?? (attributes ? undefined : (attributesOrTime as SpanTime));
+          if (
+            row.name === "eou_wait" &&
+            name === "user_resumed" &&
+            at !== undefined
+          )
+            row.resumedAt = spanTimeSeconds(at);
+          if (row.events.length < MAX_EVENTS)
+            row.events.push({
+              name,
+              attributes,
+              time: spanTimeSeconds(at),
+            });
         }
         return result;
       },
@@ -476,7 +570,13 @@ class LiveKitTracing {
         return;
       }
     }
-    const kind = SPANS.get(name) ?? {
+    // A native wait can start at notification time when no speech-end anchor exists.
+    // Retain it as a framework diagnostic until evidence permits normalization at end.
+    if (name === "eou_wait" && parentState) {
+      const turn = parentState.rows.get(parent?.turn ?? "");
+      parent = turn?.name === "user_turn" ? turn : parentState.root;
+    }
+    const kind = (name === "eou_wait" ? undefined : SPANS.get(name)) ?? {
       name: `livekit.${name}`,
       type: "task" as const,
     };
@@ -521,7 +621,9 @@ class LiveKitTracing {
       const capturing = captures.input || captures.output;
       const origin = Date.now();
       const audio = this.audioSession(row.span, origin, capturing);
-      row.span.log({ metadata: audio.session() });
+      row.span.log({
+        metadata: { ...audio.session(), "audio.schema.version": "3.1.0" },
+      });
       const transcripts: SessionState["transcripts"] = new Map();
       this.sessions.set(id, {
         root: row,
@@ -602,6 +704,20 @@ class LiveKitTracing {
   }
 
   private end(row: Row): void {
+    // Native close() also labels an undecided wait "dropped". Teardown alone
+    // establishes no abandonment; preserve that outcome only as a diagnostic.
+    if (
+      row.recognitionClosing &&
+      row.attributes.get("lk.eou.outcome") === "dropped"
+    ) {
+      row.incomplete = "recognition_closed";
+      row.span.log({
+        metadata: {
+          "contrib.livekit.incomplete": true,
+          "contrib.livekit.termination": row.incomplete,
+        },
+      });
+    }
     // Native identities resolve links in memory; only redacted values are logged.
     const identities = nativeFields(row.attributes);
     const native = this.redact(row);
@@ -609,11 +725,13 @@ class LiveKitTracing {
     const events = this.redactEvents(row);
     if (row.status.message && !this.piiAllowed(row))
       row.status = { ...row.status, message: REDACTED_EXCEPTION_MESSAGE };
-    row.attributes = new Map();
-    row.events = [];
     const state = this.sessions.get(row.session);
     if (!row.owner) {
       row.span.log(endEvent(row, attrs, events));
+      if (state && row.name === "eou_wait") {
+        const wait = this.waitEvent(row, native);
+        if (wait) row.span.log(wait);
+      }
       if (state)
         state.relationships.batch(row.span, () =>
           correlate(row, identities, state.relationships),
@@ -630,13 +748,19 @@ class LiveKitTracing {
         });
       if (state && row.name === "agent_speaking")
         row.span.log({ metadata: participantIds(state, native) });
-      row.span.end({ endTime: row.end });
+      row.span.end({ endTime: this.waitEnd(row) ?? row.end });
     } else {
       // Native request spans duplicate the public inference lifecycle.
       row.span.log(modelFields(attrs));
     }
+    row.attributes = new Map();
+    row.events = [];
     if (row.name === "agent_session") void this.closeSession(row.id);
-    if (state?.closed) this.clearSession(row.session);
+    if (
+      state?.closed &&
+      (!row.incomplete || row.incomplete === "recognition_closed")
+    )
+      this.clearSession(row.session);
   }
 
   /**
@@ -677,6 +801,286 @@ class LiveKitTracing {
           ),
         }),
       }));
+  }
+
+  /** Invalidate pause evidence before VAD writes a speech-activity clock value. */
+  vadSpeech(activity: AgentActivity, event?: VadInferenceEvent): void {
+    if (activity.audioRecognition && (!event || event.rawAccumulatedSpeech > 0))
+      this.speechEnds.delete(activity.audioRecognition);
+  }
+
+  /**
+   * In 1.9.1/1.10.0 the VAD loop writes its corrected lastSpeakingTime immediately
+   * after this callback. Keep provenance, then read that exact value at the wait
+   * factory. STT and VAD speech-activity writes invalidate or replace it below.
+   */
+  speechEnd(activity: AgentActivity, event?: SpeechEndEvent): void {
+    const recognition = activity.audioRecognition;
+    if (!recognition || this.processingSTT.has(recognition)) return;
+    this.speechEnds.delete(recognition);
+    if (
+      !event ||
+      event.type !== 2 ||
+      !Number.isFinite(event.silenceDuration) ||
+      event.silenceDuration < 0 ||
+      !Number.isFinite(event.inferenceDuration) ||
+      event.inferenceDuration < 0
+    )
+      return;
+    this.speechEnds.set(recognition, { source: "vad" });
+  }
+
+  processSTT<T>(
+    recognition: AudioRecognition,
+    event: SpeechEvent,
+    fn: () => T,
+  ): T {
+    // Manual wrapping can surround an already transformed method. Observe the
+    // outer invocation once; its synchronous callback owns provenance tracking.
+    if (this.processingSTT.has(recognition)) return fn();
+    runInstrumentation(() => this.stt(recognition, event));
+    const observation = runInstrumentation(() => {
+      const alternative = event.alternatives?.[0];
+      // Match the supported framework's assignment conditions, including explicit
+      // STT timestamps taking precedence over VAD only in STT turn detection.
+      const hasTime =
+        event.speechEndTime !== undefined ||
+        (alternative?.endTime !== undefined &&
+          alternative.endTime > 0 &&
+          recognition.inputStartedAt !== undefined);
+      const updates =
+        event.type === 0
+          ? recognition.turnDetectionMode === "stt"
+          : event.type === 3
+            ? recognition.turnDetectionMode === "stt"
+            : (event.type === 2 || event.type === 5) &&
+              !!alternative?.text &&
+              (recognition.vad === undefined ||
+                recognition.lastSpeakingTime === undefined ||
+                (recognition.turnDetectionMode === "stt" && hasTime));
+      const at =
+        event.speechEndTime ??
+        (alternative?.endTime !== undefined &&
+        alternative.endTime > 0 &&
+        recognition.inputStartedAt !== undefined
+          ? recognition.inputStartedAt + alternative.endTime * 1000
+          : undefined);
+      // StreamAdapter can supply a VAD-derived speechEndTime on STT events.
+      // That absolute timestamp is a valid anchor, but its origin is unknown
+      // here. Only an unaugmented provider-relative end establishes STT origin.
+      const source =
+        event.speechEndTime === undefined ? ("stt" as const) : undefined;
+      return { updates, at, source };
+    });
+    const invocation = {
+      waits: new Map<LiveKitSpan, EouWaitOptions>(),
+      evaluated: false,
+    };
+    this.processingSTT.set(recognition, invocation);
+    let completed = false;
+    try {
+      const result = fn();
+      completed = true;
+      return result;
+    } finally {
+      this.processingSTT.delete(recognition);
+      runInstrumentation(() => {
+        if (!completed) {
+          this.speechEnds.delete(recognition);
+          return;
+        }
+        if (observation?.updates) {
+          this.speechEnds.delete(recognition);
+          // START_OF_SPEECH sets a clock value, but does not observe speech end.
+          const { at } = observation;
+          // Reject the framework's notification-time and future-clock fallbacks.
+          if (
+            event.type !== 0 &&
+            validSpeechEnd(at) &&
+            recognition.lastSpeakingTime === at
+          )
+            this.speechEnds.set(recognition, {
+              at,
+              source: observation.source,
+            });
+        }
+        // 1.9.1 creates the native wait synchronously inside processSTTEvent;
+        // 1.10.0 defers creation. Trust the anchor only after the callback adopts it.
+        for (const [span, options] of invocation.waits)
+          this.eouWait(recognition, span, options);
+        if (invocation.evaluated) this.eouEvaluation(recognition);
+      });
+    }
+  }
+
+  recognitionClose(recognition: AudioRecognition): void {
+    const row =
+      this.rowOf(recognition.eouWaitSpan) ?? this.pauses.get(recognition);
+    if (row && !row.ended) row.recognitionClosing = true;
+  }
+
+  waitFactory<T>(recognition: AudioRecognition, fn: () => T): T {
+    return this.creatingWait.run(recognition, fn);
+  }
+
+  /** Observe the framework's actual no-transcript guard, after its VAD clock write. */
+  eouEvaluation(recognition: AudioRecognition): void {
+    const invocation = this.processingSTT.get(recognition);
+    if (invocation) {
+      invocation.evaluated = true;
+      return;
+    }
+    const pause = this.pauses.get(recognition);
+    if (
+      recognition.closed ||
+      (pause && !pause.ended) ||
+      recognition.eouWaitSpan?.isRecording() ||
+      !recognition.stt ||
+      recognition.audioTranscript !== "" ||
+      recognition.turnDetectionMode === "manual"
+    )
+      return;
+    // 1.10.0 allows a first evaluation to flush a manual-flush STT pipeline.
+    // That path did not take the missing-transcript guard; let its native factory run.
+    if (
+      recognition.vadBaseTurnDetection &&
+      recognition.sttPipeline?.manualFlush === true &&
+      !recognition.sttFlushRequested
+    )
+      return;
+    const at = recognition.lastSpeakingTime;
+    const evidence = this.speechEnds.get(recognition);
+    if (
+      !validSpeechEnd(at) ||
+      !evidence ||
+      (evidence.source !== "vad" && evidence.at !== at)
+    )
+      return;
+    const parent =
+      this.openTurn(recognition) ??
+      this.rowOf(
+        recognition.rootSpanContext?.getValue(OTEL_SPAN_KEY) as
+          | LiveKitSpan
+          | undefined,
+      );
+    const row = this.start({ name: "eou_wait", startTime: at }, parent);
+    if (!row) return;
+    row.speechEnd = { at, source: evidence.source };
+    row.span.log({
+      metadata: { "contrib.livekit.eou.transcription_pending": true },
+    });
+    this.pauses.set(recognition, row);
+  }
+
+  /** Native endEouWaitSpan is called on resume/abandonment even without a native wait. */
+  eouEnd(
+    recognition: AudioRecognition,
+    outcome: string,
+    endTime?: number,
+  ): void {
+    const row = this.pauses.get(recognition);
+    if (!row || row.ended || row.nativeWaitStart !== undefined) return;
+    row.ended = true;
+    row.end = (endTime ?? Date.now()) / 1000;
+    if (row.recognitionClosing || recognition.closed) {
+      row.incomplete = "recognition_closed";
+      row.span.log({
+        metadata: {
+          "contrib.livekit.incomplete": true,
+          "contrib.livekit.termination": row.incomplete,
+        },
+      });
+    } else {
+      row.waitOutcome = outcome;
+      if (outcome === "user_resumed") row.resumedAt = row.end;
+    }
+    this.end(row);
+  }
+
+  /** Called after ensureEouWaitSpan: rearms update evidence on the same row. */
+  eouWait(
+    recognition: AudioRecognition,
+    span: LiveKitSpan,
+    options: EouWaitOptions,
+  ): void {
+    const row = this.rowOf(span);
+    if (!row || row.ended || row.name !== "eou_wait") return;
+    this.pauses.set(recognition, row);
+    this.processingSTT.get(recognition)?.waits.set(span, options);
+    row.recognitionClosing ||= recognition.closed === true;
+    const evidence = this.speechEnds.get(recognition);
+    const state = this.sessions.get(row.session)!;
+    const turn = state.rows.get(row.turn ?? "");
+    if (turn)
+      row.span.log({ metadata: participantIds(state, turn.attributes) });
+    row.speechEnd =
+      validSpeechEnd(options.lastSpeakingTime) &&
+      evidence &&
+      (evidence.source === "vad" || evidence.at === options.lastSpeakingTime)
+        ? { at: options.lastSpeakingTime, source: evidence.source }
+        : undefined;
+  }
+
+  private waitEnd(row: Row): number | undefined {
+    if (row.name !== "eou_wait" || !row.speechEnd) return;
+    const start = row.speechEnd.at / 1000;
+    if (row.end === undefined || !Number.isFinite(row.end) || row.end < start)
+      return;
+    if (
+      !row.incomplete &&
+      (row.waitOutcome ?? row.attributes.get("lk.eou.outcome")) ===
+        "user_resumed"
+    ) {
+      const resumed = row.resumedAt;
+      return resumed !== undefined &&
+        Number.isFinite(resumed) &&
+        resumed >= start &&
+        resumed <= row.end
+        ? resumed
+        : undefined;
+    }
+    return row.end;
+  }
+
+  private waitEvent(row: Row, native: Map<string, unknown>) {
+    // waitEnd needs the native outcome even after the row's attributes are released.
+    const outcome = row.waitOutcome ?? native.get("lk.eou.outcome");
+    const end = this.waitEnd(row);
+    if (end === undefined || !row.speechEnd)
+      return {
+        metadata: {
+          "contrib.livekit.eou.canonical_omitted": !row.speechEnd
+            ? "unobserved_speech_end"
+            : "unobserved_wait_end",
+        },
+      };
+    const state = this.sessions.get(row.session)!;
+    const turn = state.rows.get(row.turn ?? "");
+    return {
+      span_attributes: SPANS.get("eou_wait")!,
+      metrics: { start: row.speechEnd.at / 1000 },
+      metadata: {
+        "audio.source_id": "session-input",
+        ...participantIds(
+          state,
+          turn?.name === "user_turn" ? turn.attributes : native,
+        ),
+        ...(row.speechEnd.source
+          ? { "eou.speech_end_source": row.speechEnd.source }
+          : {}),
+        ...(!row.incomplete &&
+        ["committed", "user_resumed", "dropped"].includes(outcome as string)
+          ? { "eou.outcome": outcome }
+          : {}),
+        ...(row.nativeWaitStart !== undefined
+          ? {
+              "contrib.livekit.eou.native_start_unix_ms":
+                row.nativeWaitStart * 1000,
+              "contrib.livekit.eou.native_end_unix_ms": row.end! * 1000,
+            }
+          : {}),
+      },
+    };
   }
 
   scope<T>(
@@ -933,15 +1337,39 @@ class LiveKitTracing {
     const state = this.sessions.get(id);
     // Native children (notably tools) can outlive session end. Retain ownership until
     // every mapped operation finishes, even after the recording has finalized.
-    // Other native spans don't hold the session: LiveKit can leave them open.
-    // Their rows still log and end on their own if LiveKit ends them later.
+    // Waits and other native diagnostics don't hold the session: LiveKit can
+    // leave them open. Finalize their exported rows as incomplete on cleanup.
     if (
       !state ||
-      [...state.rows.values()].some((row) => !row.ended && SPANS.has(row.name))
+      [...state.rows.values()].some(
+        (row) => !row.ended && SPANS.has(row.name) && row.name !== "eou_wait",
+      )
     )
       return;
+    for (const row of state.rows.values()) {
+      if (!row.ended) this.endIncomplete(row, state.root.end, "session_closed");
+    }
     state.speech.finish(state.root.span);
     this.sessions.delete(id);
+  }
+
+  private endIncomplete(
+    row: Row,
+    end: number | undefined,
+    termination: string,
+  ): void {
+    row.ended = true;
+    row.end = Math.max(row.start, end ?? Date.now() / 1000);
+    row.incomplete = termination;
+    row.span.log({
+      metadata: {
+        [row.turn === row.id
+          ? "turn.incomplete"
+          : "contrib.livekit.incomplete"]: true,
+        "contrib.livekit.termination": termination,
+      },
+    });
+    this.end(row);
   }
 
   async shutdown(): Promise<void> {
@@ -952,21 +1380,16 @@ class LiveKitTracing {
     for (const state of this.sessions.values()) {
       for (const row of state.rows.values()) {
         if (row.ended) continue;
-        row.ended = true;
-        row.span.log({
-          metadata: {
-            [row.turn === row.id
-              ? "turn.incomplete"
-              : "contrib.livekit.incomplete"]: true,
-            "contrib.livekit.termination": "processor_shutdown",
-          },
-        });
-        row.span.end();
+        this.endIncomplete(row, undefined, "processor_shutdown");
       }
       state.speech.finish(state.root.span);
     }
     this.sessions.clear();
   }
+}
+
+function validSpeechEnd(at: number | undefined): at is number {
+  return at !== undefined && Number.isFinite(at) && at > 0 && at <= Date.now();
 }
 
 function spanTimeSeconds(time: SpanTime = Date.now()): number {
