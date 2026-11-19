@@ -789,3 +789,38 @@ describe("service tiers", () => {
     expect(span.log.mock.calls.at(-1)?.[0]).not.toHaveProperty("output");
   });
 });
+
+describe("span types", () => {
+  it("records tool runs as tool spans", async () => {
+    const { handler, parent } = createHarness();
+
+    await handler.handleToolStart(
+      { name: "get_weather" } as never,
+      '{"city":"Paris"}',
+      "tool-run",
+    );
+
+    expect(parent.startSpan).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "get_weather",
+        type: "tool",
+      }),
+    );
+  });
+
+  it("records agent actions as tool spans", async () => {
+    const { handler, parent } = createHarness();
+
+    await handler.handleAgentAction(
+      { tool: "search", toolInput: "weather", log: "searching" },
+      "agent-run",
+    );
+
+    expect(parent.startSpan).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "search",
+        type: "tool",
+      }),
+    );
+  });
+});
