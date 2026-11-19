@@ -1,5 +1,18 @@
 # @braintrust/temporal
 
+## 2.0.0
+
+See the [v4 migration guide](https://github.com/braintrustdata/braintrust-sdk-javascript/blob/main/docs/migration-v3-to-v4.md) for upgrade instructions.
+
+### Major Changes
+
+- build(sdk)!: Migrate to Vite+ and tree-shakeable ESM (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2626)
+
+### Patch Changes
+
+- ref!: Reduce API to a minimum that makes sense (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2429)
+- Updated dependencies: braintrust@4.0.0
+
 ## 1.1.0
 
 ### Minor Changes
