@@ -116,4 +116,40 @@ describe("registerGenkitInstrumentation stream patching", () => {
       "second",
     ]);
   });
+
+  it("records cached and reasoning tokens under the canonical metric names", async () => {
+    const logger = _exportsForTestingOnly.useTestBackgroundLogger();
+    registerGenkitInstrumentation();
+
+    await genkitChannels.generate.invoke(
+      () =>
+        Promise.resolve({
+          text: "ok",
+          usage: {
+            inputTokens: 10,
+            outputTokens: 5,
+            totalTokens: 20,
+            cachedContentTokens: 4,
+            thoughtsTokens: 5,
+          },
+        }),
+      undefined,
+      [{ prompt: "hi" }],
+      {},
+    );
+
+    const spans = (await logger.drain()) as Record<string, any>[];
+    const llm = spans.find(
+      (s) => s.span_attributes?.name === "genkit.generate",
+    );
+    expect(llm?.metrics).toMatchObject({
+      prompt_tokens: 10,
+      completion_tokens: 5,
+      tokens: 20,
+      prompt_cached_tokens: 4,
+      completion_reasoning_tokens: 5,
+    });
+    expect(llm?.metrics).not.toHaveProperty("cached_tokens");
+    expect(llm?.metrics).not.toHaveProperty("reasoning_tokens");
+  });
 });
