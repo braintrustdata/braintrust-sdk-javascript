@@ -24,9 +24,19 @@ export interface AgentActivity {
   currentSpeech?: SpeechHandle;
 }
 export interface AudioRecognition {
+  eouWaitSpan?: LiveKitSpan;
+  stt?: unknown;
+  audioTranscript?: string;
+  vadBaseTurnDetection?: boolean;
+  sttPipeline?: { manualFlush?: boolean };
+  sttFlushRequested?: boolean;
+  closed?: boolean;
   userTurnSpan?: LiveKitSpan;
   rootSpanContext?: { getValue(key: symbol): unknown };
   inputStartedAt?: number;
+  lastSpeakingTime?: number;
+  vad?: unknown;
+  turnDetectionMode?: string;
   sttModel?: string;
   sttProvider?: string;
   sttIdentity?: () => { model?: string; provider?: string } | undefined;
@@ -38,11 +48,14 @@ export interface SpeechEvent {
     confidence?: number;
     language?: string;
     startTime?: number;
+    endTime?: number;
     /** A diarizing STT's label for the voice, scoped to its input. */
     speakerId?: string | null;
   }[];
   requestId?: string;
   createdAt?: number;
+  /** Absolute observed speech end, in Unix milliseconds. */
+  speechEndTime?: number;
 }
 export interface PlaybackStartedEvent {
   createdAt: number;
@@ -76,6 +89,20 @@ export interface AudioOutput {
     callback: (ev: PlaybackFinishedEvent) => void,
   ): unknown;
   off(event: string, callback: (...args: never[]) => void): unknown;
+}
+/** Only the VAD timing fields observed by instrumentation. Durations are ms. */
+export interface SpeechEndEvent {
+  type: number;
+  silenceDuration: number;
+  inferenceDuration: number;
+}
+export interface VadInferenceEvent {
+  rawAccumulatedSpeech: number;
+}
+export interface EouWaitOptions {
+  trigger: string;
+  lastSpeakingTime: number | undefined;
+  endpointingDelay: number;
 }
 export interface EndOfTurnInfo {
   userTurnSpan?: LiveKitSpan;

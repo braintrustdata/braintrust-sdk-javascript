@@ -54,6 +54,36 @@ const targets: [
     { className: "AgentActivity", methodName: "userTurnCompleted" },
   ],
   [
+    "vadInference",
+    "voice/agent_activity",
+    { className: "AgentActivity", methodName: "onVADInferenceDone" },
+  ],
+  [
+    "speechEnd",
+    "voice/agent_activity",
+    { className: "AgentActivity", methodName: "onEndOfSpeech" },
+  ],
+  [
+    "recognitionClose",
+    "voice/audio_recognition",
+    { className: "AudioRecognition", methodName: "close" },
+  ],
+  [
+    "eouWait",
+    "voice/audio_recognition",
+    { className: "AudioRecognition", methodName: "ensureEouWaitSpan" },
+  ],
+  [
+    "eouEvaluation",
+    "voice/audio_recognition",
+    { className: "AudioRecognition", methodName: "runEOUDetection" },
+  ],
+  [
+    "eouEnd",
+    "voice/audio_recognition",
+    { className: "AudioRecognition", methodName: "endEouWaitSpan" },
+  ],
+  [
     "stt",
     "voice/audio_recognition",
     { className: "AudioRecognition", methodName: "processSTTEvent" },

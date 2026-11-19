@@ -91,6 +91,26 @@ function start(
   });
   return span;
 }
+/** Synthetic lifecycle fixtures, independently observed VAD then native wait. */
+function vadWait(parent: NativeSpan, at: number, recognition: any = {}) {
+  tracing.speechEnd(
+    { agentSession: {}, audioRecognition: recognition },
+    {
+      type: 2,
+      silenceDuration: now - at,
+      inferenceDuration: 0,
+    },
+  );
+  const wait = start("eou_wait", parent, { "lk.eou.source": "vad" }, at);
+  const rearm = (anchor = at, trigger = "vad") =>
+    tracing.eouWait(recognition, wait, {
+      lastSpeakingTime: anchor,
+      trigger,
+      endpointingDelay: 500,
+    });
+  rearm();
+  return { wait, rearm, recognition };
+}
 async function rows() {
   const all = (await logger.drain()) as any[];
   const named = (name: string) =>
@@ -629,7 +649,7 @@ describe("tracing", () => {
     activity.end();
     sessionStart.end();
     const turn = start("user_turn", root);
-    const wait = start("eou_wait", turn);
+    const { wait } = vadWait(turn, 1000);
     start("eou_detection", wait, { "lk.eou.probability": 0.9 }).end();
     wait.end();
     turn.end();
@@ -655,8 +675,8 @@ describe("tracing", () => {
       "livekit.setup_toolsets": "livekit.start_agent_activity",
       "livekit.on_enter": "livekit.start_agent_activity",
       user_turn: "session",
-      "livekit.eou_wait": "user_turn",
-      "livekit.eou_detection": "livekit.eou_wait",
+      eou_wait: "user_turn",
+      "livekit.eou_detection": "eou_wait",
       tts: "session",
       "livekit.tts_request": "tts",
       "livekit.tts_request_run": "livekit.tts_request",
@@ -742,8 +762,8 @@ describe("tracing", () => {
     const tool = start("function_tool", turn, {
       "lk.function_tool.name": "late_tool",
     });
-    // LiveKit can leave internal spans such as eou_wait open. They don't hold
-    // the session, but still export if LiveKit ends them later.
+    // Unfinished waits do not hold the session. Close their exported rows as
+    // incomplete when the last outstanding mapped operation ends.
     const wait = start("eou_wait", turn);
     turn.end([2, 0]);
     root.end([2, 0]);
@@ -759,8 +779,12 @@ describe("tracing", () => {
       output: { ok: true },
     });
     expect(one("livekit.eou_wait")).toMatchObject({
-      span_parents: [one("agent_turn").span_id],
-      metrics: { end: 4 },
+      span_parents: [one("session").span_id],
+      metrics: { end: 2 },
+      metadata: {
+        "contrib.livekit.incomplete": true,
+        "contrib.livekit.termination": "session_closed",
+      },
     });
   });
 
@@ -826,6 +850,647 @@ describe("tracing", () => {
       "contrib.livekit.incomplete": true,
     });
   });
+});
+
+describe("eou_wait audio schema", () => {
+  function pendingRecognition(parent: NativeSpan, at = 2000): any {
+    const recognition = {
+      userTurnSpan: parent,
+      lastSpeakingTime: at,
+      vad: {},
+      stt: {},
+      audioTranscript: "",
+      vadBaseTurnDetection: true,
+    };
+    tracing.speechEnd(
+      { agentSession: {}, audioRecognition: recognition },
+      {
+        type: 2,
+        silenceDuration: now - at,
+        inferenceDuration: 0,
+      },
+    );
+    return recognition;
+  }
+
+  test("a synchronous STT factory is reconciled only after the framework adopts its timestamp", async () => {
+    const root = start("agent_session");
+    const turn = start("user_turn", root);
+    now = 2500;
+    const recognition: any = { userTurnSpan: turn };
+    let wait!: NativeSpan;
+    tracing.processSTT(
+      recognition,
+      { type: 2, speechEndTime: 2000, alternatives: [{ text: "hello" }] },
+      () => {
+        recognition.lastSpeakingTime = 2000;
+        wait = start("eou_wait", turn, {}, 2000);
+        tracing.eouWait(recognition, wait, {
+          trigger: "stt",
+          lastSpeakingTime: 2000,
+          endpointingDelay: 0,
+        });
+      },
+    );
+    wait.setAttribute("lk.eou.outcome", "committed");
+    wait.end(2600);
+    const { one, named } = await rows();
+    expect(one("eou_wait").metrics).toMatchObject({ start: 2, end: 2.6 });
+    expect(named("livekit.eou_wait")).toHaveLength(0);
+  });
+
+  test("a transcript-gated pause exports once on resume without any native wait", async () => {
+    const root = start("agent_session");
+    const turn = start("user_turn", root);
+    now = 2200;
+    const recognition = pendingRecognition(turn);
+    tracing.eouEvaluation(recognition);
+    tracing.eouEvaluation(recognition);
+    tracing.eouEnd(recognition, "user_resumed", 2300);
+    tracing.eouEnd(recognition, "user_resumed", 2300);
+    turn.end(2400);
+    root.end(2400);
+    await tracing.closeSession(root);
+    const { one, named } = await rows();
+    expect(one("eou_wait")).toMatchObject({
+      metrics: { start: 2, end: 2.3 },
+      span_parents: [one("user_turn").span_id],
+      metadata: {
+        "eou.outcome": "user_resumed",
+        "eou.speech_end_source": "vad",
+      },
+    });
+    expect(one("eou_wait").metadata).not.toHaveProperty(
+      "contrib.livekit.eou.native_start_unix_ms",
+    );
+    expect(named("livekit.eou_wait")).toHaveLength(0);
+    expect(tracing.sessions.size).toBe(0);
+  });
+
+  test("a later native factory attaches to the pending pause before detector children start", async () => {
+    const root = start("agent_session");
+    const turn = start("user_turn", root);
+    now = 2200;
+    const recognition = pendingRecognition(turn);
+    tracing.eouEvaluation(recognition);
+    const wait = tracing.waitFactory(recognition, () =>
+      start("eou_wait", turn, { "lk.eou.source": "stt" }, 2100),
+    );
+    tracing.eouWait(recognition, wait, {
+      trigger: "stt",
+      lastSpeakingTime: 2000,
+      endpointingDelay: 0,
+    });
+    const detector = start("eou_detection", wait, {}, 2200);
+    detector.end(2400);
+    wait.setAttribute("lk.eou.outcome", "committed");
+    wait.end(2500);
+    const { one } = await rows();
+    expect(one("eou_wait").metrics).toMatchObject({ start: 2, end: 2.5 });
+    expect(one("eou_wait").metadata).toMatchObject({
+      "contrib.livekit.eou.native_start_unix_ms": 2100,
+      "contrib.livekit.eou.source": "stt",
+      "eou.outcome": "committed",
+    });
+    expect(one("livekit.eou_detection").span_parents).toEqual([
+      one("eou_wait").span_id,
+    ]);
+  });
+
+  test.each([
+    "manual",
+    "no-stt",
+    "has-transcript",
+    "invalid-anchor",
+    "no-evidence",
+    "manual-flush",
+  ])(
+    "does not invent a transcription-gated wait with %s",
+    async (condition) => {
+      const root = start("agent_session");
+      now = 2200;
+      const recognition = pendingRecognition(root);
+      if (condition === "manual") recognition.turnDetectionMode = "manual";
+      if (condition === "no-stt") recognition.stt = undefined;
+      if (condition === "has-transcript") recognition.audioTranscript = "hello";
+      if (condition === "invalid-anchor") recognition.lastSpeakingTime = NaN;
+      if (condition === "no-evidence")
+        tracing.vadSpeech({ agentSession: {}, audioRecognition: recognition });
+      if (condition === "manual-flush")
+        recognition.sttPipeline = { manualFlush: true };
+      tracing.eouEvaluation(recognition);
+      tracing.eouEnd(recognition, "user_resumed", 2300);
+      expect((await rows()).named("eou_wait")).toHaveLength(0);
+    },
+  );
+
+  test("a pending pause without turn membership uses the session and shutdown leaves its outcome unknown", async () => {
+    const root = start("agent_session");
+    now = 2200;
+    const recognition = pendingRecognition(root);
+    recognition.userTurnSpan = undefined;
+    recognition.rootSpanContext = { getValue: () => root };
+    tracing.eouEvaluation(recognition);
+    tracing.recognitionClose(recognition);
+    tracing.eouEnd(recognition, "dropped", 2500);
+    root.end(2600);
+    await tracing.closeSession(root);
+    const { one } = await rows();
+    expect(one("eou_wait").span_parents).toEqual([one("session").span_id]);
+    expect(one("eou_wait").metadata).not.toHaveProperty("turn.id");
+    expect(one("eou_wait").metadata).not.toHaveProperty("eou.outcome");
+    expect(one("eou_wait").metadata["contrib.livekit.incomplete"]).toBe(true);
+    expect(tracing.sessions.size).toBe(0);
+  });
+
+  test.each(["session-close", "processor-shutdown"])(
+    "an unfinished pending pause does not hold open %s",
+    async (cleanup) => {
+      const root = start("agent_session");
+      now = 2200;
+      const recognition = pendingRecognition(root);
+      recognition.userTurnSpan = undefined;
+      recognition.rootSpanContext = { getValue: () => root };
+      tracing.eouEvaluation(recognition);
+      now = 2500;
+      if (cleanup === "processor-shutdown") await tracing.shutdown();
+      else {
+        root.end(2500);
+        await tracing.closeSession(root);
+      }
+      const { one } = await rows();
+      expect(one("eou_wait").metrics).toMatchObject({ start: 2, end: 2.5 });
+      expect(one("eou_wait").metadata).not.toHaveProperty("eou.outcome");
+      expect(one("eou_wait").metadata["contrib.livekit.incomplete"]).toBe(true);
+      expect(tracing.sessions.size).toBe(0);
+    },
+  );
+
+  test("an absolute end on an STT event establishes timing but cannot distinguish provider from VAD-adapter provenance", async () => {
+    const root = start("agent_session");
+    now = 2500;
+    const recognition = { lastSpeakingTime: 2000 };
+    tracing.processSTT(
+      recognition,
+      { type: 2, speechEndTime: 2000, alternatives: [{ text: "hello" }] },
+      () => {},
+    );
+    const wait = start("eou_wait", root, {}, 2000);
+    tracing.eouWait(recognition, wait, {
+      lastSpeakingTime: 2000,
+      trigger: "stt",
+      endpointingDelay: 0,
+    });
+    wait.setAttribute("lk.eou.outcome", "committed");
+    wait.end(2600);
+    const { one } = await rows();
+    expect(one("eou_wait").metrics).toMatchObject({ start: 2, end: 2.6 });
+    expect(one("eou_wait").metadata).not.toHaveProperty(
+      "eou.speech_end_source",
+    );
+  });
+
+  test("a failed STT callback preserves the exception and cannot establish anchor provenance", async () => {
+    const root = start("agent_session");
+    now = 2500;
+    const recognition = { lastSpeakingTime: 2000 };
+    const error = new Error("callback failed");
+    expect(() =>
+      tracing.processSTT(
+        recognition,
+        { type: 2, speechEndTime: 2000, alternatives: [{ text: "hello" }] },
+        () => {
+          throw error;
+        },
+      ),
+    ).toThrow(error);
+    const wait = start("eou_wait", root, {}, 2000);
+    tracing.eouWait(recognition, wait, {
+      lastSpeakingTime: 2000,
+      trigger: "stt",
+      endpointingDelay: 0,
+    });
+    wait.end(2600);
+    expect((await rows()).named("eou_wait")).toHaveLength(0);
+  });
+
+  test("combined wrapping and auto instrumentation observe an STT invocation only once", async () => {
+    const root = start("agent_session");
+    const turn = start("user_turn", root);
+    const recognition = { userTurnSpan: turn };
+    const event = { type: 2, alternatives: [{ text: "hello" }] };
+    const target = vi.fn(() => "result");
+    expect(
+      tracing.processSTT(recognition, event, () =>
+        tracing.processSTT(recognition, event, target),
+      ),
+    ).toBe("result");
+    expect(target).toHaveBeenCalledTimes(1);
+    expect((await rows()).named("stt")).toHaveLength(1);
+  });
+
+  test.each(["dropped", "committed"])(
+    "native %s during recognition close requires an actual decision",
+    async (outcome) => {
+      const root = start("agent_session");
+      now = 2200;
+      const { wait } = vadWait(root, 2000);
+      tracing.recognitionClose({ eouWaitSpan: wait });
+      wait.setAttribute("lk.eou.outcome", outcome);
+      wait.end(2600);
+      const { one } = await rows();
+      expect(one("eou_wait").metadata["contrib.livekit.eou.outcome"]).toBe(
+        outcome,
+      );
+      expect(one("eou_wait").metadata["eou.outcome"]).toBe(
+        outcome === "committed" ? "committed" : undefined,
+      );
+      if (outcome === "dropped")
+        expect(one("eou_wait").metadata).toMatchObject({
+          "contrib.livekit.incomplete": true,
+          "contrib.livekit.termination": "recognition_closed",
+        });
+    },
+  );
+
+  test("resume timing survives the diagnostic event cap and requires an explicit timestamp", async () => {
+    const root = start("agent_session");
+    now = 2200;
+    const first = vadWait(root, 2000).wait;
+    for (let i = 0; i < 300; i++) first.addEvent("rearmed", {}, 2200);
+    first.addEvent("user_resumed", {}, 2300);
+    first.setAttribute("lk.eou.outcome", "user_resumed");
+    first.end(2600);
+    const second = vadWait(root, 2000).wait;
+    second.addEvent("user_resumed", {});
+    second.setAttribute("lk.eou.outcome", "user_resumed");
+    second.end(2600);
+    const { one } = await rows();
+    expect(one("eou_wait").metrics.end).toBe(2.3);
+    expect(
+      one("livekit.eou_wait").metadata["contrib.livekit.eou.canonical_omitted"],
+    ).toBe("unobserved_wait_end");
+  });
+
+  test("an STT evaluation trigger retaining a VAD anchor does not change its provenance", async () => {
+    const root = start("agent_session");
+    now = 2200;
+    const recognition = { vad: {}, lastSpeakingTime: 2000 };
+    const { wait, rearm } = vadWait(root, 2000, recognition);
+    tracing.processSTT(
+      recognition,
+      { type: 2, speechEndTime: 2000, alternatives: [{ text: "hello" }] },
+      () => {},
+    );
+    rearm(2000, "stt");
+    wait.setAttributes({
+      "lk.eou.outcome": "committed",
+      "lk.eou.source": "stt",
+    });
+    wait.end(2500);
+    expect((await rows()).one("eou_wait").metadata).toMatchObject({
+      "eou.speech_end_source": "vad",
+      "contrib.livekit.eou.source": "stt",
+    });
+  });
+
+  test("VAD provenance uses the exact framework correction even across separate clock reads", async () => {
+    const root = start("agent_session");
+    now = 2200;
+    const { wait, rearm } = vadWait(root, 2000);
+    rearm(2001);
+    wait.end(2500);
+    expect((await rows()).one("eou_wait").metrics.start).toBe(2.001);
+  });
+
+  test("VAD speech activity invalidates an earlier pause anchor before another wait", async () => {
+    const root = start("agent_session");
+    now = 2200;
+    const { wait, rearm, recognition } = vadWait(root, 2000);
+    tracing.vadSpeech(
+      { agentSession: {}, audioRecognition: recognition },
+      { rawAccumulatedSpeech: 20 },
+    );
+    rearm(2100);
+    wait.end(2500);
+    expect((await rows()).named("eou_wait")).toHaveLength(0);
+  });
+
+  test.each([NaN, Infinity, 1900])(
+    "invalid native end %s cannot establish a canonical interval",
+    async (end) => {
+      const root = start("agent_session");
+      now = 2200;
+      const { wait } = vadWait(root, 2000);
+      wait.setAttribute("lk.eou.outcome", "committed");
+      wait.end(end);
+      expect((await rows()).named("eou_wait")).toHaveLength(0);
+    },
+  );
+
+  test("commit uses observed VAD timing, owning turn and established audio identities", async () => {
+    const root = start("agent_session");
+    const turn = start("user_turn", root, {
+      "lk.participant_id": "PA_caller",
+      "lk.participant_kind": "STANDARD",
+    });
+    now = 2300;
+    const { wait } = vadWait(turn, 2000);
+    wait.setAttributes({
+      "lk.eou.outcome": "committed",
+      "lk.eou.source": "stt",
+      "lk.eou.endpointing_delay": 0.5,
+    });
+    wait.end([2, 500_000_000]);
+    turn.end(2500);
+    root.end(2600);
+    const { one } = await rows();
+    expect(one("eou_wait")).toMatchObject({
+      span_attributes: { name: "eou_wait", type: "task" },
+      span_parents: [one("user_turn").span_id],
+      metrics: { start: 2, end: 2.5 },
+      metadata: {
+        "turn.id": one("user_turn").span_id,
+        "audio.source_id": "session-input",
+        "audio.participant_ids": ["participant-1"],
+        "eou.outcome": "committed",
+        "eou.speech_end_source": "vad",
+        "contrib.livekit.eou.source": "stt",
+        "contrib.livekit.eou.endpointing_delay": 0.5,
+      },
+    });
+    expect(one("eou_wait").metadata).not.toHaveProperty("eou.end_reason");
+    expect(one("eou_wait").metadata).not.toHaveProperty(
+      "eou.detection_methods",
+    );
+    expect(one("session").metadata["audio.schema.version"]).toBe("3.1.0");
+  });
+
+  test("resume then later pause commits; rearms and speculative work do not create or end waits", async () => {
+    const root = start("agent_session");
+    const turn = start("user_turn", root);
+    start("user_speaking", turn, {}, 1000).end(2000);
+    now = 2200;
+    const first = vadWait(turn, 2000);
+    first.wait.addEvent("user_resumed", {}, new Date(2300));
+    first.wait.setAttribute("lk.eou.outcome", "user_resumed");
+    first.wait.end(2300);
+    start("user_speaking", turn, {}, 2300).end(3500);
+    now = 3600;
+    const second = vadWait(turn, 3500);
+    for (let i = 0; i < 4; i++) {
+      second.wait.addEvent(
+        "rearmed",
+        { "lk.eou.source": "stt" },
+        3600 + i * 10,
+      );
+      start(
+        "eou_detection",
+        second.wait,
+        { "lk.eou.probability": 0.9 },
+        3600 + i * 10,
+      ).end(3605 + i * 10);
+      second.rearm(3500, "stt");
+    }
+    const model = start("llm_node", root, {}, 3700);
+    second.wait.setAttributes({
+      "lk.eou.outcome": "committed",
+      "lk.eou.rearm_count": 4,
+    });
+    second.wait.end(4000);
+    model.end(4500);
+    turn.end(4000);
+    root.end(4500);
+    const { named, one } = await rows();
+    expect(
+      named("eou_wait").map((row) => [
+        row.metrics.start,
+        row.metrics.end,
+        row.metadata["eou.outcome"],
+      ]),
+    ).toEqual([
+      [2, 2.3, "user_resumed"],
+      [3.5, 4, "committed"],
+    ]);
+    expect(named("livekit.eou_wait")).toHaveLength(0);
+    expect(one("llm_response").metrics).toMatchObject({ start: 3.7, end: 4.5 });
+    expect(named("livekit.eou_detection")).toHaveLength(4);
+    expect(
+      named("eou_wait").every(
+        (row) => row.span_parents[0] === one("user_turn").span_id,
+      ),
+    ).toBe(true);
+    await tracing.closeSession(root);
+    expect(tracing.sessions.size).toBe(0);
+  });
+
+  test("late STT with multiple native gates corrects the anchor without claiming final gate or a complete method set", async () => {
+    const root = start("agent_session");
+    const turn = start("user_turn", root);
+    now = 2200;
+    const recognition = {
+      inputStartedAt: 1000,
+      lastSpeakingTime: 2000,
+      vad: {},
+      turnDetectionMode: "stt",
+    };
+    const { wait, rearm } = vadWait(turn, 2000, recognition);
+    start(
+      "eou_detection",
+      wait,
+      { "lk.eou.probability": 0.8, "lk.eou.unlikely_threshold": 0.5 },
+      2200,
+    ).end(2400);
+    now = 2800;
+    // Real STT-origin end timestamp corrects an earlier VAD anchor. The
+    // final's receipt (2.8 s) is deliberately different from speech end (2.1 s).
+    const event = { type: 2, alternatives: [{ text: "hello", endTime: 1.1 }] };
+    tracing.processSTT(recognition, event, () => {
+      recognition.lastSpeakingTime = 2100;
+    });
+    tracing.stt(
+      { ...recognition, userTurnSpan: turn },
+      { ...event, createdAt: 2800 },
+    );
+    rearm(2100, "stt");
+    wait.setAttributes({
+      "lk.eou.outcome": "committed",
+      "lk.eou.source": "stt",
+      "lk.eou.endpointing_delay": 0.5,
+    });
+    wait.end(2900);
+    const { one } = await rows();
+    expect(one("eou_wait").metrics).toMatchObject({ start: 2.1, end: 2.9 });
+    expect(one("eou_wait").metadata).toMatchObject({
+      "eou.speech_end_source": "stt",
+      "eou.outcome": "committed",
+      "contrib.livekit.eou.native_start_unix_ms": 2000,
+    });
+    expect(one("eou_wait").metadata).not.toHaveProperty("eou.end_reason");
+    expect(one("eou_wait").metadata).not.toHaveProperty(
+      "eou.detection_methods",
+    );
+    expect(one("stt").metrics.end).toBe(2.8);
+  });
+
+  test("resume event bounds canonical wait while detector cleanup retains its native interval", async () => {
+    const root = start("agent_session");
+    const turn = start("user_turn", root);
+    now = 2200;
+    const { wait } = vadWait(turn, 2000);
+    const detector = start("eou_detection", wait, {}, 2200);
+    detector.addEvent("superseded", { "lk.eou.outcome": "user_resumed" }, 2600);
+    detector.end(2600);
+    wait.addEvent("user_resumed", {}, [2, 300_000_000]);
+    wait.setAttributes({
+      "lk.eou.outcome": "user_resumed",
+      "lk.eou.wait_duration": 0.6,
+    });
+    wait.end(2600);
+    const { one } = await rows();
+    expect(one("eou_wait").metrics).toMatchObject({ start: 2, end: 2.3 });
+    expect(one("livekit.eou_detection")).toMatchObject({
+      span_parents: [one("eou_wait").span_id],
+      metrics: { start: 2.2, end: 2.6 },
+    });
+    expect(one("eou_wait").metadata).toMatchObject({
+      "contrib.livekit.eou.native_end_unix_ms": 2600,
+      "contrib.livekit.eou.wait_duration": 0.6,
+    });
+    expect(one("eou_wait").metadata["contrib.livekit.events"]).toContainEqual({
+      name: "user_resumed",
+      time_unix_ms: 2300,
+      attributes: {},
+    });
+  });
+
+  test.each(["dropped", "committed", "unknown"])(
+    "native %s only maps known outcomes",
+    async (outcome) => {
+      const root = start("agent_session");
+      now = 2200;
+      const { wait } = vadWait(root, 2000);
+      wait.setAttribute("lk.eou.outcome", outcome);
+      wait.end(2500);
+      const { one } = await rows();
+      expect(one("eou_wait").span_parents).toEqual([one("session").span_id]);
+      expect(one("eou_wait").metadata).not.toHaveProperty("turn.id");
+      expect(one("eou_wait").metadata).not.toHaveProperty(
+        "audio.participant_ids",
+      );
+      expect(one("eou_wait").metadata["eou.outcome"]).toBe(
+        outcome === "unknown" ? undefined : outcome,
+      );
+      expect(one("eou_wait").metadata["contrib.livekit.eou.outcome"]).toBe(
+        outcome,
+      );
+      expect(one("eou_wait").metadata).not.toHaveProperty("eou.end_reason");
+    },
+  );
+
+  test.each(["session", "processor"])(
+    "%s shutdown closes unfinished waits and detectors without inventing outcomes",
+    async (mode) => {
+      const root = start("agent_session");
+      const turn = start("user_turn", root);
+      now = 2200;
+      const { wait } = vadWait(turn, 2000);
+      start("eou_detection", wait, {}, 2200);
+      now = 2600;
+      if (mode === "session") {
+        turn.end(2600);
+        root.end(2600);
+        await tracing.closeSession(root);
+      } else await tracing.shutdown();
+      expect(tracing.sessions.size).toBe(0);
+      // A late native result cannot turn the observed incomplete boundary into commitment.
+      wait.setAttribute("lk.eou.outcome", "committed");
+      wait.end(2800);
+      const { one } = await rows();
+      expect(one("eou_wait")).toMatchObject({
+        metrics: { start: 2, end: 2.6 },
+        metadata: { "contrib.livekit.incomplete": true },
+      });
+      expect(one("eou_wait").metadata).not.toHaveProperty("eou.outcome");
+      expect(one("livekit.eou_detection").metrics.end).toBe(2.6);
+    },
+  );
+
+  test.each([undefined, NaN, Infinity, -1, 0, 3000])(
+    "missing/invalid speech end %s stays a native diagnostic",
+    async (at) => {
+      now = 2500;
+      const root = start("agent_session");
+      const wait = start("eou_wait", root, { "lk.eou.source": "stt" }, 2500);
+      const recognition = { lastSpeakingTime: at };
+      tracing.processSTT(
+        recognition,
+        { type: 2, speechEndTime: at, alternatives: [{ text: "hello" }] },
+        () => {},
+      );
+      tracing.eouWait(recognition, wait, {
+        lastSpeakingTime: at,
+        trigger: "stt",
+        endpointingDelay: 0,
+      });
+      wait.setAttribute("lk.eou.outcome", "committed");
+      wait.end(2800);
+      const { one, named } = await rows();
+      expect(named("eou_wait")).toHaveLength(0);
+      expect(one("livekit.eou_wait").metadata).toMatchObject({
+        "contrib.livekit.eou.outcome": "committed",
+        "contrib.livekit.eou.canonical_omitted": "unobserved_speech_end",
+      });
+      for (const key of [
+        "eou.outcome",
+        "eou.speech_end_source",
+        "eou.end_reason",
+        "eou.detection_methods",
+      ])
+        expect(one("livekit.eou_wait").metadata).not.toHaveProperty(key);
+    },
+  );
+
+  test("STT receipt time and synthetic VAD notifications never establish a speech-end anchor", async () => {
+    const root = start("agent_session");
+    now = 2500;
+    const recognition = { lastSpeakingTime: 2500, turnDetectionMode: "stt" };
+    const wait = start("eou_wait", root, {}, 2500);
+    const result = tracing.processSTT(recognition, { type: 3 }, () => {
+      tracing.speechEnd(
+        { agentSession: {}, audioRecognition: recognition },
+        { type: 2, silenceDuration: 0, inferenceDuration: 0 },
+      );
+      return "original result";
+    });
+    expect(result).toBe("original result");
+    tracing.eouWait(recognition, wait, {
+      lastSpeakingTime: 2500,
+      trigger: "stt",
+      endpointingDelay: 0,
+    });
+    wait.end(2800);
+    expect((await rows()).named("eou_wait")).toHaveLength(0);
+  });
+
+  test.each([undefined, 1900, 2900])(
+    "invalid/missing resume time %s cannot normalize an extended native wait",
+    async (at) => {
+      const root = start("agent_session");
+      now = 2200;
+      const { wait } = vadWait(root, 2000);
+      if (at !== undefined) wait.addEvent("user_resumed", {}, at);
+      wait.setAttribute("lk.eou.outcome", "user_resumed");
+      wait.end(2600);
+      const { one, named } = await rows();
+      expect(named("eou_wait")).toHaveLength(0);
+      expect(
+        one("livekit.eou_wait").metadata[
+          "contrib.livekit.eou.canonical_omitted"
+        ],
+      ).toBe("unobserved_wait_end");
+    },
+  );
 });
 
 describe("speech", () => {
@@ -1542,7 +2207,7 @@ describe("recording", () => {
     await playOneFrame(sink, origin);
     // The session is still described; no audio is recorded.
     expect((await close()).audio).toEqual({
-      "schema.version": "3.0.0",
+      "schema.version": "3.1.0",
       sources: SESSION_SOURCES,
       timeline: { origin_unix_ms: origin },
     });

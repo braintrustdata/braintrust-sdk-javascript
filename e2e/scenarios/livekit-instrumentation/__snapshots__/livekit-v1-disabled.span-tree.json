@@ -165,6 +165,7 @@
                 }
               ],
               "metadata": {
+                "contrib.livekit.eou.canonical_omitted": "unobserved_speech_end",
                 "contrib.livekit.eou.endpointing_delay": 0,
                 "contrib.livekit.eou.not_committed_count": 0,
                 "contrib.livekit.eou.outcome": "committed",
@@ -188,7 +189,7 @@
         }
       ],
       "metadata": {
-        "audio.schema.version": "3.0.0",
+        "audio.schema.version": "3.1.0",
         "audio.sources": {
           "agent-output": {
             "label": "Agent audio"
