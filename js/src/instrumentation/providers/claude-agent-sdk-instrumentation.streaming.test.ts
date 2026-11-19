@@ -611,7 +611,7 @@ describe("Claude Agent SDK streaming instrumentation", () => {
     await expect(iterator.next()).resolves.toMatchObject({ done: true });
 
     const events = (await backgroundLogger.drain()).filter(isCapturedSpanEvent);
-    const subagentSpan = events.find((event) =>
+    const subagentSpans = events.filter((event) =>
       String(event.span_attributes?.name).startsWith("Agent: "),
     );
     const toolSpan = events.find(
@@ -620,8 +620,8 @@ describe("Claude Agent SDK streaming instrumentation", () => {
         event.metadata?.["gen_ai.tool.call.id"] === localToolUseId,
     );
 
-    expect(subagentSpan).toBeDefined();
+    expect(subagentSpans).toHaveLength(1);
     expect(toolSpan).toBeDefined();
-    expect(toolSpan?.span_parents).toEqual([subagentSpan?.span_id]);
+    expect(toolSpan?.span_parents).toEqual([subagentSpans[0].span_id]);
   });
 });

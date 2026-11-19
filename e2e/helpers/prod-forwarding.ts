@@ -37,7 +37,13 @@ export async function initializeProdForwarding(): Promise<void> {
     const projectId = await logger.id;
     const state = logger.loggingState;
 
-    if (!state.apiUrl || !state.appUrl || !state.orgId || !state.orgName) {
+    if (
+      !projectId ||
+      !state.apiUrl ||
+      !state.appUrl ||
+      !state.orgId ||
+      !state.orgName
+    ) {
       throw new Error("Braintrust login did not resolve prodForwarding URLs");
     }
 

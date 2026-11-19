@@ -1,0 +1,34 @@
+{
+  "span_tree": [
+    {
+      "name": "ingest-key-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "ingest-key-child",
+          "children": [],
+          "input": {
+            "attachment": "[Attachment blocked by ingest key policy]",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ingest-key-remote",
+          "children": [],
+          "input": {
+            "testRunId": "<run:1>"
+          }
+        }
+      ],
+      "input": {
+        "testRunId": "<run:1>"
+      },
+      "output": "updated remotely",
+      "metadata": {
+        "scenario": "trace-primitives-basic",
+        "testRunId": "<run:1>",
+        "variant": "ingest-key"
+      }
+    }
+  ]
+}

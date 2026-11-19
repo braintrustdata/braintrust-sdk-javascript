@@ -442,6 +442,25 @@ export async function startMockBraintrustServer(
       }
     }
 
+    // Ingest keys omit the project ID. Production forwarding uses an ordinary
+    // API key, so add the test project only to the forwarded copy.
+    if (
+      capturedRequest.path === "/logs3" &&
+      capturedRequest.headers.authorization?.startsWith("Bearer bt-ik-") &&
+      Array.isArray(jsonBody.rows)
+    ) {
+      for (const row of jsonBody.rows) {
+        if (
+          isRecord(row) &&
+          row.log_id === "g" &&
+          row.project_id === undefined
+        ) {
+          row.project_id = prodForwarding.projectId;
+          changed = true;
+        }
+      }
+    }
+
     if ("org_id" in jsonBody) {
       jsonBody.org_id = prodForwarding.orgId;
       changed = true;
