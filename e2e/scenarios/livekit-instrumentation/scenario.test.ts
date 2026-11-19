@@ -136,6 +136,8 @@ function scenarioOptions(
           ],
     env: {
       LIVEKIT_WRAP: mode === "auto" ? "0" : "1",
+      // Combined mode exercises both LiveKit paths; OpenAI uses the auto hook.
+      LIVEKIT_WRAP_PROVIDER: mode === "wrapped" ? "1" : "0",
       BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS: recording ? "true" : "",
       BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS: recording ? "true" : "",
       BRAINTRUST_DISABLE_INSTRUMENTATION: "",
@@ -162,6 +164,105 @@ async function snapshotTrace(events: CapturedLogEvent[], name: string) {
     })),
     resolveFileSnapshotPath(import.meta.url, `${name}.span-tree.json`),
   );
+}
+
+for (const variant of variants) {
+  for (const mode of ["auto", "wrapped"] as const) {
+    for (const client of ["sdk", "custom"] as const) {
+      for (const enabled of [true, false]) {
+        test(`${variant} ${mode} public constructors classify ${client} client with provider ${enabled ? "on" : "off"}`, async () => {
+          await withScenarioHarness(async (harness) => {
+            await harness.runNodeScenarioDir(
+              scenarioOptions(variant, {
+                mode,
+                entry: "framework-regression.mjs",
+                recording: false,
+                env: {
+                  LIVEKIT_PROBE: "ownership",
+                  LIVEKIT_PROBE_CLIENT: client,
+                  LIVEKIT_OPENAI_INTEGRATION: enabled ? "on" : "off",
+                },
+              }),
+            );
+            const events = harness.events();
+            const names =
+              client === "custom"
+                ? ["livekit.llm_response", "livekit.stt", "livekit.tts"]
+                : enabled
+                  ? [
+                      "Chat Completion",
+                      "openai.audio.transcriptions.create",
+                      "openai.audio.speech.create",
+                    ]
+                  : [];
+            for (const [index, name] of names.entries()) {
+              const model = findAllSpans(events, name);
+              expect(model).toHaveLength(1);
+              const wrapper = findLatestSpan(
+                events,
+                ["llm_response", "stt", "tts"][index],
+              );
+              expect(model[0].row.span_parents).toEqual([wrapper?.row.span_id]);
+              expect(model[0].span.type).toBe("llm");
+              expect(model[0].row.error).toBeTruthy();
+            }
+            if (client === "sdk")
+              for (const name of [
+                "livekit.llm_response",
+                "livekit.stt",
+                "livekit.tts",
+              ])
+                expect(findAllSpans(events, name)).toHaveLength(0);
+            if (client === "sdk" && !enabled)
+              expect(
+                events.filter((event) => event.span.type === "llm"),
+              ).toHaveLength(0);
+          });
+        }, 120000);
+      }
+    }
+    test(`${variant} ${mode} preserves attempt-local buffered output and usage`, async () => {
+      await withScenarioHarness(async (harness) => {
+        await harness.runNodeScenarioDir(
+          scenarioOptions(variant, {
+            mode,
+            entry: "framework-regression.mjs",
+            recording: false,
+          }),
+        );
+        const models = findAllSpans(harness.events(), "livekit.llm_response");
+        expect(models).toHaveLength(2);
+        expect(
+          models.map(
+            (model) =>
+              (model.output as { message: { content: string } }[])[0].message
+                .content,
+          ),
+        ).toEqual(["FIRST", "SECOND"]);
+        expect(models.map((model) => model.metrics?.tokens)).toEqual([5, 8]);
+        expect(
+          models.map((model) => model.metrics?.completion_reasoning_tokens),
+        ).toEqual([1, 1]);
+        expect(
+          models.map((model) => model.metrics?.prompt_cached_tokens),
+        ).toEqual([1, 2]);
+        expect(
+          models.map((model) => model.metrics?.prompt_cache_creation_tokens),
+        ).toEqual([0, 0]);
+        expect(
+          models.map((model) => model.metadata?.served_service_tier),
+        ).toEqual(["flex", "priority"]);
+        expect(models[0].row.error).toContain("controlled retry");
+        expect(models[1].row.error).toBeUndefined();
+        const wrapper = findLatestSpan(harness.events(), "llm_response");
+        expect(wrapper?.metrics?.tokens).toBeUndefined();
+        for (const model of models) {
+          expect(model.row.span_parents).toEqual([wrapper?.row.span_id]);
+          expect(model.metrics?.time_to_first_token).toBeGreaterThanOrEqual(0);
+        }
+      });
+    }, 120000);
+  }
 }
 
 const spoken = (event: CapturedLogEvent | undefined, pattern: RegExp) =>
@@ -428,10 +529,14 @@ for (const variant of variants) {
           scenarioOptions(variant, { mode, cassette: "order" }),
         );
         const events = assertAudioTrace(harness.events());
-        // Provider spans inside LiveKit inference are suppressed.
+        // The underlying SDK integrations own model payloads and usage.
         expect(
           events.filter((e) => e.span.type === "llm").map((e) => e.span.name),
-        ).toEqual(["llm_response", "llm_response"]);
+        ).toEqual([
+          "Chat Completion",
+          "Chat Completion",
+          "openai.audio.speech.create",
+        ]);
         // Typed input isn't heard, so no user turn has it; the agent turn it
         // prompted carries it.
         expect(
@@ -449,6 +554,46 @@ for (const variant of variants) {
           findAllSpans(events, "llm_response")[1].span.id,
         ]);
         await snapshotTrace(events, `${variant}-order`);
+      });
+    }, 120000);
+
+  for (const mode of ["auto", "wrapped"] as const)
+    test(`${variant} ${mode} provider instrumentation disabled leaves task wrappers only`, async () => {
+      await withScenarioHarness(async (harness) => {
+        await harness.runNodeScenarioDir(
+          scenarioOptions(variant, {
+            mode,
+            cassette: "order",
+            recording: false,
+            env: { LIVEKIT_OPENAI_INTEGRATION: "off" },
+          }),
+        );
+        const events = assertAudioTrace(harness.events());
+        expect(events.filter((e) => e.span.type === "llm")).toEqual([]);
+        expect(findAllSpans(events, "llm_response")).toHaveLength(2);
+        expect(findAllSpans(events, "tts")).toHaveLength(1);
+      });
+    }, 120000);
+
+  for (const mode of ["auto", "wrapped"] as const)
+    test(`${variant} ${mode} generic capture never enables provider voice attachments`, async () => {
+      await withScenarioHarness(async (harness) => {
+        await harness.runNodeScenarioDir(
+          scenarioOptions(variant, {
+            mode,
+            cassette: "order",
+            recording: false,
+            env: { BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "true" },
+          }),
+        );
+        const events = assertAudioTrace(harness.events());
+        expect(findAllSpans(events, "Chat Completion")).toHaveLength(2);
+        expect(
+          findLatestSpan(events, "openai.audio.speech.create")?.row.output,
+        ).toEqual({ content: [] });
+        expect(JSON.stringify(events.map((e) => e.row))).not.toContain(
+          "braintrust_attachment",
+        );
       });
     }, 120000);
 
@@ -493,7 +638,11 @@ for (const variant of variants) {
         // The call's shape, models and timing remain.
         expect(
           events.filter((e) => e.span.type === "llm").map((e) => e.span.name),
-        ).toEqual(["llm_response", "llm_response"]);
+        ).toEqual([
+          "Chat Completion",
+          "Chat Completion",
+          "openai.audio.speech.create",
+        ]);
         expect(findLatestSpan(events, "llm_response")?.metadata).toMatchObject({
           model: expect.any(String),
         });
@@ -502,6 +651,93 @@ for (const variant of variants) {
         ).not.toEqual([]);
       });
     }, 120000);
+
+  for (const providerDisabled of [false, true])
+    for (const direct of [false, true])
+      for (const mode of ["auto", "wrapped"] as const)
+        test(`${variant} ${mode} ${direct ? "direct client" : "SDK client"} discrete recognition${providerDisabled ? " provider disabled" : ""}`, async () => {
+          await withScenarioHarness(async (harness) => {
+            await harness.runNodeScenarioDir(
+              scenarioOptions(variant, {
+                mode,
+                cassette: direct ? "direct" : "discrete",
+                env: {
+                  LIVEKIT_DISCRETE_STT: "1",
+                  ...(providerDisabled
+                    ? { LIVEKIT_OPENAI_INTEGRATION: "off" }
+                    : {}),
+                  ...(direct ? { LIVEKIT_DIRECT_CLIENT: "1" } : {}),
+                },
+              }),
+            );
+            const events = assertAudioTrace(harness.events());
+            const stt = findAllSpans(events, "stt");
+            expect(stt.length).toBeGreaterThan(0);
+            const providers = findAllSpans(
+              events,
+              direct ? "livekit.stt" : "openai.audio.transcriptions.create",
+            );
+            expect(providers).toHaveLength(
+              providerDisabled && !direct ? 0 : stt.length,
+            );
+            for (const provider of providers) {
+              expect(stt.map((s) => s.span.id)).toContain(
+                provider.span.parentIds[0],
+              );
+              expect(provider.row.input).toMatchObject({
+                operation: "transcribe",
+              });
+              expect(provider.row.output).toMatchObject({
+                content: [
+                  { type: "text", text: expect.stringMatching(/order/i) },
+                ],
+              });
+              if (direct) {
+                // This custom adapter does not expose transcription usage.
+                expect(provider.metrics).not.toHaveProperty("tokens");
+              } else {
+                expect(provider.metrics?.tokens).toBeGreaterThan(0);
+                expect(provider.metrics?.tokens).toBe(
+                  (provider.metrics!.prompt_tokens as number) +
+                    (provider.metrics!.completion_tokens as number),
+                );
+              }
+            }
+            for (const model of findAllSpans(
+              events,
+              direct ? "livekit.llm_response" : "Chat Completion",
+            )) {
+              expect(model.metrics?.tokens).toBeGreaterThan(0);
+              expect(model.metrics?.tokens).toBe(
+                (model.metrics!.prompt_tokens as number) +
+                  (model.metrics!.completion_tokens as number),
+              );
+            }
+            for (const synthesis of findAllSpans(
+              events,
+              direct ? "livekit.tts" : "openai.audio.speech.create",
+            ))
+              expect(synthesis.metrics).not.toHaveProperty("tokens");
+            if (!direct)
+              expect(findAllSpans(events, "livekit.stt")).toHaveLength(0);
+            if (direct) {
+              expect(findAllSpans(events, "livekit.llm_response")).toHaveLength(
+                2,
+              );
+              expect(findAllSpans(events, "livekit.tts")).toHaveLength(1);
+              expect(findAllSpans(events, "Chat Completion")).toHaveLength(0);
+            }
+            if (providerDisabled && !direct)
+              expect(events.filter((e) => e.span.type === "llm")).toHaveLength(
+                0,
+              );
+            if (!providerDisabled)
+              await snapshotTrace(
+                events,
+                `${variant}-${direct ? "direct" : "discrete"}`,
+              );
+          });
+        }, 120000);
 
   for (const mode of ["auto", "wrapped", "wrapped-auto"] as const)
     test(`${variant} ${mode} streaming-cascade order conversation`, async () => {
@@ -531,9 +767,20 @@ for (const variant of variants) {
             findAllSpans(events, "user_turn").find((e) => e.row.input),
           ),
         ).toHaveLength(1);
-        // LiveKit has no native STT span; each final transcript gets one, and the
-        // model's context links to the transcripts of the turn it answers.
-        const stt = findAllSpans(events, "stt");
+        // Each SDK request has one model child, including combined LiveKit hooks.
+        const responses = findAllSpans(events, "llm_response");
+        const completions = findAllSpans(events, "Chat Completion");
+        expect(responses).toHaveLength(2);
+        expect(completions).toHaveLength(2);
+        for (const response of responses) {
+          const requests = completions.filter(
+            (model) => model.span.parentIds[0] === response.span.id,
+          );
+          expect(requests).toHaveLength(1);
+          expect(requests[0].metrics?.tokens).toBeGreaterThan(0);
+        }
+        // Receipt-only transcripts link the model to the turn it answers.
+        const stt = findAllSpans(events, "transcript_received");
         expect(stt.length).toBeGreaterThan(0);
         expect(contextLinks(findAllSpans(events, "llm_response")[0])).toEqual(
           stt.map((span) => span.span.id),
@@ -590,7 +837,7 @@ for (const variant of variants) {
           attributes: { "contrib.livekit.speaker_id": expect.any(String) },
         },
       ]);
-      const labeled = findAllSpans(events, "stt").filter(
+      const labeled = findAllSpans(events, "transcript_received").filter(
         (span) => span.metadata?.["audio.speaker_ids"],
       );
       expect(labeled.length).toBeGreaterThan(1);
@@ -605,16 +852,15 @@ for (const variant of variants) {
           labeled.map((span) => span.metadata?.["contrib.livekit.speaker_id"]),
         ),
       ).toHaveProperty("size", 2);
-      // Each recognition is a span from its first result to its final, under
-      // the user turn it began in.
-      for (const span of findAllSpans(events, "stt")) {
+      // Receipt-only callbacks keep their receipt timestamp and user turn.
+      for (const span of findAllSpans(events, "transcript_received")) {
         const parent = events.find((e) => e.span.id === span.span.parentIds[0]);
         expect(parent?.span.name).toBe("user_turn");
         const { start, end } = span.row.metrics as {
           start: number;
           end: number;
         };
-        expect(end).toBeGreaterThan(start);
+        expect(end).toBe(start);
       }
       // Speech is audio activity: it names no speaker and links to no transcript.
       for (const span of findAllSpans(events, "user_speech")) {
@@ -633,7 +879,7 @@ for (const variant of variants) {
       });
       // The answer's context is every transcript of the turn, from both callers.
       expect(contextLinks(findAllSpans(events, "llm_response")[0])).toEqual(
-        findAllSpans(events, "stt").map((span) => span.span.id),
+        findAllSpans(events, "transcript_received").map((span) => span.span.id),
       );
       // No LiveKit room, so no room connections: no participants are invented.
       expect(session).not.toHaveProperty("participants", expect.anything());

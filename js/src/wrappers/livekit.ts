@@ -41,10 +41,6 @@ function wrapMethod<Args extends unknown[], Result>(
 
 function wrapActivity(activity: AgentActivity | undefined) {
   if (!activity) return;
-  if (activity.agent) {
-    wrapMethod(activity.agent, "llmNode", livekitChannels.inference);
-    wrapMethod(activity.agent, "ttsNode", livekitChannels.inference);
-  }
   // The recognizer exists once the activity starts, before it receives audio.
   wrapMethod(activity, "attachAudioInput", livekitChannels.input, () => {
     if (activity.audioRecognition) {

@@ -4,6 +4,7 @@ configureInstrumentation({
     ? { streamingAttachmentBufferBytes: 19200 } // 200 ms of 24 kHz stereo s16le.
     : {}),
   integrations: {
+    openai: process.env.LIVEKIT_OPENAI_INTEGRATION !== "off",
     livekit:
       process.env.LIVEKIT_INTEGRATION === "off"
         ? false

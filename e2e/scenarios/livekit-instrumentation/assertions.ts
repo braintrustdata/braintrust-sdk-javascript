@@ -33,11 +33,13 @@ export function audioSession(event: CapturedLogEvent | undefined) {
   const metadata = event?.metadata;
   const session: AudioSession | undefined = metadata?.["audio.sources"]
     ? {
-        sources: metadata["audio.sources"],
-        participants: metadata["audio.participants"],
-        speakers: metadata["audio.speakers"],
-        segments: metadata["audio.segments"],
-        timeline: metadata["audio.timeline"],
+        sources: metadata["audio.sources"] as AudioSession["sources"],
+        participants: metadata[
+          "audio.participants"
+        ] as AudioSession["participants"],
+        speakers: metadata["audio.speakers"] as AudioSession["speakers"],
+        segments: metadata["audio.segments"] as AudioSession["segments"],
+        timeline: metadata["audio.timeline"] as AudioSession["timeline"],
       }
     : undefined;
   const segments = Object.entries(session?.segments ?? {})
@@ -87,6 +89,44 @@ export function assertAudioTrace(raw: CapturedLogEvent[]) {
     findAllSpans(raw, name!),
   );
   for (const event of events) {
+    if (["llm_response", "tts", "stt"].includes(event.span.name!)) {
+      expect(event.span.type).toBe("task");
+      expect(
+        Object.keys(event.metrics ?? {}).filter(
+          (k) => !["start", "end"].includes(k),
+        ),
+      ).toEqual([]);
+      expect(
+        Object.keys(event.metadata ?? {}).filter(
+          (key) =>
+            key.startsWith("gen_ai.usage.") ||
+            key === "contrib.livekit.response.ttft" ||
+            key === "gen_ai.response.time_to_first_chunk",
+        ),
+      ).toEqual([]);
+    }
+    if (
+      [
+        "Chat Completion",
+        "openai.audio.speech.create",
+        "openai.audio.transcriptions.create",
+        "livekit.stt",
+        "livekit.tts",
+        "livekit.llm_response",
+      ].includes(event.span.name!)
+    ) {
+      expect(event.span.type).toBe("llm");
+      const parent = events.find((e) => e.span.id === event.span.parentIds[0]);
+      expect(parent?.span.name).toBe(
+        event.span.name === "Chat Completion" ||
+          event.span.name === "livekit.llm_response"
+          ? "llm_response"
+          : event.span.name === "openai.audio.speech.create" ||
+              event.span.name === "livekit.tts"
+            ? "tts"
+            : "stt",
+      );
+    }
     expect(event.metadata).not.toHaveProperty("audio.recordings");
     expect(event.metadata).not.toHaveProperty("audio.session");
     expect(event.metadata).not.toHaveProperty("audio.selection");

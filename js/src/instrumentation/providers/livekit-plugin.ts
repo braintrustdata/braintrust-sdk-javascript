@@ -21,14 +21,9 @@ import type {
   TraceOptions,
 } from "../../vendor-sdk-types/livekit";
 import iso from "#braintrust-platform";
-import { runInstrumentation } from "../core/observe-result";
+import { serviceTierMetadata } from "../core/service-tier";
+import { observeResult, runInstrumentation } from "../core/observe-result";
 import { livekitChannels, livekitOpenAIChannels } from "./livekit-interceptors";
-import { recordLiveKitOpenAIClient } from "./livekit-client-ownership";
-import type {
-  ModelService,
-  OpenAIAdapterOptions,
-} from "../../vendor-sdk-types/livekit";
-import { wrapLiveKitModels } from "./livekit-wrapping";
 import {
   REDACTED_EXCEPTION_MESSAGE,
   REDACTION_ENABLED,
@@ -37,11 +32,23 @@ import {
   withoutPii,
 } from "./livekit-pii";
 import { v4 as uuidv4 } from "uuid";
+import { isAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
 import {
   withInstrumentationContentPolicy,
   type InstrumentationContentPolicy,
 } from "../../instrumentation-content-policy";
-import { runWithAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
+import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
+import {
+  wrapLiveKitModels,
+  wrapLiveKitModelWorker,
+  wrapLiveKitModelQueue,
+} from "./livekit-wrapping";
+import {
+  liveKitUsesCoveredClient,
+  recordLiveKitOpenAIClient,
+} from "./livekit-client-ownership";
+import type { OpenAIAdapterOptions } from "../../vendor-sdk-types/livekit";
+import type { ModelService } from "../../vendor-sdk-types/livekit";
 import {
   Attachment,
   _internalAttachmentCapturePermitted,
@@ -82,7 +89,6 @@ const SAMPLE_RATE = 24000;
 // The OTel API shares its context key through Symbol.for, including across copies.
 const OTEL_SPAN_KEY = Symbol.for("OpenTelemetry Context Key SPAN");
 // SpeechEventType values.
-const START_OF_SPEECH = 0;
 const FINAL_TRANSCRIPT = 2;
 // Voice audio is personal data, so each direction has its own explicit flag rather
 // than the shared BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS, which also enables other media.
@@ -102,19 +108,10 @@ const SPANS = new Map<string, { name: string; type: "task" | "llm" | "tool" }>([
   ["agent_turn", { name: "agent_turn", type: "task" }],
   ["user_speaking", { name: "user_speech", type: "task" }],
   ["agent_speaking", { name: "agent_speech", type: "task" }],
-  ["llm_node", { name: "llm_response", type: "llm" }],
+  ["llm_node", { name: "llm_response", type: "task" }],
   ["tts_node", { name: "tts", type: "task" }],
   ["function_tool", { name: "function_tool", type: "tool" }],
 ]);
-
-const METRICS = {
-  prompt_tokens: "gen_ai.usage.input_tokens",
-  completion_tokens: "gen_ai.usage.output_tokens",
-  cache_read_input_tokens: "gen_ai.usage.cache_read.input_tokens",
-  cache_creation_input_tokens: "gen_ai.usage.cache_write.input_tokens",
-  reasoning_tokens: "gen_ai.usage.reasoning.output_tokens",
-  time_to_first_token: "contrib.livekit.response.ttft",
-} as const;
 
 class LiveKitInstrumentationConsumer {
   public register(
@@ -155,8 +152,25 @@ class LiveKitInstrumentationConsumer {
       (target, self, [fn, options]) =>
         Reflect.apply(target, self, [observeActive(fn, options), options]),
     );
-    livekitChannels.inference.intercept((target, self, args) =>
-      tracing.inference(() => Reflect.apply(target, self, args)),
+    livekitChannels.model.intercept(
+      (target, self, args, { kind, method, activity }) =>
+        tracing.model(
+          () => Reflect.apply(target, self, args),
+          self as ModelService,
+          kind,
+          method,
+          args,
+          activity,
+          target,
+        ),
+    );
+    livekitChannels.modelEnqueue.intercept((target, self, args, { stream }) => {
+      const result = Reflect.apply(target, self, args);
+      runInstrumentation(() => tracing.modelEnqueue(stream, args[0]));
+      return result;
+    });
+    livekitChannels.modelRun.intercept((target, self, args) =>
+      tracing.modelRun(self as object, () => Reflect.apply(target, self, args)),
     );
     livekitChannels.start.intercept((target, self, args) =>
       tracing.scope((self as AgentSession).sessionSpan, () =>
@@ -280,6 +294,7 @@ type Row = {
   span: Span;
   /** Set when this native span folds into an exported ancestor. */
   owner?: Row;
+  parent?: Row;
   session: string;
   turn?: string;
   replyTo?: string;
@@ -314,6 +329,7 @@ type Row = {
 };
 type SessionState = {
   root: Row;
+  operations: Set<() => void>;
   /** Exported rows. Folded rows resolve through their owner. */
   rows: Map<string, Row>;
   rowLimitWarned: boolean;
@@ -340,10 +356,24 @@ type SessionState = {
 // Native no-op spans all share one OTel ID. Keep our observation identity
 // separately without altering the application's span context or provider.
 const observedRows = new WeakMap<object, Row>();
+const receiptTurns = new WeakMap<object, { turn?: Row }>();
+const recognizedEvents = new WeakMap<
+  object,
+  { span: Span; parent: Row; continuous: boolean }
+>();
 const observedId = (span: LiveKitSpan | undefined) =>
   span && observedRows.get(span)?.id;
 
 class LiveKitTracing {
+  private modelChunks = new WeakMap<object, (value: unknown) => void>();
+  modelEnqueue(worker: object, value: unknown): void {
+    this.modelChunks.get(worker)?.(value);
+  }
+  private modelWorkers = new WeakMap<object, <T>(call: () => T) => T>();
+  modelRun<T>(worker: object, call: () => T): T {
+    const trace = this.modelWorkers.get(worker);
+    return trace ? trace(call) : call();
+  }
   // No-op OTel spans still need parent propagation across LiveKit's async work.
   // `inference` is shared by a scope and its unobserved children; it holds the
   // latest model response started there, which generated later speech.
@@ -632,6 +662,7 @@ class LiveKitTracing {
             () => (parent ? parent.span.startSpan(args) : startSpan(args)),
           ),
       owner,
+      parent,
       session: name === "agent_session" ? id : parent!.session,
       turn: name === "user_turn" || name === "agent_turn" ? id : parent?.turn,
       replyTo: parent?.replyTo,
@@ -663,6 +694,7 @@ class LiveKitTracing {
       const transcripts: SessionState["transcripts"] = new Map();
       this.sessions.set(id, {
         root: row,
+        operations: new Set(),
         rows,
         rowLimitWarned: false,
         relationships,
@@ -785,9 +817,6 @@ class LiveKitTracing {
       if (state && row.name === "agent_speaking")
         row.span.log({ metadata: participantIds(state, native) });
       row.span.end({ endTime: this.waitEnd(row) ?? row.end });
-    } else {
-      // Native request spans duplicate the public inference lifecycle.
-      row.span.log(modelFields(attrs));
     }
     row.attributes = new Map();
     row.events = [];
@@ -1139,10 +1168,25 @@ class LiveKitTracing {
         found
           ? withInstrumentationContentPolicy(
               this.policy(() => row!),
-              () => withCurrent(row!.span, fn),
+              () => withCurrent(this.operationParent(row!).span, fn),
             )
           : fn(),
     );
+  }
+
+  private operationParent(row: Row): Row {
+    let parent = row.owner ?? row;
+    while (
+      parent.parent &&
+      [
+        "llm_request",
+        "llm_request_run",
+        "tts_request",
+        "tts_request_run",
+      ].includes(parent.name)
+    )
+      parent = parent.parent.owner ?? parent.parent;
+    return parent;
   }
 
   private policy(row: () => Row): InstrumentationContentPolicy {
@@ -1209,37 +1253,442 @@ class LiveKitTracing {
     };
   }
 
-  inference<T>(fn: () => T): T {
-    // Only tracked sessions suppress duplicate provider spans. The suppressed
-    // inference worker excludes the pipeline and user tools.
-    return this.context.getStore()?.row
-      ? runWithAutoInstrumentationSuppressed(fn)
-      : fn();
+  /** Service execution, before provider work; independent of provider activation. */
+  model<T>(
+    call: () => T,
+    service: ModelService,
+    kind: "llm" | "stt" | "tts",
+    method: string,
+    args: unknown[],
+    activity: AgentActivity,
+    implementation?: (...args: unknown[]) => unknown,
+  ): T {
+    // A model service may be shared by multiple activities. Its idempotent
+    // method wrapper retains the first activity; the live operation scope is
+    // authoritative when a different session is executing it.
+    const outer = this.context.getStore()?.row;
+    const activityState = this.sessionOf(activity.agentSession);
+    const state =
+      (outer ? this.sessions.get(outer.session) : undefined) ?? activityState;
+    if (!state || state.closed || isAutoInstrumentationSuppressed())
+      return call();
+    const nativeParent =
+      outer?.session === state.root.id
+        ? this.operationParent(outer)
+        : state.root;
+    const recognition =
+      state === activityState ? activity.audioRecognition : undefined;
+    const parent =
+      kind === "stt"
+        ? (this.openTurn(recognition ?? {}) ?? nativeParent)
+        : nativeParent;
+    const wrapper =
+      kind === "stt"
+        ? withInstrumentationContentPolicy(
+            this.policy(() => parent),
+            () =>
+              parent.span.startSpan(
+                withSpanInstrumentationName(
+                  { name: "stt", type: "task" as const },
+                  INSTRUMENTATION_NAMES.LIVEKIT,
+                ),
+              ),
+          )
+        : parent.span;
+    const run = <R>(fn: () => R) =>
+      withInstrumentationContentPolicy(
+        this.policy(() => parent),
+        () => withCurrent(wrapper, fn),
+      );
+    let started = Date.now() / 1000;
+    let model: Span | undefined;
+    let modelEnded = false;
+    let attempts = 0;
+    let ended = false;
+    let text = kind === "tts" && typeof args[0] === "string" ? args[0] : "";
+    let transcript = "";
+    let first = false;
+    const recognitionTokens: Record<string, number> = {};
+    const audio: Blob[] = [];
+    let audioBytes = 0;
+    let audioOffset = 0;
+    let audioFormat: { sampleRate: number; channels: number } | undefined;
+    const mediaParts: unknown[] = [];
+    const mediaSegments: unknown[] = [];
+    const calls = new Map<string, NonNullable<Message["tool_calls"]>[number]>();
+    const audioPermitted = run(() => _internalAttachmentCapturePermitted());
+    const capture = () =>
+      audioPermitted &&
+      this.piiAllowed(parent) &&
+      isEnvFlagEnabled(
+        kind === "stt" ? CAPTURE_USER_AUDIO : CAPTURE_AGENT_AUDIO,
+      );
+    const metadata =
+      runInstrumentation(() => ({
+        model: service.model,
+        provider: service.provider,
+      })) ?? {};
+    const flushAudio = () => {
+      if (!audioBytes || !audioFormat || !model) return;
+      if (capture()) {
+        const filename = `${kind === "stt" ? "input" : "speech"}-${mediaParts.length}.pcm`;
+        mediaParts.push({
+          type: "file",
+          file: {
+            filename,
+            byte_size: audioBytes,
+            file_data: new Attachment({
+              data: new Blob(audio, { type: "audio/pcm" }),
+              contentType: "audio/pcm",
+              filename,
+            }),
+          },
+        });
+        mediaSegments.push({
+          content_index: mediaParts.length - 1,
+          byte_offset: audioOffset,
+          sample_rate_hz: audioFormat.sampleRate,
+          channel_count: audioFormat.channels,
+          sample_format: "s16le",
+        });
+        model.log({
+          ...(kind === "stt"
+            ? { input: { operation: "transcribe", content: [...mediaParts] } }
+            : { output: { content: [...mediaParts] } }),
+          metadata: { "contrib.livekit.audio.segments": [...mediaSegments] },
+        });
+      }
+      audioOffset += audioBytes;
+      audioBytes = 0;
+      audio.length = 0;
+    };
+    const capturePcm = (frame: AudioFrame) => {
+      if (
+        !model ||
+        !capture() ||
+        !(frame?.data instanceof Int16Array) ||
+        !frame.data.length
+      )
+        return;
+      if (
+        audioFormat &&
+        (audioFormat.sampleRate !== frame.sampleRate ||
+          audioFormat.channels !== frame.channels)
+      )
+        flushAudio();
+      audioFormat = { sampleRate: frame.sampleRate, channels: frame.channels };
+      audio.push(
+        new Blob([new Int16Array(frame.data).buffer], { type: "audio/pcm" }),
+      );
+      audioBytes += frame.data.byteLength;
+      if (audioBytes >= this.streamingAttachmentBufferBytes) flushAudio();
+    };
+    wrapper.log({ metadata });
+    if (kind === "stt")
+      wrapper.log({
+        metadata: {
+          ...metadata,
+          "audio.source_id": "session-input",
+          ...(parent.turn
+            ? { "turn.id": state.rows.get(parent.turn)?.span.spanId }
+            : {}),
+        },
+      });
+    const startModel = () => {
+      modelEnded = false;
+      model = run(() =>
+        wrapper.startSpan(
+          withSpanInstrumentationName(
+            {
+              name: `livekit.${kind === "llm" ? "llm_response" : kind}`,
+              type: "llm" as const,
+              startTime: started,
+            },
+            INSTRUMENTATION_NAMES.LIVEKIT,
+          ),
+        ),
+      );
+      model.log({ metadata });
+      if (kind === "tts")
+        model.log({
+          input: { operation: "speech", ...(text ? { prompt: text } : {}) },
+        });
+      if (kind === "stt") {
+        model.log({ input: { operation: "transcribe" } });
+        if (method === "recognize")
+          for (const frame of Array.isArray(args[0]) ? args[0] : [args[0]])
+            capturePcm(frame as AudioFrame);
+      }
+      if (kind === "llm") {
+        const chat = isObject(args[0]) ? args[0].chatCtx : undefined;
+        const input =
+          isObject(chat) && typeof chat.toJSON === "function"
+            ? messages(chat.toJSON())
+            : undefined;
+        if (input) model.log({ input });
+        if (isObject(args[0]))
+          model.log({
+            metadata: requestMetadata({
+              toolCtx: args[0].toolCtx as PipelineOptions["toolCtx"],
+              modelSettings: { toolChoice: args[0].toolChoice },
+            }),
+          });
+      }
+    };
+    const chunk = (value: any) => {
+      if (ended || !value) return;
+      const delta = typeof value === "string" ? value : value.delta?.content;
+      const alternative =
+        value.type === FINAL_TRANSCRIPT ? value.alternatives?.[0] : undefined;
+      const frame: AudioFrame | undefined = value.frame;
+      const toolCalls = value.delta?.toolCalls;
+      if (Array.isArray(toolCalls))
+        for (const call of toolCalls) {
+          if (typeof call.callId === "string" && typeof call.name === "string")
+            calls.set(call.callId, {
+              id: call.callId,
+              type: "function",
+              function: { name: call.name, arguments: stringify(call.args) },
+            });
+        }
+      if (
+        !first &&
+        (delta || calls.size || alternative?.text || frame?.data.length)
+      ) {
+        first = true;
+        model?.log({
+          metrics: { time_to_first_token: Date.now() / 1000 - started },
+        });
+      }
+      if (typeof delta === "string") transcript += delta;
+      if (alternative?.text)
+        transcript += (transcript ? " " : "") + alternative.text;
+      if (frame) capturePcm(frame);
+      if (value.usage && model) {
+        const metrics: Record<string, number> = {};
+        for (const [from, to] of [
+          ["promptTokens", "prompt_tokens"],
+          ["completionTokens", "completion_tokens"],
+          ["totalTokens", "tokens"],
+          ["promptCachedTokens", "prompt_cached_tokens"],
+          ["cacheCreationTokens", "prompt_cache_creation_tokens"],
+          ["reasoningTokens", "completion_reasoning_tokens"],
+        ])
+          if (typeof value.usage[from] === "number")
+            metrics[to] = value.usage[from];
+        model.log({
+          metrics,
+          metadata: serviceTierMetadata({ served: value.usage.serviceTier }),
+        });
+      }
+      if (kind === "stt" && value.recognitionUsage && model) {
+        for (const [from, to] of [
+          ["inputTokens", "prompt_tokens"],
+          ["outputTokens", "completion_tokens"],
+        ]) {
+          const count = value.recognitionUsage[from];
+          if (typeof count === "number")
+            recognitionTokens[to] = (recognitionTokens[to] ?? 0) + count;
+        }
+        if (
+          recognitionTokens.prompt_tokens !== undefined &&
+          recognitionTokens.completion_tokens !== undefined
+        )
+          recognitionTokens.tokens =
+            recognitionTokens.prompt_tokens +
+            recognitionTokens.completion_tokens;
+        model.log({ metrics: { ...recognitionTokens } });
+      }
+      if (kind === "stt" && alternative?.text) {
+        recognizedEvents.set(value, {
+          span: wrapper,
+          parent,
+          continuous: method === "stream",
+        });
+        wrapper.log({
+          output: [{ role: "user", content: transcript }],
+          metadata: {
+            "audio.source_id": "session-input",
+            ...(parent.turn
+              ? { "turn.id": state.rows.get(parent.turn)?.span.spanId }
+              : {}),
+            ...speakerIds(
+              state,
+              recognition ?? service,
+              alternative.speakerId || undefined,
+            ),
+          },
+        });
+      }
+    };
+    const endModel = (error?: unknown) => {
+      if (model && !modelEnded) {
+        if (kind === "llm" && (transcript || calls.size))
+          model.log({
+            output: [
+              {
+                index: 0,
+                message: {
+                  role: "assistant",
+                  content: transcript || null,
+                  ...(calls.size ? { tool_calls: [...calls.values()] } : {}),
+                },
+              },
+            ],
+          });
+        if (kind === "stt")
+          model.log({
+            output: {
+              content: transcript ? [{ type: "text", text: transcript }] : [],
+            },
+          });
+        flushAudio();
+        if (kind === "tts")
+          model.log({
+            input: { operation: "speech", ...(text ? { prompt: text } : {}) },
+            output: { content: capture() ? [...mediaParts] : [] },
+          });
+        if (error !== undefined) model.log({ error });
+        if (!modelEnded) {
+          modelEnded = true;
+          model.end();
+        }
+      }
+    };
+    const finish = (error?: unknown) => {
+      if (ended) return;
+      ended = true;
+      state.operations.delete(finish);
+      endModel(error);
+      audio.length = 0;
+      if (kind === "stt") {
+        if (error !== undefined) wrapper.log({ error });
+        wrapper.end();
+      }
+    };
+    state.operations.add(finish);
+    if (
+      !(
+        runInstrumentation(() =>
+          liveKitUsesCoveredClient(service, kind, method, implementation),
+        ) ?? false
+      )
+    )
+      startModel();
+    const observe = (value: any) => {
+      if (isAsyncIterable(value)) {
+        const stream = value as any;
+        // run() and queue are declared protected adapter extension points, not
+        // public observer APIs. LiveKit has no public attempt/delta event. Keep
+        // this qualified bridge here so delayed consumer reads cannot attribute
+        // an earlier attempt's buffered output to the current retry.
+        this.modelChunks.set(stream, chunk);
+        const producerObserved =
+          !!model &&
+          (runInstrumentation(() => wrapLiveKitModelQueue(stream)) ?? false);
+        patchStreamIfNeeded(value, {
+          shouldCollect: (value) => {
+            if (!producerObserved) runInstrumentation(() => chunk(value));
+            return false;
+          },
+          onComplete: () => finish(),
+          onCancel: () => finish(),
+          onError: finish,
+          aroundNext: run,
+        });
+        if (model && typeof stream.run === "function") {
+          this.modelWorkers.set(stream, <R>(call: () => R): R => {
+            if (ended) return call();
+            if (attempts++) {
+              started = Date.now() / 1000;
+              transcript = "";
+              first = false;
+              audio.length = 0;
+              audioBytes = 0;
+              audioOffset = 0;
+              mediaParts.length = 0;
+              mediaSegments.length = 0;
+              calls.clear();
+              for (const key of Object.keys(recognitionTokens))
+                delete recognitionTokens[key];
+              startModel();
+            }
+            try {
+              return run(() =>
+                observeResult(
+                  call(),
+                  () => {
+                    if (producerObserved) endModel();
+                  },
+                  endModel,
+                ),
+              );
+            } catch (error) {
+              endModel(error);
+              throw error;
+            }
+          });
+          wrapLiveKitModelWorker(stream);
+        }
+        if (kind === "stt" && typeof stream.pushFrame === "function") {
+          const push = stream.pushFrame;
+          stream.pushFrame = function (frame: AudioFrame) {
+            runInstrumentation(() => capturePcm(frame));
+            return Reflect.apply(push, this, [frame]);
+          };
+        }
+        if (kind === "tts" && typeof stream.pushText === "function") {
+          const push = stream.pushText;
+          stream.pushText = function (part: string) {
+            text += part;
+            return Reflect.apply(push, this, [part]);
+          };
+        }
+        if (typeof stream.close === "function") {
+          const close = stream.close;
+          stream.close = function (...closeArgs: unknown[]) {
+            try {
+              return Reflect.apply(close, this, closeArgs);
+            } finally {
+              finish();
+            }
+          };
+        }
+      } else {
+        chunk(value);
+        finish();
+      }
+    };
+    try {
+      return run(() => observeResult(call(), observe, finish));
+    } catch (error) {
+      finish(error);
+      throw error;
+    }
   }
 
-  /**
-   * LiveKit has no native STT span. Each utterance's recognition gets one, from
-   * the first result STT emits for it to its final transcript, under the turn
-   * open when recognition began: LiveKit can close a turn on silence before
-   * its final transcript arrives.
-   */
+  /** Decorate observed recognition, or record receipt without inferring duration. */
   stt(recognition: AudioRecognition, event: SpeechEvent): void {
     const at = event.createdAt ?? Date.now();
     const alternative = event.alternatives?.[0];
     if (event.type !== FINAL_TRANSCRIPT) {
-      // Recognition begins at speech or at text. Empty interims are keepalives
-      // between utterances, and END_OF_SPEECH can trail the final it belongs to.
-      const recognizes = event.type === START_OF_SPEECH || !!alternative?.text;
-      if (recognizes && !recognizing.has(recognition))
-        recognizing.set(recognition, { at, turn: this.openTurn(recognition) });
+      if (
+        (event.type === 0 || alternative?.text) &&
+        !receiptTurns.has(recognition)
+      )
+        receiptTurns.set(recognition, { turn: this.openTurn(recognition) });
       return;
     }
     if (!alternative?.text) return;
-    const begun = recognizing.get(recognition);
-    recognizing.delete(recognition);
-    const turn = begun?.turn ?? this.openTurn(recognition);
+    const turn =
+      receiptTurns.get(recognition)?.turn ?? this.openTurn(recognition);
+    receiptTurns.delete(recognition);
+    const observed = recognizedEvents.get(event);
+    const operation = observed?.continuous ? undefined : observed;
     const parent =
+      operation?.parent ??
       turn ??
+      observed?.parent ??
       this.rowOf(
         recognition.rootSpanContext?.getValue(OTEL_SPAN_KEY) as
           | LiveKitSpan
@@ -1248,15 +1697,25 @@ class LiveKitTracing {
     const state = parent && this.sessions.get(parent.session);
     if (!parent || !state) return;
     const end = at;
-    const start = Math.min(end, begun?.at ?? end);
+    const start = end;
     const { model = recognition.sttModel, provider = recognition.sttProvider } =
       recognition.sttIdentity?.() ?? {};
-    const span = parent.span.startSpan(
-      withSpanInstrumentationName(
-        { name: "stt", type: "task" as const, startTime: start / 1000 },
-        INSTRUMENTATION_NAMES.LIVEKIT,
-      ),
-    );
+    const span =
+      operation?.span ??
+      withInstrumentationContentPolicy(
+        this.policy(() => parent),
+        () =>
+          parent.span.startSpan(
+            withSpanInstrumentationName(
+              {
+                name: "transcript_received",
+                type: "task" as const,
+                startTime: start / 1000,
+              },
+              INSTRUMENTATION_NAMES.LIVEKIT,
+            ),
+          ),
+      );
     span.log({
       ...(this.piiAllowed(parent)
         ? { output: [{ role: "user", content: alternative.text }] }
@@ -1282,7 +1741,7 @@ class LiveKitTracing {
           : {}),
       },
     });
-    span.end({ endTime: end / 1000 });
+    if (!operation) span.end({ endTime: end / 1000 });
     if (!turn) return;
     const transcripts = state.transcripts.get(turn.id) ?? [];
     if (transcripts.length >= MAX_EVENTS) return;
@@ -1419,6 +1878,7 @@ class LiveKitTracing {
     );
     if (!state) return Promise.resolve();
     if (!state.closing) {
+      for (const finish of state.operations) finish();
       state.playback?.close();
       state.playback = undefined;
       const done = () => {
@@ -1516,6 +1976,9 @@ function metadataFields(fields: Record<string, unknown>) {
       ([key]) =>
         !key.includes(".pii.") &&
         !key.startsWith("langfuse.") &&
+        !key.startsWith("gen_ai.usage.") &&
+        key !== "contrib.livekit.response.ttft" &&
+        key !== "gen_ai.response.time_to_first_chunk" &&
         !/^gen_ai\.(input\.|output\.|system_instructions|tool\.(definitions|call\.(arguments|result)|description))/.test(
           key,
         ),
@@ -1528,7 +1991,7 @@ function endEvent(
   attrs: Record<string, unknown>,
   events: Row["events"],
 ) {
-  const { metrics, metadata: model } = modelFields(attrs);
+  const { metadata: model } = modelFields(attrs);
   const toolName = attrs["contrib.livekit.function_tool.name"];
   return {
     metadata: {
@@ -1546,7 +2009,7 @@ function endEvent(
         : {}),
       ...model,
     },
-    ...(row.name === "llm_node" ? { metrics } : {}),
+
     ...(typeof toolName === "string"
       ? { span_attributes: { name: toolName, type: "tool" as const } }
       : {}),
@@ -1628,7 +2091,7 @@ function messageMetadata(item: ChatMessage) {
 const toolParameters = new WeakMap<FunctionTool, unknown>();
 
 /** The tools and tool choice LiveKit makes available to one pipeline reply. */
-function requestMetadata({ toolCtx, modelSettings }: PipelineOptions) {
+function requestMetadata({ toolCtx, modelSettings }: Partial<PipelineOptions>) {
   const tools = Object.entries(toolCtx?.functionTools ?? {}).map(
     ([name, tool]) => {
       if (!toolParameters.has(tool))
@@ -1689,7 +2152,7 @@ function messages(value: unknown): Message[] | undefined {
   if (!Array.isArray(items)) return;
   return items.flatMap((item): Message[] => {
     if (!isObject(item)) return [];
-    const callId = item.call_id;
+    const callId = item.call_id ?? item.callId;
     if (item.type === "function_call")
       return typeof callId === "string" && typeof item.name === "string"
         ? [
@@ -1702,7 +2165,7 @@ function messages(value: unknown): Message[] | undefined {
                   type: "function",
                   function: {
                     name: item.name,
-                    arguments: stringify(item.arguments),
+                    arguments: stringify(item.arguments ?? item.args),
                   },
                 },
               ],
@@ -1726,21 +2189,9 @@ function messages(value: unknown): Message[] | undefined {
 }
 
 function modelFields(attrs: Record<string, unknown>) {
-  const metrics: Record<string, number> = {};
-  for (const [target, source] of Object.entries(METRICS)) {
-    const value = attrs[source];
-    if (typeof value === "number" && Number.isFinite(value) && value >= 0)
-      metrics[target] = value;
-  }
-  if (
-    metrics.prompt_tokens !== undefined &&
-    metrics.completion_tokens !== undefined
-  )
-    metrics.tokens = metrics.prompt_tokens + metrics.completion_tokens;
   const model = attrs["gen_ai.response.model"] ?? attrs["gen_ai.request.model"];
   const provider = attrs["gen_ai.provider.name"];
   return {
-    metrics,
     metadata: {
       ...(typeof model === "string" ? { model } : {}),
       ...(typeof provider === "string" ? { provider } : {}),
@@ -2005,7 +2456,7 @@ type Packet = {
 
 const inputs = new WeakMap<object, Recording>();
 /** Recognition in progress per recognizer: when it began, and in which turn. */
-const recognizing = new WeakMap<object, { at: number; turn?: Row }>();
+
 const sinks = new WeakMap<object, Playback>();
 /**
  * Each recognizer labels its speakers independently: the same label from two
