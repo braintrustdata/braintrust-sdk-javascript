@@ -23,17 +23,27 @@ import type {
   GroqAudioTextResult,
   GroqAudioTranscriptionCreateParams,
   GroqAudioTranslationCreateParams,
+  GroqBatch,
   GroqChatCompletion,
   GroqChatCompletionChunk,
 } from "../../vendor-sdk-types/groq";
 
 import { traceAsyncCall, traceStreamingCall } from "../core/tracing";
 import { isAsyncIterable, observeByteStream } from "../core/stream-patcher";
+import { runWithAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
 import { groqChannels } from "./groq-interceptors";
 import {
   aggregateChatCompletionChunks,
   parseMetricsFromUsage,
 } from "./openai-instrumentation";
+
+function extractBatchOutput(batch: GroqBatch) {
+  return {
+    id: batch.id,
+    status: batch.status,
+    request_counts: batch.request_counts,
+  };
+}
 
 export function registerGroqInstrumentation(): void {
   groqChannels.chatCompletionsCreate.intercept(
@@ -99,6 +109,52 @@ export function registerGroqInstrumentation(): void {
           extractMetrics: (result) => parseGroqMetrics(result),
         },
       ),
+  );
+
+  groqChannels.batchesCreate.intercept((target, receiver, args, additional) =>
+    traceAsyncCall<typeof groqChannels.batchesCreate>(
+      () =>
+        runWithAutoInstrumentationSuppressed(() =>
+          Reflect.apply(target, receiver, args),
+        ),
+      { ...additional, arguments: args, self: receiver },
+      {
+        instrumentationName: INSTRUMENTATION_NAMES.GROQ,
+        name: "groq.batches.create",
+        type: SpanTypeAttribute.TASK,
+        extractInput: ([arg]) => ({
+          input: {
+            endpoint: arg.endpoint,
+            completion_window: arg.completion_window,
+            input_file_id: arg.input_file_id,
+          },
+          metadata: { provider: "groq" },
+        }),
+        extractOutput: extractBatchOutput,
+        extractMetrics: () => ({}),
+      },
+    ),
+  );
+
+  groqChannels.batchesRetrieve.intercept((target, receiver, args, additional) =>
+    traceAsyncCall<typeof groqChannels.batchesRetrieve>(
+      () =>
+        runWithAutoInstrumentationSuppressed(() =>
+          Reflect.apply(target, receiver, args),
+        ),
+      { ...additional, arguments: args, self: receiver },
+      {
+        instrumentationName: INSTRUMENTATION_NAMES.GROQ,
+        name: "groq.batches.retrieve",
+        type: SpanTypeAttribute.TASK,
+        extractInput: ([arg]) => ({
+          input: { id: arg },
+          metadata: { provider: "groq" },
+        }),
+        extractOutput: extractBatchOutput,
+        extractMetrics: () => ({}),
+      },
+    ),
   );
 
   groqChannels.audioSpeechCreate.intercept(

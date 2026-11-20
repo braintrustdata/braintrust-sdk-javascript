@@ -5,6 +5,8 @@ import type {
   GroqAudioTextResult,
   GroqAudioTranscriptionCreateParams,
   GroqAudioTranslationCreateParams,
+  GroqBatch,
+  GroqBatchCreateParams,
   GroqChatCompletion,
   GroqChatCompletionChunk,
   GroqChatCreateParams,
@@ -23,6 +25,16 @@ export const groqChannels = defineInterceptor("groq-sdk", {
     GroqChatCompletionChunk
   >({
     channelName: "chat.completions.create",
+  }),
+
+  batchesCreate: channel<
+    [GroqBatchCreateParams, unknown?],
+    PromiseLike<GroqBatch>
+  >({
+    channelName: "batches.create",
+  }),
+  batchesRetrieve: channel<[string, unknown?], PromiseLike<GroqBatch>>({
+    channelName: "batches.retrieve",
   }),
 
   embeddingsCreate: channel<

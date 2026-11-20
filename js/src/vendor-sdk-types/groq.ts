@@ -133,7 +133,28 @@ export interface GroqAudio {
   translations?: GroqAudioTranslations;
 }
 
+export interface GroqBatchCreateParams {
+  endpoint: string;
+  completion_window: string;
+  input_file_id: string;
+}
+
+export interface GroqBatch {
+  id: string;
+  status: string;
+  request_counts?: { total: number; completed: number; failed: number } | null;
+}
+
+export interface GroqBatches {
+  create(
+    params: GroqBatchCreateParams,
+    options?: unknown,
+  ): OpenAIAPIPromise<GroqBatch>;
+  retrieve(id: string, options?: unknown): OpenAIAPIPromise<GroqBatch>;
+}
+
 export interface GroqClient {
+  batches?: GroqBatches;
   audio?: GroqAudio;
   chat?: GroqChat;
   embeddings?: GroqEmbeddings;
