@@ -15,6 +15,24 @@ export const groqConfigs: InstrumentationConfig[] = [
     },
   },
   {
+    channelName: groqChannels.batchesCreate.channelName,
+    module: {
+      name: "groq-sdk",
+      versionRange: ">=1.0.0",
+      filePath: "resources/batches.mjs",
+    },
+    functionQuery: { className: "Batches", methodName: "create" },
+  },
+  {
+    channelName: groqChannels.batchesRetrieve.channelName,
+    module: {
+      name: "groq-sdk",
+      versionRange: ">=1.0.0",
+      filePath: "resources/batches.mjs",
+    },
+    functionQuery: { className: "Batches", methodName: "retrieve" },
+  },
+  {
     channelName: groqChannels.embeddingsCreate.channelName,
     module: {
       name: "groq-sdk",

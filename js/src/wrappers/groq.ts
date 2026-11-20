@@ -6,6 +6,7 @@ import type {
   GroqAudioSpeech,
   GroqAudioTranscriptions,
   GroqAudioTranslations,
+  GroqBatches,
   GroqChat,
   GroqChatCompletion,
   GroqChatCreateParams,
@@ -41,6 +42,10 @@ function hasFunction(value: unknown, methodName: string): boolean {
   );
 }
 
+function hasBatches(value: unknown): value is GroqBatches {
+  return hasFunction(value, "create") && hasFunction(value, "retrieve");
+}
+
 function hasChat(value: unknown): value is GroqChat {
   return (
     isRecord(value) &&
@@ -67,7 +72,8 @@ function hasAudio(value: unknown): value is GroqAudio {
 function isSupportedGroqClient(value: unknown): value is GroqClient {
   return (
     isRecord(value) &&
-    ((value.audio !== undefined && hasAudio(value.audio)) ||
+    (hasBatches(value.batches) ||
+      (value.audio !== undefined && hasAudio(value.audio)) ||
       (value.chat !== undefined && hasChat(value.chat)) ||
       (value.embeddings !== undefined && hasEmbeddings(value.embeddings)))
   );
@@ -98,6 +104,32 @@ function groqProxy(groq: GroqClient): GroqClient {
             return completionProxy ?? target.completions;
           }
 
+          return Reflect.get(target, prop, receiver);
+        },
+      })
+    : undefined;
+
+  const batchesProxy = hasBatches(groq.batches)
+    ? new Proxy(groq.batches, {
+        get(target, prop, receiver) {
+          if (prop === "create") {
+            return (...args: Parameters<GroqBatches["create"]>) =>
+              groqChannels.batchesCreate.invoke(
+                target.create,
+                target,
+                args,
+                {},
+              );
+          }
+          if (prop === "retrieve") {
+            return (...args: Parameters<GroqBatches["retrieve"]>) =>
+              groqChannels.batchesRetrieve.invoke(
+                target.retrieve,
+                target,
+                args,
+                {},
+              );
+          }
           return Reflect.get(target, prop, receiver);
         },
       })
@@ -175,6 +207,8 @@ function groqProxy(groq: GroqClient): GroqClient {
           return audioProxy ?? target.audio;
         case "chat":
           return chatProxy ?? target.chat;
+        case "batches":
+          return batchesProxy ?? target.batches;
         case "embeddings":
           return embeddingsProxy ?? target.embeddings;
       }
