@@ -1,11 +1,13 @@
-import { describe } from "vite-plus/test";
+import { describe, expect, test } from "vite-plus/test";
 import { describeVariant } from "../../helpers/describe-variant";
 import { resolve } from "node:path";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
   resolveScenarioDir,
+  withScenarioHarness,
 } from "../../helpers/scenario-harness";
+import { findAllSpans } from "../../helpers/trace-selectors";
 import { defineGroqInstrumentationAssertions } from "./assertions";
 import { GROQ_SCENARIO_TIMEOUT_MS } from "./scenario.impl.mjs";
 
@@ -39,6 +41,57 @@ const groqScenarios = await Promise.all(
 describe.concurrent("variants", () => {
   for (const scenario of groqScenarios) {
     describeVariant(`groq sdk ${scenario.version}`, () => {
+      test.each(["wrapped", "auto"])(
+        "traces batch operations (%s)",
+        async (mode) => {
+          await withScenarioHarness(async (harness) => {
+            await harness.runNodeScenarioDir({
+              entry: "batch.mjs",
+              scenarioDir,
+              nodeArgs:
+                mode === "auto" ? ["--import", "braintrust/hook.mjs"] : [],
+              env: {
+                GROQ_PACKAGE_NAME: scenario.dependencyName,
+                GROQ_WRAP: String(mode === "wrapped"),
+              },
+            });
+            const events = harness.events();
+            const creates = findAllSpans(events, "groq.batches.create");
+            expect(creates).toHaveLength(1);
+            expect(creates[0].input).toEqual({
+              endpoint: "/v1/chat/completions",
+              input_file_id: "file-input",
+              completion_window: "24h",
+            });
+            expect(creates[0].output).toEqual({
+              id: "batch-test",
+              status: "validating",
+            });
+            const polls = findAllSpans(events, "groq.batches.retrieve");
+            expect(polls).toHaveLength(2);
+            expect(polls).toEqual(
+              expect.arrayContaining([
+                expect.objectContaining({
+                  input: { id: "batch-test" },
+                  output: {
+                    id: "batch-test",
+                    status: "completed",
+                    request_counts: { total: 1, completed: 1, failed: 0 },
+                  },
+                }),
+                expect.objectContaining({
+                  input: { id: "missing" },
+                  row: expect.objectContaining({
+                    error: expect.stringContaining("unknown batch"),
+                  }),
+                }),
+              ]),
+            );
+          });
+        },
+        GROQ_SCENARIO_TIMEOUT_MS,
+      );
+
       defineGroqInstrumentationAssertions({
         name: "wrapped instrumentation",
         runScenario: async ({ runScenarioDir }) => {
