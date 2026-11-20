@@ -127,6 +127,17 @@ export function assertAudioTrace(raw: CapturedLogEvent[]) {
             : "stt",
       );
     }
+    if (event.span.name === "livekit.stt.stream") {
+      expect(event.span.type).toBe("llm");
+      const parent = events.find((e) => e.span.id === event.span.parentIds[0]);
+      expect(parent?.span.name).toBe("session");
+      expect(event.metadata).toMatchObject({
+        "audio.scope": "session",
+        "audio.source_id": "session-input",
+      });
+      expect(event.metadata).not.toHaveProperty("turn.id");
+      expect(event.metadata).not.toHaveProperty("turn.reply_to");
+    }
     expect(event.metadata).not.toHaveProperty("audio.recordings");
     expect(event.metadata).not.toHaveProperty("audio.session");
     expect(event.metadata).not.toHaveProperty("audio.selection");

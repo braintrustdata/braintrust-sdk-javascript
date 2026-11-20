@@ -381,3 +381,73 @@ mise exec -- pnpm run fix:formatting
 mise exec -- pnpm run formatting
 git diff --check
 ```
+
+## Continuous STT session model (2026-11-20)
+
+Starting SDK SHA: `bc4f66b7`. The audio spec on `braintrust-spec/main` still has
+blob SHA `335214e1d44e687aaf25d11c5954496012b66728`; its session model contract
+requires a direct `session` child of type `llm` with `audio.scope: "session"`.
+
+The real demo's OpenAI STT uses LiveKit's `STT.stream()` direct WebSocket rather
+than the OpenAI SDK. Represent that connection as `livekit.stt.stream`, matching
+the framework's public API. The previous call-long `stt` wrapper is removed.
+Discrete `recognize()` requests retain `stt -> provider model` or
+`stt -> livekit.stt`, according to actual client ownership. `transcript_received`
+still records receipt time and native user-turn membership. This does not add
+LiveKit `RealtimeModel`/duplex support or change audio encoding/capture policy.
+
+The first new unit regression failed against the starting implementation: a
+stream started during an open turn had no session model operation and created
+an `stt` wrapper. After the change it checks direct session parenting across two
+turns, model usage once, receipt membership, and no model payload or metadata
+pollution on `session`. Additional tests cover connection failure and concurrent
+redaction contexts; existing retry, buffered-output, cancellation and shutdown
+tests now assert the continuous span shape. The recorded streaming scenarios
+also cover OpenAI SDK instrumentation disabled, across automatic/manual/combined
+LiveKit modes and both dependency variants.
+
+Commands from the root (`SDK864_NODE_BIN` is the pinned Node 26.8.2 binary
+folder defined above):
+
+```sh
+mise install
+mise exec -- pnpm exec env PATH="$SDK864_NODE_BIN:$PATH" node ./node_modules/vite-plus/bin/vp run -r build
+mise exec -- pnpm --dir js run check:typings
+# Explicit pinned Node for source/test typing and lint checks.
+mise exec -- pnpm --dir js exec env PATH="$SDK864_NODE_BIN:$PATH" node ./node_modules/typescript/bin/tsc --noEmit
+mise exec -- pnpm --dir js exec env PATH="$SDK864_NODE_BIN:$PATH" node ./node_modules/typescript/bin/tsc --noEmit -p tsconfig.test.json
+# Same twelve-file unit selection from the preceding stack section: 445 passed.
+mise exec -- pnpm --dir js exec env PATH="$SDK864_NODE_BIN:$PATH" node ./node_modules/vitest/vitest.mjs run src/auto-instrumentations/orchestrion-js/transforms.test.ts src/instrumentation/providers/livekit-plugin.test.ts src/wrappers/livekit.test.ts src/instrumentation/providers/livekit-wrapping.test.ts src/instrumentation/providers/livekit-client-ownership.test.ts src/instrumentation/providers/openai-media.test.ts src/instrumentation/providers/openai-instrumentation.test.ts src/wrappers/attachment-utils.test.ts src/attachment-capture.test.ts src/span-customizer.test.ts src/logger-json-attachment.test.ts src/logger/lifecycle.test.ts
+mise exec -- pnpm --dir e2e exec env PATH="$SDK864_NODE_BIN:$PATH" node ./scripts/run-e2e-tests.mjs --update livekit-instrumentation
+# Two focused normal replays, then the full audited replay (third normal pass).
+mise exec -- pnpm --dir e2e exec env PATH="$SDK864_NODE_BIN:$PATH" node ./scripts/run-e2e-tests.mjs livekit-instrumentation -t 'streaming-cascade order|diarized two-caller'
+mise exec -- pnpm --dir e2e exec env PATH="$SDK864_NODE_BIN:$PATH" node ./scripts/run-e2e-tests.mjs livekit-instrumentation -t 'streaming-cascade order|diarized two-caller'
+mise exec -- pnpm --dir e2e exec env PATH="$SDK864_NODE_BIN:$PATH" node ./scripts/run-e2e-tests.mjs --check-cassettes livekit-instrumentation
+mise exec -- pnpm run lint
+mise exec -- pnpm exec env PATH="$SDK864_NODE_BIN:$PATH" node ./node_modules/vite-plus/bin/vp lint .
+mise exec -- pnpm run fix:formatting
+mise exec -- pnpm run formatting
+git diff --check
+```
+
+Fresh follow-up results:
+
+- 445 unit/regression tests passed in the twelve-file selection above.
+- Workspace build, SDK source/test typing, root lint, and explicit pinned-Node
+  source/test typing and lint checks passed.
+- Snapshot regeneration passed all 98 LiveKit cases. Four JSON/text pairs
+  changed. A structural comparison confirmed the sole tree change in each:
+  replace `stt -> livekit.stt` with `livekit.stt.stream`, add session scope and
+  source identity, and retain the model payloads and metrics. Other spans,
+  payloads, relationships and EOU data are identical.
+- The 14 streaming/diarization cases passed two consecutive normal replays;
+  84 unrelated cases were filtered in each focused run.
+- The final full normal replay passed all 98 cases with no skipped tests and
+  zero unused cassette variants. It is the third normal pass for every changed
+  streaming/diarization case after paired snapshot regeneration.
+
+Tested pinned/latest dependencies: agents and OpenAI plugin 1.9.1/1.10.0,
+RTC 1.1.0/1.2.2, OpenAI SDK 6.49.0. No provider cassettes were changed or
+rerecorded. The previous 787-case provider matrix predates this follow-up;
+provider instrumentation code is unchanged. Historical qualification limits
+above remain visible. Fresh logs are `/tmp/sdk864-stream-*.log`.

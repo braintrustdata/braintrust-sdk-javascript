@@ -1278,23 +1278,27 @@ class LiveKitTracing {
         : state.root;
     const recognition =
       state === activityState ? activity.audioRecognition : undefined;
-    const parent =
-      kind === "stt"
+    // A recognition stream spans the listening session, potentially many turns.
+    // Discrete recognize() requests retain their framework task wrapper.
+    const sessionModel = kind === "stt" && method === "stream";
+    const sttTask = kind === "stt" && !sessionModel;
+    const parent = sessionModel
+      ? state.root
+      : kind === "stt"
         ? (this.openTurn(recognition ?? {}) ?? nativeParent)
         : nativeParent;
-    const wrapper =
-      kind === "stt"
-        ? withInstrumentationContentPolicy(
-            this.policy(() => parent),
-            () =>
-              parent.span.startSpan(
-                withSpanInstrumentationName(
-                  { name: "stt", type: "task" as const },
-                  INSTRUMENTATION_NAMES.LIVEKIT,
-                ),
+    const wrapper = sttTask
+      ? withInstrumentationContentPolicy(
+          this.policy(() => parent),
+          () =>
+            parent.span.startSpan(
+              withSpanInstrumentationName(
+                { name: "stt", type: "task" as const },
+                INSTRUMENTATION_NAMES.LIVEKIT,
               ),
-          )
-        : parent.span;
+            ),
+        )
+      : parent.span;
     const run = <R>(fn: () => R) =>
       withInstrumentationContentPolicy(
         this.policy(() => parent),
@@ -1323,11 +1327,15 @@ class LiveKitTracing {
       isEnvFlagEnabled(
         kind === "stt" ? CAPTURE_USER_AUDIO : CAPTURE_AGENT_AUDIO,
       );
-    const metadata =
-      runInstrumentation(() => ({
+    const metadata = {
+      ...(runInstrumentation(() => ({
         model: service.model,
         provider: service.provider,
-      })) ?? {};
+      })) ?? {}),
+      ...(sessionModel
+        ? { "audio.scope": "session", "audio.source_id": "session-input" }
+        : {}),
+    };
     const flushAudio = () => {
       if (!audioBytes || !audioFormat || !model) return;
       if (capture()) {
@@ -1383,8 +1391,8 @@ class LiveKitTracing {
       audioBytes += frame.data.byteLength;
       if (audioBytes >= this.streamingAttachmentBufferBytes) flushAudio();
     };
-    wrapper.log({ metadata });
-    if (kind === "stt")
+    if (!sessionModel) wrapper.log({ metadata });
+    if (sttTask)
       wrapper.log({
         metadata: {
           ...metadata,
@@ -1400,7 +1408,7 @@ class LiveKitTracing {
         wrapper.startSpan(
           withSpanInstrumentationName(
             {
-              name: `livekit.${kind === "llm" ? "llm_response" : kind}`,
+              name: `livekit.${sessionModel ? "stt.stream" : kind === "llm" ? "llm_response" : kind}`,
               type: "llm" as const,
               startTime: started,
             },
@@ -1503,22 +1511,23 @@ class LiveKitTracing {
         recognizedEvents.set(value, {
           span: wrapper,
           parent,
-          continuous: method === "stream",
+          continuous: sessionModel,
         });
-        wrapper.log({
-          output: [{ role: "user", content: transcript }],
-          metadata: {
-            "audio.source_id": "session-input",
-            ...(parent.turn
-              ? { "turn.id": state.rows.get(parent.turn)?.span.spanId }
-              : {}),
-            ...speakerIds(
-              state,
-              recognition ?? service,
-              alternative.speakerId || undefined,
-            ),
-          },
-        });
+        if (!sessionModel)
+          wrapper.log({
+            output: [{ role: "user", content: transcript }],
+            metadata: {
+              "audio.source_id": "session-input",
+              ...(parent.turn
+                ? { "turn.id": state.rows.get(parent.turn)?.span.spanId }
+                : {}),
+              ...speakerIds(
+                state,
+                recognition ?? service,
+                alternative.speakerId || undefined,
+              ),
+            },
+          });
       }
     };
     const endModel = (error?: unknown) => {
@@ -1561,7 +1570,7 @@ class LiveKitTracing {
       state.operations.delete(finish);
       endModel(error);
       audio.length = 0;
-      if (kind === "stt") {
+      if (sttTask) {
         if (error !== undefined) wrapper.log({ error });
         wrapper.end();
       }

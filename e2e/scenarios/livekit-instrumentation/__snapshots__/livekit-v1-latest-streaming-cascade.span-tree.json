@@ -71,79 +71,57 @@
           }
         },
         {
-          "name": "stt",
-          "type": "task",
-          "children": [
-            {
-              "name": "livekit.stt",
-              "type": "llm",
-              "children": [],
-              "input": {
-                "content": [
-                  {
-                    "file": {
-                      "byte_size": 292800,
-                      "file_data": {
-                        "content_type": "audio/pcm",
-                        "filename": "input-0.pcm",
-                        "key": "<uuid:1>",
-                        "type": "braintrust_attachment"
-                      },
-                      "filename": "input-0.pcm"
-                    },
-                    "type": "file"
-                  }
-                ],
-                "operation": "transcribe"
-              },
-              "output": {
-                "content": [
-                  {
-                    "text": "Where is my order, DMO1042?",
-                    "type": "text"
-                  }
-                ]
-              },
-              "metadata": {
-                "contrib.livekit.audio.segments": [
-                  {
-                    "byte_offset": 0,
-                    "channel_count": 1,
-                    "content_index": 0,
-                    "sample_format": "s16le",
-                    "sample_rate_hz": 24000
-                  }
-                ],
-                "model": "gpt-4o-mini-transcribe",
-                "provider": "<provider-host>",
-                "scenario": "livekit-instrumentation",
-                "testRunId": "<run:1>"
-              },
-              "metrics": {
-                "completion_tokens": 12,
-                "prompt_tokens": 37,
-                "time_to_first_token": 0,
-                "tokens": 49
-              },
-              "context": {
-                "caller_filename": "<node-internal>",
-                "caller_functionname": "<node-internal>",
-                "caller_lineno": 0
+          "name": "livekit.stt.stream",
+          "type": "llm",
+          "children": [],
+          "input": {
+            "content": [
+              {
+                "file": {
+                  "byte_size": 292800,
+                  "file_data": {
+                    "content_type": "audio/pcm",
+                    "filename": "input-0.pcm",
+                    "key": "<uuid:1>",
+                    "type": "braintrust_attachment"
+                  },
+                  "filename": "input-0.pcm"
+                },
+                "type": "file"
               }
-            }
-          ],
-          "output": [
-            {
-              "content": "Where is my order, DMO1042?",
-              "role": "user"
-            }
-          ],
+            ],
+            "operation": "transcribe"
+          },
+          "output": {
+            "content": [
+              {
+                "text": "Where is my order, DMO1042?",
+                "type": "text"
+              }
+            ]
+          },
           "metadata": {
+            "audio.scope": "session",
             "audio.source_id": "session-input",
+            "contrib.livekit.audio.segments": [
+              {
+                "byte_offset": 0,
+                "channel_count": 1,
+                "content_index": 0,
+                "sample_format": "s16le",
+                "sample_rate_hz": 24000
+              }
+            ],
             "model": "gpt-4o-mini-transcribe",
             "provider": "<provider-host>",
             "scenario": "livekit-instrumentation",
             "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "completion_tokens": 12,
+            "prompt_tokens": 37,
+            "time_to_first_token": 0,
+            "tokens": 49
           },
           "context": {
             "caller_filename": "<node-internal>",

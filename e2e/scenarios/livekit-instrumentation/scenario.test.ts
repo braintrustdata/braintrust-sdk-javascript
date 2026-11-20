@@ -739,71 +739,87 @@ for (const variant of variants) {
           });
         }, 120000);
 
-  for (const mode of ["auto", "wrapped", "wrapped-auto"] as const)
-    test(`${variant} ${mode} streaming-cascade order conversation`, async () => {
-      await withScenarioHarness(async (harness) => {
-        await harness.runNodeScenarioDir(
-          scenarioOptions(variant, {
-            cassette: "streaming-cascade",
-            mode,
-            env: {
-              LIVEKIT_STREAMING_STT: "1",
-              LIVEKIT_WS_PATH: `${originalScenarioDir}/__cassettes__/${variant}-streaming-cascade.websocket.json`,
-              BRAINTRUST_E2E_CASSETTE_MODE:
-                process.env.BRAINTRUST_E2E_CASSETTE_MODE ?? "replay",
-              OPENAI_API_KEY: process.env.OPENAI_API_KEY ?? "replay",
-            },
-          }),
-        );
-        const events = assertAudioTrace(harness.events());
-        const user = findLatestSpan(events, "user_speech");
-        // User speech is observed audio: its source and its place on the
-        // timeline, from LiveKit's local VAD, but no text.
-        expect(user?.metadata?.["audio.source_id"]).toBe("session-input");
-        expect(user?.row.input).toBeUndefined();
-        expect(selectionsOf(user)).toHaveLength(1);
-        expect(
-          selectionsOf(
-            findAllSpans(events, "user_turn").find((e) => e.row.input),
-          ),
-        ).toHaveLength(1);
-        // Each SDK request has one model child, including combined LiveKit hooks.
-        const responses = findAllSpans(events, "llm_response");
-        const completions = findAllSpans(events, "Chat Completion");
-        expect(responses).toHaveLength(2);
-        expect(completions).toHaveLength(2);
-        for (const response of responses) {
-          const requests = completions.filter(
-            (model) => model.span.parentIds[0] === response.span.id,
+  for (const providerDisabled of [false, true])
+    for (const mode of ["auto", "wrapped", "wrapped-auto"] as const)
+      test(`${variant} ${mode} streaming-cascade order conversation${providerDisabled ? " provider disabled" : ""}`, async () => {
+        await withScenarioHarness(async (harness) => {
+          await harness.runNodeScenarioDir(
+            scenarioOptions(variant, {
+              cassette: "streaming-cascade",
+              mode,
+              env: {
+                LIVEKIT_STREAMING_STT: "1",
+                ...(providerDisabled
+                  ? { LIVEKIT_OPENAI_INTEGRATION: "off" }
+                  : {}),
+                LIVEKIT_WS_PATH: `${originalScenarioDir}/__cassettes__/${variant}-streaming-cascade.websocket.json`,
+                BRAINTRUST_E2E_CASSETTE_MODE:
+                  process.env.BRAINTRUST_E2E_CASSETTE_MODE ?? "replay",
+                OPENAI_API_KEY: process.env.OPENAI_API_KEY ?? "replay",
+              },
+            }),
           );
-          expect(requests).toHaveLength(1);
-          expect(requests[0].metrics?.tokens).toBeGreaterThan(0);
-        }
-        // Receipt-only transcripts link the model to the turn it answers.
-        const stt = findAllSpans(events, "transcript_received");
-        expect(stt.length).toBeGreaterThan(0);
-        expect(contextLinks(findAllSpans(events, "llm_response")[0])).toEqual(
-          stt.map((span) => span.span.id),
-        );
-        const waits = findAllSpans(events, "eou_wait");
-        expect(waits.length).toBeGreaterThan(0);
-        for (const wait of waits) {
-          expect(wait.span.type).toBe("task");
-          expect(wait.metadata).toMatchObject({
-            "eou.outcome": "committed",
-            "eou.speech_end_source": "vad",
-            "audio.source_id": "session-input",
-          });
-          expect(wait.metadata?.["turn.id"]).toBe(wait.span.parentIds[0]);
-          expect(wait.metadata).not.toHaveProperty("eou.end_reason");
-          expect(wait.metadata).not.toHaveProperty("eou.detection_methods");
-          expect(wait.metrics?.end).toBeGreaterThanOrEqual(
-            wait.metrics?.start as number,
+          const events = assertAudioTrace(harness.events());
+          const user = findLatestSpan(events, "user_speech");
+          // User speech is observed audio: its source and its place on the
+          // timeline, from LiveKit's local VAD, but no text.
+          expect(user?.metadata?.["audio.source_id"]).toBe("session-input");
+          expect(user?.row.input).toBeUndefined();
+          expect(selectionsOf(user)).toHaveLength(1);
+          expect(
+            selectionsOf(
+              findAllSpans(events, "user_turn").find((e) => e.row.input),
+            ),
+          ).toHaveLength(1);
+          // Each SDK request has one model child, including combined LiveKit hooks.
+          const responses = findAllSpans(events, "llm_response");
+          const completions = findAllSpans(events, "Chat Completion");
+          expect(responses).toHaveLength(2);
+          expect(completions).toHaveLength(providerDisabled ? 0 : 2);
+          for (const response of responses) {
+            const requests = completions.filter(
+              (model) => model.span.parentIds[0] === response.span.id,
+            );
+            expect(requests).toHaveLength(providerDisabled ? 0 : 1);
+            if (!providerDisabled)
+              expect(requests[0].metrics?.tokens).toBeGreaterThan(0);
+          }
+          const session = findLatestSpan(events, "session");
+          const recognition = findAllSpans(events, "livekit.stt.stream");
+          expect(recognition).toHaveLength(1);
+          expect(recognition[0].span.parentIds).toEqual([session?.span.id]);
+          expect(recognition[0].metrics?.tokens).toBeGreaterThan(0);
+          expect(findAllSpans(events, "stt")).toHaveLength(0);
+          expect(findAllSpans(events, "livekit.stt")).toHaveLength(0);
+          expect(session?.row.output).toBeUndefined();
+          expect(session?.row.input).not.toHaveProperty("operation");
+          expect(session?.metadata).not.toHaveProperty("audio.scope");
+          // Receipt-only transcripts link the model to the turn it answers.
+          const stt = findAllSpans(events, "transcript_received");
+          expect(stt.length).toBeGreaterThan(0);
+          expect(contextLinks(findAllSpans(events, "llm_response")[0])).toEqual(
+            stt.map((span) => span.span.id),
           );
-        }
-        await snapshotTrace(events, `${variant}-streaming-cascade`);
-      });
-    }, 120000);
+          const waits = findAllSpans(events, "eou_wait");
+          expect(waits.length).toBeGreaterThan(0);
+          for (const wait of waits) {
+            expect(wait.span.type).toBe("task");
+            expect(wait.metadata).toMatchObject({
+              "eou.outcome": "committed",
+              "eou.speech_end_source": "vad",
+              "audio.source_id": "session-input",
+            });
+            expect(wait.metadata?.["turn.id"]).toBe(wait.span.parentIds[0]);
+            expect(wait.metadata).not.toHaveProperty("eou.end_reason");
+            expect(wait.metadata).not.toHaveProperty("eou.detection_methods");
+            expect(wait.metrics?.end).toBeGreaterThanOrEqual(
+              wait.metrics?.start as number,
+            );
+          }
+          if (!providerDisabled)
+            await snapshotTrace(events, `${variant}-streaming-cascade`);
+        });
+      }, 120000);
 
   // Two callers share one microphone; diarized STT tells their voices apart.
   test(`${variant} diarized two-caller conversation`, async () => {

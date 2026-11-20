@@ -1,6 +1,6 @@
 # SDK-864: review the local stack
 
-Review the four local commits on `davidelner/sdk-864-typescript-livekit-cascade-cleanup`,
+Review the four-layer local stack on `davidelner/sdk-864-typescript-livekit-cascade-cleanup`,
 starting after `c26ce3c7cc2d084441505800f5fcb7c1e205be4d` (latest fetched `main`,
 2026-11-19). Nothing has been pushed; no PR has been opened. The original pre-stack implementation is preserved in
 local safety stash `ebabaf72` (including its originally untracked files).
@@ -116,7 +116,8 @@ explicit SDK-client ownership contract.
 
 The rebase retains main's end-of-utterance lifecycle and audio schema 3.1.0.
 Receipt-only callbacks remain `transcript_received`, including the new EOU
-regressions; an observed recognition service operation still owns an `stt` task.
+regressions; a discrete recognition request still owns an `stt` task. The
+session-stream follow-up below supersedes that task shape for continuous STT.
 The streaming conversation now runs in automatic, manual, and combined modes,
 alongside main's six recognition-lifecycle cases.
 
@@ -135,3 +136,44 @@ regeneration of both snapshot files. No provider cassettes were rerecorded.
 Pinned/latest versions remain agents/plugin 1.9.1/1.10.0, RTC 1.1.0/1.2.2 and
 OpenAI 6.49.0. Exact commands and the fixture reproduction are in the review
 notes under “Rebase checks (2026-11-19)”.
+
+## Continuous recognition follow-up (2026-11-20)
+
+Review the additional local commit after `bc4f66b7` on layer 4. The other three
+branch endpoints are unchanged. The production sample exposed a continuous
+recognition connection represented as a call-long `stt` task and model child.
+It now follows the audio schema's session model operation contract:
+
+```text
+session : task
+├─ livekit.stt.stream : llm       audio.scope=session; actual connection lifetime
+├─ user_turn : task
+│  └─ transcript_received : task
+└─ agent_turn : task
+   ├─ llm_response : task
+   │  └─ Chat Completion : llm
+   └─ tts : task
+      └─ openai.audio.speech.create : llm
+```
+
+`livekit.stt.stream` mirrors LiveKit's `STT.stream()`/`SpeechStream`; the demo
+does not use LiveKit's separate `RealtimeModel` API. OpenAI's stock stream uses
+LiveKit's direct WebSocket, so it remains LiveKit-owned even when OpenAI SDK
+instrumentation is disabled. Discrete `recognize()` calls retain their existing
+`stt` task and ownership rules. No audio compression or native diagnostic-span
+filtering is included in this follow-up.
+
+Review the new regressions for a stream started during an existing turn, receipt
+membership across two turns, root payload isolation, connection failure,
+concurrent privacy contexts, retry-local output/usage, cancellation and session
+shutdown. The recorded streaming conversation now also runs with OpenAI SDK
+instrumentation disabled in automatic, manual and combined modes for both
+dependency versions. Its direct-WebSocket model remains present, while SDK chat
+children disappear. See the dated follow-up in `livekit-cascade-cleanup-review.md`
+for fresh commands and results.
+
+Fresh follow-up checks: 445 unit/regression tests; build; source/test typings;
+root lint/format; 98-case snapshot regeneration; two 14-case normal streaming/
+diarization replays; then a full normal 98-case replay with no skipped tests and
+zero unused cassette variants. The changed cases passed three normal replays
+after snapshot regeneration. No provider traffic was rerecorded.
