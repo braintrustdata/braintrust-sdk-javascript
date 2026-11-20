@@ -30,6 +30,7 @@ import type {
 
 import { traceAsyncCall, traceStreamingCall } from "../core/tracing";
 import { isAsyncIterable, observeByteStream } from "../core/stream-patcher";
+import { runWithAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
 import { groqChannels } from "./groq-interceptors";
 import {
   aggregateChatCompletionChunks,
@@ -112,7 +113,10 @@ export function registerGroqInstrumentation(): void {
 
   groqChannels.batchesCreate.intercept((target, receiver, args, additional) =>
     traceAsyncCall<typeof groqChannels.batchesCreate>(
-      () => Reflect.apply(target, receiver, args),
+      () =>
+        runWithAutoInstrumentationSuppressed(() =>
+          Reflect.apply(target, receiver, args),
+        ),
       { ...additional, arguments: args, self: receiver },
       {
         instrumentationName: INSTRUMENTATION_NAMES.GROQ,
@@ -134,7 +138,10 @@ export function registerGroqInstrumentation(): void {
 
   groqChannels.batchesRetrieve.intercept((target, receiver, args, additional) =>
     traceAsyncCall<typeof groqChannels.batchesRetrieve>(
-      () => Reflect.apply(target, receiver, args),
+      () =>
+        runWithAutoInstrumentationSuppressed(() =>
+          Reflect.apply(target, receiver, args),
+        ),
       { ...additional, arguments: args, self: receiver },
       {
         instrumentationName: INSTRUMENTATION_NAMES.GROQ,

@@ -41,7 +41,7 @@ const groqScenarios = await Promise.all(
 describe.concurrent("variants", () => {
   for (const scenario of groqScenarios) {
     describeVariant(`groq sdk ${scenario.version}`, () => {
-      test.each(["wrapped", "auto"])(
+      test.each(["wrapped", "auto", "both"])(
         "traces batch operations (%s)",
         async (mode) => {
           await withScenarioHarness(async (harness) => {
@@ -49,10 +49,10 @@ describe.concurrent("variants", () => {
               entry: "batch.mjs",
               scenarioDir,
               nodeArgs:
-                mode === "auto" ? ["--import", "braintrust/hook.mjs"] : [],
+                mode !== "wrapped" ? ["--import", "braintrust/hook.mjs"] : [],
               env: {
                 GROQ_PACKAGE_NAME: scenario.dependencyName,
-                GROQ_WRAP: String(mode === "wrapped"),
+                GROQ_WRAP: String(mode !== "auto"),
               },
             });
             const events = harness.events();
