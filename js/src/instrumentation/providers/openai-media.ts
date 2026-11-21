@@ -1,3 +1,7 @@
+import {
+  openAIAudioAttachment,
+  openAIAudioCaptureEnabled,
+} from "./openai-audio";
 import type {
   ArgsOf,
   InvocationAdditionalOf,
@@ -18,7 +22,6 @@ import {
 import {
   convertDataToBlob,
   getExtensionFromMediaType,
-  isAudioCaptureEnabled,
 } from "../../wrappers/attachment-utils";
 import { isObject } from "../../../util/index";
 import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
@@ -70,6 +73,11 @@ function mediaAttachment(
   if (!captureAttachments) return "<omitted>";
   const blob =
     value instanceof Blob ? value : convertDataToBlob(value, contentType);
+  if (blob && contentType.startsWith("audio/"))
+    return openAIAudioAttachment(
+      blob.type ? blob : new Blob([blob], { type: contentType }),
+      filename,
+    );
   if (blob)
     return new Attachment({
       data: blob,
@@ -421,7 +429,11 @@ function observeSpeech(
             type: "file",
             file: {
               filename,
-              file_data: new Attachment({ data: blob, contentType, filename }),
+              file_data: openAIAudioAttachment(
+                new Blob([blob], { type: contentType }),
+                filename,
+                true,
+              ),
               byte_size: blob.size,
             },
           },
@@ -670,7 +682,7 @@ export function traceOpenAIMedia(
   const captureAttachments = ["transcribe", "translate", "speech"].includes(
     operation,
   )
-    ? isAudioCaptureEnabled(operation === "speech" ? "agent" : "user")
+    ? openAIAudioCaptureEnabled(operation === "speech" ? "agent" : "user")
     : _internalCaptureAttachmentsEnabled();
   let span: Span;
   try {
@@ -804,11 +816,11 @@ export function traceOpenAIMedia(
                       type: "file",
                       file: {
                         filename,
-                        file_data: new Attachment({
-                          data: new Blob(audio, { type: contentType }),
-                          contentType,
+                        file_data: openAIAudioAttachment(
+                          new Blob(audio, { type: contentType }),
                           filename,
-                        }),
+                          true,
+                        ),
                       },
                     },
                   ],

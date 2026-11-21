@@ -1,3 +1,8 @@
+import { withInstrumentationContentPolicy } from "../../instrumentation-content-policy";
+import { setSpanCustomizers } from "../../span-customizer";
+import { extractOpenAIChatInput } from "./openai-span-data";
+import { registry } from "../registry";
+import { _exportsForTestingOnly as audioCodecs } from "../../audio-compression";
 import { registerInstrumentation } from "../registrations/openai";
 import { Readable } from "node:stream";
 import {
@@ -33,6 +38,9 @@ beforeEach(() => {
   });
 });
 afterEach(() => {
+  vi.restoreAllMocks();
+  setSpanCustomizers([]);
+  audioCodecs.reset();
   vi.unstubAllEnvs();
   if (originalAutoCaptureAttachments === undefined) {
     delete process.env.BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS;
@@ -402,4 +410,234 @@ it("explicit logger capture opt-out wins over environment voice opt-ins", async 
       (row) => row.span_attributes?.name === "openai.audio.speech.create",
     ).output,
   ).toEqual({ content: [] });
+});
+
+it("OpenAI audio opt-out retains provider spans, text and unrelated image capture", async () => {
+  vi.spyOn(registry, "integrationConfig").mockReturnValue({ audio: false });
+  const response = new Response(new Uint8Array([1, 2]), {
+    headers: { "content-type": "audio/pcm" },
+  });
+  const read = response.arrayBuffer;
+  await openAIChannels.audioSpeechCreate.invoke(
+    async () => response,
+    undefined,
+    [{ model: "unit", input: "hello", response_format: "pcm" }],
+    {},
+  );
+  expect(response.arrayBuffer).toBe(read);
+  await openAIChannels.audioTranscriptionsCreate.invoke(
+    async () => ({ text: "hello" }),
+    undefined,
+    [
+      {
+        model: "unit",
+        file: new File(["audio"], "input.wav", { type: "audio/wav" }),
+      },
+    ],
+    {},
+  );
+  await openAIChannels.imagesGenerate.invoke(
+    async () => ({ data: [{ b64_json: "AQI=" }] }),
+    undefined,
+    [{ model: "image-unit", prompt: "image" }],
+    {},
+  );
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  const rows = (await background.drain()) as any[];
+  const speech = rows.find(
+    (r) => r.span_attributes?.name === "openai.audio.speech.create",
+  );
+  const stt = rows.find(
+    (r) => r.span_attributes?.name === "openai.audio.transcriptions.create",
+  );
+  const image = rows.find(
+    (r) => r.span_attributes?.name === "openai.images.generate",
+  );
+  expect(speech.output).toEqual({ content: [] });
+  expect(speech.input.prompt).toBe("hello");
+  expect(stt.input.content[0].file.file_data).toBe("<omitted>");
+  expect(stt.output.content).toEqual([{ type: "text", text: "hello" }]);
+  expect(image.output.content[0].image_url.url).toBeInstanceOf(Attachment);
+});
+
+it("speech encoding waits for export and never delays or changes the application read", async () => {
+  const key = Symbol.for("braintrust.audio");
+  const globals = globalThis as Record<symbol, unknown>;
+  const original = globals[key];
+  let encoded = 0;
+  globals[key] = {
+    version: 1,
+    createStack: () => [
+      async (bytes: Uint8Array, meta: any, next: any) => {
+        encoded++;
+        return next(new Uint8Array([79, 103, 103]), {
+          ...meta,
+          mimeType: "audio/ogg",
+          encoding: "opus",
+        });
+      },
+    ],
+  };
+  audioCodecs.reset();
+  try {
+    const response = new Response(new Uint8Array([1, 0, 2, 0]), {
+      headers: { "content-type": "audio/pcm" },
+    });
+    const result = await openAIChannels.audioSpeechCreate.invoke(
+      async () => response,
+      undefined,
+      [{ model: "unit", input: "hello", response_format: "pcm" }],
+      {},
+    );
+    expect(result).toBe(response);
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(
+      new Uint8Array([1, 0, 2, 0]),
+    );
+    expect(encoded).toBe(0);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const rows = (await background.drain()) as any[];
+    const speech = rows.find(
+      (r) => r.span_attributes?.name === "openai.audio.speech.create",
+    );
+    expect(speech.output.content[0].file).toMatchObject({
+      filename: "speech.ogg",
+      byte_size: 3,
+    });
+    expect(speech.output.content[0].file.file_data.reference.content_type).toBe(
+      "audio/ogg",
+    );
+    expect(speech.input.parameters.format).toBe("pcm");
+    expect(encoded).toBe(1);
+  } finally {
+    globals[key] = original;
+  }
+});
+
+it("OpenAI audio opt-out also omits chat audio without removing images or transcripts", async () => {
+  vi.spyOn(registry, "integrationConfig").mockReturnValue({ audio: false });
+  const params = {
+    model: "audio-model",
+    messages: [
+      {
+        role: "user",
+        content: [
+          { type: "input_audio", input_audio: { data: "AQI=", format: "wav" } },
+          {
+            type: "image_url",
+            image_url: { url: "data:image/png;base64,AQI=" },
+          },
+        ],
+      },
+    ],
+  };
+  const result = extractOpenAIChatInput(params).input as any[];
+  expect(result[0].content[0].input_audio).not.toHaveProperty("data");
+  expect(result[0].content[1].image_url.url).toBeInstanceOf(Attachment);
+  expect(params.messages[0].content[0].input_audio?.data).toBe("AQI=");
+  await openAIChannels.chatCompletionsCreate.invoke(
+    async () => ({
+      choices: [
+        {
+          index: 0,
+          message: {
+            role: "assistant",
+            content: null,
+            audio: { data: "AQI=", transcript: "hello", id: "a" },
+          },
+          finish_reason: "stop",
+        },
+      ],
+    }),
+    undefined,
+    [
+      {
+        model: "audio-model",
+        messages: [],
+        audio: { voice: "alloy", format: "pcm16" },
+      },
+    ],
+    {},
+  );
+  const rows = (await background.drain()) as any[];
+  const output = rows.find(
+    (r) => r.span_attributes?.name === "Chat Completion",
+  ).output;
+  expect(output[0].message.audio).toEqual({ transcript: "hello", id: "a" });
+});
+
+it("export redaction removes audio before any encoding work", async () => {
+  const key = Symbol.for("braintrust.audio");
+  const globals = globalThis as Record<symbol, unknown>;
+  const original = globals[key];
+  const createStack = vi.fn(() => {
+    throw Error("must not encode redacted content");
+  });
+  globals[key] = { version: 1, createStack };
+  audioCodecs.reset();
+  setSpanCustomizers([
+    {
+      onSpanExport(data) {
+        delete data.output;
+        return data;
+      },
+    },
+  ]);
+  try {
+    const response = new Response(new Uint8Array([1, 0, 2, 0]), {
+      headers: { "content-type": "audio/pcm" },
+    });
+    await openAIChannels.audioSpeechCreate.invoke(
+      async () => response,
+      undefined,
+      [{ model: "unit", input: "hello", response_format: "pcm" }],
+      {},
+    );
+    await response.arrayBuffer();
+    const rows = (await background.drain()) as any[];
+    expect(rows.every((row) => row.output === undefined)).toBe(true);
+    expect(createStack).not.toHaveBeenCalled();
+  } finally {
+    globals[key] = original;
+  }
+});
+
+it("redaction during deferred encoding prevents the completed audio from exporting", async () => {
+  const key = Symbol.for("braintrust.audio");
+  const globals = globalThis as Record<symbol, unknown>;
+  const original = globals[key];
+  let allowed = true;
+  const encode = vi.fn(async (bytes: Uint8Array, meta: any, next: any) => {
+    await Promise.resolve();
+    allowed = false;
+    return next(bytes, { ...meta, mimeType: "audio/ogg", encoding: "opus" });
+  });
+  globals[key] = { version: 1, createStack: () => [encode] };
+  audioCodecs.reset();
+  try {
+    const response = (await withInstrumentationContentPolicy(
+      {
+        allowed: () => allowed,
+        filterFramework: (data) => data,
+      },
+      () =>
+        openAIChannels.audioSpeechCreate.invoke(
+          async () =>
+            new Response(new Uint8Array([1, 0]), {
+              headers: { "content-type": "audio/pcm" },
+            }),
+          undefined,
+          [{ model: "unit", input: "hello", response_format: "pcm" }],
+          {},
+        ),
+    )) as Response;
+    await response.arrayBuffer();
+    const rows = (await background.drain()) as any[];
+    expect(encode).toHaveBeenCalledTimes(1);
+    for (const row of rows) {
+      expect(row.output?.content ?? []).toEqual([]);
+      expect(row.metadata).not.toHaveProperty("contrib.audio.encodings");
+    }
+  } finally {
+    globals[key] = original;
+  }
 });

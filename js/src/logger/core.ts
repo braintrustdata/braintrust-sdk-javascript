@@ -1,4 +1,5 @@
 /// <reference lib="dom" />
+import { encodeAudioAttachments } from "../audio-attachments";
 import {
   currentInstrumentationContentPolicy,
   filterInstrumentationContent,
@@ -6767,13 +6768,18 @@ export class SpanImpl implements Span {
         this.contentPolicy,
         this.instrumentationName,
       ) as BackgroundLogEvent;
+      const encoded = await encodeAudioAttachments(customized);
       // Background flushes run outside this span's context. Keep its policy on
       // the record without exposing internal metadata to customizers or JSON.
-      Object.defineProperty(customized, CAPTURE_ATTACHMENTS, {
+      Object.defineProperty(encoded, CAPTURE_ATTACHMENTS, {
         value: this[CAPTURE_ATTACHMENTS],
         configurable: true,
       });
-      return customized;
+      return filterInstrumentationContent(
+        encoded as SpanExportData,
+        this.contentPolicy,
+        this.instrumentationName,
+      ) as BackgroundLogEvent;
     };
     this._state.bgLogger().log([new LazyValue(computeRecord)]);
   }

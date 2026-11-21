@@ -1,6 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import OpenAI from "openai";
-import { wrapOpenAI } from "../../wrappers/oai";
 import {
   afterEach,
   beforeAll,
@@ -12,13 +10,13 @@ import {
 } from "vite-plus/test";
 import { EventEmitter } from "node:events";
 import { z } from "zod/v3";
+import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
+import { wrapAnthropic } from "../../wrappers/anthropic";
+import { wrapOpenAI } from "../../wrappers/oai";
+import { currentSpan } from "../../logger/core";
 import { configureNode } from "../../node/config";
-import {
-  currentSpan,
-  Attachment,
-  SpanImpl,
-  initLogger,
-} from "../../logger/core";
+import { Attachment, SpanImpl, initLogger } from "../../logger/core";
 import { _exportsForTestingOnly as logging } from "../../logger/testing";
 import type { LiveKitSpan, SpanTime } from "../../vendor-sdk-types/livekit";
 import type { AudioMiddleware } from "../../audio-middleware";
@@ -26,6 +24,8 @@ import { DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES } from "../config";
 import { channel, defineInterceptor } from "../core/interceptor-definitions";
 import { traceAsyncCall } from "../core/tracing";
 import { _exportsForTestingOnly } from "./livekit-plugin";
+import { recordLiveKitOpenAIClient } from "./livekit-client-ownership";
+import { livekitChannels } from "./livekit-interceptors";
 
 configureNode();
 const { LiveKitTracing, Recording, requestMetadata } = _exportsForTestingOnly;
@@ -166,6 +166,39 @@ const channelSamples = (bytes: Uint8Array, channel: number) => {
 };
 
 describe("tracing", () => {
+  test("model wrappers own duration only", async () => {
+    const root = start("agent_session");
+    const model = start("llm_node", root, {
+      "lk.response.ttft": 0.1,
+      "gen_ai.usage.input_tokens": 10,
+    });
+    model.end();
+    const row = (await rows()).one("llm_response");
+    expect(row.span_attributes.type).toBe("task");
+    expect(row.metrics.prompt_tokens).toBeUndefined();
+    expect(row.metrics.time_to_first_token).toBeUndefined();
+    expect(row.metadata["gen_ai.usage.input_tokens"]).toBeUndefined();
+    expect(row.metadata["contrib.livekit.response.ttft"]).toBeUndefined();
+  });
+  test("final-only transcript observation is a receipt", async () => {
+    const root = start("agent_session");
+    const user = start("user_turn", root);
+    tracing.stt(
+      { userTurnSpan: user },
+      {
+        type: 2,
+        createdAt: 2000,
+        alternatives: [{ text: "hello" }],
+      },
+    );
+    const captured = await rows();
+    expect(captured.named("stt")).toHaveLength(0);
+    expect(captured.one("transcript_received").metrics).toMatchObject({
+      start: 2,
+      end: 2,
+    });
+  });
+
   test("maps a voice conversation to standard spans, messages, metrics and turn links", async () => {
     const root = start("agent_session");
     const user = start("user_turn", root);
@@ -186,12 +219,12 @@ describe("tracing", () => {
         { call_id: "call-1", name: "lookup_order", arguments: '{"id":1042}' },
       ]),
     });
-    // Native request spans fold into the model span, contributing usage.
+    // Native requests fold into the operation wrapper without copying usage.
     const request = start("llm_request", model, {
       "gen_ai.usage.input_tokens": 10,
       "gen_ai.usage.output_tokens": 3,
     });
-    // Attempts export under the model span. A retried attempt's failure does
+    // Attempts export under the wrapper. A retried attempt's failure does
     // not fail the model response.
     const failed = start("llm_request_run", request, { "lk.retry_count": 0 });
     failed.recordException(new Error("timed out"));
@@ -250,7 +283,7 @@ describe("tracing", () => {
     const llm = one("llm_response");
     expect(llm).toMatchObject({
       span_parents: [agentTurn.span_id],
-      span_attributes: { type: "llm" },
+      span_attributes: { type: "task" },
       input: [
         { role: "user", content: "Order 1042?" },
         { role: "tool", content: "Sunday", tool_call_id: "old" },
@@ -269,10 +302,6 @@ describe("tracing", () => {
         },
       ],
       metrics: {
-        prompt_tokens: 10,
-        completion_tokens: 3,
-        tokens: 13,
-        time_to_first_token: 0.2,
         start: 1,
         end: 2,
       },
@@ -362,7 +391,7 @@ describe("tracing", () => {
     tool.end();
     let continuation!: NativeSpan;
     tracing.scope(turn, () => {
-      tracing.inference(() => {
+      {
         continuation = start("llm_node", turn, {
           "lk.pii.chat_ctx": JSON.stringify({
             items: [
@@ -374,7 +403,7 @@ describe("tracing", () => {
             ],
           }),
         });
-      });
+      }
       // Created after the continuation started in this scope, so it generated them.
       start("tts_node", turn).end();
       const speech = start("agent_speaking", turn);
@@ -400,7 +429,7 @@ describe("tracing", () => {
       attributes: { "braintrust.relationship.type": type },
     });
     const [first, second] = named("llm_response");
-    const [stt, rest] = named("stt");
+    const [stt, rest] = named("transcript_received");
     expect(stt).toMatchObject({
       span_parents: [one("user_turn").span_id],
       output: [{ role: "user", content: "Order?" }],
@@ -802,7 +831,7 @@ describe("tracing", () => {
     expect(second.span_parents).toEqual([first.span_id]);
   });
 
-  test("inference suppression preserves results and leaves provider calls in user tools visible", async () => {
+  test("inference preserves provider calls and results, including calls inside user tools", async () => {
     const root = start("agent_session");
     const turn = start("agent_turn", root);
     const channels = defineInterceptor("livekit-test-provider", {
@@ -827,17 +856,17 @@ describe("tracing", () => {
         channels.request.invoke(async () => "answer", undefined, [], {});
       await tracing.scope(turn, async () => {
         expect(
-          await tracing.inference(async () => {
+          await (async () => {
             await Promise.resolve();
             return request();
-          }),
+          })(),
         ).toBe("answer");
         expect(await request()).toBe("answer"); // e.g. a provider call inside a user tool
       });
     } finally {
       unsubscribe();
     }
-    expect((await rows()).named("provider-request")).toHaveLength(1);
+    expect((await rows()).named("provider-request")).toHaveLength(2);
   });
 
   test("shutdown ends open spans as incomplete and makes observers inert", async () => {
@@ -1093,7 +1122,9 @@ describe("eou_wait audio schema", () => {
       ),
     ).toBe("result");
     expect(target).toHaveBeenCalledTimes(1);
-    expect((await rows()).named("stt")).toHaveLength(1);
+    const captured = await rows();
+    expect(captured.named("transcript_received")).toHaveLength(1);
+    expect(captured.named("stt")).toHaveLength(0);
   });
 
   test.each(["dropped", "committed"])(
@@ -1337,7 +1368,10 @@ describe("eou_wait audio schema", () => {
     expect(one("eou_wait").metadata).not.toHaveProperty(
       "eou.detection_methods",
     );
-    expect(one("stt").metrics.end).toBe(2.8);
+    expect(one("transcript_received").metrics).toMatchObject({
+      start: 2.8,
+      end: 2.8,
+    });
   });
 
   test("resume event bounds canonical wait while detector cleanup retains its native interval", async () => {
@@ -1599,7 +1633,7 @@ describe("speech", () => {
     const { named, one } = await rows();
     expect(
       one("llm_response").metadata.links.map((l: any) => l.context.spanId),
-    ).toEqual(named("stt").map((r) => r.span_id));
+    ).toEqual(named("transcript_received").map((r) => r.span_id));
     expect(one("session").metadata).not.toHaveProperty(
       "contrib.livekit.unassociated_messages",
     );
@@ -1612,7 +1646,7 @@ describe("speech", () => {
     createdAt,
   });
 
-  test("an STT span is the recognition: first result to final, under the turn it began in", async () => {
+  test("transcript receipts retain the observed turn even when it closes before finalization", async () => {
     const root = start("agent_session");
     const user = start("user_turn", root);
     const recognition: { userTurnSpan?: NativeSpan } = { userTurnSpan: user };
@@ -1631,15 +1665,15 @@ describe("speech", () => {
     recognition.userTurnSpan = undefined;
     tracing.stt(recognition, final("and we haven't heard anything.", 1_900));
     const { one } = await rows();
-    expect(one("stt")).toMatchObject({
+    expect(one("transcript_received")).toMatchObject({
       span_parents: [one("user_turn").span_id],
-      metrics: { start: 1.1, end: 1.9 },
+      metrics: { start: 1.9, end: 1.9 },
       output: [{ role: "user", content: "and we haven't heard anything." }],
       metadata: { "turn.id": one("user_turn").span_id },
     });
   });
 
-  test("each utterance's recognition starts after the previous final", async () => {
+  test("transcript timestamps describe receipt regardless of interim results", async () => {
     const root = start("agent_session");
     const user = start("user_turn", root);
     const recognition = { userTurnSpan: user };
@@ -1667,14 +1701,16 @@ describe("speech", () => {
     tracing.stt(recognition, final("Where is my order?", 2_600));
     user.end();
     expect(
-      (await rows()).named("stt").map((r) => [r.metrics.start, r.metrics.end]),
+      (await rows())
+        .named("transcript_received")
+        .map((r) => [r.metrics.start, r.metrics.end]),
     ).toEqual([
-      [1, 1.5],
-      [2, 2.6],
+      [1.5, 1.5],
+      [2.6, 2.6],
     ]);
   });
 
-  test("non-streaming recognition starts at the speech the adapter reports", async () => {
+  test("speech events alone do not establish a recognition interval", async () => {
     const root = start("agent_session");
     const user = start("user_turn", root);
     const recognition = { userTurnSpan: user };
@@ -1683,9 +1719,9 @@ describe("speech", () => {
     tracing.stt(recognition, final("Where is my order?", 2_700));
     user.end();
     const { one } = await rows();
-    expect(one("stt")).toMatchObject({
+    expect(one("transcript_received")).toMatchObject({
       span_parents: [one("user_turn").span_id],
-      metrics: { start: 1, end: 2.7 },
+      metrics: { start: 2.7, end: 2.7 },
       metadata: { "turn.id": one("user_turn").span_id },
     });
   });
@@ -1715,15 +1751,15 @@ describe("speech", () => {
     second.end();
     const { named } = await rows();
     const [a, b] = named("user_turn").map((turn) => turn.span_id);
-    expect(named("stt")).toMatchObject([
+    expect(named("transcript_received")).toMatchObject([
       {
         span_parents: [a],
-        metrics: { start: 1.1, end: 1.2 },
+        metrics: { start: 1.2, end: 1.2 },
         metadata: { "turn.id": a },
       },
       {
         span_parents: [b],
-        metrics: { start: 2, end: 2.2 },
+        metrics: { start: 2.2, end: 2.2 },
         metadata: { "turn.id": b },
       },
     ]);
@@ -1739,7 +1775,7 @@ describe("speech", () => {
       final("Hello?", 3_000),
     );
     const { one } = await rows();
-    expect(one("stt")).toMatchObject({
+    expect(one("transcript_received")).toMatchObject({
       span_parents: [one("session").span_id],
       metrics: { start: 3, end: 3 },
     });
@@ -1821,7 +1857,7 @@ describe("speech", () => {
     );
     expect(
       one("llm_response").metadata.links.map((l: any) => l.context.spanId),
-    ).toEqual([one("stt").span_id]);
+    ).toEqual([one("transcript_received").span_id]);
   });
 
   test("a committed user message adds its native ID and speaking times to its turn", async () => {
@@ -2799,7 +2835,7 @@ describe("recording", () => {
     turn.end();
     const { audio, named, one } = await close();
     expect(
-      named("stt").map((r) => [
+      named("transcript_received").map((r) => [
         r.metadata["audio.participant_ids"],
         r.metadata["audio.speaker_ids"],
         r.metadata["contrib.livekit.speaker_id"],
@@ -2854,7 +2890,7 @@ describe("recording", () => {
     }
     const { audio, named } = await close();
     expect(
-      named("stt").map((r) => [
+      named("transcript_received").map((r) => [
         r.metadata["audio.speaker_ids"],
         r.metadata["contrib.livekit.speaker_id"],
       ]),
@@ -3309,7 +3345,7 @@ describe("PII", () => {
 
   test("by default LiveKit allows PII, so content is traced", async () => {
     const { one } = await exchange();
-    expect(one("stt").output).toEqual([
+    expect(one("transcript_received").output).toEqual([
       { role: "user", content: "SECRET order 1042" },
     ]);
     expect(one("user_turn").input).toEqual([
@@ -3334,19 +3370,25 @@ describe("PII", () => {
         "llm_response",
         "lookup_order",
         "session",
-        "stt",
+        "transcript_received",
         "tts",
         "user_turn",
       ]);
       expect(one("llm_response")).toMatchObject({
         metadata: { model: "gpt-5.4-nano" },
-        metrics: { prompt_tokens: 10 },
       });
       for (const name of ["user_turn", "agent_turn", "llm_response", "tts"])
         expect(one(name).input, name).toBeUndefined();
-      for (const name of ["llm_response", "stt", "agent_speech", "tts"])
+      for (const name of [
+        "llm_response",
+        "transcript_received",
+        "agent_speech",
+        "tts",
+      ])
         expect(one(name).output, name).toBeUndefined();
-      expect(one("stt").metadata).toMatchObject({ model: "nova-3" });
+      expect(one("transcript_received").metadata).toMatchObject({
+        model: "nova-3",
+      });
       expect(one("agent_speech").metadata).toMatchObject({
         "contrib.livekit.message_ids": ["a1"],
       });
@@ -3434,7 +3476,7 @@ describe("PII", () => {
       ...nativeSpan(),
       attributes: { "lk.redaction.enabled": true },
     };
-    // The reply's tools are published when the model span starts.
+    // The reply's tools are published when the response wrapper starts.
     tracing.scope(
       turn,
       () =>
@@ -3461,7 +3503,330 @@ describe("PII", () => {
     turn.end();
     const { all, one } = await rows();
     expect(JSON.stringify(all)).not.toContain("SECRET");
+    expect(one("llm_response").metadata.tools).toBeUndefined();
     expect(one("llm_response").metadata.tool_choice).toBeUndefined();
+  });
+});
+
+describe("model ownership at the service boundary", () => {
+  test.each(["llm", "stt", "tts"] as const)(
+    "%s constructor options distinguish a hidden non-SDK client",
+    async (kind) => {
+      const root = start("agent_session");
+      const native =
+        kind === "stt"
+          ? root
+          : start(kind === "llm" ? "llm_node" : "tts_node", root);
+      const method =
+        kind === "llm" ? "chat" : kind === "stt" ? "recognize" : "synthesize";
+      const execute = async () => {
+        throw new Error("custom transport failure");
+      };
+      // The service does not expose its constructor-injected client afterward.
+      const service = { [method]: execute };
+      recordLiveKitOpenAIClient(
+        service,
+        { prototype: service },
+        { client: { audio: {} } },
+        kind,
+      );
+      await tracing.scope(native, async () => {
+        await expect(
+          tracing.model(
+            execute,
+            service,
+            kind,
+            method,
+            [],
+            { agentSession: { sessionSpan: root } },
+            execute,
+          ),
+        ).rejects.toThrow("custom transport failure");
+      });
+      const captured = await rows();
+      const model = captured.one(
+        `livekit.${kind === "llm" ? "llm_response" : kind}`,
+      );
+      expect(model.error).toContain("custom transport failure");
+      expect(model.span_parents).toEqual([
+        captured.one(kind === "llm" ? "llm_response" : kind).span_id,
+      ]);
+    },
+  );
+
+  test.each([true, false])(
+    "an exposed Anthropic SDK client retains provider ownership (wrapped=%s)",
+    async (enabled) => {
+      const root = start("agent_session");
+      const native = start("llm_node", root);
+      const raw = new Anthropic({
+        apiKey: "unit",
+        fetch: async () =>
+          new Response(
+            JSON.stringify({
+              id: "unit",
+              type: "message",
+              role: "assistant",
+              model: "unit-model",
+              content: [{ type: "text", text: "hello" }],
+              stop_reason: "end_turn",
+              usage: { input_tokens: 2, output_tokens: 1 },
+            }),
+            { headers: { "content-type": "application/json" } },
+          ),
+      });
+      const client = enabled ? wrapAnthropic(raw) : raw;
+      await tracing.scope(native, () =>
+        tracing.model(
+          () =>
+            client.messages.create({
+              model: "unit-model",
+              max_tokens: 2,
+              messages: [{ role: "user", content: "hi" }],
+            }),
+          { client },
+          "llm",
+          "chat",
+          [],
+          { agentSession: { sessionSpan: root } },
+        ),
+      );
+      const captured = await rows();
+      expect(captured.named("livekit.llm_response")).toHaveLength(0);
+      const provider = captured.named("anthropic.messages.create");
+      expect(provider).toHaveLength(enabled ? 1 : 0);
+      if (enabled) {
+        expect(provider[0].span_parents).toEqual([
+          captured.one("llm_response").span_id,
+        ]);
+        expect(provider[0].metrics.tokens).toBe(3);
+      }
+    },
+  );
+
+  test.each(["llm", "stt", "tts"] as const)(
+    "%s shared service uses the executing session after its original session closes",
+    async (kind) => {
+      const first = start("agent_session");
+      const activity = { agentSession: { sessionSpan: first } };
+      const second = start("agent_session");
+      const turn = start(kind === "stt" ? "user_turn" : "agent_turn", second);
+      const native =
+        kind === "stt"
+          ? turn
+          : start(kind === "llm" ? "llm_node" : "tts_node", turn);
+      first.end();
+      await tracing.closeSession(first);
+      await tracing.scope(native, async () => {
+        await Promise.resolve();
+        await tracing.model(
+          async () => ({ type: 2, alternatives: [{ text: "second session" }] }),
+          { model: "shared", provider: "direct" },
+          kind,
+          kind === "llm" ? "chat" : kind === "stt" ? "recognize" : "synthesize",
+          kind === "tts" ? ["second session"] : [],
+          activity,
+        );
+      });
+      const captured = await rows();
+      const wrapper = captured.one(kind === "llm" ? "llm_response" : kind);
+      const child = captured.one(
+        `livekit.${kind === "llm" ? "llm_response" : kind}`,
+      );
+      expect(child.span_parents).toEqual([wrapper.span_id]);
+      expect(child.root_span_id).toBe(wrapper.root_span_id);
+      expect(wrapper.root_span_id).toBe(
+        captured.named("session")[1].root_span_id,
+      );
+      if (kind === "stt")
+        expect(wrapper.span_parents).toEqual([
+          captured.one("user_turn").span_id,
+        ]);
+    },
+  );
+
+  for (const kind of ["llm", "stt", "tts"] as const) {
+    for (const ownership of ["enabled", "disabled", "uncovered"] as const) {
+      test(`${kind}: ${ownership} client owns its model payload and usage`, async () => {
+        const root = start("agent_session");
+        const turn = start(kind === "stt" ? "user_turn" : "agent_turn", root);
+        const native =
+          kind === "stt"
+            ? turn
+            : start(kind === "llm" ? "llm_node" : "tts_node", turn);
+        const client = new OpenAI({
+          apiKey: "unit-test",
+          fetch: async () =>
+            new Response(
+              JSON.stringify(
+                kind === "llm"
+                  ? {
+                      id: "unit",
+                      choices: [
+                        {
+                          index: 0,
+                          message: { role: "assistant", content: "hello" },
+                          finish_reason: "stop",
+                        },
+                      ],
+                      usage: {
+                        prompt_tokens: 2,
+                        completion_tokens: 1,
+                        total_tokens: 3,
+                      },
+                    }
+                  : { text: "hello" },
+              ),
+              { headers: { "content-type": "application/json" } },
+            ),
+        });
+        const sdk = ownership === "enabled" ? wrapOpenAI(client) : client;
+        const service = {
+          model: "unit-model",
+          provider: "openai",
+          ...(ownership !== "uncovered" ? { client: sdk } : {}),
+        };
+        const activity = {
+          agentSession: { sessionSpan: root },
+          audioRecognition: { userTurnSpan: turn },
+        };
+        const method =
+          kind === "llm" ? "chat" : kind === "stt" ? "recognize" : "synthesize";
+        const result = { type: 2, alternatives: [{ text: "hello" }] };
+        await tracing.scope(native, async () => {
+          await tracing.model(
+            async () => {
+              if (ownership === "uncovered") return result;
+              if (kind === "llm")
+                return sdk.chat.completions.create({
+                  model: "unit-model",
+                  messages: [{ role: "user", content: "hi" }],
+                });
+              if (kind === "stt") {
+                await sdk.audio.transcriptions.create({
+                  model: "unit-model",
+                  file: new File(["unit"], "unit.wav"),
+                });
+                return result;
+              }
+              const response = await sdk.audio.speech.create({
+                model: "unit-model",
+                voice: "alloy",
+                input: "transformed text",
+              });
+              await response.arrayBuffer();
+              return undefined;
+            },
+            service,
+            kind,
+            method,
+            kind === "tts"
+              ? ["transformed text"]
+              : kind === "llm"
+                ? [
+                    {
+                      chatCtx: {
+                        toJSON: () => [{ role: "user", content: "hi" }],
+                      },
+                      toolCtx: {
+                        functionTools: {
+                          lookup: {
+                            description: "Look up an order",
+                            parameters: { type: "object" },
+                          },
+                        },
+                      },
+                      toolChoice: "auto",
+                    },
+                  ]
+                : [],
+            activity,
+          );
+        });
+        const captured = await rows();
+        const wrapper = captured.one(kind === "llm" ? "llm_response" : kind);
+        expect(wrapper.span_attributes.type).toBe("task");
+        expect(Object.keys(wrapper.metrics).sort()).toEqual(
+          ["end", "start"].filter((k) => wrapper.metrics[k] !== undefined),
+        );
+        const children = captured.all.filter(
+          (row) => row.span_attributes?.type === "llm",
+        );
+        expect(children).toHaveLength(ownership === "disabled" ? 0 : 1);
+        for (const child of children)
+          expect(child.span_parents).toEqual([wrapper.span_id]);
+        if (ownership === "enabled" && kind === "llm") {
+          expect(children[0].span_attributes.name).toBe("Chat Completion");
+          expect(children[0].metrics.tokens).toBe(3);
+        }
+        if (ownership === "uncovered") {
+          expect(children[0].span_attributes.name).toBe(
+            `livekit.${kind === "llm" ? "llm_response" : kind}`,
+          );
+          if (kind === "llm") {
+            expect(children[0].input).toEqual([
+              { role: "user", content: "hi" },
+            ]);
+            expect(children[0].metadata).toMatchObject({
+              tools: [
+                {
+                  type: "function",
+                  function: {
+                    name: "lookup",
+                    description: "Look up an order",
+                    parameters: { type: "object" },
+                  },
+                },
+              ],
+              tool_choice: "auto",
+            });
+          }
+          if (kind === "tts")
+            expect(children[0].input).toEqual({
+              operation: "speech",
+              prompt: "transformed text",
+            });
+          if (kind === "stt")
+            expect(children[0].output).toEqual({
+              content: [{ type: "text", text: "hello" }],
+            });
+        }
+      });
+    }
+  }
+
+  test("recognition starts before client execution and restores context after failure", async () => {
+    const root = start("agent_session");
+    const turn = start("user_turn", root);
+    const failure = new Error("recognizer failed");
+    let during: string | undefined;
+    await tracing.scope(turn, async () => {
+      const before = currentSpan();
+      await expect(
+        tracing.model(
+          async () => {
+            during = currentSpan().spanId;
+            now += 1000;
+            throw failure;
+          },
+          { model: "direct", provider: "custom" },
+          "stt",
+          "recognize",
+          [],
+          {
+            agentSession: { sessionSpan: root },
+            audioRecognition: { userTurnSpan: turn },
+          },
+        ),
+      ).rejects.toBe(failure);
+      expect(currentSpan()).toBe(before);
+    });
+    const captured = await rows();
+    expect(during).toBe(captured.one("stt").span_id);
+    expect(captured.one("stt").metrics.end).toBeGreaterThanOrEqual(
+      captured.one("stt").metrics.start,
+    );
+    expect(captured.one("livekit.stt").error).toContain("recognizer failed");
   });
 });
 
@@ -3530,6 +3895,71 @@ describe("provider privacy across LiveKit scopes", () => {
       expect(child.output[0].message.audio.data instanceof Attachment).toBe(
         agent,
       );
+    },
+  );
+
+  test.each(["llm", "stt", "tts"] as const)(
+    "%s provider errors retain application behavior without exporting redacted content",
+    async (kind) => {
+      const root = start("agent_session", undefined, {
+        "lk.redaction.enabled": true,
+      });
+      const native =
+        kind === "stt"
+          ? root
+          : start(kind === "llm" ? "llm_node" : "tts_node", root);
+      const client = wrapOpenAI(
+        new OpenAI({
+          apiKey: "unit",
+          maxRetries: 0,
+          fetch: async () =>
+            new Response(
+              JSON.stringify({
+                error: { message: "PRIVATE provider failure" },
+              }),
+              { status: 400, headers: { "content-type": "application/json" } },
+            ),
+        }),
+      );
+      await expect(
+        tracing.scope(native, () =>
+          tracing.model(
+            () =>
+              kind === "llm"
+                ? client.chat.completions.create({
+                    model: "unit",
+                    messages: [{ role: "user", content: "PRIVATE input" }],
+                  })
+                : kind === "stt"
+                  ? client.audio.transcriptions.create({
+                      model: "unit",
+                      file: new File(["PRIVATE audio"], "input.wav"),
+                    })
+                  : client.audio.speech.create({
+                      model: "unit",
+                      voice: "alloy",
+                      input: "PRIVATE input",
+                    }),
+            { client, model: "unit", provider: "openai" },
+            kind,
+            kind === "llm"
+              ? "chat"
+              : kind === "stt"
+                ? "recognize"
+                : "synthesize",
+            [],
+            { agentSession: { sessionSpan: root } },
+          ),
+        ),
+      ).rejects.toThrow("PRIVATE provider failure");
+      const captured = await rows();
+      expect(JSON.stringify(captured.all)).not.toContain("PRIVATE");
+      const child = captured.all.find(
+        (row) => row.span_attributes?.type === "llm",
+      );
+      expect(child).toBeDefined();
+      expect(child.error).toBeUndefined();
+      expect(child.metrics.end).toBeDefined();
     },
   );
 
@@ -3652,4 +4082,548 @@ describe("provider privacy across LiveKit scopes", () => {
     expect(providers.filter((p) => p.input)).toHaveLength(2);
     expect(captured.one("customer").input).toBe("customer data");
   });
+});
+
+describe("model streaming lifecycle", () => {
+  test("continuous recognition stays at session scope across user turns", async () => {
+    const root = start("agent_session");
+    const firstTurn = start("user_turn", root);
+    const recognition: { userTurnSpan?: NativeSpan } = {
+      userTurnSpan: firstTurn,
+    };
+    const during: string[] = [];
+    const activity = {
+      agentSession: { sessionSpan: root },
+      audioRecognition: recognition,
+    };
+    const original = {
+      async *[Symbol.asyncIterator]() {
+        during.push(currentSpan().spanId);
+        now += 500;
+        yield { type: 2, alternatives: [{ text: "first turn" }] };
+        during.push(currentSpan().spanId);
+        now += 1000;
+        yield { type: 2, alternatives: [{ text: "second turn" }] };
+        yield {
+          type: 4,
+          recognitionUsage: { inputTokens: 5, outputTokens: 2 },
+        };
+      },
+    };
+    const stream = tracing.scope(firstTurn, () =>
+      tracing.model(
+        () => original,
+        { model: "transcriber", provider: "custom" },
+        "stt",
+        "stream",
+        [],
+        activity,
+      ),
+    );
+    expect(stream).toBe(original);
+    let secondTurn: NativeSpan | undefined;
+    const before = currentSpan();
+    for await (const event of stream) {
+      if (event.type !== 2) continue;
+      if (
+        secondTurn === undefined &&
+        event.alternatives?.[0].text === "second turn"
+      ) {
+        firstTurn.end();
+        secondTurn = start("user_turn", root);
+        recognition.userTurnSpan = secondTurn;
+      }
+      tracing.stt(recognition, event);
+    }
+    secondTurn?.end();
+    expect(currentSpan()).toBe(before);
+    const captured = await rows();
+    const session = captured.one("session");
+    const model = captured.one("livekit.stt.stream");
+    expect(captured.named("stt")).toHaveLength(0);
+    expect(captured.named("livekit.stt")).toHaveLength(0);
+    expect(model.span_attributes.type).toBe("llm");
+    expect(model.span_parents).toEqual([session.span_id]);
+    expect(model.metadata).toMatchObject({
+      "audio.scope": "session",
+      "audio.source_id": "session-input",
+      model: "transcriber",
+      provider: "custom",
+    });
+    expect(model.metadata).not.toHaveProperty("turn.id");
+    expect(model.metadata).not.toHaveProperty("turn.reply_to");
+    expect(model.metrics).toMatchObject({
+      prompt_tokens: 5,
+      completion_tokens: 2,
+      tokens: 7,
+    });
+    expect(model.metrics.end).toBeGreaterThan(model.metrics.start);
+    expect(model.output).toEqual({
+      content: [{ type: "text", text: "first turn second turn" }],
+    });
+    expect(during).toEqual([session.span_id, session.span_id]);
+    expect(
+      captured.named("transcript_received").map((row) => row.span_parents),
+    ).toEqual(captured.named("user_turn").map((row) => [row.span_id]));
+    expect(session.input).toBeUndefined();
+    expect(session.output).toBeUndefined();
+    expect(session.metadata).not.toHaveProperty("model");
+    expect(session.metadata).not.toHaveProperty("provider");
+  });
+
+  test("a failed recognition stream ends its model and restores the caller scope", async () => {
+    const root = start("agent_session");
+    const turn = start("user_turn", root);
+    const error = new Error("stream connection failed");
+    tracing.scope(turn, () => {
+      const before = currentSpan();
+      expect(() =>
+        tracing.model(
+          () => {
+            throw error;
+          },
+          { provider: "custom" },
+          "stt",
+          "stream",
+          [],
+          {
+            agentSession: { sessionSpan: root },
+            audioRecognition: { userTurnSpan: turn },
+          },
+        ),
+      ).toThrow(error);
+      expect(currentSpan()).toBe(before);
+    });
+    const captured = await rows();
+    const model = captured.one("livekit.stt.stream");
+    expect(model.span_parents).toEqual([captured.one("session").span_id]);
+    expect(model.error).toContain(error.message);
+    expect(model.metrics.end).toBeDefined();
+    expect(captured.named("stt")).toHaveLength(0);
+    expect(captured.one("session").error).toBeUndefined();
+  });
+
+  test("concurrent recognition streams keep session ownership and redaction isolated", async () => {
+    const roots = [
+      start("agent_session"),
+      start("agent_session", undefined, { "lk.redaction.enabled": true }),
+    ];
+    const before = currentSpan();
+    await Promise.all(
+      roots.map(async (root, index) => {
+        const turn = start("user_turn", root);
+        const stream = tracing.scope(turn, () =>
+          tracing.model(
+            () =>
+              (async function* () {
+                await Promise.resolve();
+                yield {
+                  type: 2,
+                  alternatives: [
+                    {
+                      text: index ? "PRIVATE TRANSCRIPT" : "public transcript",
+                    },
+                  ],
+                };
+                yield {
+                  type: 4,
+                  recognitionUsage: { inputTokens: 2 + index, outputTokens: 1 },
+                };
+              })(),
+            { model: `model-${index}`, provider: "custom" },
+            "stt",
+            "stream",
+            [],
+            {
+              agentSession: { sessionSpan: root },
+              audioRecognition: { userTurnSpan: turn },
+            },
+          ),
+        );
+        for await (const _ of stream) {
+          /* consume */
+        }
+      }),
+    );
+    expect(currentSpan()).toBe(before);
+    const captured = await rows();
+    const sessions = captured.named("session");
+    const models = captured.named("livekit.stt.stream");
+    expect(models).toHaveLength(2);
+    expect(captured.named("stt")).toHaveLength(0);
+    for (let index = 0; index < models.length; index++) {
+      expect(models[index].span_parents).toEqual([sessions[index].span_id]);
+      expect(models[index].metadata["audio.scope"]).toBe("session");
+      expect(models[index].metadata).not.toHaveProperty("turn.id");
+      expect(models[index].metrics.tokens).toBe(3 + index);
+      expect(sessions[index].input).toBeUndefined();
+      expect(sessions[index].output).toBeUndefined();
+    }
+    expect(models[0].output).toEqual({
+      content: [{ type: "text", text: "public transcript" }],
+    });
+    expect(models[1].output).toBeUndefined();
+    expect(JSON.stringify(captured.all)).not.toContain("PRIVATE TRANSCRIPT");
+  });
+
+  for (const kind of ["llm", "stt", "tts"] as const) {
+    test(`${kind} keeps one model request across chunks and separate retry attempts`, async () => {
+      const root = start("agent_session");
+      const native =
+        kind === "stt"
+          ? root
+          : start(kind === "llm" ? "llm_node" : "tts_node", root);
+      const activity = { agentSession: { sessionSpan: root } };
+      const stream = {
+        run() {},
+        async *[Symbol.asyncIterator]() {
+          if (kind === "llm") {
+            yield { delta: { content: "hel" } };
+            yield {
+              delta: { content: "lo" },
+              usage: { promptTokens: 3, completionTokens: 2, totalTokens: 5 },
+            };
+          } else if (kind === "stt") {
+            yield { type: 2, alternatives: [{ text: "hello" }] };
+            yield { type: 2, alternatives: [{ text: "again" }] };
+            yield {
+              type: 4,
+              recognitionUsage: { inputTokens: 3, outputTokens: 1 },
+            };
+            yield {
+              type: 4,
+              recognitionUsage: { inputTokens: 2, outputTokens: 1 },
+            };
+          } else {
+            yield { frame: frame() };
+            yield { frame: frame() };
+          }
+        },
+      };
+      const observed = tracing.scope(native, () =>
+        tracing.model(
+          () => stream,
+          { model: "direct", provider: "openai" },
+          kind,
+          kind === "llm" ? "chat" : "stream",
+          [],
+          activity,
+        ),
+      );
+      expect(observed).toBe(stream);
+      const error = new Error("first request failed");
+      await expect(
+        tracing.modelRun(stream, async () => {
+          throw error;
+        }),
+      ).rejects.toBe(error);
+      await tracing.modelRun(stream, async () => {});
+      for await (const _ of observed) {
+        /* consume without prefetch */
+      }
+      const captured = await rows();
+      const children = captured.named(
+        `livekit.${kind === "llm" ? "llm_response" : kind === "stt" ? "stt.stream" : kind}`,
+      );
+      expect(children).toHaveLength(2);
+      expect(children[0].error).toContain("first request failed");
+      expect(children[1].error).toBeUndefined();
+      if (kind === "llm") {
+        expect(children[1].output).toEqual([
+          { index: 0, message: { role: "assistant", content: "hello" } },
+        ]);
+        expect(children[1].metrics.tokens).toBe(5);
+      }
+      if (kind === "stt") {
+        expect(children[1].output).toEqual({
+          content: [{ type: "text", text: "hello again" }],
+        });
+        expect(children[1].metrics).toMatchObject({
+          prompt_tokens: 5,
+          completion_tokens: 2,
+          tokens: 7,
+        });
+        expect(children[0].metrics.tokens).toBeUndefined();
+      }
+      expect(children[1].metrics.time_to_first_token).toBeGreaterThanOrEqual(0);
+    });
+  }
+
+  test.each(["llm", "stt", "tts"] as const)(
+    "%s attributes buffered chunks to their producing attempt",
+    async (kind) => {
+      if (kind === "tts") {
+        vi.stubEnv("BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS", "true");
+        // This checks exact samples per attempt, independently of whether the
+        // optional codec package is installed and enables default compression.
+        tracing = new LiveKitTracing(
+          DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES,
+          undefined,
+          true,
+          { codec: { name: "pcm" } },
+        );
+      }
+      const root = start("agent_session");
+      const native =
+        kind === "stt"
+          ? root
+          : start(kind === "llm" ? "llm_node" : "tts_node", root);
+      const queued: unknown[] = [];
+      const stream = {
+        queue: {
+          put(value: unknown) {
+            queued.push(value);
+          },
+        },
+        run() {},
+        async *[Symbol.asyncIterator]() {
+          yield* queued;
+        },
+      };
+      const remove = livekitChannels.modelEnqueue.intercept(
+        (target, self, args, { stream }) => {
+          const result = Reflect.apply(target, self, args);
+          tracing.modelEnqueue(stream, args[0]);
+          return result;
+        },
+      );
+      const observed = tracing.scope(native, () =>
+        tracing.model(
+          () => stream,
+          { model: "custom" },
+          kind,
+          kind === "llm" ? "chat" : "stream",
+          [],
+          { agentSession: { sessionSpan: root } },
+        ),
+      );
+      const emit = (text: string, tokens: number) => {
+        stream.queue.put(
+          kind === "llm"
+            ? {
+                delta: { content: text },
+                usage: {
+                  promptTokens: tokens,
+                  completionTokens: 1,
+                  totalTokens: tokens + 1,
+                  promptCachedTokens: tokens - 1,
+                  reasoningTokens: 0,
+                  cacheCreationTokens: 0,
+                  serviceTier: text === "FIRST" ? " FIRST " : undefined,
+                },
+              }
+            : kind === "stt"
+              ? { type: 2, alternatives: [{ text }] }
+              : { frame: frame(480, tokens) },
+        );
+      };
+      try {
+        await expect(
+          tracing.modelRun(stream, async () => {
+            emit("FIRST", 3);
+            throw new Error("retry");
+          }),
+        ).rejects.toThrow("retry");
+        await tracing.modelRun(stream, async () => {
+          emit("SECOND", 5);
+        });
+        for await (const _ of observed) {
+          /* intentionally read after both attempts */
+        }
+        const children = (await rows()).named(
+          `livekit.${kind === "llm" ? "llm_response" : kind === "stt" ? "stt.stream" : kind}`,
+        );
+        expect(children).toHaveLength(2);
+        expect(children[0].error).toContain("retry");
+        expect(children[1].error).toBeUndefined();
+        if (kind === "llm") {
+          expect(
+            children.map((child) => child.output[0].message.content),
+          ).toEqual(["FIRST", "SECOND"]);
+          expect(children.map((child) => child.metrics.tokens)).toEqual([4, 6]);
+          expect(
+            children.map((child) => child.metrics.prompt_cached_tokens),
+          ).toEqual([2, 4]);
+          expect(
+            children.map((child) => child.metadata.served_service_tier),
+          ).toEqual(["first", undefined]);
+        } else if (kind === "stt") {
+          expect(children.map((child) => child.output.content[0].text)).toEqual(
+            ["FIRST", "SECOND"],
+          );
+        }
+        if (kind === "tts") {
+          for (const child of children)
+            expect(child.output.content[0].file.byte_size).toBe(
+              frame().data.byteLength,
+            );
+          const samples = await Promise.all(
+            children.map(async (child) => {
+              const data = await child.output.content[0].file.file_data.data();
+              return new Int16Array(await data.arrayBuffer())[0];
+            }),
+          );
+          expect(samples).toEqual([3, 5]);
+        }
+        for (const child of children) {
+          expect(child.metrics.time_to_first_token).toBeGreaterThanOrEqual(0);
+          expect(child.metrics.end).toBeDefined();
+        }
+      } finally {
+        remove();
+      }
+    },
+  );
+
+  test("fallback usage preserves reasoning, cache details and the reported service tier", async () => {
+    const root = start("agent_session");
+    const native = start("llm_node", root);
+    const stream = tracing.scope(native, () =>
+      tracing.model(
+        () =>
+          (async function* () {
+            yield {
+              usage: {
+                promptTokens: 10,
+                completionTokens: 6,
+                totalTokens: 16,
+                promptCachedTokens: 3,
+                cacheCreationTokens: 2,
+                reasoningTokens: 4,
+                serviceTier: " PRIORITY ",
+              },
+            };
+            yield { delta: { content: "answer" }, usage: { serviceTier: "" } };
+          })(),
+        { model: "custom" },
+        "llm",
+        "chat",
+        [],
+        { agentSession: { sessionSpan: root } },
+      ),
+    );
+    for await (const _ of stream) {
+      /* consume */
+    }
+    const model = (await rows()).one("livekit.llm_response");
+    expect(model.metrics).toMatchObject({
+      prompt_tokens: 10,
+      completion_tokens: 6,
+      tokens: 16,
+      prompt_cached_tokens: 3,
+      prompt_cache_creation_tokens: 2,
+      completion_reasoning_tokens: 4,
+    });
+    expect(model.metadata.served_service_tier).toBe("priority");
+  });
+
+  test("fallback omits unavailable usage details and service tier", async () => {
+    const root = start("agent_session");
+    const native = start("llm_node", root);
+    const stream = tracing.scope(native, () =>
+      tracing.model(
+        () =>
+          (async function* () {
+            yield { delta: { content: "answer" } };
+          })(),
+        {},
+        "llm",
+        "chat",
+        [],
+        { agentSession: { sessionSpan: root } },
+      ),
+    );
+    for await (const _ of stream) {
+      /* consume */
+    }
+    const model = (await rows()).one("livekit.llm_response");
+    for (const field of [
+      "prompt_tokens",
+      "completion_tokens",
+      "tokens",
+      "prompt_cached_tokens",
+      "prompt_cache_creation_tokens",
+      "completion_reasoning_tokens",
+    ])
+      expect(model.metrics[field]).toBeUndefined();
+    expect(model.metadata.served_service_tier).toBeUndefined();
+  });
+
+  test("cancelled and abandoned recognizers end once, including at session shutdown", async () => {
+    const root = start("agent_session");
+    let generated = 0;
+    const activity = { agentSession: { sessionSpan: root } };
+    const stream = tracing.model(
+      () =>
+        (async function* () {
+          generated++;
+          yield { type: 2, alternatives: [{ text: "first" }] };
+          generated++;
+          yield { type: 2, alternatives: [{ text: "second" }] };
+        })(),
+      { model: "direct", provider: "custom" },
+      "stt",
+      "stream",
+      [],
+      activity,
+    );
+    for await (const _ of stream) break;
+    expect(generated).toBe(1);
+    tracing.model(
+      () => ({
+        async *[Symbol.asyncIterator]() {
+          yield { type: 2 };
+        },
+      }),
+      { provider: "custom" },
+      "stt",
+      "stream",
+      [],
+      activity,
+    );
+    await tracing.closeSession(root);
+    const captured = await rows();
+    expect(captured.named("stt")).toHaveLength(0);
+    expect(captured.named("livekit.stt.stream")).toHaveLength(2);
+    for (const row of captured.named("livekit.stt.stream"))
+      expect(row.metrics.end).toBeDefined();
+  });
+});
+
+test("continuous STT never copies frames even when both voice capture flags are enabled", async () => {
+  vi.stubEnv("BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS", "true");
+  vi.stubEnv("BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS", "true");
+  const root = start("agent_session");
+  const activity = { agentSession: { sessionSpan: root } } as any;
+  const pushFrame = vi.fn();
+  const original = {
+    pushFrame,
+    async *[Symbol.asyncIterator]() {
+      yield { type: 2, alternatives: [{ text: "hello" }] };
+    },
+  };
+  const stream = tracing.scope(root, () =>
+    tracing.model(
+      () => original,
+      { provider: "direct", model: "transcriber" },
+      "stt",
+      "stream",
+      [],
+      activity,
+    ),
+  );
+  const data = new Int16Array([1, 2, 3, 4]);
+  const readData = vi.fn(() => data);
+  const frame = { data, sampleRate: 24000, channels: 1, samplesPerChannel: 4 };
+  stream.pushFrame(frame);
+  for await (const _ of stream) {
+    /* consume */
+  }
+  expect(pushFrame).toHaveBeenCalledWith(frame);
+  expect(readData).not.toHaveBeenCalled();
+  const captured = await rows();
+  const model = captured.one("livekit.stt.stream");
+  expect(model.input).toEqual({ operation: "transcribe" });
+  expect(model.output).toEqual({ content: [{ type: "text", text: "hello" }] });
+  expect(model.metadata).not.toHaveProperty("contrib.livekit.audio.segments");
 });

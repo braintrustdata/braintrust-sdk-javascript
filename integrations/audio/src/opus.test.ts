@@ -252,3 +252,31 @@ test("concurrent segments encode independently", async () => {
   ]);
   expect(concurrent).toEqual(sequential);
 });
+
+test("overlapping session and model encoders match isolated output, including after a failed peer", async () => {
+  // More than one second forces both encoders to yield while their libopus
+  // handles are alive. Distinct rates/channel counts exercise separate buffers.
+  const session = tones(48000 * 2, 48000, 2);
+  const model = tones(24000 * 3, 24000, 1);
+  const sessionMeta = meta(48000, 2);
+  const modelMeta = meta(24000, 1);
+  const expectedSession = await encode(session, sessionMeta, {
+    bitrate: 32000,
+  });
+  const expectedModel = await encode(model, modelMeta, { bitrate: 16000 });
+  const [actualSession, failed, actualModel] = await Promise.allSettled([
+    encode(session, sessionMeta, { bitrate: 32000 }),
+    encode(model, { ...modelMeta, sampleRate: 12345 }),
+    encode(model, modelMeta, { bitrate: 16000 }),
+  ]);
+  expect(failed.status).toBe("rejected");
+  expect(actualSession.status).toBe("fulfilled");
+  expect(actualModel.status).toBe("fulfilled");
+  if (
+    actualSession.status !== "fulfilled" ||
+    actualModel.status !== "fulfilled"
+  )
+    throw Error("encoding failed");
+  expect(actualSession.value).toEqual(expectedSession);
+  expect(actualModel.value).toEqual(expectedModel);
+});

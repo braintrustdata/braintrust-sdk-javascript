@@ -71,6 +71,41 @@
           }
         },
         {
+          "name": "livekit.stt.stream",
+          "type": "llm",
+          "children": [],
+          "input": {
+            "operation": "transcribe"
+          },
+          "output": {
+            "content": [
+              {
+                "text": "Where is my order, DMO1042?",
+                "type": "text"
+              }
+            ]
+          },
+          "metadata": {
+            "audio.scope": "session",
+            "audio.source_id": "session-input",
+            "model": "gpt-4o-mini-transcribe",
+            "provider": "<provider-host>",
+            "scenario": "livekit-instrumentation",
+            "testRunId": "<run:1>"
+          },
+          "metrics": {
+            "completion_tokens": 12,
+            "prompt_tokens": 37,
+            "time_to_first_token": 0,
+            "tokens": 49
+          },
+          "context": {
+            "caller_filename": "<node-internal>",
+            "caller_functionname": "<node-internal>",
+            "caller_lineno": 0
+          }
+        },
+        {
           "name": "user_turn",
           "type": "task",
           "children": [
@@ -97,7 +132,7 @@
               }
             },
             {
-              "name": "stt",
+              "name": "transcript_received",
               "type": "task",
               "children": [],
               "output": [
@@ -116,6 +151,11 @@
                 "scenario": "livekit-instrumentation",
                 "testRunId": "<run:1>",
                 "turn.id": "<span:1>"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             },
             {
@@ -249,7 +289,7 @@
           "children": [
             {
               "name": "llm_response",
-              "type": "llm",
+              "type": "task",
               "children": [
                 {
                   "name": "livekit.llm_request_run",
@@ -269,6 +309,86 @@
                     "caller_filename": "<node-internal>",
                     "caller_functionname": "<node-internal>",
                     "caller_lineno": 0
+                  }
+                },
+                {
+                  "name": "Chat Completion",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": "You help customers check orders. Always call lookup_order when an order number is supplied. Answer with one short sentence giving the delivery day.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Where is my order, DMO1042?",
+                      "role": "user"
+                    }
+                  ],
+                  "output": [
+                    {
+                      "finish_reason": "tool_calls",
+                      "index": 0,
+                      "logprobs": null,
+                      "message": {
+                        "role": "assistant",
+                        "tool_calls": [
+                          {
+                            "function": {
+                              "arguments": "{\"order_id\":\"DMO1042\"}",
+                              "name": "lookup_order"
+                            },
+                            "id": "<span:1>",
+                            "type": "function"
+                          }
+                        ]
+                      }
+                    }
+                  ],
+                  "metadata": {
+                    "model": "gpt-5.4-nano",
+                    "parallel_tool_calls": true,
+                    "provider": "openai",
+                    "scenario": "livekit-instrumentation",
+                    "served_service_tier": "default",
+                    "stream": true,
+                    "stream_options": {
+                      "include_usage": true
+                    },
+                    "testRunId": "<run:1>",
+                    "tools": [
+                      {
+                        "function": {
+                          "description": "Look up an order delivery status.",
+                          "name": "lookup_order",
+                          "parameters": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "order_id": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "order_id"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "type": "function"
+                      }
+                    ]
+                  },
+                  "metrics": {
+                    "completion_accepted_prediction_tokens": 0,
+                    "completion_audio_tokens": 0,
+                    "completion_reasoning_tokens": 0,
+                    "completion_rejected_prediction_tokens": 0,
+                    "completion_tokens": 21,
+                    "prompt_audio_tokens": 0,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 166,
+                    "time_to_first_token": 0,
+                    "tokens": 187
                   }
                 }
               ],
@@ -300,13 +420,11 @@
               ],
               "metadata": {
                 "contrib.livekit.function_tools": "[\"lookup_order\"]",
-                "contrib.livekit.response.ttft": 0,
                 "gen_ai.operation.name": "chat",
                 "gen_ai.request.stream": true,
                 "gen_ai.response.finish_reasons": [
                   "tool_call"
                 ],
-                "gen_ai.response.time_to_first_chunk": 0,
                 "links": [
                   {
                     "attributes": {
@@ -348,12 +466,6 @@
                 "turn.id": "<span:1>",
                 "turn.reply_to": "<span:2>"
               },
-              "metrics": {
-                "completion_tokens": 21,
-                "prompt_tokens": 166,
-                "time_to_first_token": 0,
-                "tokens": 187
-              },
               "context": {
                 "caller_filename": "<node-internal>",
                 "caller_functionname": "<node-internal>",
@@ -362,7 +474,7 @@
             },
             {
               "name": "llm_response",
-              "type": "llm",
+              "type": "task",
               "children": [
                 {
                   "name": "livekit.llm_request_run",
@@ -382,6 +494,96 @@
                     "caller_filename": "<node-internal>",
                     "caller_functionname": "<node-internal>",
                     "caller_lineno": 0
+                  }
+                },
+                {
+                  "name": "Chat Completion",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": "You help customers check orders. Always call lookup_order when an order number is supplied. Answer with one short sentence giving the delivery day.",
+                      "role": "system"
+                    },
+                    {
+                      "content": "Where is my order, DMO1042?",
+                      "role": "user"
+                    },
+                    {
+                      "role": "assistant",
+                      "tool_calls": [
+                        {
+                          "function": {
+                            "arguments": "{\"order_id\":\"DMO1042\"}",
+                            "name": "lookup_order"
+                          },
+                          "id": "<span:1>",
+                          "type": "function"
+                        }
+                      ]
+                    },
+                    {
+                      "content": "{\"order_id\":\"DMO1042\",\"status\":\"in_transit\",\"delivery\":\"Friday\"}",
+                      "role": "tool",
+                      "tool_call_id": "call_kndDifYj16ltho0t1qn0gJQj"
+                    }
+                  ],
+                  "output": [
+                    {
+                      "finish_reason": "stop",
+                      "index": 0,
+                      "logprobs": null,
+                      "message": {
+                        "content": "Your order will be delivered on Friday.",
+                        "role": "assistant"
+                      }
+                    }
+                  ],
+                  "metadata": {
+                    "model": "gpt-5.4-nano",
+                    "parallel_tool_calls": true,
+                    "provider": "openai",
+                    "scenario": "livekit-instrumentation",
+                    "served_service_tier": "default",
+                    "stream": true,
+                    "stream_options": {
+                      "include_usage": true
+                    },
+                    "testRunId": "<run:1>",
+                    "tool_choice": "auto",
+                    "tools": [
+                      {
+                        "function": {
+                          "description": "Look up an order delivery status.",
+                          "name": "lookup_order",
+                          "parameters": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "order_id": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "order_id"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "type": "function"
+                      }
+                    ]
+                  },
+                  "metrics": {
+                    "completion_accepted_prediction_tokens": 0,
+                    "completion_audio_tokens": 0,
+                    "completion_reasoning_tokens": 0,
+                    "completion_rejected_prediction_tokens": 0,
+                    "completion_tokens": 11,
+                    "prompt_audio_tokens": 0,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 217,
+                    "time_to_first_token": 0,
+                    "tokens": 228
                   }
                 }
               ],
@@ -422,13 +624,11 @@
               ],
               "metadata": {
                 "contrib.livekit.function_tools": "[\"lookup_order\"]",
-                "contrib.livekit.response.ttft": 0,
                 "gen_ai.operation.name": "chat",
                 "gen_ai.request.stream": true,
                 "gen_ai.response.finish_reasons": [
                   "stop"
                 ],
-                "gen_ai.response.time_to_first_chunk": 0,
                 "links": [
                   {
                     "attributes": {
@@ -480,12 +680,6 @@
                 ],
                 "turn.id": "<span:1>",
                 "turn.reply_to": "<span:2>"
-              },
-              "metrics": {
-                "completion_tokens": 11,
-                "prompt_tokens": 217,
-                "time_to_first_token": 0,
-                "tokens": 228
               },
               "context": {
                 "caller_filename": "<node-internal>",
@@ -650,6 +844,58 @@
                     "caller_filename": "<node-internal>",
                     "caller_functionname": "<node-internal>",
                     "caller_lineno": 0
+                  }
+                },
+                {
+                  "name": "openai.audio.speech.create",
+                  "type": "llm",
+                  "children": [],
+                  "input": {
+                    "operation": "speech",
+                    "parameters": {
+                      "format": "pcm",
+                      "speed": 1,
+                      "voice": "alloy"
+                    },
+                    "prompt": "Your order will be delivered on Friday."
+                  },
+                  "output": {
+                    "content": [
+                      {
+                        "file": {
+                          "byte_size": 25136,
+                          "file_data": {
+                            "content_type": "audio/ogg",
+                            "filename": "speech.ogg",
+                            "key": "<uuid:1>",
+                            "type": "braintrust_attachment"
+                          },
+                          "filename": "speech.ogg"
+                        },
+                        "type": "file"
+                      }
+                    ]
+                  },
+                  "metadata": {
+                    "contrib.audio.encodings": [
+                      {
+                        "original": {
+                          "content_type": "audio/pcm",
+                          "filename": "speech.pcm"
+                        },
+                        "stored": {
+                          "content_type": "audio/ogg",
+                          "filename": "speech.ogg"
+                        }
+                      }
+                    ],
+                    "model": "gpt-4o-mini-tts",
+                    "provider": "openai",
+                    "scenario": "livekit-instrumentation",
+                    "testRunId": "<run:1>"
+                  },
+                  "metrics": {
+                    "time_to_first_token": 0
                   }
                 }
               ],

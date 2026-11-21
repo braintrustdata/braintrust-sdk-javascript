@@ -87,6 +87,13 @@ class InstrumentationRegistry {
     subscribe(integrations, state.config);
   }
 
+  /** Internal read access for provider-specific capture configuration. */
+  integrationConfig<P extends Provider>(
+    provider: P,
+  ): InstrumentationIntegrationsConfig[P] {
+    return getRegistryState().config.integrations?.[provider];
+  }
+
   isRegistered(provider: Provider): boolean {
     return getRegistryState().registered.has(provider);
   }

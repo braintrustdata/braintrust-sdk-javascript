@@ -1338,20 +1338,32 @@ span_tree:
 │   │         "content": [
 │   │           {
 │   │             "file": {
-│   │               "byte_size": 76844,
+│   │               "byte_size": 12550,
 │   │               "file_data": {
-│   │                 "content_type": "audio/wav",
-│   │                 "filename": "speech.wav",
+│   │                 "content_type": "audio/ogg",
+│   │                 "filename": "speech.ogg",
 │   │                 "key": "<uuid:1>",
 │   │                 "type": "braintrust_attachment"
 │   │               },
-│   │               "filename": "speech.wav"
+│   │               "filename": "speech.ogg"
 │   │             },
 │   │             "type": "file"
 │   │           }
 │   │         ]
 │   │       }
 │   │       metadata: {
+│   │         "contrib.audio.encodings": [
+│   │           {
+│   │             "original": {
+│   │               "content_type": "audio/wav",
+│   │               "filename": "speech.wav"
+│   │             },
+│   │             "stored": {
+│   │               "content_type": "audio/ogg",
+│   │               "filename": "speech.ogg"
+│   │             }
+│   │           }
+│   │         ],
 │   │         "model": "gpt-4o-mini-tts",
 │   │         "provider": "openai"
 │   │       }
