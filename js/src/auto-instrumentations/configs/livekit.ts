@@ -19,9 +19,9 @@ const targets: [
     { className: "AgentSession", methodName: "closeImpl" },
   ],
   [
-    "conversation",
+    "sessionEvent",
     "voice/agent_session",
-    { className: "AgentSession", methodName: "_conversationItemAdded" },
+    { className: "AgentSession", methodName: "emit" },
   ],
   [
     "activity",

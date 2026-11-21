@@ -83,14 +83,11 @@ function wrapActivity(activity: AgentActivity | undefined) {
 function wrapSession(session: AgentSession): AgentSession {
   wrapMethod(session, "_startImpl", livekitChannels.start);
   wrapMethod(session, "closeImpl", livekitChannels.close);
-  // AgentActivity is not exported. LiveKit reports each new activity's handoff
-  // item through _conversationItemAdded before activity.start(), so that is the
-  // first call where the activity exists and none of its hooks have run yet.
-  wrapMethod(
-    session,
-    "_conversationItemAdded",
-    livekitChannels.conversation,
-    () => wrapActivity(session.activity),
+  // The public conversation_item_added event reports handoffs before the new
+  // activity starts. Observe emit rather than the private insertion helper so
+  // automatic and manual entrypoints share the same public event boundary.
+  wrapMethod(session, "emit", livekitChannels.sessionEvent, () =>
+    wrapActivity(session.activity),
   );
   return session;
 }
