@@ -176,12 +176,12 @@ span_tree:
     │           {
     │             "file": {
     │               "file_data": {
-    │                 "content_type": "audio/wav",
-    │                 "filename": "audio.wav",
+    │                 "content_type": "audio/ogg",
+    │                 "filename": "audio.ogg",
     │                 "key": "<uuid:1>",
     │                 "type": "braintrust_attachment"
     │               },
-    │               "filename": "audio.wav"
+    │               "filename": "audio.ogg"
     │             },
     │             "type": "file"
     │           }
@@ -201,6 +201,18 @@ span_tree:
     │         ]
     │       }
     │       metadata: {
+    │         "contrib.audio.encodings": [
+    │           {
+    │             "original": {
+    │               "content_type": "audio/wav",
+    │               "filename": "audio.wav"
+    │             },
+    │             "stored": {
+    │               "content_type": "audio/ogg",
+    │               "filename": "audio.ogg"
+    │             }
+    │           }
+    │         ],
     │         "model": "gpt-4o-mini-transcribe",
     │         "provider": "openai",
     │         "scenario": "livekit-instrumentation",
@@ -781,20 +793,32 @@ span_tree:
     │   │         "content": [
     │   │           {
     │   │             "file": {
-    │   │               "byte_size": 276000,
+    │   │               "byte_size": 47133,
     │   │               "file_data": {
-    │   │                 "content_type": "audio/pcm",
-    │   │                 "filename": "speech.pcm",
+    │   │                 "content_type": "audio/ogg",
+    │   │                 "filename": "speech.ogg",
     │   │                 "key": "<uuid:1>",
     │   │                 "type": "braintrust_attachment"
     │   │               },
-    │   │               "filename": "speech.pcm"
+    │   │               "filename": "speech.ogg"
     │   │             },
     │   │             "type": "file"
     │   │           }
     │   │         ]
     │   │       }
     │   │       metadata: {
+    │   │         "contrib.audio.encodings": [
+    │   │           {
+    │   │             "original": {
+    │   │               "content_type": "audio/pcm",
+    │   │               "filename": "speech.pcm"
+    │   │             },
+    │   │             "stored": {
+    │   │               "content_type": "audio/ogg",
+    │   │               "filename": "speech.ogg"
+    │   │             }
+    │   │           }
+    │   │         ],
     │   │         "model": "gpt-4o-mini-tts",
     │   │         "provider": "openai",
     │   │         "scenario": "livekit-instrumentation",

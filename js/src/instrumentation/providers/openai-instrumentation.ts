@@ -1,6 +1,6 @@
 import { serviceTierMetadata } from "../core/service-tier";
 import { _internalCaptureAttachmentsEnabled } from "../../logger/core";
-import { processInputAttachments } from "../../wrappers/attachment-utils";
+import { processOpenAIInputAttachments } from "./openai-audio";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
 import {
   BRAINTRUST_CACHED_STREAM_METRIC,
@@ -488,7 +488,7 @@ function processChatCompletionOutput(
       ...choice.message,
       ...(Array.isArray(choice.message.content)
         ? {
-            content: processInputAttachments(
+            content: processOpenAIInputAttachments(
               choice.message.content,
               captureAttachments,
             ),
@@ -496,10 +496,12 @@ function processChatCompletionOutput(
         : {}),
       ...(choice.message.audio
         ? {
-            audio: processInputAttachments(
-              { role: "assistant", audio: choice.message.audio },
-              captureAttachments,
-              audioFormat,
+            audio: (
+              processOpenAIInputAttachments(
+                { role: "assistant", audio: choice.message.audio },
+                captureAttachments,
+                audioFormat,
+              ) as { audio: unknown }
             ).audio,
           }
         : {}),

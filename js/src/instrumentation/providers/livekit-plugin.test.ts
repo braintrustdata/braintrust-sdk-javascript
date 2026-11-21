@@ -4580,3 +4580,41 @@ describe("model streaming lifecycle", () => {
       expect(row.metrics.end).toBeDefined();
   });
 });
+
+test("continuous STT never copies frames even when both voice capture flags are enabled", async () => {
+  vi.stubEnv("BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS", "true");
+  vi.stubEnv("BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS", "true");
+  const root = start("agent_session");
+  const activity = { agentSession: { sessionSpan: root } } as any;
+  const pushFrame = vi.fn();
+  const original = {
+    pushFrame,
+    async *[Symbol.asyncIterator]() {
+      yield { type: 2, alternatives: [{ text: "hello" }] };
+    },
+  };
+  const stream = tracing.scope(root, () =>
+    tracing.model(
+      () => original,
+      { provider: "direct", model: "transcriber" },
+      "stt",
+      "stream",
+      [],
+      activity,
+    ),
+  );
+  const data = new Int16Array([1, 2, 3, 4]);
+  const readData = vi.fn(() => data);
+  const frame = { data, sampleRate: 24000, channels: 1, samplesPerChannel: 4 };
+  stream.pushFrame(frame);
+  for await (const _ of stream) {
+    /* consume */
+  }
+  expect(pushFrame).toHaveBeenCalledWith(frame);
+  expect(readData).not.toHaveBeenCalled();
+  const captured = await rows();
+  const model = captured.one("livekit.stt.stream");
+  expect(model.input).toEqual({ operation: "transcribe" });
+  expect(model.output).toEqual({ content: [{ type: "text", text: "hello" }] });
+  expect(model.metadata).not.toHaveProperty("contrib.livekit.audio.segments");
+});

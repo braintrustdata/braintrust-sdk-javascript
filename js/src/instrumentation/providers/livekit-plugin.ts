@@ -1,3 +1,4 @@
+import { audioAttachment } from "../../audio-attachments";
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions -- vendored LiveKit boundaries. */
 import type {
   AgentSession,
@@ -116,10 +117,14 @@ const SPANS = new Map<string, { name: string; type: "task" | "llm" | "tool" }>([
 class LiveKitInstrumentationConsumer {
   public register(
     streamingAttachmentBufferBytes: number,
-    audio?: AudioEncodingConfig,
+    audio?: false | AudioEncodingConfig,
   ): void {
-    const tracing = new LiveKitTracing(streamingAttachmentBufferBytes, () =>
-      audioEncodingStack(audio, AUDIO_DEFAULTS),
+    const tracing = new LiveKitTracing(
+      streamingAttachmentBufferBytes,
+      () =>
+        audioEncodingStack(audio === false ? undefined : audio, AUDIO_DEFAULTS),
+      audio !== false,
+      audio === false ? undefined : audio,
     );
     const observeActive =
       <T>(fn: (span: LiveKitSpan) => T, options: TraceOptions) =>
@@ -404,6 +409,8 @@ class LiveKitTracing {
   constructor(
     private streamingAttachmentBufferBytes: number,
     private audioMiddleware?: () => AudioMiddlewareStack,
+    private captureAudio = true,
+    private audioConfig?: AudioEncodingConfig,
   ) {}
 
   private rowOf(span: LiveKitSpan | undefined): Row | undefined {
@@ -677,9 +684,11 @@ class LiveKitTracing {
       const relationships = new Relationships();
       const captures = {
         input:
+          this.captureAudio &&
           _internalAttachmentCapturePermitted() &&
           isEnvFlagEnabled(CAPTURE_USER_AUDIO),
         output:
+          this.captureAudio &&
           _internalAttachmentCapturePermitted() &&
           isEnvFlagEnabled(CAPTURE_AGENT_AUDIO),
       };
@@ -1322,6 +1331,8 @@ class LiveKitTracing {
     const calls = new Map<string, NonNullable<Message["tool_calls"]>[number]>();
     const audioPermitted = run(() => _internalAttachmentCapturePermitted());
     const capture = () =>
+      !sessionModel &&
+      this.captureAudio &&
       audioPermitted &&
       this.piiAllowed(parent) &&
       isEnvFlagEnabled(
@@ -1345,11 +1356,15 @@ class LiveKitTracing {
           file: {
             filename,
             byte_size: audioBytes,
-            file_data: new Attachment({
-              data: new Blob(audio, { type: "audio/pcm" }),
-              contentType: "audio/pcm",
+            file_data: audioAttachment(
+              new Blob(audio, { type: "audio/pcm" }),
               filename,
-            }),
+              this.audioConfig,
+              {
+                sampleRate: audioFormat.sampleRate,
+                channels: audioFormat.channels,
+              },
+            ),
           },
         });
         mediaSegments.push({
@@ -3143,7 +3158,7 @@ export const _exportsForTestingOnly = {
 
 export function registerLiveKitInstrumentation(
   streamingAttachmentBufferBytes = DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES,
-  audio?: AudioEncodingConfig,
+  audio?: false | AudioEncodingConfig,
 ): void {
   new LiveKitInstrumentationConsumer().register(
     streamingAttachmentBufferBytes,

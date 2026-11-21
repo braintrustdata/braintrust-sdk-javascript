@@ -451,3 +451,70 @@ RTC 1.1.0/1.2.2, OpenAI SDK 6.49.0. No provider cassettes were changed or
 rerecorded. The previous 787-case provider matrix predates this follow-up;
 provider instrumentation code is unchanged. Historical qualification limits
 above remain visible. Fresh logs are `/tmp/sdk864-stream-*.log`.
+
+## 2026-11-20: independent audio capture and compressed model attachments
+
+This follow-up starts at `b950b046` and stays on layer 4. Continuous
+`livekit.stt.stream` operations retain their session scope, transcripts, usage,
+errors and lifecycle, but no longer copy or attach submitted audio frames. The
+session recording supplies the conversation audio.
+
+Both integrations accept `audio: false` to disable their own audio capture while
+retaining tracing. The switch does not propagate to the other integration:
+
+```ts
+configureInstrumentation({
+  integrations: {
+    livekit: true,
+    openai: { audio: false },
+  },
+});
+```
+
+Omitted audio configuration defaults to Ogg/Opus when `@braintrust/audio` is
+available. Explicit `audio: { codec: { name: "pcm" } }` preserves original
+uncompressed capture. Existing compressed files remain unchanged. Directional
+capture environment flags and inherited logger/privacy restrictions still apply;
+configuration cannot enable capture without consent.
+
+OpenAI speech responses, transcription uploads, and supported chat audio capture
+use the same encoder implementation as LiveKit recordings. Each clip gets fresh
+middleware and its own libopus encoder handle/buffers; no recording state crosses
+integrations. Encoding runs during asynchronous export, after span customization
+and privacy filtering. Application responses and stream reads retain their original
+bytes and timing. Export/flush awaits encoding, and repeated span records reuse
+only that attachment's completed conversion.
+
+The current codec supports interleaved s16le PCM at 24/48 kHz in mono/stereo.
+Declared PCM WAV containers provide their own sample format; complete OpenAI WAV
+responses with unknown-length headers are supported. Raw OpenAI output uses its
+24 kHz mono format. Unknown/unsupported formats, absent codecs, and codec failures
+retain original bytes. Already compressed formats are not transcoded. Stored
+filenames, MIME types and byte sizes describe the captured representation;
+`contrib.audio.encodings` preserves original and stored formats without creating
+references to unuploaded originals.
+
+### Spec follow-up (separate repository)
+
+`braintrust-spec/main` audio-traces blob remains
+`335214e1d44e687aaf25d11c5954496012b66728`. Session segments already allow
+compression, but the attachments document describes uploading the exact buffered
+snapshot and speech files as the generated encoding. Clarify that an explicitly
+configured/default audio encoding policy may transform the instrumentation-owned
+snapshot, provided application bytes stay untouched and stored/source encodings
+are distinguishable. This SDK behavior follows the user's explicit decision;
+the bundled specification has not been edited.
+
+### Review focus
+
+- Independently disable each layer, including both disabled, through manual and
+  automatic entrypoints with both voice flags enabled.
+- Confirm continuous STT produces no model audio attachment.
+- Compare concurrent codec output to isolated output with different rates,
+  channel counts and bitrates; a failed concurrent encoder must not affect peers.
+- Check completed vs cancelled provider streams, mutable application buffers,
+  export redaction, and unchanged image attachment behavior.
+- Inspect paired snapshots for original provider request format versus compressed
+  attachment format and absence of duplicate model usage.
+
+Validation results for this follow-up are recorded in the stack handoff.

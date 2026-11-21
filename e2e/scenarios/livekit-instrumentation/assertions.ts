@@ -135,6 +135,12 @@ export function assertAudioTrace(raw: CapturedLogEvent[]) {
         "audio.scope": "session",
         "audio.source_id": "session-input",
       });
+      expect(JSON.stringify(event.row.input)).not.toContain(
+        "braintrust_attachment",
+      );
+      expect(event.metadata).not.toHaveProperty(
+        "contrib.livekit.audio.segments",
+      );
       expect(event.metadata).not.toHaveProperty("turn.id");
       expect(event.metadata).not.toHaveProperty("turn.reply_to");
     }

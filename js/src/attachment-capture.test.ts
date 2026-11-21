@@ -898,6 +898,7 @@ it.each([false, true])(
 it.each([false, true])(
   "applies capture policy to Chat Completions audio (%s)",
   async (captureAttachments) => {
+    vi.stubEnv("BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS", "true");
     initLogger({
       ...loggerOptions,
       autoCaptureAttachments: captureAttachments,
@@ -1050,6 +1051,7 @@ it.each([
 ] as const)(
   "uses the requested %s format for generated chat audio",
   async (format, contentType, extension) => {
+    vi.stubEnv("BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS", "true");
     initLogger({ ...loggerOptions, autoCaptureAttachments: true });
     const audio = { data: "AQID", transcript: "Hello", id: "audio-1" };
     const choices = [

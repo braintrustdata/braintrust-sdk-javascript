@@ -597,6 +597,97 @@ for (const variant of variants) {
       });
     }, 120000);
 
+  for (const mode of ["auto", "wrapped"] as const)
+    for (const layer of ["both", "livekit", "openai", "neither"] as const)
+      test(`${variant} ${mode} independent audio capture ${layer}`, async () => {
+        await withScenarioHarness(async (harness) => {
+          const result = await harness.runNodeScenarioDir(
+            scenarioOptions(variant, {
+              mode,
+              cassette: "order",
+              env: {
+                LIVEKIT_AUDIO:
+                  layer === "openai" || layer === "neither" ? "false" : "{}",
+                OPENAI_AUDIO:
+                  layer === "livekit" || layer === "neither" ? "false" : "{}",
+                LIVEKIT_PROBE_UPLOADS: "1",
+              },
+            }),
+          );
+          const events = assertAudioTrace(harness.events());
+          const session = findLatestSpan(events, "session");
+          const speech = findLatestSpan(events, "openai.audio.speech.create");
+          expect(speech?.span.type).toBe("llm");
+          expect(findAllSpans(events, "Chat Completion")).toHaveLength(2);
+          const modelFiles = (speech?.row.output as { content: unknown[] })
+            .content;
+          expect(modelFiles.length).toBe(
+            layer === "both" || layer === "openai" ? 1 : 0,
+          );
+          const sessionFiles = audioSession(session).segments.filter(
+            (s) => s.state === "ready",
+          );
+          expect(sessionFiles.length > 0).toBe(
+            layer === "both" || layer === "livekit",
+          );
+          const uploads = uploadedAudio(result.stdout);
+          expect(uploads).toHaveLength(modelFiles.length + sessionFiles.length);
+          for (const file of uploads) {
+            expect(file.format).toBe("ogg");
+            expect(file.decodedMs).toBeGreaterThan(0);
+          }
+          if (modelFiles.length)
+            expect(modelFiles[0]).toMatchObject({
+              type: "file",
+              file: {
+                filename: "speech.ogg",
+                file_data: { content_type: "audio/ogg" },
+              },
+            });
+        });
+      }, 120000);
+
+  for (const mode of ["auto", "wrapped"] as const)
+    test(`${variant} ${mode} independent audio encoding options`, async () => {
+      await withScenarioHarness(async (harness) => {
+        const result = await harness.runNodeScenarioDir(
+          scenarioOptions(variant, {
+            mode,
+            cassette: "order",
+            env: {
+              LIVEKIT_AUDIO: JSON.stringify({
+                codec: { name: "opus", options: { bitrate: 32000 } },
+              }),
+              OPENAI_AUDIO: JSON.stringify({ codec: { name: "pcm" } }),
+              LIVEKIT_PROBE_UPLOADS: "1",
+            },
+          }),
+        );
+        const events = assertAudioTrace(harness.events());
+        const session = findLatestSpan(events, "session");
+        const speech = findLatestSpan(events, "openai.audio.speech.create");
+        expect(speech?.row.output).toMatchObject({
+          content: [
+            {
+              type: "file",
+              file: {
+                filename: "speech.pcm",
+                file_data: { content_type: "audio/pcm" },
+              },
+            },
+          ],
+        });
+        expect(audioSession(session).segments[0].attributes).toMatchObject({
+          "opus.bitrate_bps": 32000,
+        });
+        expect(
+          uploadedAudio(result.stdout)
+            .map((file) => file.format)
+            .sort(),
+        ).toEqual(["ogg", "raw"]);
+      });
+    }, 120000);
+
   // A LiveKit Cloud project with redaction: LiveKit's own PII setting wins.
   for (const mode of ["auto", "wrapped"] as const)
     test(`${variant} ${mode} order conversation in a redacted LiveKit job`, async () => {

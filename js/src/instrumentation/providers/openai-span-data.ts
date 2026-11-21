@@ -1,13 +1,11 @@
+import { processOpenAIInputAttachments } from "./openai-audio";
 import { serviceTierMetadata } from "../core/service-tier";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   _internalCaptureAttachmentsEnabled,
   Attachment,
 } from "../../logger/core";
-import {
-  omitMediaData,
-  processInputAttachments,
-} from "../../wrappers/attachment-utils";
+import { omitMediaData } from "../../wrappers/attachment-utils";
 import { isObject } from "../../../util/index";
 
 const OPENAI_METADATA_KEYS = [
@@ -65,7 +63,10 @@ export function extractOpenAIBatchInput(
   const input =
     endpoint === "/v1/chat/completions" ? params.messages : params.input;
   return {
-    input: processInputAttachments(input, _internalCaptureAttachmentsEnabled()),
+    input: processOpenAIInputAttachments(
+      input,
+      _internalCaptureAttachmentsEnabled(),
+    ),
     metadata: batchMetadata(params),
   };
 }
@@ -76,7 +77,7 @@ export function extractOpenAIChatInput(params: Record<string, unknown>): {
 } {
   const { messages, ...metadata } = params;
   return {
-    input: processInputAttachments(
+    input: processOpenAIInputAttachments(
       messages,
       _internalCaptureAttachmentsEnabled(),
     ),
@@ -94,7 +95,10 @@ export function extractOpenAIResponsesInput(params: Record<string, unknown>): {
 } {
   const { input, ...metadata } = params;
   return {
-    input: processInputAttachments(input, _internalCaptureAttachmentsEnabled()),
+    input: processOpenAIInputAttachments(
+      input,
+      _internalCaptureAttachmentsEnabled(),
+    ),
     metadata: {
       ...metadata,
       provider: "openai",

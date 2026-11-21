@@ -177,3 +177,107 @@ root lint/format; 98-case snapshot regeneration; two 14-case normal streaming/
 diarization replays; then a full normal 98-case replay with no skipped tests and
 zero unused cassette variants. The changed cases passed three normal replays
 after snapshot regeneration. No provider traffic was rerecorded.
+
+## 2026-11-20 follow-up: independent capture and encoding
+
+Review the changes after `b950b046` on layer 4. Layers 1–3 are unchanged.
+
+- `integrations.livekit.audio: false` and `integrations.openai.audio: false`
+  independently disable audio capture, preserving spans, text and metrics. The
+  switch is local to the integration; directional environment permissions and
+  inherited logger/privacy restrictions remain upper bounds.
+- Continuous `livekit.stt.stream` no longer copies or attaches audio. Its session
+  model span and transcripts/usage remain. Discrete recognition and synthesis
+  retain operation-level captures.
+- Supported PCM and PCM WAV model captures use Ogg/Opus by default with the audio
+  package available. Existing compressed media stays unchanged; explicit PCM,
+  unsupported formats, unavailable codecs and encoder failures retain original
+  bytes. Source and stored format metadata distinguish the compressed copy.
+- Encoding runs during asynchronous export after customization/privacy filtering,
+  with a second privacy check after encoding. Application audio reads are not
+  delayed by codec work. Each clip uses a fresh stack and libopus handle; separate
+  buffers, options, timelines and output files are verified under concurrency.
+
+Key files: `js/src/audio-attachments.ts` (deferred per-attachment encoding),
+`js/src/instrumentation/providers/openai-audio.ts` (provider capture policy),
+`openai-media.ts`, `livekit-plugin.ts`, `instrumentation/config.ts`, and the
+small export integration in `logger/core.ts`. Generic wrapping hooks and client
+ownership classification are unchanged.
+
+Review the encoding/export boundary for deferred privacy, original buffer/stream
+semantics, file metadata, and multi-copy SDK behavior. The real-codec test overlaps
+stereo 48 kHz and mono 24 kHz encoders with different bitrates and a failing third
+encoder; both successful packet sequences equal isolated reference encodes.
+
+The spec clarification and supported-format limits are described in
+`livekit-cascade-cleanup-review.md`, section "2026-11-20". The bundled spec is
+unchanged; compression of provider snapshots needs an explicit allowance in the
+attachments contract (session-segment compression is already allowed).
+
+Tested dependencies: LiveKit agents/OpenAI plugin 1.9.1 and 1.10.0; RTC 1.1.0 and
+1.2.2; OpenAI 6.49.0 in LiveKit. Standalone provider matrix: OpenAI 4.104.0
+(pinned/latest aliases), 5.11.0/5.23.2, 6.25.0/6.49.0, 7.30.0/7.32.0.
+Audio package 0.1.0 with `@audio/encode-opus` 1.3.1; Node 26.8.2.
+
+Additional legacy-test audit: `js/src/wrappers/test_oai_attachments.test.ts`
+fails four tests and reports three unhandled assertion rejections, identically
+on the unchanged `b950b046` baseline in an isolated checkout. Those tests expect
+provider arguments to be replaced with Braintrust Attachments and monkeypatch
+APIPromise methods with plain promises. They are not changed or counted as passing.
+Logs: `/tmp/sdk864-audio-baseline-tests.log` and
+`/tmp/sdk864-audio-additional-unit.log`.
+
+### Validation commands and results for the audio follow-up
+
+Run from the SDK repository root. The explicit Node path avoids the older Node
+selected by nested `pnpm exec` in this environment.
+
+```sh
+SDK864_NODE_BIN=/Users/david/.local/share/mise/installs/node/26.8.2/bin
+mise install
+mise exec -- pnpm exec env PATH="$SDK864_NODE_BIN:$PATH" node ./node_modules/vite-plus/bin/vp run -r build
+mise exec -- pnpm --dir js run check:typings
+mise exec -- pnpm --dir js exec env PATH="$SDK864_NODE_BIN:$PATH" node ./node_modules/typescript/bin/tsc --noEmit
+mise exec -- pnpm --dir js exec env PATH="$SDK864_NODE_BIN:$PATH" node ./node_modules/typescript/bin/tsc --noEmit -p tsconfig.test.json
+mise exec -- pnpm --dir integrations/audio run check:typings
+mise exec -- pnpm --dir js exec env PATH="$SDK864_NODE_BIN:$PATH" node ./node_modules/vitest/vitest.mjs run src/audio-attachments.test.ts src/audio-compression.test.ts src/audio-middleware.test.ts src/audio-session-recorder.test.ts src/instrumentation/providers/openai-media.test.ts src/instrumentation/providers/livekit-plugin.test.ts src/wrappers/livekit.test.ts src/instrumentation/providers/openai-instrumentation.test.ts src/wrappers/attachment-utils.test.ts src/span-customizer.test.ts src/logger/lifecycle.test.ts src/attachment-capture.test.ts src/logger-json-attachment.test.ts
+mise exec -- pnpm --dir integrations/audio exec env PATH="$SDK864_NODE_BIN:$PATH" node ../../node_modules/vite-plus/bin/vp test run
+mise exec -- pnpm exec env PATH="$SDK864_NODE_BIN:$PATH" node ./node_modules/vite-plus/bin/vp lint .
+mise exec -- pnpm run fix:formatting
+mise exec -- pnpm run formatting
+git diff --check
+```
+
+Results: build and SDK/audio type checks passed; **470 SDK tests** and **48 audio
+package tests** passed. Lint exited successfully with warnings; formatting and
+whitespace checks passed. A subsequent narrow test confirmed continuous STT never
+reads a submitted frame's audio data for attachment capture.
+
+```sh
+mise exec -- pnpm --dir e2e exec env PATH="$SDK864_NODE_BIN:$PATH" node ./scripts/run-e2e-tests.mjs --update livekit-instrumentation
+mise exec -- pnpm --dir e2e exec env PATH="$SDK864_NODE_BIN:$PATH" node ./scripts/run-e2e-tests.mjs --check-cassettes livekit-instrumentation
+# Run the following normal replay twice, sequentially:
+mise exec -- pnpm --dir e2e exec env PATH="$SDK864_NODE_BIN:$PATH" node ./scripts/run-e2e-tests.mjs livekit-instrumentation -t 'independent audio| auto order conversation$| auto (direct client|SDK client) discrete recognition$| auto streaming-cascade order conversation$|diarized two-caller|interrupted order answer|recovered order answer'
+mise exec -- pnpm --dir e2e exec env PATH="$SDK864_NODE_BIN:$PATH" node ./scripts/run-e2e-tests.mjs --update openai-instrumentation
+# Run normal provider replay three times, sequentially:
+mise exec -- pnpm --dir e2e exec env PATH="$SDK864_NODE_BIN:$PATH" node ./scripts/run-e2e-tests.mjs --check-cassettes openai-instrumentation
+```
+
+The LiveKit snapshot update passed **114 cases**. After adding the four explicit
+encoding-override cases, full normal replay passed **118 cases**, no skips, zero
+unused cassette variants. The OpenAI snapshot update passed **745 cases**;
+three normal audited replays and one additional final-build replay each passed
+**745 cases**, no skips, zero unused cassette variants. All traffic was replayed
+from existing recordings; no provider cassette was changed or fabricated.
+
+A structural audit of all **30 changed JSON trees** (14 LiveKit, 16 OpenAI)
+found only the intended audio-representation changes and continuous-STT attachment
+removal. Span structure, text, metrics, relationships, and other metadata remained
+identical. Paired text snapshots were regenerated by the runner. Example: the
+pinned order response changed from 213,600 PCM bytes to 36,638 Ogg/Opus bytes;
+its provider request still asks for PCM. Logs are `/tmp/sdk864-audio-*.log`.
+
+Both final focused LiveKit normal replays passed **34 cases** each (the other
+84 cases were excluded by the explicit name filter). These cover every new
+capture/configuration case and each changed LiveKit snapshot. The full
+118-case replay above had no filtered or skipped cases.

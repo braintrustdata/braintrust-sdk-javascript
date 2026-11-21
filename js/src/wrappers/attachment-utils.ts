@@ -143,6 +143,10 @@ export function processInputAttachments(
   input: any,
   captureAttachments = _internalCaptureAttachmentsEnabled(),
   audioOutputFormat?: string,
+  audioCapture?: {
+    enabled(direction: "user" | "agent"): boolean;
+    attachment(blob: Blob, filename: string): Attachment;
+  },
 ): any {
   if (!input) {
     return input;
@@ -151,9 +155,11 @@ export function processInputAttachments(
   // The framework boundary supplies voice consent. Keep the existing owning
   // attachment policy for unrelated chat/Agents payloads outside that boundary.
   const captureAudio = (direction: "user" | "agent") =>
-    currentInstrumentationContentPolicy()
-      ? isAudioCaptureEnabled(direction)
-      : captureAttachments;
+    audioCapture
+      ? audioCapture.enabled(direction)
+      : currentInstrumentationContentPolicy()
+        ? isAudioCaptureEnabled(direction)
+        : captureAttachments;
 
   let attachmentIndex = 0;
 
@@ -175,6 +181,8 @@ export function processInputAttachments(
       return null;
     }
 
+    if (audioCapture && mediaType.startsWith("audio/"))
+      return audioCapture.attachment(blob, filename);
     return new Attachment({
       data: blob,
       filename,

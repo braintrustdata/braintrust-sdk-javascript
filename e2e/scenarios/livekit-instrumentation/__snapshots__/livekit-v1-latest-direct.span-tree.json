@@ -82,14 +82,14 @@
                 "content": [
                   {
                     "file": {
-                      "byte_size": 172800,
+                      "byte_size": 29720,
                       "file_data": {
-                        "content_type": "audio/pcm",
-                        "filename": "input-0.pcm",
+                        "content_type": "audio/ogg",
+                        "filename": "input-0.ogg",
                         "key": "<uuid:1>",
                         "type": "braintrust_attachment"
                       },
-                      "filename": "input-0.pcm"
+                      "filename": "input-0.ogg"
                     },
                     "type": "file"
                   }
@@ -105,6 +105,18 @@
                 ]
               },
               "metadata": {
+                "contrib.audio.encodings": [
+                  {
+                    "original": {
+                      "content_type": "audio/pcm",
+                      "filename": "input-0.pcm"
+                    },
+                    "stored": {
+                      "content_type": "audio/ogg",
+                      "filename": "input-0.ogg"
+                    }
+                  }
+                ],
                 "contrib.livekit.audio.segments": [
                   {
                     "byte_offset": 0,
