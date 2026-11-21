@@ -6808,29 +6808,33 @@ export class SpanImpl implements Span {
   }
 
   public startSpan(args?: StartSpanArgs): Span {
+    // Avoid adding context-wrapper frames to ordinary calls: caller-location
+    // capture must still see the application within the stack trace limit.
+    if (this.contentPolicy && !currentInstrumentationContentPolicy()) {
+      return withInheritedInstrumentationContentPolicy(this.contentPolicy, () =>
+        this.startSpan(args),
+      );
+    }
     const parentSpanIds: ParentSpanIds | undefined = args?.parent
       ? undefined
       : { spanId: this._spanId, rootSpanId: this._rootSpanId };
-    return withInheritedInstrumentationContentPolicy(this.contentPolicy, () =>
-      inheritCaptureOverride(
-        this,
-        new SpanImpl({
+    return inheritCaptureOverride(
+      this,
+      new SpanImpl({
+        state: this._state,
+        [CAPTURE_ATTACHMENTS]: this[CAPTURE_ATTACHMENTS],
+        ...args,
+        ...startSpanParentArgs({
           state: this._state,
-          [CAPTURE_ATTACHMENTS]: this[CAPTURE_ATTACHMENTS],
-          ...args,
-          ...startSpanParentArgs({
-            state: this._state,
-            parent: args?.parent,
-            parentObjectType: this.parentObjectType,
-            parentObjectId: this.parentObjectId,
-            parentComputeObjectMetadataArgs:
-              this.parentComputeObjectMetadataArgs,
-            parentSpanIds,
-            propagatedEvent: args?.propagatedEvent ?? this.propagatedEvent,
-            propagatedState: this._propagatedState,
-          }),
+          parent: args?.parent,
+          parentObjectType: this.parentObjectType,
+          parentObjectId: this.parentObjectId,
+          parentComputeObjectMetadataArgs: this.parentComputeObjectMetadataArgs,
+          parentSpanIds,
+          propagatedEvent: args?.propagatedEvent ?? this.propagatedEvent,
+          propagatedState: this._propagatedState,
         }),
-      ),
+      }),
     );
   }
 
@@ -6839,31 +6843,33 @@ export class SpanImpl implements Span {
     spanParents: string[],
     args?: StartSpanArgs,
   ): Span {
+    if (this.contentPolicy && !currentInstrumentationContentPolicy()) {
+      return withInheritedInstrumentationContentPolicy(this.contentPolicy, () =>
+        this.startSpanWithParents(spanId, spanParents, args),
+      );
+    }
     const parentSpanIds: MultiParentSpanIds = {
       parentSpanIds: spanParents,
       rootSpanId: this._rootSpanId,
     };
-    return withInheritedInstrumentationContentPolicy(this.contentPolicy, () =>
-      inheritCaptureOverride(
-        this,
-        new SpanImpl({
+    return inheritCaptureOverride(
+      this,
+      new SpanImpl({
+        state: this._state,
+        [CAPTURE_ATTACHMENTS]: this[CAPTURE_ATTACHMENTS],
+        ...args,
+        ...startSpanParentArgs({
           state: this._state,
-          [CAPTURE_ATTACHMENTS]: this[CAPTURE_ATTACHMENTS],
-          ...args,
-          ...startSpanParentArgs({
-            state: this._state,
-            parent: args?.parent,
-            parentObjectType: this.parentObjectType,
-            parentObjectId: this.parentObjectId,
-            parentComputeObjectMetadataArgs:
-              this.parentComputeObjectMetadataArgs,
-            parentSpanIds,
-            propagatedEvent: args?.propagatedEvent ?? this.propagatedEvent,
-            propagatedState: this._propagatedState,
-          }),
-          spanId,
+          parent: args?.parent,
+          parentObjectType: this.parentObjectType,
+          parentObjectId: this.parentObjectId,
+          parentComputeObjectMetadataArgs: this.parentComputeObjectMetadataArgs,
+          parentSpanIds,
+          propagatedEvent: args?.propagatedEvent ?? this.propagatedEvent,
+          propagatedState: this._propagatedState,
         }),
-      ),
+        spanId,
+      }),
     );
   }
 
