@@ -4352,8 +4352,17 @@ describe("model streaming lifecycle", () => {
   test.each(["llm", "stt", "tts"] as const)(
     "%s attributes buffered chunks to their producing attempt",
     async (kind) => {
-      if (kind === "tts")
+      if (kind === "tts") {
         vi.stubEnv("BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS", "true");
+        // This checks exact samples per attempt, independently of whether the
+        // optional codec package is installed and enables default compression.
+        tracing = new LiveKitTracing(
+          DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES,
+          undefined,
+          true,
+          { codec: { name: "pcm" } },
+        );
+      }
       const root = start("agent_session");
       const native =
         kind === "stt"
