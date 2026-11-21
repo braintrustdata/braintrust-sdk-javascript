@@ -169,7 +169,8 @@ function wrapOpenAIPlugin<T extends object>(
  * ```ts
  * import * as agents from "@livekit/agents";
  * const { voice } = wrapLiveKit(agents);
- * const openai = wrapLiveKit(await import("@livekit/agents-plugin-openai"));
+ * import * as openaiPlugin from "@livekit/agents-plugin-openai";
+ * const openai = wrapLiveKit(openaiPlugin);
  * const client = wrapOpenAI(new OpenAI());
  * const session = new voice.AgentSession({ stt: new openai.STT({ client }), llm, tts });
  * ```
