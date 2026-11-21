@@ -34,6 +34,7 @@ import {
 import { processInputAttachments } from "./wrappers/attachment-utils";
 import { SpanCache } from "./span-cache";
 import { LazyValue } from "./util";
+import { audioAttachment } from "./audio-attachments";
 import { SpanObjectTypeV3 } from "../util";
 
 configureNode();
@@ -48,6 +49,14 @@ describe("onSpanExport", () => {
   let memoryLogger: TestBackgroundLogger;
 
   beforeEach(async () => {
+    // Audio capture initializes process-wide export bookkeeping. Fail-closed
+    // records must retain their identity even when unrelated audio was captured.
+    audioAttachment(
+      new Blob([new Uint8Array([1, 0])], { type: "audio/pcm" }),
+      "earlier-capture.pcm",
+      undefined,
+      { sampleRate: 24000, channels: 1 },
+    );
     vi.stubEnv("BRAINTRUST_DEBUG_LOG_LEVEL", "error");
     await _exportsForTestingOnly.simulateLoginForTests();
     memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();

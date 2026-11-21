@@ -204,6 +204,9 @@ export async function encodeAudioAttachments<T extends object>(
   const result = (await walk(record)) as T & {
     metadata?: Record<string, unknown>;
   };
+  // Export uses object identity to protect stripped customizer failures from
+  // merging and masking. Preserve it whenever no attachment was replaced.
+  if (!encoded.size) return record;
   const formats = [...descriptions.values()].filter(
     (item) => item !== undefined,
   );

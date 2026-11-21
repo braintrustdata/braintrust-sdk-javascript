@@ -93,6 +93,7 @@ test("one codec failure preserves that original without corrupting another clip"
     encodeAudioAttachments(bad),
     encodeAudioAttachments(good),
   ]);
+  expect(failed).toBe(bad);
   expect(failed.output.content[0].file.file_data).toBe(
     bad.output.content[0].file.file_data,
   );
@@ -114,8 +115,24 @@ test("PCM override, compressed media, and removed attachments never invoke the e
     "voice.mp3",
   );
   record([1, 0]); // Removed by export customization: never traversed or encoded.
-  const result = await encodeAudioAttachments({ input: [pcmFile, mp3] });
+  const original = { input: [pcmFile, mp3] };
+  const result = await encodeAudioAttachments(original);
+  expect(result).toBe(original);
   expect(result.input).toEqual([pcmFile, mp3]);
+  expect(createStack).not.toHaveBeenCalled();
+});
+
+test("unrelated records retain identity after audio capture initializes", async () => {
+  const createStack = install(
+    () => async (bytes, meta, next) => next(bytes, meta),
+  );
+  record([1, 0]);
+  const original = {
+    id: "span",
+    metrics: { start: 1, end: 2 },
+    context: { customizer_error: true },
+  };
+  expect(await encodeAudioAttachments(original)).toBe(original);
   expect(createStack).not.toHaveBeenCalled();
 });
 
@@ -178,7 +195,8 @@ test("malformed WAV and PCM with unknown format preserve their original bytes", 
       "unknown.pcm",
     ),
   ];
-  expect((await encodeAudioAttachments({ input })).input).toEqual(input);
+  const original = { input };
+  expect(await encodeAudioAttachments(original)).toBe(original);
   expect(transform).not.toHaveBeenCalled();
   expect(input.every((a) => a instanceof Attachment)).toBe(true);
 });

@@ -281,3 +281,33 @@ Both final focused LiveKit normal replays passed **34 cases** each (the other
 84 cases were excluded by the explicit name filter). These cover every new
 capture/configuration case and each changed LiveKit snapshot. The full
 118-case replay above had no filtered or skipped cases.
+
+## Review fix: preserve export record identity after audio initialization
+
+Review the follow-up to `c166f48f`. The reviewer reproduced a real regression:
+initializing one encodable audio attachment enabled a traversal that returned
+clones even for unrelated records. This lost the WeakSet identity marking stripped
+customizer failures, breaking ordered merging, masking protections, and retries.
+
+`encodeAudioAttachments()` now returns the original record whenever no attachment
+was replaced, including codec failures and unsupported formats. Records with
+successfully encoded attachments still use the existing copy and metadata path.
+The customizer suite now initializes audio bookkeeping before each export test;
+attachment tests also assert unchanged-record identity.
+
+Before the fix, 13 existing customizer tests and four attachment identity checks
+failed. After the fix, **148 tests across six files passed**, including all 52
+customizer tests and the ordered HTTP export/retry regression. SDK source/test
+typings and targeted lint passed. No provider behavior, snapshots, or cassettes
+changed. The provider matrices and production trace were not rerun for this
+three-line runtime fix; their earlier results apply to `c166f48f`.
+
+```sh
+mise exec -- pnpm --dir js exec env PATH="/Users/david/.local/share/mise/installs/node/26.8.2/bin:$PATH" node ./node_modules/vitest/vitest.mjs run src/span-customizer.test.ts src/audio-attachments.test.ts src/instrumentation/providers/openai-media.test.ts src/logger/lifecycle.test.ts src/logger-json-attachment.test.ts src/attachment-capture.test.ts
+mise exec -- pnpm --dir js run check:typings
+mise exec -- pnpm exec env PATH="/Users/david/.local/share/mise/installs/node/26.8.2/bin:$PATH" node ./node_modules/vite-plus/bin/vp lint js/src/audio-attachments.ts js/src/audio-attachments.test.ts js/src/span-customizer.test.ts
+mise exec -- pnpm run fix:formatting
+git diff --check
+```
+
+Logs: `/tmp/sdk864-export-identity-{before,after,types,lint}.log`.
