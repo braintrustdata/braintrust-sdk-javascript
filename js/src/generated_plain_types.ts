@@ -1,4 +1,4 @@
-// Auto-generated file (content hash 387034529ea006a9) -- do not modify
+// Auto-generated file (content hash 771d6dc8c81f3b48) -- do not modify
 
 export type AclObjectTypeType =
   /**
@@ -39,7 +39,7 @@ export type PermissionType =
   /**
  * Each permission permits a certain type of operation on an object in the system
 
-Permissions can be assigned to to objects on an individual basis, or grouped into roles
+Permissions can be assigned to objects on an individual basis, or grouped into roles
  *
  * @enum create, read, update, delete, create_acls, read_acls, update_acls, delete_acls
  */
@@ -90,10 +90,11 @@ export type AclType = {
       )
     | undefined;
   permission?:
-    | (PermissionType &
+    | (PermissionType
+      /**
+       * Permission the ACL grants. Exactly one of `permission` and `role_id` will be provided
+       */ &
         /**
-         * Permission the ACL grants. Exactly one of `permission` and `role_id` will be provided
-         */ /**
          * Permission the ACL grants. Exactly one of `permission` and `role_id` will be provided
          */
         (| string
@@ -104,10 +105,11 @@ export type AclType = {
         ))
     | undefined;
   restrict_object_type?:
-    | (AclObjectTypeType &
-        /**
-         * When setting a permission directly, optionally restricts the permission grant to just the specified object type. Cannot be set alongside a `role_id`.
-         */ unknown)
+    | (AclObjectTypeType
+      /**
+       * When setting a permission directly, optionally restricts the permission grant to just the specified object type. Cannot be set alongside a `role_id`.
+       */ &
+        unknown)
     | undefined;
   role_id?:
     | /**
@@ -166,6 +168,20 @@ export type AgentType = {
         | null
       )
     | undefined;
+  deleted_at?:
+    | /**
+     * Date of agent deletion, or null if the agent is still active
+     */
+    /**
+     * Date of agent deletion, or null if the agent is still active
+     */
+    (| string
+        /**
+         * Date of agent deletion, or null if the agent is still active
+         */
+        | null
+      )
+    | undefined;
   /**
    * Name of the agent. Within a project, agent names are unique
    */
@@ -199,12 +215,10 @@ export type AgentType = {
     /**
      * User-controlled metadata about the agent
      */
-    (| {}
-        /**
-         * User-controlled metadata about the agent
-         */
-        | null
-      )
+    ({}
+      /**
+       * User-controlled metadata about the agent
+       */ | null)
     | undefined;
 };
 export type AISecretType = {
@@ -312,9 +326,9 @@ export type AnyModelParamsType = {
   top_p?: number | undefined;
   max_tokens: number;
   max_completion_tokens?: /**
-     * The successor to max_tokens
-     */
-    number | undefined;
+   * The successor to max_tokens
+   */
+  number | undefined;
   frequency_penalty?: number | undefined;
   presence_penalty?: number | undefined;
   response_format?: ResponseFormatNullishType | undefined;
@@ -381,14 +395,15 @@ export type AnyModelParamsType = {
      */
     ("low" | "medium" | "high")
     | undefined;
+  service_tier?: string | undefined;
   top_k?: number | undefined;
   stop_sequences?: Array<string> | undefined;
   reasoning_enabled?: boolean | undefined;
   reasoning_budget?: number | undefined;
   max_tokens_to_sample?: /**
-     * This is a legacy parameter that should not be used.
-     */
-    number | undefined;
+   * This is a legacy parameter that should not be used.
+   */
+  number | undefined;
   maxOutputTokens?: number | undefined;
   topP?: number | undefined;
   topK?: number | undefined;
@@ -417,6 +432,9 @@ export type ApiKeyType = {
    * Name of the api key
    */
   name: string;
+  /**
+   * Masked preview showing the key prefix and last four characters, e.g. sk-…AbCd.
+   */
   preview_name: string;
   user_id?:
     | /**
@@ -484,6 +502,20 @@ export type ApiKeyType = {
     (| string
         /**
          * Unique identifier for the organization
+         */
+        | null
+      )
+    | undefined;
+  last_used_at?:
+    | /**
+     * Approximate time this credential was last used to authenticate. Updates are limited to once every 10 minutes and may be delayed by authorization caches. If null, no usage has been recorded.
+     */
+    /**
+     * Approximate time this credential was last used to authenticate. Updates are limited to once every 10 minutes and may be delayed by authorization caches. If null, no usage has been recorded.
+     */
+    (| string
+        /**
+         * Approximate time this credential was last used to authenticate. Updates are limited to once every 10 minutes and may be delayed by authorization caches. If null, no usage has been recorded.
          */
         | null
       )
@@ -600,6 +632,7 @@ export type AsyncScoringControlType =
        */
       kind: "score_update";
       token?: string | undefined;
+      triggered_xact_id?: string | undefined;
     }
   | {
       /**
@@ -722,9 +755,9 @@ export type UploadStatusType =
 export type AttachmentStatusType = {
   upload_status: UploadStatusType;
   error_message?: /**
-     * Describes the error encountered while uploading.
-     */
-    string | undefined;
+   * Describes the error encountered while uploading.
+   */
+  string | undefined;
 };
 export type AutomationStatusType =
   /**
@@ -762,9 +795,9 @@ export type FacetPreprocessorIdType =
       type: "function";
       id: string;
       version?: /**
-         * The version of the function
-         */
-        string | undefined;
+       * The version of the function
+       */
+      string | undefined;
     }
   | {
       /**
@@ -795,9 +828,9 @@ export type SavedFunctionIdType =
       type: "function";
       id: string;
       version?: /**
-         * The version of the function
-         */
-        string | undefined;
+       * The version of the function
+       */
+      string | undefined;
     }
   | {
       /**
@@ -833,32 +866,33 @@ export type TopicMapDataType = {
    */
   source_facet: string;
   source_facet_function?:
-    | (SavedFunctionIdType &
-        /**
-         * The stable function reference for the source facet
-         */ unknown)
+    | (SavedFunctionIdType
+      /**
+       * The stable function reference for the source facet
+       */ &
+        unknown)
     | undefined;
   /**
    * The embedding model to use for embedding facet values
    */
   embedding_model: string;
   bundle_key?: /**
-     * Key of the topic map bundle in code_bundles bucket
-     */
-    string | undefined;
+   * Key of the topic map bundle in code_bundles bucket
+   */
+  string | undefined;
   report_key?: /**
-     * Key of the clustering report in code_bundles bucket
-     */
-    string | undefined;
+   * Key of the clustering report in code_bundles bucket
+   */
+  string | undefined;
   topic_names?: /**
-     * Mapping from topic_id to topic name
-     */
-    {} | undefined;
+   * Mapping from topic_id to topic name
+   */
+  {} | undefined;
   generation_settings?: TopicMapGenerationSettingsType | undefined;
   disable_reconciliation?: /**
-     * Whether new topic generation should ignore the previously saved report during reconciliation. Defaults to false when omitted.
-     */
-    boolean | undefined;
+   * Whether new topic generation should ignore the previously saved report during reconciliation. Defaults to false when omitted.
+   */
+  boolean | undefined;
   reconcile_mode?:
     | /**
      * How reconciliation carries the previous map forward: "evolve" re-routes new samples into the previous topics before naming; "names_only" keeps the fresh clustering and carries only topic ids/names. Defaults to "names_only" when omitted.
@@ -868,17 +902,17 @@ export type TopicMapDataType = {
     ("evolve" | "names_only")
     | undefined;
   distance_threshold?: /**
-     * Maximum distance to nearest centroid. If exceeded, returns no_match.
-     */
-    number | undefined;
+   * Maximum distance to nearest centroid. If exceeded, returns no_match.
+   */
+  number | undefined;
   btql_filter?: /**
-     * Per-topic-map BTQL filter that was applied when this version was generated. Absent on versions generated before this was recorded.
-     */
-    string | undefined;
+   * Per-topic-map BTQL filter that was applied when this version was generated. Absent on versions generated before this was recorded.
+   */
+  string | undefined;
   automation_btql_filter?: /**
-     * Automation-level BTQL filter that was applied when this version was generated. Absent on versions generated before this was recorded.
-     */
-    string | undefined;
+   * Automation-level BTQL filter that was applied when this version was generated. Absent on versions generated before this was recorded.
+   */
+  string | undefined;
 };
 export type BatchedFacetDataType = {
   /**
@@ -896,22 +930,22 @@ export type BatchedFacetDataType = {
      */
     prompt: string;
     model?: /**
-       * The model to use for facet extraction
-       */
-      string | undefined;
+     * The model to use for facet extraction
+     */
+    string | undefined;
     embedding_model?: /**
-       * The embedding model to use for vectorizing facet results.
-       */
-      string | undefined;
+     * The embedding model to use for vectorizing facet results.
+     */
+    string | undefined;
     no_match_pattern?: /**
-       * Regex pattern to identify outputs that do not match the facet. If the output matches, the facet will be saved as 'no_match'
-       */
-      string | undefined;
+     * Regex pattern to identify outputs that do not match the facet. If the output matches, the facet will be saved as 'no_match'
+     */
+    string | undefined;
   }>;
   topic_maps?: /**
-     * Topic maps that depend on facets in this batch, keyed by source facet name. Each source facet can have multiple topic maps.
-     */
-    {} | undefined;
+   * Topic maps that depend on facets in this batch, keyed by source facet name. Each source facet can have multiple topic maps.
+   */
+  {} | undefined;
 };
 export type BraintrustModelParamsType = Partial<{
   use_cache: boolean;
@@ -1152,9 +1186,9 @@ export type ChatCompletionMessageReasoningType = Partial<{
 export type ChatCompletionMessageParamType =
   | {
       content: /**
-         * @default ""
-         */
-        string | Array<ChatCompletionContentPartTextType>;
+       * @default ""
+       */
+      string | Array<ChatCompletionContentPartTextType>;
       /**
        * @enum system
        */
@@ -1163,9 +1197,9 @@ export type ChatCompletionMessageParamType =
     }
   | {
       content: /**
-         * @default ""
-         */
-        string | Array<ChatCompletionContentPartType>;
+       * @default ""
+       */
+      string | Array<ChatCompletionContentPartType>;
       /**
        * @enum user
        */
@@ -1193,9 +1227,9 @@ export type ChatCompletionMessageParamType =
     }
   | {
       content: /**
-         * @default ""
-         */
-        string | Array<ChatCompletionContentPartTextType>;
+       * @default ""
+       */
+      string | Array<ChatCompletionContentPartTextType>;
       /**
        * @enum tool
        */
@@ -1215,9 +1249,9 @@ export type ChatCompletionMessageParamType =
     }
   | {
       content: /**
-         * @default ""
-         */
-        string | Array<ChatCompletionContentPartTextType>;
+       * @default ""
+       */
+      string | Array<ChatCompletionContentPartTextType>;
       /**
        * @enum developer
        */
@@ -1234,9 +1268,9 @@ export type ChatCompletionMessageParamType =
 export type ChatCompletionOpenAIMessageParamType =
   | {
       content: /**
-         * @default ""
-         */
-        string | Array<ChatCompletionContentPartTextType>;
+       * @default ""
+       */
+      string | Array<ChatCompletionContentPartTextType>;
       /**
        * @enum system
        */
@@ -1245,9 +1279,9 @@ export type ChatCompletionOpenAIMessageParamType =
     }
   | {
       content: /**
-         * @default ""
-         */
-        string | Array<ChatCompletionContentPartType>;
+       * @default ""
+       */
+      string | Array<ChatCompletionContentPartType>;
       /**
        * @enum user
        */
@@ -1275,9 +1309,9 @@ export type ChatCompletionOpenAIMessageParamType =
     }
   | {
       content: /**
-         * @default ""
-         */
-        string | Array<ChatCompletionContentPartTextType>;
+       * @default ""
+       */
+      string | Array<ChatCompletionContentPartTextType>;
       /**
        * @enum tool
        */
@@ -1297,9 +1331,9 @@ export type ChatCompletionOpenAIMessageParamType =
     }
   | {
       content: /**
-         * @default ""
-         */
-        string | Array<ChatCompletionContentPartTextType>;
+       * @default ""
+       */
+      string | Array<ChatCompletionContentPartTextType>;
       /**
        * @enum developer
        */
@@ -1382,7 +1416,7 @@ export type CodeBundleType = {
                */
               provider: "modal";
               /**
-               * sandbox snapshot ref
+               * The Modal snapshot to start the sandbox from
                */
               snapshot_ref: string;
             }
@@ -1393,18 +1427,18 @@ export type CodeBundleType = {
               provider: "lambda";
             };
         entrypoints?: /**
-           * Which entrypoints to execute in the sandbox
-           */
-          Array<string> | undefined;
+         * Which entrypoints to execute in the sandbox
+         */
+        Array<string> | undefined;
         eval_name: string;
         parameters?: /**
-           * Parameter values for sandbox eval execution
-           */
-          {} | undefined;
+         * Parameter values for sandbox eval execution
+         */
+        {} | undefined;
         evaluator_definition?: /**
-           * Definition of current evaluator with parameters
-           */
-          unknown | undefined;
+         * Definition of current evaluator with parameters
+         */
+        unknown | undefined;
       };
   bundle_id?: (string | null) | undefined;
   preview?:
@@ -1498,12 +1532,10 @@ export type DatasetType = {
     /**
      * A list of tags for the dataset
      */
-    (| Array<string>
-        /**
-         * A list of tags for the dataset
-         */
-        | null
-      )
+    (Array<string>
+      /**
+       * A list of tags for the dataset
+       */ | null)
     | undefined;
   metadata?:
     | /**
@@ -1512,12 +1544,10 @@ export type DatasetType = {
     /**
      * User-controlled metadata about the dataset
      */
-    (| {}
-        /**
-         * User-controlled metadata about the dataset
-         */
-        | null
-      )
+    ({}
+      /**
+       * User-controlled metadata about the dataset
+       */ | null)
     | undefined;
   /**
    * URL slug for the dataset. used to construct dataset URLs
@@ -1531,60 +1561,59 @@ export type ObjectReferenceNullishType =
   /**
    * Indicates the event was copied from another object.
    */
-  | {
-      /**
-       * Type of the object the event is originating from.
-       *
-       * @enum project_logs, experiment, dataset, prompt, function, prompt_session
+  {
+    /**
+     * Type of the object the event is originating from.
+     *
+     * @enum project_logs, experiment, dataset, prompt, function, prompt_session
+     */
+    object_type:
+      | "project_logs"
+      | "experiment"
+      | "dataset"
+      | "prompt"
+      | "function"
+      | "prompt_session";
+    /**
+     * ID of the object the event is originating from.
+     */
+    object_id: string;
+    /**
+     * ID of the original event.
+     */
+    id: string;
+    _xact_id?:
+      | /**
+       * Transaction ID of the original event.
        */
-      object_type:
-        | "project_logs"
-        | "experiment"
-        | "dataset"
-        | "prompt"
-        | "function"
-        | "prompt_session";
       /**
-       * ID of the object the event is originating from.
+       * Transaction ID of the original event.
        */
-      object_id: string;
+      (| string
+          /**
+           * Transaction ID of the original event.
+           */
+          | null
+        )
+      | undefined;
+    created?:
+      | /**
+       * Created timestamp of the original event. Used to help sort in the UI
+       */
       /**
-       * ID of the original event.
+       * Created timestamp of the original event. Used to help sort in the UI
        */
-      id: string;
-      _xact_id?:
-        | /**
-         * Transaction ID of the original event.
-         */
-        /**
-         * Transaction ID of the original event.
-         */
-        (| string
-            /**
-             * Transaction ID of the original event.
-             */
-            | null
-          )
-        | undefined;
-      created?:
-        | /**
-         * Created timestamp of the original event. Used to help sort in the UI
-         */
-        /**
-         * Created timestamp of the original event. Used to help sort in the UI
-         */
-        (| string
-            /**
-             * Created timestamp of the original event. Used to help sort in the UI
-             */
-            | null
-          )
-        | undefined;
-    }
+      (| string
+          /**
+           * Created timestamp of the original event. Used to help sort in the UI
+           */
+          | null
+        )
+      | undefined;
+  }
   /**
    * Indicates the event was copied from another object.
-   */
-  | null;
+   */ | null;
 export type DatasetEventType = {
   /**
    * A unique identifier for the dataset event. If you don't provide one, Braintrust will generate one for you
@@ -1621,13 +1650,13 @@ export type DatasetEventType = {
    */
   dataset_id: string;
   input?: /**
-     * The argument that uniquely define an input case (an arbitrary, JSON serializable object)
-     */
-    unknown | undefined;
+   * The argument that uniquely define an input case (an arbitrary, JSON serializable object)
+   */
+  unknown | undefined;
   expected?: /**
-     * The output of your application, including post-processing (an arbitrary, JSON serializable object)
-     */
-    unknown | undefined;
+   * The output of your application, including post-processing (an arbitrary, JSON serializable object)
+   */
+  unknown | undefined;
   metadata?:
     | /**
      * A dictionary with additional data about the test example, model outputs, or just about anything else that's relevant, that you can use to help find and analyze examples later. For example, you could log the `prompt`, example's `id`, or anything else that would be useful to slice/dice later. The values in `metadata` can be any JSON-serializable type, but its keys must be strings
@@ -1635,28 +1664,48 @@ export type DatasetEventType = {
     /**
      * A dictionary with additional data about the test example, model outputs, or just about anything else that's relevant, that you can use to help find and analyze examples later. For example, you could log the `prompt`, example's `id`, or anything else that would be useful to slice/dice later. The values in `metadata` can be any JSON-serializable type, but its keys must be strings
      */
-    (| Partial<
-            {
-              /**
-               * The model used for this example
-               */
-              model: /**
-                 * The model used for this example
-                 */
-                | string
-                /**
-                 * The model used for this example
-                 */
-                | null;
-            } & {
-              [key: string]: any;
-            }
-          >
-        /**
-         * A dictionary with additional data about the test example, model outputs, or just about anything else that's relevant, that you can use to help find and analyze examples later. For example, you could log the `prompt`, example's `id`, or anything else that would be useful to slice/dice later. The values in `metadata` can be any JSON-serializable type, but its keys must be strings
-         */
-        | null
-      )
+    (Partial<
+        {
+          /**
+           * The model used for this example
+           */
+          model: /**
+           * The model used for this example
+           */
+          | string
+            /**
+             * The model used for this example
+             */
+            | null;
+          /**
+           * The service tier requested for this LLM call
+           */
+          requested_service_tier: /**
+           * The service tier requested for this LLM call
+           */
+          | string
+            /**
+             * The service tier requested for this LLM call
+             */
+            | null;
+          /**
+           * The service tier that served this LLM call
+           */
+          served_service_tier: /**
+           * The service tier that served this LLM call
+           */
+          | string
+            /**
+             * The service tier that served this LLM call
+             */
+            | null;
+        } & {
+          [key: string]: any;
+        }
+      >
+      /**
+       * A dictionary with additional data about the test example, model outputs, or just about anything else that's relevant, that you can use to help find and analyze examples later. For example, you could log the `prompt`, example's `id`, or anything else that would be useful to slice/dice later. The values in `metadata` can be any JSON-serializable type, but its keys must be strings
+       */ | null)
     | undefined;
   tags?:
     | /**
@@ -1665,15 +1714,13 @@ export type DatasetEventType = {
     /**
      * A list of tags to log
      */
-    (| Array<string>
-        /**
-         * A list of tags to log
-         */
-        | null
-      )
+    (Array<string>
+      /**
+       * A list of tags to log
+       */ | null)
     | undefined;
   /**
-   * A unique identifier used to link different dataset events together as part of a full trace. See the [tracing guide](https://www.braintrust.dev/docs/instrument) for full details on tracing
+   * A unique identifier used to link different dataset events together as part of a full trace. See the [tracing guide](https://docs.braintrust.dev/instrument) for full details on tracing
    */
   span_id: string;
   /**
@@ -1702,12 +1749,10 @@ export type DatasetEventType = {
     /**
      * Optional list of comments attached to this event
      */
-    (| Array<unknown>
-        /**
-         * Optional list of comments attached to this event
-         */
-        | null
-      )
+    (Array<unknown>
+      /**
+       * Optional list of comments attached to this event
+       */ | null)
     | undefined;
   audit_data?:
     | /**
@@ -1716,12 +1761,10 @@ export type DatasetEventType = {
     /**
      * Optional list of audit entries attached to this event
      */
-    (| Array<unknown>
-        /**
-         * Optional list of audit entries attached to this event
-         */
-        | null
-      )
+    (Array<unknown>
+      /**
+       * Optional list of audit entries attached to this event
+       */ | null)
     | undefined;
   facets?:
     | /**
@@ -1730,12 +1773,10 @@ export type DatasetEventType = {
     /**
      * Facets for categorization (dictionary from facet id to value)
      */
-    (| {}
-        /**
-         * Facets for categorization (dictionary from facet id to value)
-         */
-        | null
-      )
+    ({}
+      /**
+       * Facets for categorization (dictionary from facet id to value)
+       */ | null)
     | undefined;
   classifications?:
     | /**
@@ -1744,12 +1785,10 @@ export type DatasetEventType = {
     /**
      * Classifications for this event (dictionary from classification name to items)
      */
-    (| {}
-        /**
-         * Classifications for this event (dictionary from classification name to items)
-         */
-        | null
-      )
+    ({}
+      /**
+       * Classifications for this event (dictionary from classification name to items)
+       */ | null)
     | undefined;
 };
 export type DatasetSnapshotType = {
@@ -1767,16 +1806,16 @@ export type DatasetSnapshotType = {
   name: string;
   description: string | null;
   /**
-   * Transaction id of the brainstore version at the time of the snapshot
+   * Transaction ID of the dataset version at the time of the snapshot
    */
   xact_id: string;
   /**
    * Date of dataset snapshot creation
    */
   created: /**
-     * Date of dataset snapshot creation
-     */
-    | string
+   * Date of dataset snapshot creation
+   */
+  | string
     /**
      * Date of dataset snapshot creation
      */
@@ -1864,12 +1903,10 @@ export type EnvVarType = {
     /**
      * Optional metadata associated with the environment variable when managed via the function secrets API
      */
-    (| {}
-        /**
-         * Optional metadata associated with the environment variable when managed via the function secrets API
-         */
-        | null
-      )
+    ({}
+      /**
+       * Optional metadata associated with the environment variable when managed via the function secrets API
+       */ | null)
     | undefined;
   preview_secret?:
     | /**
@@ -1900,7 +1937,7 @@ export type EnvVarType = {
       )
     | undefined;
   /**
-   * The category of the secret: env_var for regular environment variables, ai_provider for AI provider API keys
+   * The category of the secret: env_var for regular environment variables, ai_provider for AI provider API keys, sandbox_provider for sandbox provider credentials, automation_integration for automation delivery credentials
    *
    * @default "env_var"
    * @enum env_var, ai_provider, sandbox_provider, automation_integration
@@ -1918,111 +1955,110 @@ export type RepoInfoType =
   /**
    * Metadata about the state of the repo when the experiment was created
    */
-  | Partial<{
+  Partial<{
+    /**
+     * SHA of most recent commit
+     */
+    commit: /**
+     * SHA of most recent commit
+     */
+    | string
       /**
        * SHA of most recent commit
        */
-      commit: /**
-         * SHA of most recent commit
-         */
-        | string
-        /**
-         * SHA of most recent commit
-         */
-        | null;
+      | null;
+    /**
+     * Name of the branch the most recent commit belongs to
+     */
+    branch: /**
+     * Name of the branch the most recent commit belongs to
+     */
+    | string
       /**
        * Name of the branch the most recent commit belongs to
        */
-      branch: /**
-         * Name of the branch the most recent commit belongs to
-         */
-        | string
-        /**
-         * Name of the branch the most recent commit belongs to
-         */
-        | null;
+      | null;
+    /**
+     * Name of the tag on the most recent commit
+     */
+    tag: /**
+     * Name of the tag on the most recent commit
+     */
+    | string
       /**
        * Name of the tag on the most recent commit
        */
-      tag: /**
-         * Name of the tag on the most recent commit
-         */
-        | string
-        /**
-         * Name of the tag on the most recent commit
-         */
-        | null;
+      | null;
+    /**
+     * Whether or not the repo had uncommitted changes when snapshotted
+     */
+    dirty: /**
+     * Whether or not the repo had uncommitted changes when snapshotted
+     */
+    | boolean
       /**
        * Whether or not the repo had uncommitted changes when snapshotted
        */
-      dirty: /**
-         * Whether or not the repo had uncommitted changes when snapshotted
-         */
-        | boolean
-        /**
-         * Whether or not the repo had uncommitted changes when snapshotted
-         */
-        | null;
+      | null;
+    /**
+     * Name of the author of the most recent commit
+     */
+    author_name: /**
+     * Name of the author of the most recent commit
+     */
+    | string
       /**
        * Name of the author of the most recent commit
        */
-      author_name: /**
-         * Name of the author of the most recent commit
-         */
-        | string
-        /**
-         * Name of the author of the most recent commit
-         */
-        | null;
+      | null;
+    /**
+     * Email of the author of the most recent commit
+     */
+    author_email: /**
+     * Email of the author of the most recent commit
+     */
+    | string
       /**
        * Email of the author of the most recent commit
        */
-      author_email: /**
-         * Email of the author of the most recent commit
-         */
-        | string
-        /**
-         * Email of the author of the most recent commit
-         */
-        | null;
+      | null;
+    /**
+     * Most recent commit message
+     */
+    commit_message: /**
+     * Most recent commit message
+     */
+    | string
       /**
        * Most recent commit message
        */
-      commit_message: /**
-         * Most recent commit message
-         */
-        | string
-        /**
-         * Most recent commit message
-         */
-        | null;
+      | null;
+    /**
+     * Time of the most recent commit
+     */
+    commit_time: /**
+     * Time of the most recent commit
+     */
+    | string
       /**
        * Time of the most recent commit
        */
-      commit_time: /**
-         * Time of the most recent commit
-         */
-        | string
-        /**
-         * Time of the most recent commit
-         */
-        | null;
+      | null;
+    /**
+     * If the repo was dirty when run, this includes the diff between the current state of the repo and the most recent commit.
+     */
+    git_diff: /**
+     * If the repo was dirty when run, this includes the diff between the current state of the repo and the most recent commit.
+     */
+    | string
       /**
        * If the repo was dirty when run, this includes the diff between the current state of the repo and the most recent commit.
        */
-      git_diff: /**
-         * If the repo was dirty when run, this includes the diff between the current state of the repo and the most recent commit.
-         */
-        | string
-        /**
-         * If the repo was dirty when run, this includes the diff between the current state of the repo and the most recent commit.
-         */
-        | null;
-    }>
+      | null;
+  }>
   /**
    * Metadata about the state of the repo when the experiment was created
-   */
-  | null;
+   */ | null;
 export type ExperimentType = {
   /**
    * Unique identifier for the experiment
@@ -2142,28 +2178,25 @@ export type ExperimentType = {
     /**
      * Braintrust-controlled metadata about the experiment.
      */
-    (| Partial<
-            {
-              /**
-               * BTQL filter payload used to evaluate a subset of a linked dataset.
-               */
-              dataset_filter: /**
-                 * BTQL filter payload used to evaluate a subset of a linked dataset.
-                 */
-                | {}
-                /**
-                 * BTQL filter payload used to evaluate a subset of a linked dataset.
-                 */
-                | null;
-            } & {
-              [key: string]: any;
-            }
-          >
-        /**
-         * Braintrust-controlled metadata about the experiment.
-         */
-        | null
-      )
+    (Partial<
+        {
+          /**
+           * BTQL filter payload used to evaluate a subset of a linked dataset.
+           */
+          dataset_filter: /**
+           * BTQL filter payload used to evaluate a subset of a linked dataset.
+           */
+          {}
+          /**
+           * BTQL filter payload used to evaluate a subset of a linked dataset.
+           */ | null;
+        } & {
+          [key: string]: any;
+        }
+      >
+      /**
+       * Braintrust-controlled metadata about the experiment.
+       */ | null)
     | undefined;
   parameters_id?:
     | /**
@@ -2218,12 +2251,10 @@ export type ExperimentType = {
     /**
      * User-controlled metadata about the experiment
      */
-    (| {}
-        /**
-         * User-controlled metadata about the experiment
-         */
-        | null
-      )
+    ({}
+      /**
+       * User-controlled metadata about the experiment
+       */ | null)
     | undefined;
   tags?:
     | /**
@@ -2232,24 +2263,22 @@ export type ExperimentType = {
     /**
      * A list of tags for the experiment
      */
-    (| Array<string>
-        /**
-         * A list of tags for the experiment
-         */
-        | null
-      )
+    (Array<string>
+      /**
+       * A list of tags for the experiment
+       */ | null)
     | undefined;
 };
 export type SpanTypeType =
   /**
    * Type of the span, for display purposes only
    *
-   * @enum llm, score, function, eval, task, tool, automation, facet, preprocessor, classifier, review, question, log
+   * @enum llm, score, function, eval, task, tool, automation, facet, preprocessor, classifier, review, decision, question, log
    */
   | /**
    * Type of the span, for display purposes only
    *
-   * @enum llm, score, function, eval, task, tool, automation, facet, preprocessor, classifier, review, question, log
+   * @enum llm, score, function, eval, task, tool, automation, facet, preprocessor, classifier, review, decision, question, log
    */
   (| "llm"
       | "score"
@@ -2262,13 +2291,14 @@ export type SpanTypeType =
       | "preprocessor"
       | "classifier"
       | "review"
+      | "decision"
       | "question"
       | "log"
     )
   /**
    * Type of the span, for display purposes only
    *
-   * @enum llm, score, function, eval, task, tool, automation, facet, preprocessor, classifier, review, question, log
+   * @enum llm, score, function, eval, task, tool, automation, facet, preprocessor, classifier, review, decision, question, log
    */
   | null;
 export type SpanAttributesType =
@@ -2278,64 +2308,63 @@ export type SpanAttributesType =
   /**
    * Human-identifying attributes of the span, such as name, type, etc.
    */
-  | Partial<
-      {
+  Partial<
+    {
+      /**
+       * Name of the span, for display purposes only
+       */
+      name: /**
+       * Name of the span, for display purposes only
+       */
+      | string
         /**
          * Name of the span, for display purposes only
          */
-        name: /**
-           * Name of the span, for display purposes only
-           */
-          | string
-          /**
-           * Name of the span, for display purposes only
-           */
-          | null;
-        type: SpanTypeType;
+        | null;
+      type: SpanTypeType;
+      /**
+       * A special value that indicates the span was generated by a scoring automation
+       *
+       * @enum scorer
+       */
+      purpose:
+        | /**
+         * A special value that indicates the span was generated by a scoring automation
+         *
+         * @enum scorer
+         */
+        "scorer"
         /**
          * A special value that indicates the span was generated by a scoring automation
          *
          * @enum scorer
          */
-        purpose:
-          | /**
-           * A special value that indicates the span was generated by a scoring automation
-           *
-           * @enum scorer
-           */
-          "scorer"
-          /**
-           * A special value that indicates the span was generated by a scoring automation
-           *
-           * @enum scorer
-           */
-          | null;
+        | null;
+      /**
+       * Severity level of a log
+       *
+       * @enum trace, debug, info, warn, error, fatal
+       */
+      log_level:
+        | /**
+         * Severity level of a log
+         *
+         * @enum trace, debug, info, warn, error, fatal
+         */
+        ("trace" | "debug" | "info" | "warn" | "error" | "fatal")
         /**
          * Severity level of a log
          *
          * @enum trace, debug, info, warn, error, fatal
          */
-        log_level:
-          | /**
-           * Severity level of a log
-           *
-           * @enum trace, debug, info, warn, error, fatal
-           */
-          ("trace" | "debug" | "info" | "warn" | "error" | "fatal")
-          /**
-           * Severity level of a log
-           *
-           * @enum trace, debug, info, warn, error, fatal
-           */
-          | null;
-      } & {
-        [key: string]: any;
-      }
-    >
+        | null;
+    } & {
+      [key: string]: any;
+    }
+  >
   /**
    * Human-identifying attributes of the span, such as name, type, etc.
-   */
-  | null;
+   */ | null;
 export type ExperimentEventType = {
   /**
    * A unique identifier for the experiment event. If you don't provide one, Braintrust will generate one for you
@@ -2372,34 +2401,32 @@ export type ExperimentEventType = {
    */
   experiment_id: string;
   input?: /**
-     * The arguments that uniquely define a test case (an arbitrary, JSON serializable object). Later on, Braintrust will use the `input` to know whether two test cases are the same between experiments, so they should not contain experiment-specific state. A simple rule of thumb is that if you run the same experiment twice, the `input` should be identical
-     */
-    unknown | undefined;
+   * The arguments that uniquely define a test case (an arbitrary, JSON serializable object). Later on, Braintrust will use the `input` to know whether two test cases are the same between experiments, so they should not contain experiment-specific state. A simple rule of thumb is that if you run the same experiment twice, the `input` should be identical
+   */
+  unknown | undefined;
   output?: /**
-     * The output of your application, including post-processing (an arbitrary, JSON serializable object), that allows you to determine whether the result is correct or not. For example, in an app that generates SQL queries, the `output` should be the _result_ of the SQL query generated by the model, not the query itself, because there may be multiple valid queries that answer a single question
-     */
-    unknown | undefined;
+   * The output of your application, including post-processing (an arbitrary, JSON serializable object), that allows you to determine whether the result is correct or not. For example, in an app that generates SQL queries, the `output` should be the _result_ of the SQL query generated by the model, not the query itself, because there may be multiple valid queries that answer a single question
+   */
+  unknown | undefined;
   expected?: /**
-     * The ground truth value (an arbitrary, JSON serializable object) that you'd compare to `output` to determine if your `output` value is correct or not. Braintrust currently does not compare `output` to `expected` for you, since there are so many different ways to do that correctly. Instead, these values are just used to help you navigate your experiments while digging into analyses. However, we may later use these values to re-score outputs or fine-tune your models
-     */
-    unknown | undefined;
+   * The ground truth value (an arbitrary, JSON serializable object) that you'd compare to `output` to determine if your `output` value is correct or not. Braintrust currently does not compare `output` to `expected` for you, since there are so many different ways to do that correctly. Instead, these values are just used to help you navigate your experiments while digging into analyses. However, we may later use these values to re-score outputs or fine-tune your models
+   */
+  unknown | undefined;
   error?: /**
-     * The error that occurred, if any.
-     */
-    unknown | undefined;
+   * The error that occurred, if any.
+   */
+  unknown | undefined;
   scores?:
     | /**
-     * A dictionary of numeric values (between 0 and 1) to log. The scores should give you a variety of signals that help you determine how accurate the outputs are compared to what you expect and diagnose failures. For example, a summarization app might have one score that tells you how accurate the summary is, and another that measures the word similarity between the generated and grouth truth summary. The word similarity score could help you determine whether the summarization was covering similar concepts or not. You can use these scores to help you sort, filter, and compare experiments
+     * A dictionary of numeric values (between 0 and 1) to log. The scores should give you a variety of signals that help you determine how accurate the outputs are compared to what you expect and diagnose failures. For example, a summarization app might have one score that tells you how accurate the summary is, and another that measures the word similarity between the generated and ground truth summary. The word similarity score could help you determine whether the summarization was covering similar concepts or not. You can use these scores to help you sort, filter, and compare experiments.
      */
     /**
-     * A dictionary of numeric values (between 0 and 1) to log. The scores should give you a variety of signals that help you determine how accurate the outputs are compared to what you expect and diagnose failures. For example, a summarization app might have one score that tells you how accurate the summary is, and another that measures the word similarity between the generated and grouth truth summary. The word similarity score could help you determine whether the summarization was covering similar concepts or not. You can use these scores to help you sort, filter, and compare experiments
+     * A dictionary of numeric values (between 0 and 1) to log. The scores should give you a variety of signals that help you determine how accurate the outputs are compared to what you expect and diagnose failures. For example, a summarization app might have one score that tells you how accurate the summary is, and another that measures the word similarity between the generated and ground truth summary. The word similarity score could help you determine whether the summarization was covering similar concepts or not. You can use these scores to help you sort, filter, and compare experiments.
      */
-    (| {}
-        /**
-         * A dictionary of numeric values (between 0 and 1) to log. The scores should give you a variety of signals that help you determine how accurate the outputs are compared to what you expect and diagnose failures. For example, a summarization app might have one score that tells you how accurate the summary is, and another that measures the word similarity between the generated and grouth truth summary. The word similarity score could help you determine whether the summarization was covering similar concepts or not. You can use these scores to help you sort, filter, and compare experiments
-         */
-        | null
-      )
+    ({}
+      /**
+       * A dictionary of numeric values (between 0 and 1) to log. The scores should give you a variety of signals that help you determine how accurate the outputs are compared to what you expect and diagnose failures. For example, a summarization app might have one score that tells you how accurate the summary is, and another that measures the word similarity between the generated and ground truth summary. The word similarity score could help you determine whether the summarization was covering similar concepts or not. You can use these scores to help you sort, filter, and compare experiments.
+       */ | null)
     | undefined;
   metadata?:
     | /**
@@ -2408,28 +2435,48 @@ export type ExperimentEventType = {
     /**
      * A dictionary with additional data about the test example, model outputs, or just about anything else that's relevant, that you can use to help find and analyze examples later. For example, you could log the `prompt`, example's `id`, or anything else that would be useful to slice/dice later. The values in `metadata` can be any JSON-serializable type, but its keys must be strings
      */
-    (| Partial<
-            {
-              /**
-               * The model used for this example
-               */
-              model: /**
-                 * The model used for this example
-                 */
-                | string
-                /**
-                 * The model used for this example
-                 */
-                | null;
-            } & {
-              [key: string]: any;
-            }
-          >
-        /**
-         * A dictionary with additional data about the test example, model outputs, or just about anything else that's relevant, that you can use to help find and analyze examples later. For example, you could log the `prompt`, example's `id`, or anything else that would be useful to slice/dice later. The values in `metadata` can be any JSON-serializable type, but its keys must be strings
-         */
-        | null
-      )
+    (Partial<
+        {
+          /**
+           * The model used for this example
+           */
+          model: /**
+           * The model used for this example
+           */
+          | string
+            /**
+             * The model used for this example
+             */
+            | null;
+          /**
+           * The service tier requested for this LLM call
+           */
+          requested_service_tier: /**
+           * The service tier requested for this LLM call
+           */
+          | string
+            /**
+             * The service tier requested for this LLM call
+             */
+            | null;
+          /**
+           * The service tier that served this LLM call
+           */
+          served_service_tier: /**
+           * The service tier that served this LLM call
+           */
+          | string
+            /**
+             * The service tier that served this LLM call
+             */
+            | null;
+        } & {
+          [key: string]: any;
+        }
+      >
+      /**
+       * A dictionary with additional data about the test example, model outputs, or just about anything else that's relevant, that you can use to help find and analyze examples later. For example, you could log the `prompt`, example's `id`, or anything else that would be useful to slice/dice later. The values in `metadata` can be any JSON-serializable type, but its keys must be strings
+       */ | null)
     | undefined;
   tags?:
     | /**
@@ -2438,12 +2485,10 @@ export type ExperimentEventType = {
     /**
      * A list of tags to log
      */
-    (| Array<string>
-        /**
-         * A list of tags to log
-         */
-        | null
-      )
+    (Array<string>
+      /**
+       * A list of tags to log
+       */ | null)
     | undefined;
   metrics?:
     | /**
@@ -2468,53 +2513,51 @@ export type ExperimentEventType = {
     /**
      * Context is additional information about the code that produced the experiment event. It is essentially the textual counterpart to `metrics`. Use the `caller_*` attributes to track the location in code which produced the experiment event
      */
-    (| Partial<
-            {
-              /**
-               * The function in code which created the experiment event
-               */
-              caller_functionname: /**
-                 * The function in code which created the experiment event
-                 */
-                | string
-                /**
-                 * The function in code which created the experiment event
-                 */
-                | null;
-              /**
-               * Name of the file in code where the experiment event was created
-               */
-              caller_filename: /**
-                 * Name of the file in code where the experiment event was created
-                 */
-                | string
-                /**
-                 * Name of the file in code where the experiment event was created
-                 */
-                | null;
-              /**
-               * Line of code where the experiment event was created
-               */
-              caller_lineno: /**
-                 * Line of code where the experiment event was created
-                 */
-                | number
-                /**
-                 * Line of code where the experiment event was created
-                 */
-                | null;
-            } & {
-              [key: string]: any;
-            }
-          >
-        /**
-         * Context is additional information about the code that produced the experiment event. It is essentially the textual counterpart to `metrics`. Use the `caller_*` attributes to track the location in code which produced the experiment event
-         */
-        | null
-      )
+    (Partial<
+        {
+          /**
+           * The function in code which created the experiment event
+           */
+          caller_functionname: /**
+           * The function in code which created the experiment event
+           */
+          | string
+            /**
+             * The function in code which created the experiment event
+             */
+            | null;
+          /**
+           * Name of the file in code where the experiment event was created
+           */
+          caller_filename: /**
+           * Name of the file in code where the experiment event was created
+           */
+          | string
+            /**
+             * Name of the file in code where the experiment event was created
+             */
+            | null;
+          /**
+           * Line of code where the experiment event was created
+           */
+          caller_lineno: /**
+           * Line of code where the experiment event was created
+           */
+          | number
+            /**
+             * Line of code where the experiment event was created
+             */
+            | null;
+        } & {
+          [key: string]: any;
+        }
+      >
+      /**
+       * Context is additional information about the code that produced the experiment event. It is essentially the textual counterpart to `metrics`. Use the `caller_*` attributes to track the location in code which produced the experiment event
+       */ | null)
     | undefined;
   /**
-   * A unique identifier used to link different experiment events together as part of a full trace. See the [tracing guide](https://www.braintrust.dev/docs/instrument) for full details on tracing
+   * A unique identifier used to link different experiment events together as part of a full trace. See the [tracing guide](https://docs.braintrust.dev/instrument) for full details on tracing
    */
   span_id: string;
   span_parents?:
@@ -2524,12 +2567,10 @@ export type ExperimentEventType = {
     /**
      * An array of the parent `span_ids` of this experiment event. This should be empty for the root span of a trace, and should most often contain just one parent element for subspans
      */
-    (| Array<string>
-        /**
-         * An array of the parent `span_ids` of this experiment event. This should be empty for the root span of a trace, and should most often contain just one parent element for subspans
-         */
-        | null
-      )
+    (Array<string>
+      /**
+       * An array of the parent `span_ids` of this experiment event. This should be empty for the root span of a trace, and should most often contain just one parent element for subspans
+       */ | null)
     | undefined;
   /**
    * A unique identifier for the trace this experiment event belongs to
@@ -2558,12 +2599,10 @@ export type ExperimentEventType = {
     /**
      * Optional list of comments attached to this event
      */
-    (| Array<unknown>
-        /**
-         * Optional list of comments attached to this event
-         */
-        | null
-      )
+    (Array<unknown>
+      /**
+       * Optional list of comments attached to this event
+       */ | null)
     | undefined;
   audit_data?:
     | /**
@@ -2572,12 +2611,10 @@ export type ExperimentEventType = {
     /**
      * Optional list of audit entries attached to this event
      */
-    (| Array<unknown>
-        /**
-         * Optional list of audit entries attached to this event
-         */
-        | null
-      )
+    (Array<unknown>
+      /**
+       * Optional list of audit entries attached to this event
+       */ | null)
     | undefined;
   facets?:
     | /**
@@ -2586,12 +2623,10 @@ export type ExperimentEventType = {
     /**
      * Facets for categorization (dictionary from facet id to value)
      */
-    (| {}
-        /**
-         * Facets for categorization (dictionary from facet id to value)
-         */
-        | null
-      )
+    ({}
+      /**
+       * Facets for categorization (dictionary from facet id to value)
+       */ | null)
     | undefined;
   classifications?:
     | /**
@@ -2600,12 +2635,10 @@ export type ExperimentEventType = {
     /**
      * Classifications for this event (dictionary from classification name to items)
      */
-    (| {}
-        /**
-         * Classifications for this event (dictionary from classification name to items)
-         */
-        | null
-      )
+    ({}
+      /**
+       * Classifications for this event (dictionary from classification name to items)
+       */ | null)
     | undefined;
 };
 export type ExtendedSavedFunctionIdType =
@@ -2616,9 +2649,9 @@ export type ExtendedSavedFunctionIdType =
       type: "function";
       id: string;
       version?: /**
-         * The version of the function
-         */
-        string | undefined;
+       * The version of the function
+       */
+      string | undefined;
     }
   | {
       /**
@@ -2647,17 +2680,17 @@ export type FacetDataType = {
    */
   prompt: string;
   model?: /**
-     * The model to use for facet extraction
-     */
-    string | undefined;
+   * The model to use for facet extraction
+   */
+  string | undefined;
   embedding_model?: /**
-     * The embedding model to use for vectorizing facet results.
-     */
-    string | undefined;
+   * The embedding model to use for vectorizing facet results.
+   */
+  string | undefined;
   no_match_pattern?: /**
-     * Regex pattern to identify outputs that do not match the facet. If the output matches, the facet will be saved as 'no_match'
-     */
-    string | undefined;
+   * Regex pattern to identify outputs that do not match the facet. If the output matches, the facet will be saved as 'no_match'
+   */
+  string | undefined;
 };
 export type PromptBlockDataNullishType =
   | {
@@ -2674,6 +2707,54 @@ export type PromptBlockDataNullishType =
        */
       type: "completion";
       content: string;
+    }
+  | {
+      /**
+       * @enum decisions
+       */
+      type: "decisions";
+      input:
+        | string
+        | Array<{
+            /**
+             * @enum system, developer, user, assistant
+             */
+            role: "system" | "developer" | "user" | "assistant";
+            content: string | Array<ChatCompletionContentPartTextType>;
+          }>;
+      questions: Array<
+        {
+          name?: string | undefined;
+          instructions: string;
+        } & (
+          | {
+              /**
+               * @enum predicate
+               */
+              type: "predicate";
+            }
+          | {
+              /**
+               * @enum choice
+               */
+              type: "choice";
+              choices: Array<{
+                value: string | boolean;
+                description?: string | undefined;
+              }>;
+            }
+          | {
+              /**
+               * @enum score
+               */
+              type: "score";
+              levels: Array<{
+                label: string;
+                description?: string | undefined;
+              }>;
+            }
+        )
+      >;
     }
   | null;
 export type ModelParamsType =
@@ -2743,6 +2824,7 @@ export type ModelParamsType =
          * @enum low, medium, high
          */
         verbosity: "low" | "medium" | "high";
+        service_tier: string;
       } & {
         [key: string]: any;
       }
@@ -2757,9 +2839,9 @@ export type ModelParamsType =
       top_k?: number | undefined;
       stop_sequences?: Array<string> | undefined;
       max_tokens_to_sample?: /**
-         * This is a legacy parameter that should not be used.
-         */
-        number | undefined;
+       * This is a legacy parameter that should not be used.
+       */
+      number | undefined;
     } & {
       [key: string]: any;
     })
@@ -2809,21 +2891,21 @@ export type PromptParserNullishType = {
   type: "llm_classifier";
   use_cot: boolean;
   choice_scores?: /**
-     * Map of choices to scores (0-1). Used by scorers.
-     */
-    {} | undefined;
+   * Map of choices to scores (0-1). Used by scorers.
+   */
+  {} | undefined;
   choice?: /**
-     * List of valid choices without score mapping. Used by classifiers that deposit output to tags.
-     */
-    Array<string> | undefined;
+   * List of valid choices without score mapping. Used by classifiers that deposit output to tags.
+   */
+  Array<string> | undefined;
   allow_no_match?: /**
-     * If true, adds a 'No match' option. When selected, no tag is deposited.
-     */
-    boolean | undefined;
+   * If true, adds a 'No match' option. When selected, no tag is deposited.
+   */
+  boolean | undefined;
   allow_skip?: /**
-     * If true, adds a 'Skip' option. When selected, the scorer returns null.
-     */
-    boolean | undefined;
+   * If true, adds a 'Skip' option. When selected, the scorer returns null.
+   */
+  boolean | undefined;
 } | null;
 export type PreprocessorIdType =
   /**
@@ -2836,9 +2918,9 @@ export type PreprocessorIdType =
       type: "function";
       id: string;
       version?: /**
-         * The version of the function
-         */
-        string | undefined;
+       * The version of the function
+       */
+      string | undefined;
     }
   | {
       /**
@@ -2874,35 +2956,34 @@ export type PromptDataNullishType =
   /**
    * The prompt, model, and its parameters
    */
-  | Partial<{
-      prompt: PromptBlockDataNullishType;
-      options: PromptOptionsNullishType;
-      parser: PromptParserNullishType;
-      preprocessor: PreprocessorIdType;
-      tool_functions: Array<SavedFunctionIdType> | null;
+  Partial<{
+    prompt: PromptBlockDataNullishType;
+    options: PromptOptionsNullishType;
+    parser: PromptParserNullishType;
+    preprocessor: PreprocessorIdType;
+    tool_functions: Array<SavedFunctionIdType> | null;
+    /**
+     * @enum mustache, nunjucks, none
+     */
+    template_format:
+      | /**
+       * @enum mustache, nunjucks, none
+       */
+      ("mustache" | "nunjucks" | "none")
       /**
        * @enum mustache, nunjucks, none
        */
-      template_format:
-        | /**
-         * @enum mustache, nunjucks, none
-         */
-        ("mustache" | "nunjucks" | "none")
-        /**
-         * @enum mustache, nunjucks, none
-         */
-        | null;
-      mcp: {} | null;
-      origin: Partial<{
-        prompt_id: string;
-        project_id: string;
-        prompt_version: string;
-      }> | null;
-    }>
+      | null;
+    mcp: {} | null;
+    origin: Partial<{
+      prompt_id: string;
+      project_id: string;
+      prompt_version: string;
+    }> | null;
+  }>
   /**
    * The prompt, model, and its parameters
-   */
-  | null;
+   */ | null;
 export type FunctionTypeEnumNullishType =
   /**
    * @enum llm, scorer, task, tool, custom_view, preprocessor, facet, classifier, tag, parameters, sandbox
@@ -2946,6 +3027,54 @@ export type PromptBlockDataType =
        */
       type: "completion";
       content: string;
+    }
+  | {
+      /**
+       * @enum decisions
+       */
+      type: "decisions";
+      input:
+        | string
+        | Array<{
+            /**
+             * @enum system, developer, user, assistant
+             */
+            role: "system" | "developer" | "user" | "assistant";
+            content: string | Array<ChatCompletionContentPartTextType>;
+          }>;
+      questions: Array<
+        {
+          name?: string | undefined;
+          instructions: string;
+        } & (
+          | {
+              /**
+               * @enum predicate
+               */
+              type: "predicate";
+            }
+          | {
+              /**
+               * @enum choice
+               */
+              type: "choice";
+              choices: Array<{
+                value: string | boolean;
+                description?: string | undefined;
+              }>;
+            }
+          | {
+              /**
+               * @enum score
+               */
+              type: "score";
+              levels: Array<{
+                label: string;
+                description?: string | undefined;
+              }>;
+            }
+        )
+      >;
     };
 export type GraphNodeType =
   | {
@@ -2970,21 +3099,19 @@ export type GraphNodeType =
         /**
          * The position of the node
          */
-        (| {
-                /**
-                 * The x position of the node
-                 */
-                x: number;
-                /**
-                 * The y position of the node
-                 */
-                y: number;
-              }
+        ({
             /**
-             * The position of the node
+             * The x position of the node
              */
-            | null
-          )
+            x: number;
+            /**
+             * The y position of the node
+             */
+            y: number;
+          }
+          /**
+           * The position of the node
+           */ | null)
         | undefined;
       /**
        * @enum function
@@ -3014,21 +3141,19 @@ export type GraphNodeType =
         /**
          * The position of the node
          */
-        (| {
-                /**
-                 * The x position of the node
-                 */
-                x: number;
-                /**
-                 * The y position of the node
-                 */
-                y: number;
-              }
+        ({
             /**
-             * The position of the node
+             * The x position of the node
              */
-            | null
-          )
+            x: number;
+            /**
+             * The y position of the node
+             */
+            y: number;
+          }
+          /**
+           * The position of the node
+           */ | null)
         | undefined;
       /**
        * The input to the graph
@@ -3059,21 +3184,19 @@ export type GraphNodeType =
         /**
          * The position of the node
          */
-        (| {
-                /**
-                 * The x position of the node
-                 */
-                x: number;
-                /**
-                 * The y position of the node
-                 */
-                y: number;
-              }
+        ({
             /**
-             * The position of the node
+             * The x position of the node
              */
-            | null
-          )
+            x: number;
+            /**
+             * The y position of the node
+             */
+            y: number;
+          }
+          /**
+           * The position of the node
+           */ | null)
         | undefined;
       /**
        * The output of the graph
@@ -3104,30 +3227,28 @@ export type GraphNodeType =
         /**
          * The position of the node
          */
-        (| {
-                /**
-                 * The x position of the node
-                 */
-                x: number;
-                /**
-                 * The y position of the node
-                 */
-                y: number;
-              }
+        ({
             /**
-             * The position of the node
+             * The x position of the node
              */
-            | null
-          )
+            x: number;
+            /**
+             * The y position of the node
+             */
+            y: number;
+          }
+          /**
+           * The position of the node
+           */ | null)
         | undefined;
       /**
        * @enum literal
        */
       type: "literal";
       value?: /**
-         * A literal value to be returned
-         */
-        unknown | undefined;
+       * A literal value to be returned
+       */
+      unknown | undefined;
     }
   | {
       description?:
@@ -3151,21 +3272,19 @@ export type GraphNodeType =
         /**
          * The position of the node
          */
-        (| {
-                /**
-                 * The x position of the node
-                 */
-                x: number;
-                /**
-                 * The y position of the node
-                 */
-                y: number;
-              }
+        ({
             /**
-             * The position of the node
+             * The x position of the node
              */
-            | null
-          )
+            x: number;
+            /**
+             * The y position of the node
+             */
+            y: number;
+          }
+          /**
+           * The position of the node
+           */ | null)
         | undefined;
       /**
        * @enum btql
@@ -3198,21 +3317,19 @@ export type GraphNodeType =
         /**
          * The position of the node
          */
-        (| {
-                /**
-                 * The x position of the node
-                 */
-                x: number;
-                /**
-                 * The y position of the node
-                 */
-                y: number;
-              }
+        ({
             /**
-             * The position of the node
+             * The x position of the node
              */
-            | null
-          )
+            x: number;
+            /**
+             * The y position of the node
+             */
+            y: number;
+          }
+          /**
+           * The position of the node
+           */ | null)
         | undefined;
       /**
        * @enum gate
@@ -3255,21 +3372,19 @@ export type GraphNodeType =
         /**
          * The position of the node
          */
-        (| {
-                /**
-                 * The x position of the node
-                 */
-                x: number;
-                /**
-                 * The y position of the node
-                 */
-                y: number;
-              }
+        ({
             /**
-             * The position of the node
+             * The x position of the node
              */
-            | null
-          )
+            x: number;
+            /**
+             * The y position of the node
+             */
+            y: number;
+          }
+          /**
+           * The position of the node
+           */ | null)
         | undefined;
       /**
        * @enum aggregator
@@ -3298,21 +3413,19 @@ export type GraphNodeType =
         /**
          * The position of the node
          */
-        (| {
-                /**
-                 * The x position of the node
-                 */
-                x: number;
-                /**
-                 * The y position of the node
-                 */
-                y: number;
-              }
+        ({
             /**
-             * The position of the node
+             * The x position of the node
              */
-            | null
-          )
+            x: number;
+            /**
+             * The y position of the node
+             */
+            y: number;
+          }
+          /**
+           * The position of the node
+           */ | null)
         | undefined;
       /**
        * @enum prompt_template
@@ -3387,9 +3500,9 @@ export type FunctionDataType =
             };
             code: string;
             code_hash?: /**
-               * SHA256 hash of the code, computed at save time
-               */
-              string | undefined;
+             * SHA256 hash of the code, computed at save time
+             */
+            string | undefined;
           };
     }
   | GraphDataType
@@ -3433,12 +3546,10 @@ export type FunctionDataType =
         /**
          * Configuration options to pass to the global function (e.g., for preprocessor customization)
          */
-        (| {}
-            /**
-             * Configuration options to pass to the global function (e.g., for preprocessor customization)
-             */
-            | null
-          )
+        ({}
+          /**
+           * Configuration options to pass to the global function (e.g., for preprocessor customization)
+           */ | null)
         | undefined;
     }
   | FacetDataType
@@ -3465,7 +3576,149 @@ export type FunctionDataType =
         additionalProperties?: boolean | undefined;
       };
     }
-  | (TopicMapDataType & unknown);
+  | (TopicMapDataType & unknown)
+  /**
+   * A task function that runs a conversation between an agent and a simulated user.
+   */
+  | {
+      /**
+       * @enum conversation
+       */
+      type: "conversation";
+      config:
+        | {
+            /**
+             * Who speaks first in the conversation
+             *
+             * @default "agent"
+             * @enum agent, simulated_user
+             */
+            initiator: "agent" | "simulated_user";
+            /**
+             * Maximum conversation duration in seconds
+             *
+             * @default 600
+             * @minimum 15
+             * @maximum 3600
+             */
+            timeout_seconds: number;
+            /**
+             * @default "voice"
+             * @enum voice
+             */
+            modality: "voice";
+            agent:
+              | {
+                  /**
+                   * @enum livekit
+                   */
+                  type: "livekit";
+                  /**
+                   * The WebSocket URL of the LiveKit project hosting the agent
+                   *
+                   * @minLength 1
+                   */
+                  server_url: string;
+                  /**
+                   * The name of the LiveKit agent to dispatch
+                   *
+                   * @minLength 1
+                   */
+                  agent_name: string;
+                }
+              | {
+                  /**
+                   * @enum phone
+                   */
+                  type: "phone";
+                  /**
+                   * @pattern ^\+[1-9]\d{7,14}$
+                   */
+                  phone_number: string;
+                }
+              | {
+                  /**
+                   * @enum sip
+                   */
+                  type: "sip";
+                  /**
+                   * @pattern ^sips?:[^\s]+$
+                   */
+                  uri: string;
+                };
+          }
+        | {
+            /**
+             * Who speaks first in the conversation
+             *
+             * @default "agent"
+             * @enum agent, simulated_user
+             */
+            initiator: "agent" | "simulated_user";
+            /**
+             * Maximum conversation duration in seconds
+             *
+             * @default 600
+             * @minimum 15
+             * @maximum 3600
+             */
+            timeout_seconds: number;
+            /**
+             * @enum text
+             */
+            modality: "text";
+            agent:
+              | {
+                  /**
+                   * @enum livekit
+                   */
+                  type: "livekit";
+                  /**
+                   * The WebSocket URL of the LiveKit project hosting the agent
+                   *
+                   * @minLength 1
+                   */
+                  server_url: string;
+                  /**
+                   * The name of the LiveKit agent to dispatch
+                   *
+                   * @minLength 1
+                   */
+                  agent_name: string;
+                }
+              | {
+                  /**
+                   * @enum acp
+                   */
+                  type: "acp";
+                  /**
+                   * Executable for the ACP agent subprocess, communicating over stdio
+                   *
+                   * @minLength 1
+                   */
+                  command: string;
+                  /**
+                   * Arguments passed to the executable without shell interpretation
+                   *
+                   * @default []
+                   */
+                  args: Array<string>;
+                  /**
+                   * Absolute working directory for the ACP session on the execution host
+                   *
+                   * @pattern ^(?:[/]|[A-Za-z]:[\\/]|\\\\)
+                   */
+                  cwd: string;
+                  /**
+                   * Deny ACP permission requests; this does not sandbox the subprocess
+                   *
+                   * @default "deny"
+                   * @enum deny
+                   */
+                  permissions: "deny";
+                };
+          };
+    };
 export type FunctionType = {
   /**
    * Unique identifier for the prompt
@@ -3533,12 +3786,10 @@ export type FunctionType = {
     /**
      * A list of tags for the prompt
      */
-    (| Array<string>
-        /**
-         * A list of tags for the prompt
-         */
-        | null
-      )
+    (Array<string>
+      /**
+       * A list of tags for the prompt
+       */ | null)
     | undefined;
   metadata?:
     | /**
@@ -3547,12 +3798,10 @@ export type FunctionType = {
     /**
      * User-controlled metadata about the prompt
      */
-    (| {}
-        /**
-         * User-controlled metadata about the prompt
-         */
-        | null
-      )
+    ({}
+      /**
+       * User-controlled metadata about the prompt
+       */ | null)
     | undefined;
   function_type?: FunctionTypeEnumNullishType | undefined;
   function_data: FunctionDataType;
@@ -3565,14 +3814,14 @@ export type FunctionType = {
         object_id: string;
         internal?:
           | /**
-           * The function exists for internal purposes and should not be displayed in the list of functions.
+           * If true, the function was created for use by another Braintrust object and is hidden from function lists in the Braintrust UI.
            */
           /**
-           * The function exists for internal purposes and should not be displayed in the list of functions.
+           * If true, the function was created for use by another Braintrust object and is hidden from function lists in the Braintrust UI.
            */
           (| boolean
               /**
-               * The function exists for internal purposes and should not be displayed in the list of functions.
+               * If true, the function was created for use by another Braintrust object and is hidden from function lists in the Braintrust UI.
                */
               | null
             )
@@ -3586,22 +3835,20 @@ export type FunctionType = {
     /**
      * JSON schema for the function's parameters and return type
      */
-    (| Partial<{
-            parameters: unknown;
-            returns: unknown;
-          }>
-        /**
-         * JSON schema for the function's parameters and return type
-         */
-        | null
-      )
+    (Partial<{
+        parameters: unknown;
+        returns: unknown;
+      }>
+      /**
+       * JSON schema for the function's parameters and return type
+       */ | null)
     | undefined;
 };
 export type FunctionFormatType =
   /**
-   * @enum llm, code, global, graph, topic_map
+   * @enum llm, code, global, graph, topic_map, conversation
    */
-  "llm" | "code" | "global" | "graph" | "topic_map";
+  "llm" | "code" | "global" | "graph" | "topic_map" | "conversation";
 export type PromptDataType = Partial<{
   prompt: PromptBlockDataNullishType;
   options: PromptOptionsNullishType;
@@ -3640,9 +3887,9 @@ export type FunctionIdType =
        */
       function_id: string;
       version?: /**
-         * The version of the function
-         */
-        string | undefined;
+       * The version of the function
+       */
+      string | undefined;
     }
   /**
    * Project name and slug
@@ -3657,9 +3904,9 @@ export type FunctionIdType =
        */
       slug: string;
       version?: /**
-         * The version of the function
-         */
-        string | undefined;
+       * The version of the function
+       */
+      string | undefined;
     }
   /**
    * Global function name
@@ -3684,9 +3931,9 @@ export type FunctionIdType =
        */
       prompt_session_function_id: string;
       version?: /**
-         * The version of the function
-         */
-        string | undefined;
+       * The version of the function
+       */
+      string | undefined;
     }
   /**
    * Inline code function
@@ -3704,10 +3951,11 @@ export type FunctionIdType =
        */
       code: string;
       function_type?:
-        | (FunctionTypeEnumType &
-            /**
-             * The function type for inline code. Required when invoking inline preprocessors.
-             */ unknown)
+        | (FunctionTypeEnumType
+          /**
+           * The function type for inline code. Required when invoking inline preprocessors.
+           */ &
+            unknown)
         | undefined;
       name?:
         | /**
@@ -3887,12 +4135,10 @@ export type GroupType = {
     /**
      * Ids of users which belong to this group
      */
-    (| Array<string>
-        /**
-         * Ids of users which belong to this group
-         */
-        | null
-      )
+    (Array<string>
+      /**
+       * Ids of users which belong to this group
+       */ | null)
     | undefined;
   member_groups?:
     | /**
@@ -3905,13 +4151,11 @@ export type GroupType = {
     
     An inheriting group has all the users contained in its member groups, as well as all of their inherited users
      */
-    (| Array<string> /**
+    (Array<string> /**
      * Ids of the groups this group inherits from
     
     An inheriting group has all the users contained in its member groups, as well as all of their inherited users
-     */
-        | null
-      )
+     */ | null)
     | undefined;
 };
 export type GroupScopeType = {
@@ -3924,18 +4168,18 @@ export type GroupScopeType = {
    */
   group_by: string;
   interval_seconds?: /**
-     * Maximum time range to include when constructing a group
-     *
-     * @minimum 1
-     */
-    number | undefined;
+   * Maximum time range to include when constructing a group
+   *
+   * @minimum 1
+   */
+  number | undefined;
   max_traces?: /**
-     * Maximum number of traces to include when constructing a group (default/max: 64)
-     *
-     * @minimum 1
-     * @maximum 64
-     */
-    number | undefined;
+   * Maximum number of traces to include when constructing a group (default/max: 64)
+   *
+   * @minimum 1
+   * @maximum 64
+   */
+  number | undefined;
   /**
    * Which trace or traces to write grouped scorer results to
    *
@@ -3943,9 +4187,9 @@ export type GroupScopeType = {
    */
   placement: "first" | "each";
   idle_seconds?: /**
-     * Optional: trigger after this many seconds of inactivity
-     */
-    number | undefined;
+   * Optional: trigger after this many seconds of inactivity
+   */
+  number | undefined;
 };
 export type IfExistsType =
   /**
@@ -3988,30 +4232,28 @@ export type InvokeParentType =
       object_id: string;
       row_ids?:
         | /**
-         * Identifiers for the row to to log a subspan under
+         * Identifiers for the row to log a subspan under
          */
         /**
-         * Identifiers for the row to to log a subspan under
+         * Identifiers for the row to log a subspan under
          */
-        (| {
-                /**
-                 * The id of the row
-                 */
-                id: string;
-                /**
-                 * The span_id of the row
-                 */
-                span_id: string;
-                /**
-                 * The root_span_id of the row
-                 */
-                root_span_id: string;
-              }
+        ({
             /**
-             * Identifiers for the row to to log a subspan under
+             * The id of the row
              */
-            | null
-          )
+            id: string;
+            /**
+             * The span_id of the row
+             */
+            span_id: string;
+            /**
+             * The root_span_id of the row
+             */
+            root_span_id: string;
+          }
+          /**
+           * Identifiers for the row to log a subspan under
+           */ | null)
         | undefined;
       propagated_event?:
         | /**
@@ -4020,12 +4262,10 @@ export type InvokeParentType =
         /**
          * Include these properties in every span created under this parent
          */
-        (| {}
-            /**
-             * Include these properties in every span created under this parent
-             */
-            | null
-          )
+        ({}
+          /**
+           * Include these properties in every span created under this parent
+           */ | null)
         | undefined;
     }
   /**
@@ -4057,6 +4297,10 @@ export type InvokeFunctionType =
   FunctionIdType &
     Partial<{
       /**
+       * A label identifying the caller, used to attribute usage
+       */
+      request_source: string;
+      /**
        * Argument to the function, which can be any JSON serializable value
        */
       input: unknown;
@@ -4065,27 +4309,25 @@ export type InvokeFunctionType =
        */
       expected: unknown;
       /**
-       * Any relevant metadata. This will be logged and available as the `metadata` argument.
+       * Any relevant metadata to log on the span. For prompts, this is available as the `metadata` template variable. For code functions, this is passed through hooks and is not added to `input`.
        */
       metadata: /**
-         * Any relevant metadata. This will be logged and available as the `metadata` argument.
-         */
-        | {}
-        /**
-         * Any relevant metadata. This will be logged and available as the `metadata` argument.
-         */
-        | null;
+       * Any relevant metadata to log on the span. For prompts, this is available as the `metadata` template variable. For code functions, this is passed through hooks and is not added to `input`.
+       */
+      {}
+      /**
+       * Any relevant metadata to log on the span. For prompts, this is available as the `metadata` template variable. For code functions, this is passed through hooks and is not added to `input`.
+       */ | null;
       /**
        * Any relevant tags to log on the span.
        */
       tags: /**
-         * Any relevant tags to log on the span.
-         */
-        | Array<string>
-        /**
-         * Any relevant tags to log on the span.
-         */
-        | null;
+       * Any relevant tags to log on the span.
+       */
+      Array<string>
+      /**
+       * Any relevant tags to log on the span.
+       */ | null;
       /**
        * If the function is an LLM, additional messages to pass along to it
        */
@@ -4095,9 +4337,9 @@ export type InvokeFunctionType =
        * Whether to stream the response. If true, results will be returned in the Braintrust SSE format.
        */
       stream: /**
-         * Whether to stream the response. If true, results will be returned in the Braintrust SSE format.
-         */
-        | boolean
+       * Whether to stream the response. If true, results will be returned in the Braintrust SSE format.
+       */
+      | boolean
         /**
          * Whether to stream the response. If true, results will be returned in the Braintrust SSE format.
          */
@@ -4107,9 +4349,9 @@ export type InvokeFunctionType =
        * If true, throw an error if one of the variables in the prompt is not present in the input
        */
       strict: /**
-         * If true, throw an error if one of the variables in the prompt is not present in the input
-         */
-        | boolean
+       * If true, throw an error if one of the variables in the prompt is not present in the input
+       */
+      | boolean
         /**
          * If true, throw an error if one of the variables in the prompt is not present in the input
          */
@@ -4122,20 +4364,19 @@ export type InvokeFunctionType =
        * Partial function definition to merge with the function being invoked. Fields are validated against the function type's schema at runtime. For facets: { preprocessor?, prompt?, model? }. For prompts: { model?, ... }.
        */
       overrides: /**
-         * Partial function definition to merge with the function being invoked. Fields are validated against the function type's schema at runtime. For facets: { preprocessor?, prompt?, model? }. For prompts: { model?, ... }.
-         */
-        | {}
-        /**
-         * Partial function definition to merge with the function being invoked. Fields are validated against the function type's schema at runtime. For facets: { preprocessor?, prompt?, model? }. For prompts: { model?, ... }.
-         */
-        | null;
+       * Partial function definition to merge with the function being invoked. Fields are validated against the function type's schema at runtime. For facets: { preprocessor?, prompt?, model? }. For prompts: { model?, ... }.
+       */
+      {}
+      /**
+       * Partial function definition to merge with the function being invoked. Fields are validated against the function type's schema at runtime. For facets: { preprocessor?, prompt?, model? }. For prompts: { model?, ... }.
+       */ | null;
       /**
        * Name of the AI provider secret to pin this invocation to.
        */
       endpoint_name: /**
-         * Name of the AI provider secret to pin this invocation to.
-         */
-        | string
+       * Name of the AI provider secret to pin this invocation to.
+       */
+      | string
         /**
          * Name of the AI provider secret to pin this invocation to.
          */
@@ -4242,9 +4483,9 @@ export type NullableSavedFunctionIdType =
       type: "function";
       id: string;
       version?: /**
-         * The version of the function
-         */
-        string | undefined;
+       * The version of the function
+       */
+      string | undefined;
     }
   | {
       /**
@@ -4317,12 +4558,20 @@ export type TraceScopeType = {
    */
   type: "trace";
   idle_seconds?: /**
-     * Consider trace complete after this many seconds of inactivity (default: 30)
-     */
-    number | undefined;
+   * Consider trace complete after this many seconds of inactivity (default: 30)
+   */
+  number | undefined;
 };
 export type OnlineScoreConfigType = {
   status?: AutomationStatusType | undefined;
+  service_tier?:
+    | /**
+     * Service tier for online scoring. If omitted, prompt-level service tiers are preserved.
+     *
+     * @enum standard, flex
+     */
+    ("standard" | "flex")
+    | undefined;
   /**
    * The sampling rate for online scoring
    *
@@ -4369,12 +4618,10 @@ export type OnlineScoreConfigType = {
     /**
      * Trigger online scoring on any spans with a name in this list. Only applies when scope is 'span' or unset.
      */
-    (| Array<string>
-        /**
-         * Trigger online scoring on any spans with a name in this list. Only applies when scope is 'span' or unset.
-         */
-        | null
-      )
+    (Array<string>
+      /**
+       * Trigger online scoring on any spans with a name in this list. Only applies when scope is 'span' or unset.
+       */ | null)
     | undefined;
   skip_logging?:
     | /**
@@ -4406,11 +4653,76 @@ export type OrganizationType = {
    * Name of the organization
    */
   name: string;
-  api_url?: (string | null) | undefined;
-  is_universal_api?: (boolean | null) | undefined;
-  is_dataplane_private?: (boolean | null) | undefined;
-  proxy_url?: (string | null) | undefined;
-  realtime_url?: (string | null) | undefined;
+  api_url?:
+    | /**
+     * URL of the organization's data plane API. If unset, the Braintrust-hosted API is used.
+     */
+    /**
+     * URL of the organization's data plane API. If unset, the Braintrust-hosted API is used.
+     */
+    (| string
+        /**
+         * URL of the organization's data plane API. If unset, the Braintrust-hosted API is used.
+         */
+        | null
+      )
+    | undefined;
+  is_universal_api?:
+    | /**
+     * Whether the data plane at `api_url` also serves the AI proxy, at `api_url` with `/v1/proxy` appended
+     */
+    /**
+     * Whether the data plane at `api_url` also serves the AI proxy, at `api_url` with `/v1/proxy` appended
+     */
+    (| boolean
+        /**
+         * Whether the data plane at `api_url` also serves the AI proxy, at `api_url` with `/v1/proxy` appended
+         */
+        | null
+      )
+    | undefined;
+  is_dataplane_private?:
+    | /**
+     * Whether the organization's data plane is only reachable from a private network
+     */
+    /**
+     * Whether the organization's data plane is only reachable from a private network
+     */
+    (| boolean
+        /**
+         * Whether the organization's data plane is only reachable from a private network
+         */
+        | null
+      )
+    | undefined;
+  proxy_url?:
+    | /**
+     * URL of the organization's AI proxy
+     */
+    /**
+     * URL of the organization's AI proxy
+     */
+    (| string
+        /**
+         * URL of the organization's AI proxy
+         */
+        | null
+      )
+    | undefined;
+  realtime_url?:
+    | /**
+     * URL of the organization's realtime service
+     */
+    /**
+     * URL of the organization's realtime service
+     */
+    (| string
+        /**
+         * URL of the organization's realtime service
+         */
+        | null
+      )
+    | undefined;
   created?:
     | /**
      * Date of organization creation
@@ -4425,8 +4737,34 @@ export type OrganizationType = {
         | null
       )
     | undefined;
-  archived_at?: (string | null) | undefined;
-  deleted_at?: (string | null) | undefined;
+  archived_at?:
+    | /**
+     * Date the organization was archived
+     */
+    /**
+     * Date the organization was archived
+     */
+    (| string
+        /**
+         * Date the organization was archived
+         */
+        | null
+      )
+    | undefined;
+  deleted_at?:
+    | /**
+     * Date the organization was deleted
+     */
+    /**
+     * Date the organization was deleted
+     */
+    (| string
+        /**
+         * Date the organization was deleted
+         */
+        | null
+      )
+    | undefined;
   image_rendering_mode?: ImageRenderingModeType | undefined;
 };
 export type RetentionObjectTypeType =
@@ -4515,9 +4853,9 @@ export type ProjectSettingsType = Partial<{
    * The key used to join two experiments (defaults to `input`)
    */
   comparison_key: /**
-     * The key used to join two experiments (defaults to `input`)
-     */
-    | string
+   * The key used to join two experiments (defaults to `input`)
+   */
+  | string
     /**
      * The key used to join two experiments (defaults to `input`)
      */
@@ -4526,9 +4864,9 @@ export type ProjectSettingsType = Partial<{
    * The id of the experiment to use as the default baseline for comparisons
    */
   baseline_experiment_id: /**
-     * The id of the experiment to use as the default baseline for comparisons
-     */
-    | string
+   * The id of the experiment to use as the default baseline for comparisons
+   */
+  | string
     /**
      * The id of the experiment to use as the default baseline for comparisons
      */
@@ -4537,52 +4875,50 @@ export type ProjectSettingsType = Partial<{
    * The order of the fields to display in the trace view
    */
   spanFieldOrder: /**
-     * The order of the fields to display in the trace view
-     */
-    | Array<{
-        object_type: string;
-        column_id: string;
-        position: string;
-        layout?:
-          | (
-              | /**
-               * @enum full
-               */
-              "full"
-              /**
-               * @enum two_column
-               */
-              | "two_column"
-              | null
-            )
-          | undefined;
-      }>
-    /**
-     * The order of the fields to display in the trace view
-     */
-    | null;
+   * The order of the fields to display in the trace view
+   */
+  Array<{
+    object_type: string;
+    column_id: string;
+    position: string;
+    layout?:
+      | (
+          | /**
+           * @enum full
+           */
+          "full"
+          /**
+           * @enum two_column
+           */
+          | "two_column"
+          | null
+        )
+      | undefined;
+  }>
+  /**
+   * The order of the fields to display in the trace view
+   */ | null;
   /**
    * The remote eval sources to use for the project
    */
   remote_eval_sources: /**
-     * The remote eval sources to use for the project
-     */
-    | Array<{
-        url: string;
-        name?: (string | null) | undefined;
-        description?: (string | null) | undefined;
-      }>
-    /**
-     * The remote eval sources to use for the project
-     */
-    | null;
+   * The remote eval sources to use for the project
+   */
+  Array<{
+    url: string;
+    name?: (string | null) | undefined;
+    description?: (string | null) | undefined;
+  }>
+  /**
+   * The remote eval sources to use for the project
+   */ | null;
   /**
    * If true, disable real-time queries for this project. This can improve query performance for high-volume logs.
    */
   disable_realtime_queries: /**
-     * If true, disable real-time queries for this project. This can improve query performance for high-volume logs.
-     */
-    | boolean
+   * If true, disable real-time queries for this project. This can improve query performance for high-volume logs.
+   */
+  | boolean
     /**
      * If true, disable real-time queries for this project. This can improve query performance for high-volume logs.
      */
@@ -4591,9 +4927,9 @@ export type ProjectSettingsType = Partial<{
    * If true, use metrics.start rather than created for monitor chart time bucket dimensions.
    */
   monitor_charts_use_metrics_start: /**
-     * If true, use metrics.start rather than created for monitor chart time bucket dimensions.
-     */
-    | boolean
+   * If true, use metrics.start rather than created for monitor chart time bucket dimensions.
+   */
+  | boolean
     /**
      * If true, use metrics.start rather than created for monitor chart time bucket dimensions.
      */
@@ -4602,9 +4938,9 @@ export type ProjectSettingsType = Partial<{
    * If true, enable the agent insights dashboard for this project.
    */
   coding_agent_insights_dashboard: /**
-     * If true, enable the agent insights dashboard for this project.
-     */
-    | boolean
+   * If true, enable the agent insights dashboard for this project.
+   */
+  | boolean
     /**
      * If true, enable the agent insights dashboard for this project.
      */
@@ -4613,9 +4949,9 @@ export type ProjectSettingsType = Partial<{
    * If true, hide peer review scores, comments, and aggregate results from reviewers without project update permissions until they submit their own review.
    */
   blind_reviews: /**
-     * If true, hide peer review scores, comments, and aggregate results from reviewers without project update permissions until they submit their own review.
-     */
-    | boolean
+   * If true, hide peer review scores, comments, and aggregate results from reviewers without project update permissions until they submit their own review.
+   */
+  | boolean
     /**
      * If true, hide peer review scores, comments, and aggregate results from reviewers without project update permissions until they submit their own review.
      */
@@ -4624,13 +4960,270 @@ export type ProjectSettingsType = Partial<{
    * If true, automatically complete a review after every assigned reviewer fills all human review scores visible to them.
    */
   require_all_human_review_scores: /**
-     * If true, automatically complete a review after every assigned reviewer fills all human review scores visible to them.
-     */
-    | boolean
+   * If true, automatically complete a review after every assigned reviewer fills all human review scores visible to them.
+   */
+  | boolean
     /**
      * If true, automatically complete a review after every assigned reviewer fills all human review scores visible to them.
      */
     | null;
+  user_id_fields: Array<
+    /**
+     * Path to the application's end-user identifier in metadata or span_attributes, for example ["metadata", "customer_id"]. This identifies an end user, not a session, request, organization, or the Braintrust user who created the project.
+     */
+    Array</**
+     * @minLength 1
+     * @maxLength 256
+     */
+    string>
+  > | null;
+  /**
+   * Project-wide Slack user or agent and prompt for Pattern alert threads. Applies only to destinations in the selected workspace. Unset or null disables mentions.
+   */
+  pattern_alert_mention: /**
+   * Project-wide Slack user or agent and prompt for Pattern alert threads. Applies only to destinations in the selected workspace. Unset or null disables mentions.
+   */
+  {
+    /**
+     * @minLength 1
+     */
+    workspace_id: string;
+    /**
+     * Slack member ID of the user or agent to mention in a Pattern alert's thread to investigate the pattern.
+     *
+     * @pattern ^[UW][A-Z0-9]+$
+     */
+    mention_user_id: string;
+    mention_handle?: /**
+     * Username shown for the selected user or agent. Mentions use mention_user_id.
+     *
+     * @maxLength 80
+     */
+    string | undefined;
+    mention_prompt?: /**
+     * Message posted after the mention in a Pattern alert's thread. {{pattern}} is replaced with a link to the pattern. Defaults to "Please investigate this pattern: {{pattern}}. Review the evidence, identify the root cause, and suggest a fix."
+     *
+     * @maxLength 2000
+     * @pattern \{\{pattern\}\}
+     */
+    string | undefined;
+  }
+  /**
+   * Project-wide Slack user or agent and prompt for Pattern alert threads. Applies only to destinations in the selected workspace. Unset or null disables mentions.
+   */ | null;
+  /**
+   * Project-wide Slack, webhook, and PagerDuty destinations for new and reactivated Pattern alerts. An empty array disables alerts.
+   */
+  pattern_alert_destinations: /**
+   * Project-wide Slack, webhook, and PagerDuty destinations for new and reactivated Pattern alerts. An empty array disables alerts.
+   */
+  Array<
+    /**
+     * A delivery action available to an automation
+     */
+    | {
+        /**
+         * The type of action to take
+         *
+         * @enum webhook
+         */
+        type: "webhook";
+        /**
+         * The webhook URL to send the request to
+         */
+        url: string;
+        headers?: /**
+         * Custom HTTP headers to send with the webhook request
+         */
+        | Array<
+              | {
+                  /**
+                   * The HTTP header name
+                   *
+                   * @minLength 1
+                   * @maxLength 256
+                   * @pattern ^[!#$%&'*+.^_`|~0-9A-Za-z-]+$
+                   */
+                  name: string;
+                  /**
+                   * The HTTP header value
+                   *
+                   * @maxLength 8192
+                   * @pattern ^[\t\x20-\x7e\x80-\xff]*$
+                   */
+                  value: string;
+                }
+              | {
+                  /**
+                   * The HTTP header name
+                   *
+                   * @minLength 1
+                   * @maxLength 256
+                   * @pattern ^[!#$%&'*+.^_`|~0-9A-Za-z-]+$
+                   */
+                  name: string;
+                  /**
+                   * The data-plane secret containing the header value, bound to the webhook URL it was saved for
+                   */
+                  secret_name: string;
+                }
+            >
+          | undefined;
+        formatting_prompt?: /**
+         * Instructions for Loop to format content sent to this destination
+         *
+         * @minLength 1
+         * @maxLength 10000
+         */
+        string | undefined;
+      }
+    | {
+        /**
+         * The type of action to take
+         *
+         * @enum slack
+         */
+        type: "slack";
+        /**
+         * The Slack workspace ID to post to
+         */
+        workspace_id: string;
+        /**
+         * The Slack channel ID to post to
+         */
+        channel: string;
+        message_template?: /**
+         * Custom message template for the alert
+         */
+        string | undefined;
+        formatting_prompt?: /**
+         * Instructions for Loop to format content sent to this destination
+         *
+         * @minLength 1
+         * @maxLength 10000
+         */
+        string | undefined;
+      }
+    | {
+        /**
+         * The type of action to take
+         *
+         * @enum pagerduty
+         */
+        type: "pagerduty";
+        /**
+         * The data-plane secret containing the PagerDuty routing key
+         */
+        routing_key_secret_name: string;
+        /**
+         * @enum critical, error, warning, info
+         */
+        severity: "critical" | "error" | "warning" | "info";
+        formatting_prompt?: /**
+         * Instructions for Loop to format content sent to this destination
+         *
+         * @minLength 1
+         * @maxLength 10000
+         */
+        string | undefined;
+      }
+  >
+  /**
+   * Project-wide Slack, webhook, and PagerDuty destinations for new and reactivated Pattern alerts. An empty array disables alerts.
+   */ | null;
+  /**
+   * Lowest severity that sends Pattern alerts: `low`, `medium`, or `high`. New and reactivated Patterns below it don't send alerts, and raising an active Pattern's severity to it or above sends one. Patterns without a severity count as low. Informational Patterns follow `pattern_alert_informational` instead. Unset or null uses medium.
+   *
+   * @enum high, medium, low
+   */
+  pattern_alert_min_severity:
+    | /**
+     * Lowest severity that sends Pattern alerts: `low`, `medium`, or `high`. New and reactivated Patterns below it don't send alerts, and raising an active Pattern's severity to it or above sends one. Patterns without a severity count as low. Informational Patterns follow `pattern_alert_informational` instead. Unset or null uses medium.
+     *
+     * @enum high, medium, low
+     */
+    ("high" | "medium" | "low")
+    /**
+     * Lowest severity that sends Pattern alerts: `low`, `medium`, or `high`. New and reactivated Patterns below it don't send alerts, and raising an active Pattern's severity to it or above sends one. Patterns without a severity count as low. Informational Patterns follow `pattern_alert_informational` instead. Unset or null uses medium.
+     *
+     * @enum high, medium, low
+     */
+    | null;
+  /**
+   * Whether new and reactivated informational Patterns send alerts, independent of `pattern_alert_min_severity`. Unset or null sends them.
+   */
+  pattern_alert_informational: /**
+   * Whether new and reactivated informational Patterns send alerts, independent of `pattern_alert_min_severity`. Unset or null sends them.
+   */
+  | boolean
+    /**
+     * Whether new and reactivated informational Patterns send alerts, independent of `pattern_alert_min_severity`. Unset or null sends them.
+     */
+    | null;
+  /**
+   * Sources outside Braintrust that Patterns reads alongside this project's logs, each through a project MCP server.
+   */
+  pattern_sources: /**
+   * Sources outside Braintrust that Patterns reads alongside this project's logs, each through a project MCP server.
+   */
+  Array<{
+    /**
+     * @minLength 1
+     * @maxLength 64
+     */
+    type: string;
+    /**
+     * The project MCP server that reads this source.
+     */
+    mcp_server_id: string;
+    instructions?:
+      | /**
+       * What the user wants Patterns to look for in this source, in their own words.
+       *
+       * @maxLength 4000
+       */
+      /**
+       * What the user wants Patterns to look for in this source, in their own words.
+       *
+       * @maxLength 4000
+       */
+      (| string
+          /**
+           * What the user wants Patterns to look for in this source, in their own words.
+           *
+           * @maxLength 4000
+           */
+          | null
+        )
+      | undefined;
+  }>
+  /**
+   * Sources outside Braintrust that Patterns reads alongside this project's logs, each through a project MCP server.
+   */ | null;
+  /**
+   * Patterns rubric categories this project turned off. Patterns doesn't look for or assign them.
+   */
+  pattern_excluded_categories: /**
+   * Patterns rubric categories this project turned off. Patterns doesn't look for or assign them.
+   */
+  Array</**
+   * @minLength 1
+   * @maxLength 64
+   */
+  string>
+  /**
+   * Patterns rubric categories this project turned off. Patterns doesn't look for or assign them.
+   */ | null;
+  session_id_fields: Array<
+    /**
+     * Path to the application's session or conversation identifier in metadata or span_attributes, for example ["metadata", "conversation_id"]. This links turns of one conversation across traces, rather than identifying a user, request, trace, organization, or service account.
+     */
+    Array</**
+     * @minLength 1
+     * @maxLength 256
+     */
+    string>
+  > | null;
   default_preprocessor: NullableSavedFunctionIdType;
 }> | null;
 export type ProjectType = {
@@ -4704,6 +5297,35 @@ export type ProjectType = {
     | undefined;
   settings?: ProjectSettingsType | undefined;
 };
+export type SavedPreprocessorIdType =
+  /**
+   * Saved preprocessor that renders traces for the project's pattern questions. The project default when unset.
+   */
+  | {
+      /**
+       * @enum function
+       */
+      type: "function";
+      id: string;
+      version?: /**
+       * The version of the function
+       */
+      string | undefined;
+    }
+  | {
+      /**
+       * @enum global
+       */
+      type: "global";
+      name: string;
+      /**
+       * The type of global function. Defaults to 'preprocessor'.
+       *
+       * @default "preprocessor"
+       * @enum preprocessor
+       */
+      function_type: "preprocessor";
+    };
 export type WindowedAutomationConfigType = {
   /**
    * The type of automation.
@@ -4715,27 +5337,31 @@ export type WindowedAutomationConfigType = {
     | /**
      * The product surface that created and manages the automation
      *
-     * @enum patterns
+     * @enum patterns, dashboard, digest
      */
     (| /**
          * The product surface that created and manages the automation
          *
-         * @enum patterns
+         * @enum patterns, dashboard, digest
          */
-        "patterns"
+        ("patterns" | "dashboard" | "digest")
         /**
          * The product surface that created and manages the automation
          *
-         * @enum patterns
+         * @enum patterns, dashboard, digest
          */
         | null
       )
     | undefined;
   status?: AutomationStatusType | undefined;
+  continuous?: /**
+   * Between scheduled runs, check for accumulated new work. The executor decides how to process it.
+   */
+  boolean | undefined;
   threshold?: /**
-     * Optional calculation and lifecycle policy that gate scheduled delivery
-     */
-    | {
+   * Optional calculation and lifecycle policy that gate scheduled delivery
+   */
+  | {
         /**
          * The calculation evaluated for each window
          */
@@ -4889,9 +5515,9 @@ export type WindowedAutomationConfigType = {
     evaluation_delay_seconds: number;
   };
   loop?: /**
-     * Optional Loop agent to run for each triggered window
-     */
-    | {
+   * Optional Loop agent to run for each triggered window
+   */
+  | {
         /**
          * Instructions for the Loop agent
          *
@@ -4899,6 +5525,14 @@ export type WindowedAutomationConfigType = {
          * @maxLength 10000
          */
         prompt: string;
+        digest?:
+          | {
+              /**
+               * @enum compact, detailed
+               */
+              writing_style: "compact" | "detailed";
+            }
+          | undefined;
         /**
          * Whether to include the automation trigger payload as input
          *
@@ -4922,29 +5556,50 @@ export type WindowedAutomationConfigType = {
         string>;
         harness?:
           | /**
-           * Required when saving a Loop automation. Currently only Codex is supported.
+           * Required for an explicit model selection. Currently only Codex is supported.
            *
-           * @enum codex, native, claude-code
+           * @enum native, codex, claude-code, pi
            */
-          ("codex" | "native" | "claude-code")
+          ("native" | "codex" | "claude-code" | "pi")
           | undefined;
         model?: /**
-           * Required when saving a Loop automation.
-           *
-           * @minLength 1
-           */
-          string | undefined;
+         * Omit harness, model, and endpoint_name to inherit the organization default provider and its recommended execution settings.
+         *
+         * @minLength 1
+         */
+        string | undefined;
         endpoint_name?: /**
-           * @minLength 1
-           */
-          string | undefined;
+         * @minLength 1
+         */
+        string | undefined;
         reasoning_effort?:
           | /**
            * @enum none, minimal, low, medium, high, xhigh, max
            */
           ("none" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max")
           | undefined;
+        target?: /**
+         * The object this automation writes to or maintains
+         */
+        | {
+              /**
+               * @enum dashboard
+               */
+              type: "dashboard";
+              /**
+               * @enum overview
+               */
+              id: "overview";
+            }
+          | undefined;
       }
+    | undefined;
+  patterns?: /**
+   * Settings of the Patterns automation
+   */
+  | Partial<{
+        preprocessor: SavedPreprocessorIdType;
+      }>
     | undefined;
   /**
    * Delivery actions exposed to Loop as tools, or run directly when Loop is not configured
@@ -4966,13 +5621,50 @@ export type WindowedAutomationConfigType = {
          * The webhook URL to send the request to
          */
         url: string;
+        headers?: /**
+         * Custom HTTP headers to send with the webhook request
+         */
+        | Array<
+              | {
+                  /**
+                   * The HTTP header name
+                   *
+                   * @minLength 1
+                   * @maxLength 256
+                   * @pattern ^[!#$%&'*+.^_`|~0-9A-Za-z-]+$
+                   */
+                  name: string;
+                  /**
+                   * The HTTP header value
+                   *
+                   * @maxLength 8192
+                   * @pattern ^[\t\x20-\x7e\x80-\xff]*$
+                   */
+                  value: string;
+                }
+              | {
+                  /**
+                   * The HTTP header name
+                   *
+                   * @minLength 1
+                   * @maxLength 256
+                   * @pattern ^[!#$%&'*+.^_`|~0-9A-Za-z-]+$
+                   */
+                  name: string;
+                  /**
+                   * The data-plane secret containing the header value, bound to the webhook URL it was saved for
+                   */
+                  secret_name: string;
+                }
+            >
+          | undefined;
         formatting_prompt?: /**
-           * Instructions for Loop to format content sent to this destination
-           *
-           * @minLength 1
-           * @maxLength 10000
-           */
-          string | undefined;
+         * Instructions for Loop to format content sent to this destination
+         *
+         * @minLength 1
+         * @maxLength 10000
+         */
+        string | undefined;
       }
     | {
         /**
@@ -4990,27 +5682,16 @@ export type WindowedAutomationConfigType = {
          */
         channel: string;
         message_template?: /**
-           * Custom message template for the alert
-           */
-          string | undefined;
+         * Custom message template for the alert
+         */
+        string | undefined;
         formatting_prompt?: /**
-         * Publish a Slack mrkdwn digest.
-        
-        Pattern selection requirement: include every selected Pattern whose final status is active at the end of this automation run, plus every selected Pattern that changed from active to inactive during this run (a newly inactive outcome). Exclude Patterns that were already inactive before this run and remained inactive. Do not mention excluded Patterns anywhere in the digest, including Highlights. If no selected Patterns meet these criteria, say "No current pattern outcomes." This requirement overrides conflicting formatting guidance.
-        
-        Include a complete "*Pattern outcomes*" section with one row for every included Pattern.
-        
-        Use this row format exactly:
-        • <pattern_url|Pattern title> — `outcome`
-        
-        If a Pattern has no URL, use the plain title instead. Do not use GitHub Markdown tables or code-block tables, because links must remain clickable. Do not omit any active selected Pattern.
-        
-        After the outcome list, include a "*Highlights*" section with one very short paragraph, 2-3 sentences maximum. Summarize what changed or what broadly stands out among the included active Patterns. Do not introduce new claims beyond the run report.
+         * Instructions for Loop to format content sent to this destination
          *
          * @minLength 1
          * @maxLength 10000
          */
-          string | undefined;
+        string | undefined;
       }
     | {
         /**
@@ -5028,12 +5709,12 @@ export type WindowedAutomationConfigType = {
          */
         severity: "critical" | "error" | "warning" | "info";
         formatting_prompt?: /**
-           * Instructions for Loop to format content sent to this destination
-           *
-           * @minLength 1
-           * @maxLength 10000
-           */
-          string | undefined;
+         * Instructions for Loop to format content sent to this destination
+         *
+         * @minLength 1
+         * @maxLength 10000
+         */
+        string | undefined;
       }
   >;
 };
@@ -5056,10 +5737,11 @@ export type TopicAutomationFacetModelType =
    */
   | null;
 export type TopicMapFunctionAutomationType = {
-  function: SavedFunctionIdType &
-    /**
-     * Topic map function
-     */ unknown;
+  function: SavedFunctionIdType
+  /**
+   * Topic map function
+   */ &
+    unknown;
   btql_filter?:
     | /**
      * Per-topic-map BTQL filter. For trace scope, a topic map runs when max(filter) over the trace is truthy. For span scope, it runs when the current span matches.
@@ -5239,32 +5921,21 @@ export type TopicDigestAutomationConfigType = {
      */
     channel: string;
     message_template?: /**
-       * Custom message template for the alert
-       */
-      string | undefined;
+     * Custom message template for the alert
+     */
+    string | undefined;
     formatting_prompt?: /**
-         * Publish a Slack mrkdwn digest.
-        
-        Pattern selection requirement: include every selected Pattern whose final status is active at the end of this automation run, plus every selected Pattern that changed from active to inactive during this run (a newly inactive outcome). Exclude Patterns that were already inactive before this run and remained inactive. Do not mention excluded Patterns anywhere in the digest, including Highlights. If no selected Patterns meet these criteria, say "No current pattern outcomes." This requirement overrides conflicting formatting guidance.
-        
-        Include a complete "*Pattern outcomes*" section with one row for every included Pattern.
-        
-        Use this row format exactly:
-        • <pattern_url|Pattern title> — `outcome`
-        
-        If a Pattern has no URL, use the plain title instead. Do not use GitHub Markdown tables or code-block tables, because links must remain clickable. Do not omit any active selected Pattern.
-        
-        After the outcome list, include a "*Highlights*" section with one very short paragraph, 2-3 sentences maximum. Summarize what changed or what broadly stands out among the included active Patterns. Do not introduce new claims beyond the run report.
-         *
-         * @minLength 1
-         * @maxLength 10000
-         */
-      string | undefined;
+     * Instructions for Loop to format content sent to this destination
+     *
+     * @minLength 1
+     * @maxLength 10000
+     */
+    string | undefined;
   };
   topic_map_function_ids?: /**
-     * Optional topic map function IDs to include in the digest
-     */
-    Array<string> | undefined;
+   * Optional topic map function IDs to include in the digest
+   */
+  Array<string> | undefined;
 };
 export type ProjectAutomationType = {
   /**
@@ -5359,13 +6030,50 @@ export type ProjectAutomationType = {
                * The webhook URL to send the request to
                */
               url: string;
+              headers?: /**
+               * Custom HTTP headers to send with the webhook request
+               */
+              | Array<
+                    | {
+                        /**
+                         * The HTTP header name
+                         *
+                         * @minLength 1
+                         * @maxLength 256
+                         * @pattern ^[!#$%&'*+.^_`|~0-9A-Za-z-]+$
+                         */
+                        name: string;
+                        /**
+                         * The HTTP header value
+                         *
+                         * @maxLength 8192
+                         * @pattern ^[\t\x20-\x7e\x80-\xff]*$
+                         */
+                        value: string;
+                      }
+                    | {
+                        /**
+                         * The HTTP header name
+                         *
+                         * @minLength 1
+                         * @maxLength 256
+                         * @pattern ^[!#$%&'*+.^_`|~0-9A-Za-z-]+$
+                         */
+                        name: string;
+                        /**
+                         * The data-plane secret containing the header value, bound to the webhook URL it was saved for
+                         */
+                        secret_name: string;
+                      }
+                  >
+                | undefined;
               formatting_prompt?: /**
-                 * Instructions for Loop to format content sent to this destination
-                 *
-                 * @minLength 1
-                 * @maxLength 10000
-                 */
-                string | undefined;
+               * Instructions for Loop to format content sent to this destination
+               *
+               * @minLength 1
+               * @maxLength 10000
+               */
+              string | undefined;
             }
           | {
               /**
@@ -5383,27 +6091,16 @@ export type ProjectAutomationType = {
                */
               channel: string;
               message_template?: /**
-                 * Custom message template for the alert
-                 */
-                string | undefined;
+               * Custom message template for the alert
+               */
+              string | undefined;
               formatting_prompt?: /**
-             * Publish a Slack mrkdwn digest.
-            
-            Pattern selection requirement: include every selected Pattern whose final status is active at the end of this automation run, plus every selected Pattern that changed from active to inactive during this run (a newly inactive outcome). Exclude Patterns that were already inactive before this run and remained inactive. Do not mention excluded Patterns anywhere in the digest, including Highlights. If no selected Patterns meet these criteria, say "No current pattern outcomes." This requirement overrides conflicting formatting guidance.
-            
-            Include a complete "*Pattern outcomes*" section with one row for every included Pattern.
-            
-            Use this row format exactly:
-            • <pattern_url|Pattern title> — `outcome`
-            
-            If a Pattern has no URL, use the plain title instead. Do not use GitHub Markdown tables or code-block tables, because links must remain clickable. Do not omit any active selected Pattern.
-            
-            After the outcome list, include a "*Highlights*" section with one very short paragraph, 2-3 sentences maximum. Summarize what changed or what broadly stands out among the included active Patterns. Do not introduce new claims beyond the run report.
-             *
-             * @minLength 1
-             * @maxLength 10000
-             */
-                string | undefined;
+               * Instructions for Loop to format content sent to this destination
+               *
+               * @minLength 1
+               * @maxLength 10000
+               */
+              string | undefined;
             }
           | {
               /**
@@ -5421,12 +6118,12 @@ export type ProjectAutomationType = {
                */
               severity: "critical" | "error" | "warning" | "info";
               formatting_prompt?: /**
-                 * Instructions for Loop to format content sent to this destination
-                 *
-                 * @minLength 1
-                 * @maxLength 10000
-                 */
-                string | undefined;
+               * Instructions for Loop to format content sent to this destination
+               *
+               * @minLength 1
+               * @maxLength 10000
+               */
+              string | undefined;
             };
       }
     | {
@@ -5511,11 +6208,11 @@ export type ProjectAutomationType = {
                */
               service_account_email: string;
               credential_name?: /**
-                 * The name of a Google workload identity federation credential configured in this organization's AI providers. Supported data planes can use it regardless of hosting environment. If omitted, the data plane's GCP identity is used.
-                 *
-                 * @minLength 1
-                 */
-                string | undefined;
+               * The name of a Google workload identity federation credential configured in this organization's AI providers. Supported data planes can use it regardless of hosting environment. If omitted, the data plane's GCP identity is used.
+               *
+               * @minLength 1
+               */
+              string | undefined;
             };
         batch_size?:
           | /**
@@ -5613,9 +6310,9 @@ export type ProjectAutomationType = {
         event_type: "environment_update";
         status?: AutomationStatusType | undefined;
         environment_filter?: /**
-           * Optional list of environment slugs to filter by
-           */
-          Array<string> | undefined;
+         * Optional list of environment slugs to filter by
+         */
+        Array<string> | undefined;
         /**
          * The action to take when the automation rule is triggered
          */
@@ -5631,13 +6328,50 @@ export type ProjectAutomationType = {
                * The webhook URL to send the request to
                */
               url: string;
+              headers?: /**
+               * Custom HTTP headers to send with the webhook request
+               */
+              | Array<
+                    | {
+                        /**
+                         * The HTTP header name
+                         *
+                         * @minLength 1
+                         * @maxLength 256
+                         * @pattern ^[!#$%&'*+.^_`|~0-9A-Za-z-]+$
+                         */
+                        name: string;
+                        /**
+                         * The HTTP header value
+                         *
+                         * @maxLength 8192
+                         * @pattern ^[\t\x20-\x7e\x80-\xff]*$
+                         */
+                        value: string;
+                      }
+                    | {
+                        /**
+                         * The HTTP header name
+                         *
+                         * @minLength 1
+                         * @maxLength 256
+                         * @pattern ^[!#$%&'*+.^_`|~0-9A-Za-z-]+$
+                         */
+                        name: string;
+                        /**
+                         * The data-plane secret containing the header value, bound to the webhook URL it was saved for
+                         */
+                        secret_name: string;
+                      }
+                  >
+                | undefined;
               formatting_prompt?: /**
-                 * Instructions for Loop to format content sent to this destination
-                 *
-                 * @minLength 1
-                 * @maxLength 10000
-                 */
-                string | undefined;
+               * Instructions for Loop to format content sent to this destination
+               *
+               * @minLength 1
+               * @maxLength 10000
+               */
+              string | undefined;
             }
           | {
               /**
@@ -5655,27 +6389,16 @@ export type ProjectAutomationType = {
                */
               channel: string;
               message_template?: /**
-                 * Custom message template for the alert
-                 */
-                string | undefined;
+               * Custom message template for the alert
+               */
+              string | undefined;
               formatting_prompt?: /**
-             * Publish a Slack mrkdwn digest.
-            
-            Pattern selection requirement: include every selected Pattern whose final status is active at the end of this automation run, plus every selected Pattern that changed from active to inactive during this run (a newly inactive outcome). Exclude Patterns that were already inactive before this run and remained inactive. Do not mention excluded Patterns anywhere in the digest, including Highlights. If no selected Patterns meet these criteria, say "No current pattern outcomes." This requirement overrides conflicting formatting guidance.
-            
-            Include a complete "*Pattern outcomes*" section with one row for every included Pattern.
-            
-            Use this row format exactly:
-            • <pattern_url|Pattern title> — `outcome`
-            
-            If a Pattern has no URL, use the plain title instead. Do not use GitHub Markdown tables or code-block tables, because links must remain clickable. Do not omit any active selected Pattern.
-            
-            After the outcome list, include a "*Highlights*" section with one very short paragraph, 2-3 sentences maximum. Summarize what changed or what broadly stands out among the included active Patterns. Do not introduce new claims beyond the run report.
-             *
-             * @minLength 1
-             * @maxLength 10000
-             */
-                string | undefined;
+               * Instructions for Loop to format content sent to this destination
+               *
+               * @minLength 1
+               * @maxLength 10000
+               */
+              string | undefined;
             }
           | {
               /**
@@ -5693,12 +6416,12 @@ export type ProjectAutomationType = {
                */
               severity: "critical" | "error" | "warning" | "info";
               formatting_prompt?: /**
-                 * Instructions for Loop to format content sent to this destination
-                 *
-                 * @minLength 1
-                 * @maxLength 10000
-                 */
-                string | undefined;
+               * Instructions for Loop to format content sent to this destination
+               *
+               * @minLength 1
+               * @maxLength 10000
+               */
+              string | undefined;
             };
       }
     | WindowedAutomationConfigType
@@ -5783,7 +6506,7 @@ export type ProjectGroupType = {
       )
     | undefined;
   /**
-   * Sorted ids of active projects in this project group
+   * Sorted ids of active projects in this project group. Modifying membership requires project_group:update on the group.
    */
   member_projects: Array<string>;
 };
@@ -5829,34 +6552,32 @@ export type ProjectLogsEventType = {
    */
   log_id: "g";
   input?: /**
-     * The arguments that uniquely define a user input (an arbitrary, JSON serializable object).
-     */
-    unknown | undefined;
+   * The arguments that uniquely define a user input (an arbitrary, JSON serializable object).
+   */
+  unknown | undefined;
   output?: /**
-     * The output of your application, including post-processing (an arbitrary, JSON serializable object), that allows you to determine whether the result is correct or not. For example, in an app that generates SQL queries, the `output` should be the _result_ of the SQL query generated by the model, not the query itself, because there may be multiple valid queries that answer a single question.
-     */
-    unknown | undefined;
+   * The output of your application, including post-processing (an arbitrary, JSON serializable object), that allows you to determine whether the result is correct or not. For example, in an app that generates SQL queries, the `output` should be the _result_ of the SQL query generated by the model, not the query itself, because there may be multiple valid queries that answer a single question.
+   */
+  unknown | undefined;
   expected?: /**
-     * The ground truth value (an arbitrary, JSON serializable object) that you'd compare to `output` to determine if your `output` value is correct or not. Braintrust currently does not compare `output` to `expected` for you, since there are so many different ways to do that correctly. Instead, these values are just used to help you navigate while digging into analyses. However, we may later use these values to re-score outputs or fine-tune your models.
-     */
-    unknown | undefined;
+   * The ground truth value (an arbitrary, JSON serializable object) that you'd compare to `output` to determine if your `output` value is correct or not. Braintrust currently does not compare `output` to `expected` for you, since there are so many different ways to do that correctly. Instead, these values are just used to help you navigate while digging into analyses. However, we may later use these values to re-score outputs or fine-tune your models.
+   */
+  unknown | undefined;
   error?: /**
-     * The error that occurred, if any.
-     */
-    unknown | undefined;
+   * The error that occurred, if any.
+   */
+  unknown | undefined;
   scores?:
     | /**
-     * A dictionary of numeric values (between 0 and 1) to log. The scores should give you a variety of signals that help you determine how accurate the outputs are compared to what you expect and diagnose failures. For example, a summarization app might have one score that tells you how accurate the summary is, and another that measures the word similarity between the generated and grouth truth summary. The word similarity score could help you determine whether the summarization was covering similar concepts or not. You can use these scores to help you sort, filter, and compare logs.
+     * A dictionary of numeric values (between 0 and 1) to log. The scores should give you a variety of signals that help you determine how accurate the outputs are compared to what you expect and diagnose failures. For example, a summarization app might have one score that tells you how accurate the summary is, and another that measures the word similarity between the generated and ground truth summary. The word similarity score could help you determine whether the summarization was covering similar concepts or not. You can use these scores to help you sort, filter, and compare logs.
      */
     /**
-     * A dictionary of numeric values (between 0 and 1) to log. The scores should give you a variety of signals that help you determine how accurate the outputs are compared to what you expect and diagnose failures. For example, a summarization app might have one score that tells you how accurate the summary is, and another that measures the word similarity between the generated and grouth truth summary. The word similarity score could help you determine whether the summarization was covering similar concepts or not. You can use these scores to help you sort, filter, and compare logs.
+     * A dictionary of numeric values (between 0 and 1) to log. The scores should give you a variety of signals that help you determine how accurate the outputs are compared to what you expect and diagnose failures. For example, a summarization app might have one score that tells you how accurate the summary is, and another that measures the word similarity between the generated and ground truth summary. The word similarity score could help you determine whether the summarization was covering similar concepts or not. You can use these scores to help you sort, filter, and compare logs.
      */
-    (| {}
-        /**
-         * A dictionary of numeric values (between 0 and 1) to log. The scores should give you a variety of signals that help you determine how accurate the outputs are compared to what you expect and diagnose failures. For example, a summarization app might have one score that tells you how accurate the summary is, and another that measures the word similarity between the generated and grouth truth summary. The word similarity score could help you determine whether the summarization was covering similar concepts or not. You can use these scores to help you sort, filter, and compare logs.
-         */
-        | null
-      )
+    ({}
+      /**
+       * A dictionary of numeric values (between 0 and 1) to log. The scores should give you a variety of signals that help you determine how accurate the outputs are compared to what you expect and diagnose failures. For example, a summarization app might have one score that tells you how accurate the summary is, and another that measures the word similarity between the generated and ground truth summary. The word similarity score could help you determine whether the summarization was covering similar concepts or not. You can use these scores to help you sort, filter, and compare logs.
+       */ | null)
     | undefined;
   metadata?:
     | /**
@@ -5865,28 +6586,48 @@ export type ProjectLogsEventType = {
     /**
      * A dictionary with additional data about the test example, model outputs, or just about anything else that's relevant, that you can use to help find and analyze examples later. For example, you could log the `prompt`, example's `id`, or anything else that would be useful to slice/dice later. The values in `metadata` can be any JSON-serializable type, but its keys must be strings
      */
-    (| Partial<
-            {
-              /**
-               * The model used for this example
-               */
-              model: /**
-                 * The model used for this example
-                 */
-                | string
-                /**
-                 * The model used for this example
-                 */
-                | null;
-            } & {
-              [key: string]: any;
-            }
-          >
-        /**
-         * A dictionary with additional data about the test example, model outputs, or just about anything else that's relevant, that you can use to help find and analyze examples later. For example, you could log the `prompt`, example's `id`, or anything else that would be useful to slice/dice later. The values in `metadata` can be any JSON-serializable type, but its keys must be strings
-         */
-        | null
-      )
+    (Partial<
+        {
+          /**
+           * The model used for this example
+           */
+          model: /**
+           * The model used for this example
+           */
+          | string
+            /**
+             * The model used for this example
+             */
+            | null;
+          /**
+           * The service tier requested for this LLM call
+           */
+          requested_service_tier: /**
+           * The service tier requested for this LLM call
+           */
+          | string
+            /**
+             * The service tier requested for this LLM call
+             */
+            | null;
+          /**
+           * The service tier that served this LLM call
+           */
+          served_service_tier: /**
+           * The service tier that served this LLM call
+           */
+          | string
+            /**
+             * The service tier that served this LLM call
+             */
+            | null;
+        } & {
+          [key: string]: any;
+        }
+      >
+      /**
+       * A dictionary with additional data about the test example, model outputs, or just about anything else that's relevant, that you can use to help find and analyze examples later. For example, you could log the `prompt`, example's `id`, or anything else that would be useful to slice/dice later. The values in `metadata` can be any JSON-serializable type, but its keys must be strings
+       */ | null)
     | undefined;
   tags?:
     | /**
@@ -5895,12 +6636,10 @@ export type ProjectLogsEventType = {
     /**
      * A list of tags to log
      */
-    (| Array<string>
-        /**
-         * A list of tags to log
-         */
-        | null
-      )
+    (Array<string>
+      /**
+       * A list of tags to log
+       */ | null)
     | undefined;
   metrics?:
     | /**
@@ -5925,53 +6664,51 @@ export type ProjectLogsEventType = {
     /**
      * Context is additional information about the code that produced the project logs event. It is essentially the textual counterpart to `metrics`. Use the `caller_*` attributes to track the location in code which produced the project logs event
      */
-    (| Partial<
-            {
-              /**
-               * The function in code which created the project logs event
-               */
-              caller_functionname: /**
-                 * The function in code which created the project logs event
-                 */
-                | string
-                /**
-                 * The function in code which created the project logs event
-                 */
-                | null;
-              /**
-               * Name of the file in code where the project logs event was created
-               */
-              caller_filename: /**
-                 * Name of the file in code where the project logs event was created
-                 */
-                | string
-                /**
-                 * Name of the file in code where the project logs event was created
-                 */
-                | null;
-              /**
-               * Line of code where the project logs event was created
-               */
-              caller_lineno: /**
-                 * Line of code where the project logs event was created
-                 */
-                | number
-                /**
-                 * Line of code where the project logs event was created
-                 */
-                | null;
-            } & {
-              [key: string]: any;
-            }
-          >
-        /**
-         * Context is additional information about the code that produced the project logs event. It is essentially the textual counterpart to `metrics`. Use the `caller_*` attributes to track the location in code which produced the project logs event
-         */
-        | null
-      )
+    (Partial<
+        {
+          /**
+           * The function in code which created the project logs event
+           */
+          caller_functionname: /**
+           * The function in code which created the project logs event
+           */
+          | string
+            /**
+             * The function in code which created the project logs event
+             */
+            | null;
+          /**
+           * Name of the file in code where the project logs event was created
+           */
+          caller_filename: /**
+           * Name of the file in code where the project logs event was created
+           */
+          | string
+            /**
+             * Name of the file in code where the project logs event was created
+             */
+            | null;
+          /**
+           * Line of code where the project logs event was created
+           */
+          caller_lineno: /**
+           * Line of code where the project logs event was created
+           */
+          | number
+            /**
+             * Line of code where the project logs event was created
+             */
+            | null;
+        } & {
+          [key: string]: any;
+        }
+      >
+      /**
+       * Context is additional information about the code that produced the project logs event. It is essentially the textual counterpart to `metrics`. Use the `caller_*` attributes to track the location in code which produced the project logs event
+       */ | null)
     | undefined;
   /**
-   * A unique identifier used to link different project logs events together as part of a full trace. See the [tracing guide](https://www.braintrust.dev/docs/instrument) for full details on tracing
+   * A unique identifier used to link different project logs events together as part of a full trace. See the [tracing guide](https://docs.braintrust.dev/instrument) for full details on tracing
    */
   span_id: string;
   span_parents?:
@@ -5981,12 +6718,10 @@ export type ProjectLogsEventType = {
     /**
      * An array of the parent `span_ids` of this project logs event. This should be empty for the root span of a trace, and should most often contain just one parent element for subspans
      */
-    (| Array<string>
-        /**
-         * An array of the parent `span_ids` of this project logs event. This should be empty for the root span of a trace, and should most often contain just one parent element for subspans
-         */
-        | null
-      )
+    (Array<string>
+      /**
+       * An array of the parent `span_ids` of this project logs event. This should be empty for the root span of a trace, and should most often contain just one parent element for subspans
+       */ | null)
     | undefined;
   /**
    * A unique identifier for the trace this project logs event belongs to
@@ -6015,12 +6750,10 @@ export type ProjectLogsEventType = {
     /**
      * Optional list of comments attached to this event
      */
-    (| Array<unknown>
-        /**
-         * Optional list of comments attached to this event
-         */
-        | null
-      )
+    (Array<unknown>
+      /**
+       * Optional list of comments attached to this event
+       */ | null)
     | undefined;
   audit_data?:
     | /**
@@ -6029,17 +6762,15 @@ export type ProjectLogsEventType = {
     /**
      * Optional list of audit entries attached to this event
      */
-    (| Array<unknown>
-        /**
-         * Optional list of audit entries attached to this event
-         */
-        | null
-      )
+    (Array<unknown>
+      /**
+       * Optional list of audit entries attached to this event
+       */ | null)
     | undefined;
   _async_scoring_state?: /**
-     * The async scoring state for this event
-     */
-    unknown | undefined;
+   * The async scoring state for this event
+   */
+  unknown | undefined;
   facets?:
     | /**
      * Facets for categorization (dictionary from facet id to value)
@@ -6047,12 +6778,10 @@ export type ProjectLogsEventType = {
     /**
      * Facets for categorization (dictionary from facet id to value)
      */
-    (| {}
-        /**
-         * Facets for categorization (dictionary from facet id to value)
-         */
-        | null
-      )
+    ({}
+      /**
+       * Facets for categorization (dictionary from facet id to value)
+       */ | null)
     | undefined;
   classifications?:
     | /**
@@ -6061,12 +6790,10 @@ export type ProjectLogsEventType = {
     /**
      * Classifications for this event (dictionary from classification name to items)
      */
-    (| {}
-        /**
-         * Classifications for this event (dictionary from classification name to items)
-         */
-        | null
-      )
+    ({}
+      /**
+       * Classifications for this event (dictionary from classification name to items)
+       */ | null)
     | undefined;
 };
 export type ProjectScoreTypeType =
@@ -6332,12 +7059,10 @@ export type PromptType = {
     /**
      * A list of tags for the prompt
      */
-    (| Array<string>
-        /**
-         * A list of tags for the prompt
-         */
-        | null
-      )
+    (Array<string>
+      /**
+       * A list of tags for the prompt
+       */ | null)
     | undefined;
   metadata?:
     | /**
@@ -6346,12 +7071,10 @@ export type PromptType = {
     /**
      * User-controlled metadata about the prompt
      */
-    (| {}
-        /**
-         * User-controlled metadata about the prompt
-         */
-        | null
-      )
+    ({}
+      /**
+       * User-controlled metadata about the prompt
+       */ | null)
     | undefined;
   function_type?: FunctionTypeEnumNullishType | undefined;
 };
@@ -6397,26 +7120,26 @@ export type PromptSessionEventType = {
    */
   prompt_session_id: string;
   prompt_session_data?: /**
-     * Data about the prompt session
-     */
-    unknown | undefined;
+   * Data about the prompt session
+   */
+  unknown | undefined;
   prompt_data?: /**
-     * Data about the prompt
-     */
-    unknown | undefined;
+   * Data about the prompt
+   */
+  unknown | undefined;
   function_data?: /**
-     * Data about the function
-     */
-    unknown | undefined;
+   * Data about the function
+   */
+  unknown | undefined;
   function_type?: FunctionTypeEnumNullishType | undefined;
   object_data?: /**
-     * Data about the mapped data
-     */
-    unknown | undefined;
+   * Data about the mapped data
+   */
+  unknown | undefined;
   completion?: /**
-     * Data about the completion
-     */
-    unknown | undefined;
+   * Data about the completion
+   */
+  unknown | undefined;
   tags?:
     | /**
      * A list of tags to log
@@ -6424,12 +7147,10 @@ export type PromptSessionEventType = {
     /**
      * A list of tags to log
      */
-    (| Array<string>
-        /**
-         * A list of tags to log
-         */
-        | null
-      )
+    (Array<string>
+      /**
+       * A list of tags to log
+       */ | null)
     | undefined;
 };
 export type ResponseFormatType =
@@ -6549,15 +7270,13 @@ export type RoleType = {
     /**
      * (permission, restrict_object_type) tuples which belong to this role
      */
-    (| Array<{
-            permission: PermissionType;
-            restrict_object_type?: AclObjectTypeType | undefined;
-          }>
-        /**
-         * (permission, restrict_object_type) tuples which belong to this role
-         */
-        | null
-      )
+    (Array<{
+        permission: PermissionType;
+        restrict_object_type?: AclObjectTypeType | undefined;
+      }>
+      /**
+       * (permission, restrict_object_type) tuples which belong to this role
+       */ | null)
     | undefined;
   member_roles?:
     | /**
@@ -6570,13 +7289,11 @@ export type RoleType = {
     
     An inheriting role has all the permissions contained in its member roles, as well as all of their inherited permissions
      */
-    (| Array<string> /**
+    (Array<string> /**
      * Ids of the roles this role inherits from
     
     An inheriting role has all the permissions contained in its member roles, as well as all of their inherited permissions
-     */
-        | null
-      )
+     */ | null)
     | undefined;
 };
 export type RunEvalType = {
@@ -6588,9 +7305,9 @@ export type RunEvalType = {
    * The dataset to use
    */
   data: /**
-     * Dataset id
-     */
-    | {
+   * Dataset id
+   */
+  | {
         dataset_id: string;
         dataset_version?:
           | /**
@@ -6620,7 +7337,18 @@ export type RunEvalType = {
               | null
             )
           | undefined;
-        _internal_btql?: ({} | null) | undefined;
+        _internal_btql?:
+          | /**
+           * Internal BTQL query overrides in parsed JSON form that select which dataset rows to evaluate. `filter` is a BTQL expression object, `sort` is an array of BTQL sort expressions, and `limit` is an integer.
+           */
+          /**
+           * Internal BTQL query overrides in parsed JSON form that select which dataset rows to evaluate. `filter` is a BTQL expression object, `sort` is an array of BTQL sort expressions, and `limit` is an integer.
+           */
+          ({}
+            /**
+             * Internal BTQL query overrides in parsed JSON form that select which dataset rows to evaluate. `filter` is a BTQL expression object, `sort` is an array of BTQL sort expressions, and `limit` is an integer.
+             */ | null)
+          | undefined;
       }
     /**
      * Project and dataset name
@@ -6656,13 +7384,28 @@ export type RunEvalType = {
               | null
             )
           | undefined;
-        _internal_btql?: ({} | null) | undefined;
+        _internal_btql?:
+          | /**
+           * Internal BTQL query overrides in parsed JSON form that select which dataset rows to evaluate. `filter` is a BTQL expression object, `sort` is an array of BTQL sort expressions, and `limit` is an integer.
+           */
+          /**
+           * Internal BTQL query overrides in parsed JSON form that select which dataset rows to evaluate. `filter` is a BTQL expression object, `sort` is an array of BTQL sort expressions, and `limit` is an integer.
+           */
+          ({}
+            /**
+             * Internal BTQL query overrides in parsed JSON form that select which dataset rows to evaluate. `filter` is a BTQL expression object, `sort` is an array of BTQL sort expressions, and `limit` is an integer.
+             */ | null)
+          | undefined;
       }
     /**
      * Dataset rows
      */
     | {
         data: Array<unknown>;
+        source_dataset_id?: /**
+         * The saved dataset these rows came from. Its project scopes saved simulated-user references; the caller must have read access to the dataset and source project.
+         */
+        string | undefined;
       }
     /**
      * Experiment whose inputs and outputs should be used as dataset inputs and expected values
@@ -6671,39 +7414,41 @@ export type RunEvalType = {
         experiment_name: string;
       };
   name?: /**
-     * The name of the eval to run when multiple evals available
-     */
-    string | undefined;
+   * The name of the eval to run when multiple evals available
+   */
+  string | undefined;
   parameters?: /**
-     * Values for any parameters used in the eval
-     */
-    {} | undefined;
-  task: FunctionIdType &
-    /**
-     * The function to evaluate
-     */ unknown;
+   * Values for any parameters used in the eval
+   */
+  {} | undefined;
+  task: FunctionIdType
+  /**
+   * The function to evaluate
+   */ &
+    unknown;
   /**
    * The functions to score the eval on
    */
   scores: Array<FunctionIdType>;
   experiment_name?: /**
-     * An optional name for the experiment created by this eval. If it conflicts with an existing experiment, it will be suffixed with a unique identifier.
-     */
-    string | undefined;
+   * An optional name for the experiment created by this eval. If it conflicts with an existing experiment, it will be suffixed with a unique identifier.
+   */
+  string | undefined;
   metadata?: /**
-     * Optional experiment-level metadata to store about the evaluation. You can later use this to slice & dice across experiments.
-     */
-    {} | undefined;
+   * Optional experiment-level metadata to store about the evaluation. You can later use this to slice & dice across experiments.
+   */
+  {} | undefined;
   parent?:
-    | (InvokeParentType &
-        /**
-         * Options for tracing the evaluation
-         */ unknown)
+    | (InvokeParentType
+      /**
+       * Options for tracing the evaluation
+       */ &
+        unknown)
     | undefined;
   stream?: /**
-     * Whether to stream the results of the eval. If true, the request will return two events: one to indicate the experiment has started, and another upon completion. If false, the request will return the evaluation's summary upon completion.
-     */
-    boolean | undefined;
+   * Whether to stream the results of the eval. If true, the request will return two events: one to indicate the experiment has started, and another upon completion. If false, the request will return the evaluation's summary upon completion.
+   */
+  boolean | undefined;
   trial_count?:
     | /**
      * The number of times to run the evaluator per input. This is useful for evaluating applications that have non-deterministic behavior and gives you both a stronger aggregate measure and a sense of the variance in the results.
@@ -6734,14 +7479,14 @@ export type RunEvalType = {
     | undefined;
   timeout?:
     | /**
-     * The maximum duration, in milliseconds, to run the evaluation. Defaults to undefined, in which case there is no timeout.
+     * The maximum duration, in milliseconds, to run the evaluation. There is no timeout by default.
      */
     /**
-     * The maximum duration, in milliseconds, to run the evaluation. Defaults to undefined, in which case there is no timeout.
+     * The maximum duration, in milliseconds, to run the evaluation. There is no timeout by default.
      */
     (| number
         /**
-         * The maximum duration, in milliseconds, to run the evaluation. Defaults to undefined, in which case there is no timeout.
+         * The maximum duration, in milliseconds, to run the evaluation. There is no timeout by default.
          */
         | null
       )
@@ -6752,11 +7497,11 @@ export type RunEvalType = {
    * @default 10
    */
   max_concurrency: /**
-     * The maximum number of tasks/scorers that will be run concurrently. Defaults to 10. If null is provided, no max concurrency will be used.
-     *
-     * @default 10
-     */
-    | number
+   * The maximum number of tasks/scorers that will be run concurrently. Defaults to 10. If null is provided, no max concurrency will be used.
+   *
+   * @default 10
+   */
+  | number
     /**
      * The maximum number of tasks/scorers that will be run concurrently. Defaults to 10. If null is provided, no max concurrency will be used.
      *
@@ -6792,24 +7537,24 @@ export type RunEvalType = {
       )
     | undefined;
   git_metadata_settings?:
-    | (GitMetadataSettingsType &
+    | (GitMetadataSettingsType
+      /**
+       * Optional settings for collecting git metadata. By default, will collect git metadata fields allowed in org-level settings, excluding diff content unless the org opts in.
+       */ &
         /**
-         * Optional settings for collecting git metadata. By default, will collect git metadata fields allowed in org-level settings, excluding diff content unless the org opts in.
-         */ /**
          * Optional settings for collecting git metadata. By default, will collect git metadata fields allowed in org-level settings, excluding diff content unless the org opts in.
          */
-        (| {}
-          /**
-           * Optional settings for collecting git metadata. By default, will collect git metadata fields allowed in org-level settings, excluding diff content unless the org opts in.
-           */
-          | null
-        ))
+        ({}
+        /**
+         * Optional settings for collecting git metadata. By default, will collect git metadata fields allowed in org-level settings, excluding diff content unless the org opts in.
+         */ | null))
     | undefined;
   repo_info?:
-    | (RepoInfoType &
-        /**
-         * Optionally explicitly specify the git metadata for this experiment. This takes precedence over `gitMetadataSettings` if specified.
-         */ unknown)
+    | (RepoInfoType
+      /**
+       * Optionally explicitly specify the git metadata for this experiment. This takes precedence over `gitMetadataSettings` if specified.
+       */ &
+        unknown)
     | undefined;
   strict?:
     | /**
@@ -6840,13 +7585,13 @@ export type RunEvalType = {
       )
     | undefined;
   extra_messages?: /**
-     * A template path of extra messages to append to the conversion. These messages will be appended to the end of the conversation, after the last message.
-     */
-    string | undefined;
+   * A template path of extra messages to append to the conversion. These messages will be appended to the end of the conversation, after the last message.
+   */
+  string | undefined;
   tags?: /**
-     * Optional tags that will be added to the experiment.
-     */
-    Array<string> | undefined;
+   * Optional tags that will be added to the experiment.
+   */
+  Array<string> | undefined;
   mcp_auth?: {} | undefined;
   endpoint_name?:
     | /**
@@ -6865,14 +7610,14 @@ export type RunEvalType = {
 };
 export type ScoreObjectType = {
   name?: /**
-     * The score name. Defaults to the function name for a single score.
-     */
-    string | undefined;
+   * The score name. Defaults to the function name for a single score.
+   */
+  string | undefined;
   score: /**
-     * @minimum 0
-     * @maximum 1
-     */
-    number | boolean | null;
+   * @minimum 0
+   * @maximum 1
+   */
+  number | boolean | null;
   metadata?: {} | undefined;
 };
 export type ScoreResultType =
@@ -6914,6 +7659,9 @@ export type ServiceTokenType = {
    * Name of the service token
    */
   name: string;
+  /**
+   * Masked preview showing the token prefix and last four characters, e.g. bt-st-…AbCd.
+   */
   preview_name: string;
   service_account_id?:
     | /**
@@ -6967,6 +7715,20 @@ export type ServiceTokenType = {
     (| string
         /**
          * Unique identifier for the organization
+         */
+        | null
+      )
+    | undefined;
+  last_used_at?:
+    | /**
+     * Approximate time this credential was last used to authenticate. Updates are limited to once every 10 minutes and may be delayed by authorization caches. If null, no usage has been recorded.
+     */
+    /**
+     * Approximate time this credential was last used to authenticate. Updates are limited to once every 10 minutes and may be delayed by authorization caches. If null, no usage has been recorded.
+     */
+    (| string
+        /**
+         * Approximate time this credential was last used to authenticate. Updates are limited to once every 10 minutes and may be delayed by authorization caches. If null, no usage has been recorded.
          */
         | null
       )
@@ -7088,10 +7850,11 @@ export type SSEProgressEventDataType = {
   id: string;
   object_type: FunctionObjectTypeType;
   origin?:
-    | (ObjectReferenceNullishType &
-        /**
-         * The origin of the event
-         */ unknown)
+    | (ObjectReferenceNullishType
+      /**
+       * The origin of the event
+       */ &
+        unknown)
     | undefined;
   format: FunctionFormatType;
   output_type: FunctionOutputTypeType;
@@ -7211,14 +7974,13 @@ export type ViewDataType =
   /**
    * The view definition
    */
-  | Partial<{
-      search: ViewDataSearchType;
-      custom_charts: unknown;
-    }>
+  Partial<{
+    search: ViewDataSearchType;
+    custom_charts: unknown;
+  }>
   /**
    * The view definition
-   */
-  | null;
+   */ | null;
 export type ViewOptionsType =
   /**
    * Options for the view in the app
@@ -7229,6 +7991,10 @@ export type ViewOptionsType =
        */
       viewType: "monitor";
       options: Partial<{
+        /**
+         * @enum span, trace
+         */
+        filterScope: "span" | "trace";
         /**
          * @enum range, frame
          */
@@ -7312,9 +8078,9 @@ export type ViewOptionsType =
        * One of 'avg', 'sum', 'min', 'max', 'median', 'all'
        */
       xAxisAggregation: /**
-         * One of 'avg', 'sum', 'min', 'max', 'median', 'all'
-         */
-        | string
+       * One of 'avg', 'sum', 'min', 'max', 'median', 'all'
+       */
+      | string
         /**
          * One of 'avg', 'sum', 'min', 'max', 'median', 'all'
          */
@@ -7359,7 +8125,7 @@ export type ViewType = {
   /**
    * Type of object that the view corresponds to.
    *
-   * @enum projects, experiments, experiment, playgrounds, playground, datasets, dataset, prompts, parameters, tools, scorers, classifiers, logs, monitor, for_review_project_log, for_review_experiments, for_review_datasets
+   * @enum projects, experiments, experiment, playgrounds, playground, datasets, dataset, prompts, parameters, tools, scorers, classifiers, logs, patterns, monitor, for_review_project_log, for_review_experiments, for_review_datasets
    */
   view_type:
     | "projects"
@@ -7375,6 +8141,7 @@ export type ViewType = {
     | "scorers"
     | "classifiers"
     | "logs"
+    | "patterns"
     | "monitor"
     | "for_review_project_log"
     | "for_review_experiments"
@@ -7398,9 +8165,9 @@ export type ViewType = {
       )
     | undefined;
   starred?: /**
-     * Whether the view is starred in its project
-     */
-    boolean | undefined;
+   * Whether the view is starred in its project
+   */
+  boolean | undefined;
   created?:
     | /**
      * Date of view creation
