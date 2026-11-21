@@ -22,7 +22,12 @@ import type {
 } from "../../vendor-sdk-types/livekit";
 import iso from "#braintrust-platform";
 import { runInstrumentation } from "../core/observe-result";
-import { livekitChannels } from "./livekit-interceptors";
+import { livekitChannels, livekitOpenAIChannels } from "./livekit-interceptors";
+import { recordLiveKitOpenAIClient } from "./livekit-client-ownership";
+import type {
+  ModelService,
+  OpenAIAdapterOptions,
+} from "../../vendor-sdk-types/livekit";
 import { wrapLiveKitModels } from "./livekit-wrapping";
 import {
   REDACTED_EXCEPTION_MESSAGE,
@@ -125,6 +130,19 @@ class LiveKitInstrumentationConsumer {
         runInstrumentation(() => tracing.observeSpan(span, options));
         return tracing.scope(span, () => fn(span));
       };
+    for (const kind of ["llm", "stt", "tts"] as const)
+      livekitOpenAIChannels[kind].intercept((target, self, args) => {
+        const service = Reflect.apply(target, self, args);
+        runInstrumentation(() =>
+          recordLiveKitOpenAIClient(
+            service as ModelService,
+            self as { prototype?: ModelService },
+            args[0] as OpenAIAdapterOptions | undefined,
+            kind,
+          ),
+        );
+        return service;
+      });
     livekitChannels.startSpan.intercept((target, self, args) => {
       const span = Reflect.apply(target, self, args);
       runInstrumentation(() => tracing.observeSpan(span, args[0]));

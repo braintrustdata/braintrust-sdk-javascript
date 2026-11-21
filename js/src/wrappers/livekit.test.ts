@@ -1,6 +1,9 @@
 import { expect, test, vi } from "vite-plus/test";
 import { wrapLiveKit } from "./livekit";
-import { livekitChannels } from "../instrumentation/providers/livekit-interceptors";
+import {
+  livekitChannels,
+  livekitOpenAIChannels,
+} from "../instrumentation/providers/livekit-interceptors";
 
 test("wraps ESM namespaces and preserves return identity when wrapped twice", () => {
   const result = Promise.resolve();
@@ -121,6 +124,44 @@ test("manual sessions route all model services through shared hooks exactly once
         method: "stream",
       },
     ]);
+  } finally {
+    remove();
+  }
+});
+
+test("plugin constructors and static factories share hooks and preserve application behavior", () => {
+  const options = { client: {} };
+  class Adapter {
+    constructor(readonly options?: unknown) {
+      if (options instanceof Error) throw options;
+    }
+    static withGateway(options: unknown) {
+      return new Adapter(options);
+    }
+  }
+  const plugin = { LLM: Adapter, STT: Adapter, TTS: Adapter };
+  const observed: unknown[] = [];
+  const remove = livekitOpenAIChannels.stt.intercept(
+    (target, receiver, args) => {
+      const result = Reflect.apply(target, receiver, args);
+      observed.push({ args, result });
+      return result;
+    },
+  );
+  try {
+    const wrapped = wrapLiveKit(wrapLiveKit(plugin));
+    const adapter = new wrapped.STT(options);
+    const factory = wrapped.STT.withGateway(options);
+    expect(adapter).toBeInstanceOf(Adapter);
+    expect(adapter.options).toBe(options);
+    expect(factory.options).toBe(options);
+    expect(observed).toEqual([
+      { args: [options], result: adapter },
+      { args: [options], result: factory },
+    ]);
+    const failure = new Error("constructor failure");
+    expect(() => new wrapped.STT(failure)).toThrow(failure);
+    expect(observed).toHaveLength(2);
   } finally {
     remove();
   }

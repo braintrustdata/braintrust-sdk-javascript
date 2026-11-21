@@ -1,5 +1,8 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { livekitChannels } from "../../instrumentation/providers/livekit-interceptors";
+import {
+  livekitChannels,
+  livekitOpenAIChannels,
+} from "../../instrumentation/providers/livekit-interceptors";
 
 // Private lifecycle hooks: widen only after validating the supported release matrix.
 const versionRange = ">=1.9.1 <1.11.0";
@@ -123,3 +126,24 @@ export const livekitConfigs: InstrumentationConfig[] = targets.map(
     functionQuery,
   }),
 );
+
+// Observe the public client injection boundary even when OpenAI tracing is off.
+for (const [kind, className] of [
+  ["llm", "LLM"],
+  ["stt", "STT"],
+  ["tts", "TTS"],
+] as const)
+  for (const extension of ["js", "cjs"])
+    livekitConfigs.push({
+      channelName: livekitOpenAIChannels[kind].channelName,
+      module: {
+        name: "@livekit/agents-plugin-openai",
+        versionRange,
+        filePath: `dist/${kind}.${extension}`,
+      },
+      functionQuery: {
+        className,
+        methodName: "constructor",
+        isExportAlias: true,
+      },
+    });

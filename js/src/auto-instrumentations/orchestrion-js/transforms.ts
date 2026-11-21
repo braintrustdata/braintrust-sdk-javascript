@@ -103,10 +103,87 @@ export function wrapInvocation(
   program: AnyNode,
 ): void {
   if (node.type === "ClassDeclaration" || node.type === "ClassExpression") {
-    wrapInstanceMethod(state, node, program);
+    if (
+      "methodName" in state.functionQuery &&
+      state.functionQuery.methodName === "constructor"
+    )
+      wrapConstructor(state, node, program);
+    else wrapInstanceMethod(state, node, program);
   } else {
     wrapFunction(state, node, program);
   }
+}
+
+/** Wrap construction without moving super(), private fields, or early returns. */
+function wrapConstructor(
+  state: TransformState,
+  node: AnyNode,
+  program: AnyNode,
+): void {
+  let binding: string | undefined;
+  let declaration: AnyNode;
+  for (const statement of program.body) {
+    const candidate =
+      statement.type === "ExportNamedDeclaration"
+        ? statement.declaration
+        : statement;
+    if (candidate === node) {
+      binding = node.id?.name;
+      if (binding) {
+        const variable = {
+          type: "VariableDeclaration",
+          kind: "let",
+          declarations: [
+            {
+              type: "VariableDeclarator",
+              id: node.id,
+              // Resolve static factories' class references through the live outer
+              // binding, including calls made by methods on derived constructors.
+              init: { ...node, type: "ClassExpression", id: null },
+            },
+          ],
+        };
+        if (statement.type === "ExportNamedDeclaration")
+          statement.declaration = variable;
+        else program.body[program.body.indexOf(statement)] = variable;
+        declaration =
+          statement.type === "ExportNamedDeclaration" ? statement : variable;
+      }
+      break;
+    }
+    const variable = candidate?.declarations?.find(
+      (entry: AnyNode) => entry.init === node,
+    );
+    if (variable) {
+      if (candidate.kind === "const") candidate.kind = "let";
+      binding = variable.id?.name;
+      declaration = statement;
+      break;
+    }
+  }
+  if (!binding)
+    throw new Error(
+      "Constructor invocation hooks require a top-level class binding",
+    );
+  declareInvocationHook(state, program);
+  const code = `
+    ${binding} = new Proxy(${binding}, {
+      construct(__bt$ctor, __bt$args, __bt$newTarget) {
+        const __bt$target = (...__bt$forwarded) => Reflect.construct(__bt$ctor, __bt$forwarded, __bt$newTarget);
+        const __bt$hook = ${formatChannelGetter(state.channelName)}();
+        return __bt$hook ? __bt$hook.invoke(__bt$target, __bt$ctor, __bt$args, {
+          moduleVersion: ${JSON.stringify(state.moduleVersion)}
+        }) : __bt$target(...__bt$args);
+      }
+    });
+  `;
+  // The class declaration's lexical binding remains live, so public static
+  // factories using `new ClassName(...)` also pass through the constructor hook.
+  program.body.splice(
+    program.body.indexOf(declaration) + 1,
+    0,
+    ...parse(code).body,
+  );
 }
 
 function wrapFunction(
