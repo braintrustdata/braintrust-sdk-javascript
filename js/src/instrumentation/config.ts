@@ -61,6 +61,7 @@ export interface InstrumentationIntegrationsConfig {
   deepgram?: boolean;
   fal?: boolean;
   elevenlabs?: boolean;
+  agentKit?: boolean;
   /** Set to false to disable, or pass options; options keep LiveKit enabled. */
   livekit?: boolean | LiveKitIntegrationConfig;
   /** Set to false to disable, or pass options; options keep MCP enabled. */
@@ -264,6 +265,9 @@ const envIntegrationAliases: Record<
   fal: "fal",
   "@fal-ai/client": "fal",
   elevenlabs: "elevenlabs",
+  agentkit: "agentKit",
+  "agent-kit": "agentKit",
+  "@inngest/agent-kit": "agentKit",
   "@elevenlabs/elevenlabs-js": "elevenlabs",
   livekit: "livekit",
   "@livekit/agents": "livekit",

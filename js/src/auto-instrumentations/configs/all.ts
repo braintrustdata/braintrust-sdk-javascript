@@ -36,6 +36,7 @@ import { piCodingAgentConfigs } from "./pi-coding-agent";
 import { strandsAgentSDKConfigs } from "./strands-agent-sdk";
 import { deepgramConfigs } from "./deepgram";
 import { falConfigs } from "./fal";
+import { agentKitConfigs } from "./agent-kit";
 import { elevenLabsConfigs } from "./elevenlabs";
 import { voyageAIConfigs } from "./voyageai";
 import { mcpConfigs } from "./mcp";
@@ -50,6 +51,7 @@ interface InstrumentationConfigGroup {
 
 const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] =
   [
+    { integrations: ["agentKit"], configs: agentKitConfigs },
     { integrations: ["openai"], configs: openaiConfigs },
     {
       integrations: ["openaiCodexSDK"],

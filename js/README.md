@@ -150,6 +150,32 @@ BRAINTRUST_DISABLE_INSTRUMENTATION=langsmith node --import braintrust/hook.mjs a
 
 When Braintrust LangChain/LangGraph instrumentation is enabled, LangSmith runs serialized by LangChain are ignored to avoid duplicate spans. Set `langchain: false` (and use LangSmith instrumentation) when LangSmith should be the source for those runs instead.
 
+### Inngest AgentKit
+
+The Node.js hook and bundler plugins support `@inngest/agent-kit@0.13.2`.
+Initialize Braintrust logging as usual and load the hook before AgentKit:
+
+```bash
+node --import braintrust/hook.mjs app.js
+```
+
+Network runs contain routing and agent task spans; agents contain model-inference
+and tool spans. Names stay stable across calls, with agent, network and tool names
+in metadata. Model traces capture parsed output and reported OpenAI-compatible
+token usage, without copying the raw provider response or model credentials.
+
+Tools created by `createTool` are prepared when created. Plain tools, Inngest
+function tools and MCP tools are also prepared immediately before invocation.
+Tool objects and call receivers are retained. Already immutable handlers and
+accessor-based handlers are left unchanged; those tools may lack individual spans.
+Freezing a tool after `createTool` remains supported. Instrumentation uses the
+published ESM chunk and CommonJS entrypoint; other versions are not enabled until
+their compiled layouts are validated. This integration currently exposes automatic
+instrumentation, without a separate module wrapper API.
+
+Disable with `configureInstrumentation({ integrations: { agentKit: false } })`
+before registration, or `BRAINTRUST_DISABLE_INSTRUMENTATION=agent-kit`.
+
 ## Migration Guides
 
 ### Upgrading from 3.x to 4.x
