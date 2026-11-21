@@ -13,6 +13,7 @@ const registrations = vi.hoisted(() => ({
   cloudflareThink: vi.fn(),
   cohere: vi.fn(),
   fal: vi.fn(),
+  retell: vi.fn(),
   cursorSDK: vi.fn(),
   genkit: vi.fn(),
   gitHubCopilot: vi.fn(),
@@ -58,6 +59,9 @@ vi.mock("./providers/cloudflare-think-instrumentation", () => ({
 }));
 vi.mock("./providers/fal-instrumentation", () => ({
   registerFalInstrumentation: registrations.fal,
+}));
+vi.mock("./providers/retell-instrumentation", () => ({
+  registerRetellInstrumentation: registrations.retell,
 }));
 vi.mock("./providers/cohere-instrumentation", () => ({
   registerCohereInstrumentation: registrations.cohere,
@@ -141,6 +145,7 @@ const integrationCases: Array<
   ["cloudflareThink", [registrations.cloudflareThink]],
   ["cohere", [registrations.cohere]],
   ["fal", [registrations.fal]],
+  ["retell", [registrations.retell]],
   ["cursorSDK", [registrations.cursorSDK]],
   ["genkit", [registrations.genkit]],
   ["gitHubCopilot", [registrations.gitHubCopilot]],

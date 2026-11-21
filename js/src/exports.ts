@@ -166,3 +166,4 @@ export { wrapDeepgram } from "./wrappers/deepgram";
 export { wrapElevenLabs } from "./wrappers/elevenlabs";
 
 export { wrapFal } from "./wrappers/fal";
+export { wrapRetell } from "./wrappers/retell";
