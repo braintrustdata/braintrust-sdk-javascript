@@ -113,6 +113,8 @@ describe.concurrent("variants", () => {
             entry: scenario.wrapperEntry,
             env: {
               BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "true",
+              BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS: "true",
+              BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS: "true",
               OPENAI_PACKAGE_NAME: scenario.dependencyName,
             },
             runContext: {
@@ -136,6 +138,8 @@ describe.concurrent("variants", () => {
             entry: scenario.autoEntry,
             env: {
               BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "true",
+              BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS: "true",
+              BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS: "true",
               OPENAI_PACKAGE_NAME: scenario.dependencyName,
             },
             nodeArgs: [

@@ -19,6 +19,11 @@
                   "metadata": {
                     "scenario": "livekit-instrumentation",
                     "testRunId": "<run:1>"
+                  },
+                  "context": {
+                    "caller_filename": "<node-internal>",
+                    "caller_functionname": "<node-internal>",
+                    "caller_lineno": 0
                   }
                 },
                 {
@@ -29,6 +34,11 @@
                     "contrib.livekit.agent_label": "default_agent",
                     "scenario": "livekit-instrumentation",
                     "testRunId": "<run:1>"
+                  },
+                  "context": {
+                    "caller_filename": "<node-internal>",
+                    "caller_functionname": "<node-internal>",
+                    "caller_lineno": 0
                   }
                 }
               ],
@@ -42,12 +52,22 @@
                 "provider": "<provider-host>",
                 "scenario": "livekit-instrumentation",
                 "testRunId": "<run:1>"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "scenario": "livekit-instrumentation",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<node-internal>",
+            "caller_functionname": "<node-internal>",
+            "caller_lineno": 0
           }
         },
         {
@@ -70,6 +90,11 @@
                     "scenario": "livekit-instrumentation",
                     "testRunId": "<run:1>",
                     "turn.id": "<span:1>"
+                  },
+                  "context": {
+                    "caller_filename": "<node-internal>",
+                    "caller_functionname": "<node-internal>",
+                    "caller_lineno": 0
                   }
                 }
               ],
@@ -141,6 +166,11 @@
                 "prompt_tokens": 168,
                 "time_to_first_token": 0,
                 "tokens": 187
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             },
             {
@@ -159,6 +189,11 @@
                     "scenario": "livekit-instrumentation",
                     "testRunId": "<run:1>",
                     "turn.id": "<span:1>"
+                  },
+                  "context": {
+                    "caller_filename": "<node-internal>",
+                    "caller_functionname": "<node-internal>",
+                    "caller_lineno": 0
                   }
                 }
               ],
@@ -252,6 +287,11 @@
                 "prompt_tokens": 215,
                 "time_to_first_token": 0,
                 "tokens": 229
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             },
             {
@@ -289,6 +329,11 @@
                 "scenario": "livekit-instrumentation",
                 "testRunId": "<run:1>",
                 "turn.id": "<span:1>"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             },
             {
@@ -316,6 +361,11 @@
                                 "scenario": "livekit-instrumentation",
                                 "testRunId": "<run:1>",
                                 "turn.id": "<span:1>"
+                              },
+                              "context": {
+                                "caller_filename": "<node-internal>",
+                                "caller_functionname": "<node-internal>",
+                                "caller_lineno": 0
                               }
                             }
                           ],
@@ -343,6 +393,11 @@
                             "scenario": "livekit-instrumentation",
                             "testRunId": "<run:1>",
                             "turn.id": "<span:1>"
+                          },
+                          "context": {
+                            "caller_filename": "<node-internal>",
+                            "caller_functionname": "<node-internal>",
+                            "caller_lineno": 0
                           }
                         }
                       ],
@@ -354,6 +409,11 @@
                         "scenario": "livekit-instrumentation",
                         "testRunId": "<run:1>",
                         "turn.id": "<span:1>"
+                      },
+                      "context": {
+                        "caller_filename": "<node-internal>",
+                        "caller_functionname": "<node-internal>",
+                        "caller_lineno": 0
                       }
                     }
                   ],
@@ -381,6 +441,11 @@
                     "scenario": "livekit-instrumentation",
                     "testRunId": "<run:1>",
                     "turn.id": "<span:1>"
+                  },
+                  "context": {
+                    "caller_filename": "<node-internal>",
+                    "caller_functionname": "<node-internal>",
+                    "caller_lineno": 0
                   }
                 }
               ],
@@ -405,6 +470,11 @@
                 "scenario": "livekit-instrumentation",
                 "testRunId": "<run:1>",
                 "turn.id": "<span:3>"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             },
             {
@@ -443,6 +513,11 @@
                 "scenario": "livekit-instrumentation",
                 "testRunId": "<run:1>",
                 "turn.id": "<span:3>"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
@@ -490,6 +565,11 @@
             "scenario": "livekit-instrumentation",
             "testRunId": "<run:1>",
             "turn.id": "<span:1>"
+          },
+          "context": {
+            "caller_filename": "<node-internal>",
+            "caller_functionname": "<node-internal>",
+            "caller_lineno": 0
           }
         },
         {
@@ -508,6 +588,11 @@
                     "contrib.livekit.agent_label": "default_agent",
                     "scenario": "livekit-instrumentation",
                     "testRunId": "<run:1>"
+                  },
+                  "context": {
+                    "caller_filename": "<node-internal>",
+                    "caller_functionname": "<node-internal>",
+                    "caller_lineno": 0
                   }
                 }
               ],
@@ -515,6 +600,11 @@
                 "contrib.livekit.agent_label": "default_agent",
                 "scenario": "livekit-instrumentation",
                 "testRunId": "<run:1>"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
@@ -523,6 +613,11 @@
             "contrib.livekit.close_reason": "user_initiated",
             "scenario": "livekit-instrumentation",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<node-internal>",
+            "caller_functionname": "<node-internal>",
+            "caller_lineno": 0
           }
         },
         {
@@ -545,6 +640,11 @@
                     "scenario": "livekit-instrumentation",
                     "testRunId": "<run:1>",
                     "turn.id": "<span:1>"
+                  },
+                  "context": {
+                    "caller_filename": "<node-internal>",
+                    "caller_functionname": "<node-internal>",
+                    "caller_lineno": 0
                   }
                 }
               ],
@@ -559,6 +659,11 @@
                 "scenario": "livekit-instrumentation",
                 "testRunId": "<run:1>",
                 "turn.id": "<span:1>"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
@@ -569,6 +674,11 @@
             "scenario": "livekit-instrumentation",
             "testRunId": "<run:1>",
             "turn.id": "<span:1>"
+          },
+          "context": {
+            "caller_filename": "<node-internal>",
+            "caller_functionname": "<node-internal>",
+            "caller_lineno": 0
           }
         }
       ],
@@ -669,6 +779,11 @@
         "gen_ai.workflow.name": "agent_session",
         "scenario": "livekit-instrumentation",
         "testRunId": "<run:1>"
+      },
+      "context": {
+        "caller_filename": "<node-internal>",
+        "caller_functionname": "<node-internal>",
+        "caller_lineno": 0
       }
     }
   ]

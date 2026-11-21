@@ -1,7 +1,14 @@
 import { registerInstrumentation } from "../registrations/openai";
 import { Readable } from "node:stream";
-import { afterEach, beforeAll, beforeEach, expect, it } from "vite-plus/test";
-import { Attachment, initLogger } from "../../logger/core";
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  expect,
+  it,
+  vi,
+} from "vite-plus/test";
+import { Attachment, initLogger, withCurrent } from "../../logger/core";
 import { _exportsForTestingOnly } from "../../logger/testing";
 import { configureNode } from "../../node/config";
 import { openAIChannels } from "./openai-interceptors";
@@ -17,6 +24,8 @@ beforeAll(async () => {
 });
 beforeEach(() => {
   process.env.BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS = "true";
+  vi.stubEnv("BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS", "true");
+  vi.stubEnv("BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS", "true");
   background = _exportsForTestingOnly.useTestBackgroundLogger();
   initLogger({
     projectName: "tmp-luca-openai-media-tests",
@@ -24,6 +33,7 @@ beforeEach(() => {
   });
 });
 afterEach(() => {
+  vi.unstubAllEnvs();
   if (originalAutoCaptureAttachments === undefined) {
     delete process.env.BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS;
   } else {
@@ -131,6 +141,7 @@ it("does not upload incomplete speech and preserves response identity", async ()
 });
 
 it("does not capture speech response bytes without attachment opt-in", async () => {
+  vi.stubEnv("BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS", "false");
   delete process.env.BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS;
   const response = new Response(new Uint8Array([1, 2, 3]), {
     headers: { "content-type": "audio/mpeg" },
@@ -304,4 +315,91 @@ it("captures only the bytes consumed from an upload stream", async () => {
   expect(
     new Uint8Array(await (await attachment!.data()).arrayBuffer()),
   ).toEqual(new Uint8Array([1, 2, 3]));
+});
+
+it.each(
+  [false, true].flatMap((generic) => [
+    [false, false, generic],
+    [true, false, generic],
+    [false, true, generic],
+    [true, true, generic],
+  ]),
+)(
+  "directional voice consent user=%s agent=%s generic=%s",
+  async (user, agent, generic) => {
+    vi.stubEnv("BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS", String(generic));
+    vi.stubEnv("BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS", String(user));
+    vi.stubEnv("BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS", String(agent));
+    await openAIChannels.audioTranscriptionsCreate.invoke(
+      async () => ({ text: "hello" }),
+      undefined,
+      [
+        {
+          model: "unit",
+          file: new File(["audio"], "input.wav", { type: "audio/wav" }),
+        },
+      ],
+      {},
+    );
+    const speech = await openAIChannels.audioSpeechCreate.invoke(
+      async () => new Response(new Uint8Array([1, 2])),
+      undefined,
+      [{ model: "unit", input: "hello", response_format: "pcm" }],
+      {},
+    );
+    await (speech as Response).arrayBuffer();
+    await openAIChannels.imagesGenerate.invoke(
+      async () => ({ data: [{ b64_json: "AQI=" }] }),
+      undefined,
+      [{ model: "image-unit", prompt: "image" }],
+      {},
+    );
+    const rows = (await background.drain()) as any[];
+    const transcription = rows.find(
+      (row) =>
+        row.span_attributes?.name === "openai.audio.transcriptions.create",
+    );
+    const synthesis = rows.find(
+      (row) => row.span_attributes?.name === "openai.audio.speech.create",
+    );
+    const image = rows.find(
+      (row) => row.span_attributes?.name === "openai.images.generate",
+    );
+    expect(
+      transcription.input.content[0].file.file_data instanceof Attachment,
+    ).toBe(user);
+    expect(synthesis.output.content.length > 0).toBe(agent);
+    expect(transcription.output.content).toEqual([
+      { type: "text", text: "hello" },
+    ]);
+    expect(image.output.content[0].image_url.url instanceof Attachment).toBe(
+      generic,
+    );
+  },
+);
+
+it("explicit logger capture opt-out wins over environment voice opt-ins", async () => {
+  const logger = initLogger({
+    projectName: "tmp-luca-voice-opt-out",
+    projectId: "test-project-id",
+    setCurrent: false,
+    autoCaptureAttachments: false,
+  });
+  const root = logger.startSpan({ name: "parent" });
+  const child = root.startSpan({ name: "child" });
+  await withCurrent(child, async () => {
+    const response = await openAIChannels.audioSpeechCreate.invoke(
+      async () => new Response(new Uint8Array([1, 2])),
+      undefined,
+      [{ model: "unit", input: "hello" }],
+      {},
+    );
+    await (response as Response).arrayBuffer();
+  });
+  const rows = (await background.drain()) as any[];
+  expect(
+    rows.find(
+      (row) => row.span_attributes?.name === "openai.audio.speech.create",
+    ).output,
+  ).toEqual({ content: [] });
 });

@@ -2,6 +2,7 @@ import {
   Attachment,
   BaseAttachment,
   _internalCaptureAttachmentsEnabled,
+  _internalAttachmentCapturePermitted,
 } from "../logger/core";
 
 /** Remove media fields without reading their values, dropping type-only blocks. */
@@ -27,6 +28,20 @@ export function omitMediaData(
 }
 import iso from "#braintrust-platform";
 import { automaticAttachmentOriginals } from "../automatic-attachments";
+import { currentInstrumentationContentPolicy } from "../instrumentation-content-policy";
+
+/** Voice bytes require independent directional consent, including outside LiveKit. */
+export function isAudioCaptureEnabled(direction: "user" | "agent"): boolean {
+  return (
+    _internalAttachmentCapturePermitted() &&
+    currentInstrumentationContentPolicy()?.allowed() !== false &&
+    isEnvFlagEnabled(
+      direction === "user"
+        ? "BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS"
+        : "BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS",
+    )
+  );
+}
 
 export function isAutoCaptureAttachmentsEnabled(): boolean {
   return _internalCaptureAttachmentsEnabled();
@@ -132,6 +147,13 @@ export function processInputAttachments(
   if (!input) {
     return input;
   }
+
+  // The framework boundary supplies voice consent. Keep the existing owning
+  // attachment policy for unrelated chat/Agents payloads outside that boundary.
+  const captureAudio = (direction: "user" | "agent") =>
+    currentInstrumentationContentPolicy()
+      ? isAudioCaptureEnabled(direction)
+      : captureAttachments;
 
   let attachmentIndex = 0;
 
@@ -271,7 +293,7 @@ export function processInputAttachments(
     }
 
     if (node.type === "audio" && typeof node.audio === "string") {
-      if (!captureAttachments) return omitMediaData(node, "audio");
+      if (!captureAudio("agent")) return omitMediaData(node, "audio");
       const format = node.format || "wav";
       const attachment = toAttachment(
         node.audio,
@@ -289,7 +311,7 @@ export function processInputAttachments(
     ) {
       const audio = node[audioField];
       if (audio.data instanceof BaseAttachment) return node;
-      if (!captureAttachments)
+      if (!captureAudio(node.type === "input_audio" ? "user" : "agent"))
         return omitMediaData({
           ...node,
           [audioField]: omitMediaData(audio, "data"),

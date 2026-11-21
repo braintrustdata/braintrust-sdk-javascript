@@ -19,6 +19,11 @@
                   "metadata": {
                     "scenario": "livekit-instrumentation",
                     "testRunId": "<run:1>"
+                  },
+                  "context": {
+                    "caller_filename": "<node-internal>",
+                    "caller_functionname": "<node-internal>",
+                    "caller_lineno": 0
                   }
                 },
                 {
@@ -29,6 +34,11 @@
                     "contrib.livekit.agent_label": "default_agent",
                     "scenario": "livekit-instrumentation",
                     "testRunId": "<run:1>"
+                  },
+                  "context": {
+                    "caller_filename": "<node-internal>",
+                    "caller_functionname": "<node-internal>",
+                    "caller_lineno": 0
                   }
                 }
               ],
@@ -38,12 +48,22 @@
                 "gen_ai.operation.name": "create_agent",
                 "scenario": "livekit-instrumentation",
                 "testRunId": "<run:1>"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
           "metadata": {
             "scenario": "livekit-instrumentation",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<node-internal>",
+            "caller_functionname": "<node-internal>",
+            "caller_lineno": 0
           }
         },
         {
@@ -74,6 +94,11 @@
                 "scenario": "livekit-instrumentation",
                 "testRunId": "<run:1>",
                 "turn.id": "<span:1>"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
@@ -106,6 +131,11 @@
             "scenario": "livekit-instrumentation",
             "testRunId": "<run:1>",
             "turn.id": "<span:1>"
+          },
+          "context": {
+            "caller_filename": "<node-internal>",
+            "caller_functionname": "<node-internal>",
+            "caller_lineno": 0
           }
         },
         {
@@ -124,6 +154,11 @@
                     "contrib.livekit.agent_label": "default_agent",
                     "scenario": "livekit-instrumentation",
                     "testRunId": "<run:1>"
+                  },
+                  "context": {
+                    "caller_filename": "<node-internal>",
+                    "caller_functionname": "<node-internal>",
+                    "caller_lineno": 0
                   }
                 }
               ],
@@ -131,6 +166,11 @@
                 "contrib.livekit.agent_label": "default_agent",
                 "scenario": "livekit-instrumentation",
                 "testRunId": "<run:1>"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
@@ -139,6 +179,11 @@
             "contrib.livekit.close_reason": "user_initiated",
             "scenario": "livekit-instrumentation",
             "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<node-internal>",
+            "caller_functionname": "<node-internal>",
+            "caller_lineno": 0
           }
         },
         {
@@ -161,6 +206,11 @@
                     "scenario": "livekit-instrumentation",
                     "testRunId": "<run:1>",
                     "turn.id": "<span:1>"
+                  },
+                  "context": {
+                    "caller_filename": "<node-internal>",
+                    "caller_functionname": "<node-internal>",
+                    "caller_lineno": 0
                   }
                 }
               ],
@@ -175,6 +225,11 @@
                 "scenario": "livekit-instrumentation",
                 "testRunId": "<run:1>",
                 "turn.id": "<span:1>"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
               }
             }
           ],
@@ -185,6 +240,11 @@
             "scenario": "livekit-instrumentation",
             "testRunId": "<run:1>",
             "turn.id": "<span:1>"
+          },
+          "context": {
+            "caller_filename": "<node-internal>",
+            "caller_functionname": "<node-internal>",
+            "caller_lineno": 0
           }
         }
       ],
@@ -277,6 +337,11 @@
         "gen_ai.workflow.name": "agent_session",
         "scenario": "livekit-instrumentation",
         "testRunId": "<run:1>"
+      },
+      "context": {
+        "caller_filename": "<node-internal>",
+        "caller_functionname": "<node-internal>",
+        "caller_lineno": 0
       }
     }
   ]
