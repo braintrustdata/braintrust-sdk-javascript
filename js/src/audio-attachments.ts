@@ -4,7 +4,7 @@ import { runMiddleware } from "./audio-middleware";
 import type { AudioEncodingConfig } from "./instrumentation/config";
 import { debugLogger } from "./debug-logger";
 
-export type PcmFormat = { sampleRate: number; channels: number };
+type PcmFormat = { sampleRate: number; channels: number };
 
 // SDK copies may create and export the same attachment. Each registry entry
 // owns one clip; no encoder or recording state is reused across entries.
