@@ -102,8 +102,16 @@ const METRICS = {
   cache_read_input_tokens: "gen_ai.usage.cache_read.input_tokens",
   cache_creation_input_tokens: "gen_ai.usage.cache_write.input_tokens",
   reasoning_tokens: "gen_ai.usage.reasoning.output_tokens",
+  prompt_audio_tokens: "gen_ai.usage.audio.input_tokens",
   time_to_first_token: "contrib.livekit.response.ttft",
 } as const;
+// Spans that report model usage. Realtime usage arrives on `realtime_inference`,
+// or on a `realtime_metrics` child when that span has already ended.
+const MODEL_SPANS = new Set([
+  "llm_node",
+  "realtime_inference",
+  "realtime_metrics",
+]);
 
 class LiveKitInstrumentationConsumer {
   public register(
@@ -1441,7 +1449,7 @@ function endEvent(
         : {}),
       ...model,
     },
-    ...(row.name === "llm_node" ? { metrics } : {}),
+    ...(MODEL_SPANS.has(row.name) ? { metrics } : {}),
     ...(typeof toolName === "string"
       ? { span_attributes: { name: toolName, type: "tool" as const } }
       : {}),

@@ -305,6 +305,56 @@ describe("tracing", () => {
     });
   });
 
+  test("realtime inference spans record usage, including audio input tokens", async () => {
+    // LiveKit's recordRealtimeMetrics attributes for a realtime model response.
+    const usage = (input: number, audio: number) => ({
+      "gen_ai.request.model": "gpt-realtime-mini",
+      "gen_ai.provider.name": "openai",
+      "gen_ai.usage.input_tokens": input,
+      "gen_ai.usage.output_tokens": 7,
+      "gen_ai.usage.text.input_tokens": input - audio,
+      "gen_ai.usage.audio.input_tokens": audio,
+      "gen_ai.usage.input_audio_tokens": audio,
+      "gen_ai.usage.cache_read.input_tokens": 0,
+    });
+    const root = start("agent_session");
+    const agent = start("agent_turn", root);
+    // Metrics reported while the inference span is recording land on it.
+    const live = start("realtime_inference", agent);
+    live.setAttributes(usage(40, 30));
+    live.end([2, 0]);
+    // Late metrics land on a child of the already-ended inference span.
+    const ended = start("realtime_inference", agent);
+    ended.end([2, 0]);
+    start("realtime_metrics", ended, usage(25, 20)).end([2, 0]);
+    for (const span of [agent, root]) span.end([3, 0]);
+
+    const { named, one } = await rows();
+    expect(named("livekit.realtime_inference")).toMatchObject([
+      {
+        metrics: {
+          prompt_tokens: 40,
+          completion_tokens: 7,
+          tokens: 47,
+          prompt_audio_tokens: 30,
+          cache_read_input_tokens: 0,
+        },
+        metadata: { model: "gpt-realtime-mini", provider: "openai" },
+      },
+      { metrics: { start: 1, end: 2 } },
+    ]);
+    expect(
+      named("livekit.realtime_inference")[1].metrics.prompt_audio_tokens,
+    ).toBeUndefined();
+    expect(one("livekit.realtime_metrics").metrics).toMatchObject({
+      prompt_tokens: 25,
+      completion_tokens: 7,
+      tokens: 32,
+      prompt_audio_tokens: 20,
+    });
+    expect(one("agent_turn").metrics.prompt_audio_tokens).toBeUndefined();
+  });
+
   test("links requests, tool results, transcribed context and generated speech", async () => {
     const root = start("agent_session");
     const user = start("user_turn", root);
