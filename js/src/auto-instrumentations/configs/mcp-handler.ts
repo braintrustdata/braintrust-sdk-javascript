@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { mcpHandlerChannels } from "../../instrumentation/plugins/mcp-handler-interceptors";
+import { mcpHandlerChannels } from "../../instrumentation/providers/mcp-handler-interceptors";
 
 export const mcpHandlerConfigs: InstrumentationConfig[] = [
   "dist/index.mjs",

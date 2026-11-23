@@ -13,7 +13,7 @@ const VITEST_COMMAND = path.join(
   E2E_DIR,
   "node_modules",
   ".bin",
-  process.platform === "win32" ? "vitest.cmd" : "vitest",
+  process.platform === "win32" ? "vp.cmd" : "vp",
 );
 const DEFAULT_OPENAI_CODEX_E2E_MODEL = "gpt-5.3-codex";
 
@@ -70,8 +70,9 @@ const reportPath = auditDir && path.join(auditDir, "results.json");
 const testTargets =
   scenarioArgs.length > 0
     ? scenarioArgs.map((arg) => scenarioPathArg(arg))
-    : await defaultScenarioTestPaths();
+    : [...(await defaultScenarioTestPaths()), "helpers"];
 const vitestArgs = [
+  "test",
   "run",
   "--run",
   ...testTargets,

@@ -344,6 +344,7 @@
       "max_completion_tokens": 4000,
       "model": "gpt-5-nano",
       "provider": "openai",
+      "served_service_tier": "default",
       "stream": false
     },
     "metrics": {

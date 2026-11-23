@@ -1,0 +1,18 @@
+{
+  "name": "@braintrust/e2e-google-genai-decisions-instrumentation",
+  "private": true,
+  "braintrustScenario": {
+    "bump": {
+      "dependencies": {
+        "google-genai-sdk-v3-latest": {
+          "package": "@google/genai",
+          "range": "3"
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "google-genai-sdk-v3": "npm:@google/genai@3.2.0",
+    "google-genai-sdk-v3-latest": "npm:@google/genai@3.2.0"
+  }
+}

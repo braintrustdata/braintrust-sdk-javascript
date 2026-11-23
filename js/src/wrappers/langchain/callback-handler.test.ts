@@ -1,7 +1,7 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vite-plus/test";
 import { BraintrustLangChainCallbackHandler } from "./callback-handler";
 
-import { deepCopyEvent, type StartSpanArgs } from "../../logger";
+import { deepCopyEvent, type StartSpanArgs } from "../../logger/core";
 import type { LangChainCaptureOptions } from "../../vendor-sdk-types/langchain";
 
 function createHarness(options: LangChainCaptureOptions = {}) {
@@ -414,6 +414,116 @@ describe("BraintrustLangChainCallbackHandler model attribution", () => {
 });
 
 describe("LangChain capture options", () => {
+  it.each(["handleChatModelStart", "handleLLMStart"] as const)(
+    "%s controls tool definitions independently of messages and tool calls",
+    async (method) => {
+      for (const captureModelInputs of [undefined, true, false]) {
+        for (const captureModelToolDefinitions of [undefined, true, false]) {
+          const { handler, parent, logs } = createHarness({
+            captureModelInputs,
+            captureModelToolDefinitions,
+          });
+          const definitions = [
+            { name: "weather", parameters: { type: "object" } },
+          ];
+          const params = Object.freeze({
+            tools: definitions,
+            functions: definitions,
+            model: "requested-model",
+            service_tier: "flex",
+            temperature: 0,
+            tool_choice: "auto",
+          });
+          const extraParams = Object.freeze({
+            tools: definitions,
+            functions: definitions,
+            options: params,
+            invocation_params: params,
+            retained: "metadata",
+          });
+          await handler[method](
+            { name: "model" },
+            [],
+            "model",
+            undefined,
+            extraParams,
+          );
+          const event = parent.startSpan.mock.calls[0][0].event!;
+          const capture =
+            captureModelToolDefinitions ?? captureModelInputs ?? true;
+          for (const container of [
+            event.metadata,
+            event.metadata?.options,
+            event.metadata?.invocation_params,
+          ]) {
+            if (capture) {
+              expect(container).toHaveProperty("tools", definitions);
+              expect(container).toHaveProperty("functions", definitions);
+            } else {
+              expect(container).not.toHaveProperty("tools");
+              expect(container).not.toHaveProperty("functions");
+            }
+          }
+          expect("input" in event).toBe(captureModelInputs !== false);
+          expect(event.metadata).toMatchObject({
+            retained: "metadata",
+            model: "requested-model",
+            requested_service_tier: "flex",
+            options: { temperature: 0, tool_choice: "auto" },
+            invocation_params: { temperature: 0, tool_choice: "auto" },
+          });
+          expect(extraParams.options.tools).toBe(definitions);
+          const output = {
+            generations: [
+              [{ message: { tool_calls: [{ name: "weather", args: {} }] } }],
+            ],
+          };
+          await handler.handleLLMEnd(output, "model");
+          expect(logs[0]).toHaveProperty("output", output);
+        }
+      }
+    },
+  );
+
+  it.each(["handleChatModelStart", "handleLLMStart"] as const)(
+    "%s omits tool definitions before reading or serializing them",
+    async (method) => {
+      const readTools = vi.fn(() => {
+        throw new Error("must not read schemas");
+      });
+      const params = Object.defineProperties(
+        { temperature: 0 },
+        {
+          tools: { enumerable: true, get: readTools },
+          functions: { enumerable: true, get: readTools },
+        },
+      );
+      const { handler } = createHarness({ captureModelToolDefinitions: false });
+      await handler[method]({ name: "model" }, [], "model", undefined, {
+        options: params,
+        invocation_params: params,
+      });
+      expect(readTools).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([undefined, null, "invalid", [], {}])(
+    "preserves absent or non-record invocation containers (%j)",
+    async (value) => {
+      const { handler, parent } = createHarness({
+        captureModelToolDefinitions: false,
+      });
+      await handler.handleLLMStart({}, [], "model", undefined, {
+        options: value,
+        invocation_params: value,
+      });
+      expect(parent.startSpan.mock.calls[0][0].event?.metadata).toMatchObject({
+        options: value,
+        invocation_params: value,
+      });
+    },
+  );
+
   it.each([undefined, true, false])(
     "controls chain input and output independently (%s)",
     async (capture) => {
@@ -621,5 +731,96 @@ describe("LangChain capture options", () => {
       metadata: { model: "resolved-model" },
       metrics: {},
     });
+  });
+});
+
+describe("service tiers", () => {
+  it("captures tiers with content capture disabled and retains stream metadata on errors", async () => {
+    const { handler, parent, span } = createHarness({
+      captureModelInputs: false,
+      captureModelOutputs: false,
+    });
+    await handler.handleChatModelStart(
+      { name: "ChatOpenAI" },
+      [],
+      "tier-run",
+      undefined,
+      { invocation_params: { service_tier: " FLEX " } },
+    );
+    expect(parent.startSpan.mock.calls[0][0].event?.metadata).toMatchObject({
+      requested_service_tier: "flex",
+    });
+    expect(parent.startSpan.mock.calls[0][0].event).not.toHaveProperty("input");
+    await handler.handleLLMNewToken(
+      "",
+      { prompt: 0, completion: 0 },
+      "tier-run",
+      undefined,
+      undefined,
+      {
+        chunk: {
+          message: { response_metadata: { service_tier: " DEFAULT " } },
+        },
+      },
+    );
+    await handler.handleLLMError(new Error("interrupted"), "tier-run");
+    expect(span.log).toHaveBeenCalledWith({
+      metadata: { served_service_tier: "default" },
+    });
+  });
+
+  it.each([
+    { service_tier: " PRIORITY " },
+    { usage: { service_tier: " PRIORITY " } },
+    { usageMetadata: { serviceTier: " PRIORITY " } },
+    { serviceTier: { type: " PRIORITY " } },
+  ])("captures provider response metadata %j", async (metadata) => {
+    const { handler, span } = createHarness({ captureModelOutputs: false });
+    await handler.handleChatModelStart({ name: "model" }, [], "tier-run");
+    await handler.handleLLMEnd(
+      { generations: [[{ message: { response_metadata: metadata } }]] },
+      "tier-run",
+    );
+    expect(span.log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: { served_service_tier: "priority" },
+      }),
+    );
+    expect(span.log.mock.calls.at(-1)?.[0]).not.toHaveProperty("output");
+  });
+});
+
+describe("span types", () => {
+  it("records tool runs as tool spans", async () => {
+    const { handler, parent } = createHarness();
+
+    await handler.handleToolStart(
+      { name: "get_weather" } as never,
+      '{"city":"Paris"}',
+      "tool-run",
+    );
+
+    expect(parent.startSpan).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "get_weather",
+        type: "tool",
+      }),
+    );
+  });
+
+  it("records agent actions as tool spans", async () => {
+    const { handler, parent } = createHarness();
+
+    await handler.handleAgentAction(
+      { tool: "search", toolInput: "weather", log: "searching" },
+      "agent-run",
+    );
+
+    expect(parent.startSpan).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "search",
+        type: "tool",
+      }),
+    );
   });
 });

@@ -1,4 +1,4 @@
-import { describe } from "vitest";
+import { describe } from "vite-plus/test";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -33,6 +33,16 @@ const scenarios = await Promise.all(
       label: "v0.32 latest",
       variantKey: "cloudflare-agents-v0-32-latest",
     },
+    {
+      dependencyName: "agents-v0-33",
+      label: "v0.33 pinned",
+      variantKey: "cloudflare-agents-v0-33",
+    },
+    {
+      dependencyName: "agents-v0-33-latest",
+      label: "v0.33 latest",
+      variantKey: "cloudflare-agents-v0-33-latest",
+    },
   ].map(async (scenario) => ({
     ...scenario,
     version: await readInstalledPackageVersion(
@@ -44,30 +54,34 @@ const scenarios = await Promise.all(
 
 describe.concurrent("Cloudflare Agents versions", () => {
   for (const scenario of scenarios) {
-    describe.sequential(`${scenario.label} (${scenario.version})`, () => {
-      for (const mode of ["wrapped", "auto"] as const) {
-        defineCloudflareAgentsAssertions({
-          name: `${mode} instrumentation`,
-          runScenario: async ({ runScenarioDir }) => {
-            await runScenarioDir({
-              entry: "scenario.ts",
-              env: {
-                CLOUDFLARE_AGENTS_INSTRUMENTATION_MODE: mode,
-                CLOUDFLARE_AGENTS_PACKAGE_NAME: scenario.dependencyName,
-              },
-              runContext: {
-                cassette: false,
-                variantKey: scenario.variantKey,
-              },
-              scenarioDir,
-              timeoutMs: TIMEOUT_MS,
-            });
-          },
-          snapshotName: `${scenario.variantKey}-${mode}`,
-          testFileUrl: import.meta.url,
-          timeoutMs: TIMEOUT_MS,
-        });
-      }
-    });
+    describe(
+      `${scenario.label} (${scenario.version})`,
+      { concurrent: false },
+      () => {
+        for (const mode of ["wrapped", "auto"] as const) {
+          defineCloudflareAgentsAssertions({
+            name: `${mode} instrumentation`,
+            runScenario: async ({ runScenarioDir }) => {
+              await runScenarioDir({
+                entry: "scenario.ts",
+                env: {
+                  CLOUDFLARE_AGENTS_INSTRUMENTATION_MODE: mode,
+                  CLOUDFLARE_AGENTS_PACKAGE_NAME: scenario.dependencyName,
+                },
+                runContext: {
+                  cassette: false,
+                  variantKey: scenario.variantKey,
+                },
+                scenarioDir,
+                timeoutMs: TIMEOUT_MS,
+              });
+            },
+            snapshotName: `${scenario.variantKey}-${mode}`,
+            testFileUrl: import.meta.url,
+            timeoutMs: TIMEOUT_MS,
+          });
+        }
+      },
+    );
   }
 });

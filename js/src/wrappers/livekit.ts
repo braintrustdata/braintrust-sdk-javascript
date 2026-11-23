@@ -1,6 +1,7 @@
+import { registerInstrumentation } from "../instrumentation/registrations/livekit";
 /* eslint-disable @typescript-eslint/consistent-type-assertions -- vendored LiveKit boundaries. */
 import { debugLogger } from "../debug-logger";
-import { livekitChannels } from "../instrumentation/plugins/livekit-interceptors";
+import { livekitChannels } from "../instrumentation/providers/livekit-interceptors";
 import type {
   AgentActivity,
   AgentSession,
@@ -42,16 +43,39 @@ function wrapActivity(activity: AgentActivity | undefined) {
   }
   // The recognizer exists once the activity starts, before it receives audio.
   wrapMethod(activity, "attachAudioInput", livekitChannels.input, () => {
-    if (activity.audioRecognition)
+    if (activity.audioRecognition) {
+      wrapMethod(
+        activity.audioRecognition,
+        "close",
+        livekitChannels.recognitionClose,
+      );
+      wrapMethod(
+        activity.audioRecognition,
+        "ensureEouWaitSpan",
+        livekitChannels.eouWait,
+      );
+      wrapMethod(
+        activity.audioRecognition,
+        "runEOUDetection",
+        livekitChannels.eouEvaluation,
+      );
+      wrapMethod(
+        activity.audioRecognition,
+        "endEouWaitSpan",
+        livekitChannels.eouEnd,
+      );
       wrapMethod(
         activity.audioRecognition,
         "processSTTEvent",
         livekitChannels.stt,
       );
+    }
   });
   wrapMethod(activity, "_startSessionImpl", livekitChannels.activity);
   wrapMethod(activity, "onEndOfTurn", livekitChannels.userTurn);
   wrapMethod(activity, "onStartOfSpeech", livekitChannels.speechStart);
+  wrapMethod(activity, "onEndOfSpeech", livekitChannels.speechEnd);
+  wrapMethod(activity, "onVADInferenceDone", livekitChannels.vadInference);
   wrapMethod(activity, "userTurnCompleted", livekitChannels.userCompleted);
   wrapMethod(activity, "_pipelineReplyTaskImpl", livekitChannels.pipeline);
 }
@@ -72,7 +96,7 @@ function wrapSession(session: AgentSession): AgentSession {
 }
 
 /**
- * Trace a LiveKit Agents (1.9.x) module with Braintrust.
+ * Trace a LiveKit Agents (1.9.x–1.10.x) module with Braintrust.
  *
  * Captures cascade voice sessions: user and agent turns, speech, STT, LLM
  * responses, TTS and function tools. Call audio is recorded as attachments per
@@ -89,6 +113,7 @@ function wrapSession(session: AgentSession): AgentSession {
  * ```
  */
 export function wrapLiveKit<T extends object>(module: T): T {
+  registerInstrumentation();
   const livekit = module as unknown as Partial<LiveKitModule> | undefined;
   if (
     !livekit ||

@@ -1,5 +1,5 @@
 import { InstrumentationMatcher, type ModuleType } from "../orchestrion-js";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { bedrockRuntimeConfigs } from "./bedrock-runtime";
 
 const CJS_CLIENT_SOURCE = `

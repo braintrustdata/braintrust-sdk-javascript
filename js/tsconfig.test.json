@@ -5,11 +5,15 @@
     "module": "es2022",
     "moduleResolution": "bundler",
     "noEmit": true,
-    "types": ["node", "vitest/globals"],
+    "types": ["node", "vite-plus/test/globals"],
     "paths": {
-      "@ai-sdk/openai": ["tests/type-shims/ai-sdk-openai.d.ts"],
-      "ai": ["tests/type-shims/ai.d.ts"],
-      "braintrust": ["src/node/index.ts"]
+      "@apm-js-collab/code-transformer": [
+        "./src/auto-instrumentations/orchestrion-js/index.ts"
+      ],
+      "@ai-sdk/openai": ["./tests/type-shims/ai-sdk-openai.d.ts"],
+      "ai": ["./tests/type-shims/ai.d.ts"],
+      "braintrust": ["./src/node/index.ts"],
+      "#braintrust-platform": ["./src/isomorph.ts"]
     }
   },
   "include": [

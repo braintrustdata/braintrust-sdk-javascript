@@ -1,9 +1,11 @@
+import { registerInstrumentation } from "../instrumentation/registrations/googleGenAI";
 import { debugLogger } from "../debug-logger";
-import { googleGenAIChannels } from "../instrumentation/plugins/google-genai-interceptors";
+import { googleGenAIChannels } from "../instrumentation/providers/google-genai-interceptors";
 import { isObject } from "../util";
 import type {
   GoogleGenAIClient,
   GoogleGenAIConstructor,
+  GoogleGenAIDecisions,
   GoogleGenAIEditImageParams,
   GoogleGenAIEmbedContentParams,
   GoogleGenAIGenerateContentParams,
@@ -37,6 +39,7 @@ const patchedHttpResponses = new WeakSet<object>();
 export function wrapGoogleGenAI<T extends Record<string, any>>(
   googleGenAI: T,
 ): T {
+  registerInstrumentation();
   if (!googleGenAI || typeof googleGenAI !== "object") {
     debugLogger.notice.warn("Invalid Google GenAI module. Not wrapping.");
     return googleGenAI;
@@ -106,12 +109,40 @@ function wrapGoogleGenAIInstance(
   const wrappedModels = wrapModels(instance.models);
   let originalInteractions: GoogleGenAIInteractions | undefined;
   let wrappedInteractions: GoogleGenAIInteractions | undefined;
+  let originalDecisions: GoogleGenAIDecisions | undefined;
+  let wrappedDecisions: GoogleGenAIDecisions | undefined;
   patchGoogleGenAIChats(instance, wrappedModels);
 
   return new Proxy(instance, {
     get(target, prop, receiver) {
       if (prop === "models") {
         return wrappedModels;
+      }
+      if (prop === "decisions") {
+        const decisions = Reflect.get(target, prop, receiver) as
+          | GoogleGenAIDecisions
+          | undefined;
+        if (!isObject(decisions) || typeof decisions.create !== "function") {
+          return decisions;
+        }
+        if (decisions !== originalDecisions) {
+          originalDecisions = decisions;
+          wrappedDecisions = new Proxy(decisions, {
+            get(target, prop, receiver) {
+              if (prop === "create") {
+                return (...args: Parameters<GoogleGenAIDecisions["create"]>) =>
+                  googleGenAIChannels.decisionsCreate.invoke(
+                    target.create,
+                    target,
+                    args,
+                    {},
+                  );
+              }
+              return Reflect.get(target, prop, receiver);
+            },
+          });
+        }
+        return wrappedDecisions;
       }
       if (prop === "interactions") {
         const interactions = Reflect.get(target, prop, receiver) as

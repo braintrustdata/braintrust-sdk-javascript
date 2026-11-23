@@ -1,0 +1,127 @@
+span_tree:
+└── ai-sdk-audio [task]
+    metadata: {
+      "scenario": "ai-sdk-audio-instrumentation",
+      "testRunId": "<run:1>"
+    }
+    context: {
+      "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+      "caller_functionname": "runTracedScenario",
+      "caller_lineno": 0
+    }
+    ├── generateSpeech [llm]
+    │   input: {
+    │     "operation": "speech",
+    │     "parameters": {
+    │       "format": "mp3",
+    │       "voice": "alloy"
+    │     },
+    │     "prompt": "Hello. This is a short audio test."
+    │   }
+    │   output: {
+    │     "content": [
+    │       {
+    │         "file": {
+    │           "file_data": "<omitted>",
+    │           "filename": "audio.mp3"
+    │         },
+    │         "type": "file"
+    │       }
+    │     ]
+    │   }
+    │   metadata: {
+    │     "model": "gpt-4o-mini-tts",
+    │     "provider": "openai"
+    │   }
+    ├── transcribe [llm]
+    │   input: {
+    │     "content": [
+    │       {
+    │         "file": {
+    │           "file_data": "<omitted>",
+    │           "filename": "audio.bin"
+    │         },
+    │         "type": "file"
+    │       }
+    │     ],
+    │     "operation": "transcribe",
+    │     "parameters": {}
+    │   }
+    │   output: {
+    │     "annotations": {
+    │       "segments": []
+    │     },
+    │     "content": [
+    │       {
+    │         "text": "Hello, this is a short audio test.",
+    │         "type": "text"
+    │       }
+    │     ]
+    │   }
+    │   metadata: {
+    │     "model": "gpt-4o-mini-transcribe",
+    │     "provider": "openai"
+    │   }
+    ├── generateSpeech [llm]
+    │   input: {
+    │     "operation": "speech",
+    │     "parameters": {
+    │       "format": "mp3",
+    │       "voice": "alloy"
+    │     },
+    │     "prompt": "Hello. This is a short audio test."
+    │   }
+    │   output: {
+    │     "content": [
+    │       {
+    │         "file": {
+    │           "file_data": {
+    │             "content_type": "audio/mpeg",
+    │             "filename": "audio.mp3",
+    │             "key": "<uuid:1>",
+    │             "type": "braintrust_attachment"
+    │           },
+    │           "filename": "audio.mp3"
+    │         },
+    │         "type": "file"
+    │       }
+    │     ]
+    │   }
+    │   metadata: {
+    │     "model": "gpt-4o-mini-tts",
+    │     "provider": "openai"
+    │   }
+    └── transcribe [llm]
+        input: {
+          "content": [
+            {
+              "file": {
+                "file_data": {
+                  "content_type": "application/octet-stream",
+                  "filename": "audio.bin",
+                  "key": "<uuid:1>",
+                  "type": "braintrust_attachment"
+                },
+                "filename": "audio.bin"
+              },
+              "type": "file"
+            }
+          ],
+          "operation": "transcribe",
+          "parameters": {}
+        }
+        output: {
+          "annotations": {
+            "segments": []
+          },
+          "content": [
+            {
+              "text": "Hello, this is a short audio test.",
+              "type": "text"
+            }
+          ]
+        }
+        metadata: {
+          "model": "gpt-4o-mini-transcribe",
+          "provider": "openai"
+        }

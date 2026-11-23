@@ -1,3 +1,4 @@
+import { registerInstrumentation } from "../../instrumentation/registrations/aisdk";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { SpanTypeAttribute } from "../../../util";
@@ -6,7 +7,7 @@ import {
   codeModeChannels,
   BRAINTRUST_WRAPPED_AI_SDK_MODEL,
   harnessAgentChannels,
-} from "../../instrumentation/plugins/ai-sdk-interceptors";
+} from "../../instrumentation/providers/ai-sdk-interceptors";
 import type {
   AISDK,
   AISDKAgentClass,
@@ -18,6 +19,8 @@ import type {
   AISDKGenerateFunction,
   AISDKGenerateImageFunction,
   AISDKGenerateImageParams,
+  AISDKGenerateSpeechParams,
+  AISDKTranscribeParams,
   AISDKHarnessAgentCallParams,
   AISDKHarnessAgentCreateSessionFunction,
   AISDKHarnessAgentGenerateFunction,
@@ -121,6 +124,7 @@ function isModuleNamespace(obj: unknown): obj is AISDKNamespaceObject {
  * ```
  */
 export function wrapAISDK<T>(aiSDK: T, options: WrapAISDKOptions = {}): T {
+  registerInstrumentation();
   // Handle null/undefined early - can't create Proxy with non-objects
   if (!aiSDK || typeof aiSDK !== "object") {
     return aiSDK;
@@ -174,6 +178,54 @@ export function wrapAISDK<T>(aiSDK: T, options: WrapAISDKOptions = {}): T {
                     denyOutputPaths: options.denyOutputPaths,
                     span_info,
                   },
+                );
+              }
+            : original;
+        }
+        case "generateSpeech":
+        case "experimental_generateSpeech": {
+          const operation = typedAISDK[prop];
+          return typeof operation === "function"
+            ? function (
+                this: unknown,
+                allParams: AISDKGenerateSpeechParams & SpanInfo,
+              ) {
+                let params = allParams;
+                let span_info: SpanInfo["span_info"];
+                if ("span_info" in allParams) {
+                  const { span_info: info, ...rest } = allParams;
+                  span_info = info;
+                  params = rest;
+                }
+                return aiSDKChannels.generateSpeech.invoke(
+                  operation,
+                  this,
+                  [params],
+                  { denyOutputPaths: options.denyOutputPaths, span_info },
+                );
+              }
+            : original;
+        }
+        case "transcribe":
+        case "experimental_transcribe": {
+          const operation = typedAISDK[prop];
+          return typeof operation === "function"
+            ? function (
+                this: unknown,
+                allParams: AISDKTranscribeParams & SpanInfo,
+              ) {
+                let params = allParams;
+                let span_info: SpanInfo["span_info"];
+                if ("span_info" in allParams) {
+                  const { span_info: info, ...rest } = allParams;
+                  span_info = info;
+                  params = rest;
+                }
+                return aiSDKChannels.transcribe.invoke(
+                  operation,
+                  this,
+                  [params],
+                  { denyOutputPaths: options.denyOutputPaths, span_info },
                 );
               }
             : original;
@@ -306,6 +358,7 @@ export const wrapAgentClass = (
   AgentClass: any,
   options: WrapAISDKOptions = {},
 ): any => {
+  registerInstrumentation();
   const typedAgentClass = AgentClass as
     | AISDKAgentClass
     | AISDKWorkflowAgentClass;

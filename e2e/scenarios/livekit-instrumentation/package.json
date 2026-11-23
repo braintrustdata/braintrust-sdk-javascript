@@ -6,13 +6,13 @@
       "dependencies": {
         "livekit-v1-latest": {
           "package": "@livekit/agents",
-          "range": "~1.9.1",
+          "range": "~1.10.0",
           "targetDependency": "@livekit/agents",
           "targetManifest": "versions/livekit-v1-latest/package.json"
         },
         "livekit-openai-v1-latest": {
           "package": "@livekit/agents-plugin-openai",
-          "range": "~1.9.1",
+          "range": "~1.10.0",
           "targetDependency": "@livekit/agents-plugin-openai",
           "targetManifest": "versions/livekit-v1-latest/package.json"
         }

@@ -397,7 +397,55 @@ export interface AISDKProviderResolver {
   [key: string]: unknown;
 }
 
+// Speech and transcription are experimental exports in ai 4.3.6–6 and
+// stable exports (with deprecated aliases) in ai 7.
+interface AISDKAudioParams {
+  model: string | { modelId?: string; provider?: string };
+  providerOptions?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+export interface AISDKGenerateSpeechParams extends AISDKAudioParams {
+  text: string;
+  voice?: string;
+  outputFormat?: string;
+  instructions?: string;
+  speed?: number;
+  language?: string;
+}
+
+export interface AISDKSpeechResult {
+  audio: AISDKGeneratedFile & { mimeType?: string };
+}
+
+export interface AISDKTranscribeParams extends AISDKAudioParams {
+  timestampGranularities?: string[];
+  audio: string | Uint8Array | ArrayBuffer | URL;
+}
+
+export interface AISDKTranscriptionResult {
+  text: string;
+  segments: Array<{ text: string; startSecond: number; endSecond: number }>;
+  words?: Array<{ text: string; startSecond: number; endSecond: number }>;
+  language?: string;
+  durationInSeconds?: number;
+}
+
+type AISDKGenerateSpeechFunction = (
+  params: AISDKGenerateSpeechParams,
+) => PromiseLike<AISDKSpeechResult>;
+type AISDKTranscribeFunction = (
+  params: AISDKTranscribeParams,
+) => PromiseLike<AISDKTranscriptionResult>;
+
 export interface AISDKNamespaceBase {
+  generateSpeech?: AISDKGenerateSpeechFunction;
+  experimental_generateSpeech?: AISDKGenerateSpeechFunction;
+  transcribe?: AISDKTranscribeFunction;
+  experimental_transcribe?: AISDKTranscribeFunction;
+  Agent?: AISDKAgentClass;
+  Experimental_Agent?: AISDKAgentClass;
+  ToolLoopAgent?: AISDKAgentClass;
   experimental_evaluate?: AISDKEvaluateFunction;
   experimental_decide?: AISDKEvaluateFunction;
   generateText: AISDKGenerateFunction;

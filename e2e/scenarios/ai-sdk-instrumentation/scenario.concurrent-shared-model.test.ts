@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, test } from "vite-plus/test";
 import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import {

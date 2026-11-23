@@ -76,7 +76,8 @@
                     },
                     "finish_reason": "stop",
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -409,7 +410,8 @@
                     },
                     "finish_reason": "stop",
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -646,7 +648,8 @@
                     },
                     "finish_reason": "stop",
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -761,7 +764,8 @@
                     },
                     "finish_reason": "stop",
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -989,7 +993,8 @@
                     },
                     "finish_reason": "tool-calls",
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -1138,7 +1143,8 @@
                     },
                     "finish_reason": "tool-calls",
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -1317,7 +1323,8 @@
                     },
                     "finish_reason": "tool-calls",
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -1526,7 +1533,8 @@
                     },
                     "finish_reason": "tool-calls",
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -2444,7 +2452,8 @@
                     },
                     "finish_reason": "tool-calls",
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -2516,7 +2525,7 @@
                     },
                     "temperature": 0,
                     "toolChoice": {
-                      "type": "required"
+                      "type": "none"
                     },
                     "tools": [
                       {
@@ -2535,17 +2544,16 @@
                   "output": {
                     "content": [
                       {
-                        "input": "{}",
                         "providerMetadata": {
                           "openai": {
                             "itemId": "<itemId:2>"
                           }
                         },
-                        "toolName": "lookup_signups",
-                        "type": "tool-call"
+                        "text": "1",
+                        "type": "text"
                       }
                     ],
-                    "finishReason": "tool-calls",
+                    "finishReason": "stop",
                     "providerMetadata": {
                       "openai": {
                         "responseId": "<responseId:1>",
@@ -2560,9 +2568,9 @@
                     "usage": {
                       "cachedInputTokens": 0,
                       "inputTokens": 91,
-                      "outputTokens": 15,
+                      "outputTokens": 5,
                       "reasoningTokens": 0,
-                      "totalTokens": 106
+                      "totalTokens": 96
                     },
                     "warnings": [
                       {
@@ -2577,26 +2585,18 @@
                       "integration_name": "ai-sdk",
                       "sdk_language": "typescript"
                     },
-                    "finish_reason": "tool-calls",
+                    "finish_reason": "stop",
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
-                    "completion_tokens": 15,
+                    "completion_tokens": 5,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 91,
                     "reasoning_tokens": 0,
-                    "tokens": 106
-                  }
-                },
-                {
-                  "name": "lookup_signups",
-                  "type": "tool",
-                  "children": [],
-                  "output": {
-                    "type": "text",
-                    "value": "1 signup; rows hidden from the model"
+                    "tokens": 96
                   }
                 }
               ],
@@ -2627,7 +2627,6 @@
                   }
                 },
                 "temperature": 0,
-                "toolChoice": "required",
                 "tools": {
                   "lookup_signups": {
                     "description": "Look up today's signups",
@@ -2643,27 +2642,16 @@
               "output": {
                 "content": [
                   {
-                    "input": {},
                     "providerMetadata": {
                       "openai": {
                         "itemId": "<itemId:3>"
                       }
                     },
-                    "toolName": "lookup_signups",
-                    "type": "tool-call"
-                  },
-                  {
-                    "dynamic": false,
-                    "input": {},
-                    "output": {
-                      "type": "text",
-                      "value": "1 signup; rows hidden from the model"
-                    },
-                    "toolName": "lookup_signups",
-                    "type": "tool-result"
+                    "text": "1",
+                    "type": "text"
                   }
                 ],
-                "finishReason": "tool-calls",
+                "finishReason": "stop",
                 "providerMetadata": {
                   "openai": {
                     "responseId": "<responseId:4>",
@@ -2704,30 +2692,16 @@
                     {
                       "content": [
                         {
-                          "input": {},
                           "providerOptions": {
                             "openai": {
                               "itemId": "<itemId:3>"
                             }
                           },
-                          "toolName": "lookup_signups",
-                          "type": "tool-call"
+                          "text": "1",
+                          "type": "text"
                         }
                       ],
                       "role": "assistant"
-                    },
-                    {
-                      "content": [
-                        {
-                          "output": {
-                            "type": "text",
-                            "value": "1 signup; rows hidden from the model"
-                          },
-                          "toolName": "lookup_signups",
-                          "type": "tool-result"
-                        }
-                      ],
-                      "role": "tool"
                     }
                   ],
                   "modelId": "gpt-5.4-nano-2026-03-17",
@@ -2817,27 +2791,16 @@
                   {
                     "content": [
                       {
-                        "input": {},
                         "providerMetadata": {
                           "openai": {
                             "itemId": "<itemId:3>"
                           }
                         },
-                        "toolName": "lookup_signups",
-                        "type": "tool-call"
-                      },
-                      {
-                        "dynamic": false,
-                        "input": {},
-                        "output": {
-                          "type": "text",
-                          "value": "1 signup; rows hidden from the model"
-                        },
-                        "toolName": "lookup_signups",
-                        "type": "tool-result"
+                        "text": "1",
+                        "type": "text"
                       }
                     ],
-                    "finishReason": "tool-calls",
+                    "finishReason": "stop",
                     "providerMetadata": {
                       "openai": {
                         "responseId": "<responseId:4>",
@@ -2878,30 +2841,16 @@
                         {
                           "content": [
                             {
-                              "input": {},
                               "providerOptions": {
                                 "openai": {
                                   "itemId": "<itemId:3>"
                                 }
                               },
-                              "toolName": "lookup_signups",
-                              "type": "tool-call"
+                              "text": "1",
+                              "type": "text"
                             }
                           ],
                           "role": "assistant"
-                        },
-                        {
-                          "content": [
-                            {
-                              "output": {
-                                "type": "text",
-                                "value": "1 signup; rows hidden from the model"
-                              },
-                              "toolName": "lookup_signups",
-                              "type": "tool-result"
-                            }
-                          ],
-                          "role": "tool"
                         }
                       ],
                       "modelId": "gpt-5.4-nano-2026-03-17",
@@ -2910,9 +2859,9 @@
                     "usage": {
                       "cachedInputTokens": 0,
                       "inputTokens": 91,
-                      "outputTokens": 15,
+                      "outputTokens": 5,
                       "reasoningTokens": 0,
-                      "totalTokens": 106
+                      "totalTokens": 96
                     },
                     "warnings": [
                       {
@@ -2923,44 +2872,22 @@
                     ]
                   }
                 ],
-                "text": "",
-                "toolCalls": [
-                  {
-                    "input": {},
-                    "providerMetadata": {
-                      "openai": {
-                        "itemId": "<itemId:3>"
-                      }
-                    },
-                    "toolName": "lookup_signups",
-                    "type": "tool-call"
-                  }
-                ],
-                "toolResults": [
-                  {
-                    "dynamic": false,
-                    "input": {},
-                    "output": {
-                      "type": "text",
-                      "value": "1 signup; rows hidden from the model"
-                    },
-                    "toolName": "lookup_signups",
-                    "type": "tool-result"
-                  }
-                ],
+                "text": "1",
+                "toolCalls": [],
+                "toolResults": [],
                 "totalUsage": {
                   "cachedInputTokens": 0,
                   "inputTokens": 147,
-                  "outputTokens": 30,
+                  "outputTokens": 20,
                   "reasoningTokens": 0,
-                  "totalTokens": 177
+                  "totalTokens": 167
                 },
                 "usage": {
                   "cachedInputTokens": 0,
                   "inputTokens": 91,
-                  "outputTokens": 15,
+                  "outputTokens": 5,
                   "reasoningTokens": 0,
-                  "totalTokens": 106
+                  "totalTokens": 96
                 },
                 "warnings": [
                   {
@@ -3074,7 +3001,8 @@
                     },
                     "finish_reason": "tool-calls",
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -3148,7 +3076,7 @@
                     },
                     "temperature": 0,
                     "toolChoice": {
-                      "type": "required"
+                      "type": "none"
                     },
                     "tools": [
                       {
@@ -3165,26 +3093,15 @@
                     ]
                   },
                   "output": {
-                    "finishReason": "tool-calls",
-                    "text": "",
-                    "toolCalls": [
-                      {
-                        "input": "{}",
-                        "providerMetadata": {
-                          "openai": {
-                            "itemId": "<itemId:1>"
-                          }
-                        },
-                        "toolName": "lookup_signups",
-                        "type": "tool-call"
-                      }
-                    ],
+                    "finishReason": "stop",
+                    "text": "1",
+                    "toolCalls": [],
                     "usage": {
                       "cachedInputTokens": 0,
                       "inputTokens": 91,
-                      "outputTokens": 15,
+                      "outputTokens": 5,
                       "reasoningTokens": 0,
-                      "totalTokens": 106
+                      "totalTokens": 96
                     }
                   },
                   "metadata": {
@@ -3192,27 +3109,19 @@
                       "integration_name": "ai-sdk",
                       "sdk_language": "typescript"
                     },
-                    "finish_reason": "tool-calls",
+                    "finish_reason": "stop",
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
-                    "completion_tokens": 15,
+                    "completion_tokens": 5,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 91,
                     "reasoning_tokens": 0,
                     "time_to_first_token": 0,
-                    "tokens": 106
-                  }
-                },
-                {
-                  "name": "lookup_signups",
-                  "type": "tool",
-                  "children": [],
-                  "output": {
-                    "type": "text",
-                    "value": "1 signup; rows hidden from the model"
+                    "tokens": 96
                   }
                 }
               ],
@@ -3243,7 +3152,6 @@
                   }
                 },
                 "temperature": 0,
-                "toolChoice": "required",
                 "tools": {
                   "lookup_signups": {
                     "description": "Look up today's signups",
@@ -3257,8 +3165,8 @@
                 }
               },
               "output": {
-                "finishReason": "tool-calls",
-                "text": ""
+                "finishReason": "stop",
+                "text": "1"
               },
               "metadata": {
                 "braintrust": {
@@ -3363,7 +3271,8 @@
                 },
                 "finish_reason": "stop",
                 "model": "gpt-5.4-nano-2026-03-17",
-                "provider": "openai.responses"
+                "provider": "openai.responses",
+                "served_service_tier": "default"
               },
               "metrics": {
                 "completion_reasoning_tokens": 0,
@@ -3611,7 +3520,8 @@
                     },
                     "finish_reason": "stop",
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -3856,7 +3766,8 @@
                     },
                     "finish_reason": "stop",
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -4112,7 +4023,8 @@
                 },
                 "finish_reason": "stop",
                 "model": "claude-haiku-4-5",
-                "provider": "anthropic.messages"
+                "provider": "anthropic.messages",
+                "served_service_tier": "standard"
               },
               "metrics": {
                 "completion_tokens": 7,
@@ -4363,7 +4275,8 @@
                     },
                     "finish_reason": "stop",
                     "model": "claude-haiku-4-5",
-                    "provider": "anthropic.messages"
+                    "provider": "anthropic.messages",
+                    "served_service_tier": "standard"
                   },
                   "metrics": {
                     "completion_tokens": 7,
@@ -4611,7 +4524,8 @@
                     },
                     "finish_reason": "stop",
                     "model": "claude-haiku-4-5",
-                    "provider": "anthropic.messages"
+                    "provider": "anthropic.messages",
+                    "served_service_tier": "standard"
                   },
                   "metrics": {
                     "completion_tokens": 7,
@@ -4858,7 +4772,8 @@
                     },
                     "finish_reason": "stop",
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -5340,7 +5255,8 @@
                     },
                     "finish_reason": "stop",
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -5496,7 +5412,8 @@
                     },
                     "finish_reason": "stop",
                     "model": "gpt-5.4-nano-2026-03-17",
-                    "provider": "openai.responses"
+                    "provider": "openai.responses",
+                    "served_service_tier": "default"
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
@@ -5642,7 +5559,8 @@
                         },
                         "finish_reason": "stop",
                         "model": "gpt-5.4-nano-2026-03-17",
-                        "provider": "openai.responses"
+                        "provider": "openai.responses",
+                        "served_service_tier": "default"
                       },
                       "metrics": {
                         "completion_reasoning_tokens": 0,
@@ -5989,7 +5907,8 @@
                         },
                         "finish_reason": "stop",
                         "model": "gpt-5.4-nano-2026-03-17",
-                        "provider": "openai.responses"
+                        "provider": "openai.responses",
+                        "served_service_tier": "default"
                       },
                       "metrics": {
                         "completion_reasoning_tokens": 0,

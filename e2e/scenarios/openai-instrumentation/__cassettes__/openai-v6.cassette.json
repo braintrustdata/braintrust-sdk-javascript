@@ -301,14 +301,14 @@
     },
     {
       "callIndex": 3,
-      "id": "543b2a3214709168",
+      "id": "b83ea38c518696fb",
       "matchKey": "POST api.openai.com/v1/chat/completions",
-      "recordedAt": "2026-08-13T03:26:14.268Z",
+      "recordedAt": "2026-11-16T17:43:46.916Z",
       "request": {
         "body": {
           "kind": "json",
           "value": {
-            "max_tokens": 24,
+            "max_tokens": 64,
             "messages": [
               {
                 "content": [
@@ -318,7 +318,7 @@
                   },
                   {
                     "file": {
-                      "file_data": "data:application/pdf;base64,JVBERi0xLjAKMSAwIG9iago8PC9UeXBlL0NhdGFsb2cvUGFnZXMgMiAwIFI+PmVuZG9iagoyIDAgb2JqCjw8L1R5cGUvUGFnZXMvS2lkc1szIDAgUl0vQ291bnQgMT4+ZW5kb2JqCjMgMCBvYmoKPDwvVHlwZS9QYWdlL01lZGlhQm94WzAgMCA2MTIgNzkyXT4+ZW5kb2JqCnhyZWYKMCA0CjAwMDAwMDAwMDAgNjU1MzUgZg0KMDAwMDAwMDAxMCAwMDAwMCBuDQowMDAwMDAwMDUzIDAwMDAwIG4NCjAwMDAwMDAxMDIgMDAwMDAgbg0KdHJhaWxlcgo8PC9TaXplIDQvUm9vdCAxIDAgUj4+CnN0YXJ0eHJlZgoxNDkKJUVPRg==",
+                      "file_data": "data:application/pdf;base64,JVBERi0xLjQKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0gL0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCA2MTIgNzkyXSAvUmVzb3VyY2VzIDw8IC9Gb250IDw8IC9GMSA0IDAgUiA+PiA+PiAvQ29udGVudHMgNSAwIFIgPj4KZW5kb2JqCjQgMCBvYmoKPDwgL1R5cGUgL0ZvbnQgL1N1YnR5cGUgL1R5cGUxIC9CYXNlRm9udCAvSGVsdmV0aWNhID4+CmVuZG9iago1IDAgb2JqCjw8IC9MZW5ndGggOTAgPj4Kc3RyZWFtCkJUCi9GMSAxOCBUZgo3MiA3MjAgVGQKKEhvbmV5YmVlcyBwb2xsaW5hdGUgZmxvd2VycyBhbmQgaGVscCBwbGFudHMgcHJvZHVjZSBmcnVpdC4pIFRqCkVUCmVuZHN0cmVhbQplbmRvYmoKeHJlZgowIDYKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDA5IDAwMDAwIG4gCjAwMDAwMDAwNTggMDAwMDAgbiAKMDAwMDAwMDExNSAwMDAwMCBuIAowMDAwMDAwMjQxIDAwMDAwIG4gCjAwMDAwMDAzMTEgMDAwMDAgbiAKdHJhaWxlcgo8PCAvU2l6ZSA2IC9Sb290IDEgMCBSID4+CnN0YXJ0eHJlZgo0NTAKJSVFT0YK",
                       "filename": "document.pdf"
                     },
                     "type": "file"
@@ -341,37 +341,37 @@
           "value": {
             "choices": [
               {
-                "finish_reason": "length",
+                "finish_reason": "stop",
                 "index": 0,
                 "logprobs": null,
                 "message": {
                   "annotations": [],
-                  "content": "I can't access the content of the document to summarize it. If you can provide text or details from it, I'd be",
+                  "content": "Honeybees are essential for pollinating flowers and aiding fruit production.",
                   "refusal": null,
                   "role": "assistant"
                 }
               }
             ],
-            "created": 1786591573,
-            "id": "chatcmpl-ECGN3ZtISCAdg0zJrszCRc5SaL9HD",
+            "created": 1794851026,
+            "id": "chatcmpl-Ekv22LwWKsy5jI8QhfD1JodcAEeF7",
             "model": "gpt-4o-mini-2024-07-18",
             "object": "chat.completion",
             "service_tier": "default",
-            "system_fingerprint": "fp_4147058500",
+            "system_fingerprint": "fp_2bf6f3634d",
             "usage": {
-              "completion_tokens": 24,
+              "completion_tokens": 14,
               "completion_tokens_details": {
                 "accepted_prediction_tokens": 0,
                 "audio_tokens": 0,
                 "reasoning_tokens": 0,
                 "rejected_prediction_tokens": 0
               },
-              "prompt_tokens": 236,
+              "prompt_tokens": 245,
               "prompt_tokens_details": {
                 "audio_tokens": 0,
                 "cached_tokens": 0
               },
-              "total_tokens": 260
+              "total_tokens": 259
             }
           }
         },
@@ -379,31 +379,28 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a2a49df6dd897075-IAD",
-          "connection": "keep-alive",
+          "cf-ray": "a5b84cc23fe2f46c-YYZ",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Thu, 13 Aug 2026 03:26:14 GMT",
+          "date": "Mon, 16 Nov 2026 17:43:47 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "613",
+          "openai-processing-ms": "649",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-          "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
           "x-openai-proxy-wasm": "v0.1",
           "x-ratelimit-limit-requests": "30000",
           "x-ratelimit-limit-tokens": "150000000",
           "x-ratelimit-remaining-requests": "29999",
-          "x-ratelimit-remaining-tokens": "149999220",
+          "x-ratelimit-remaining-tokens": "149999222",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "req_08141afa1e6b48aa9ae7d23c887d4eb0"
+          "x-request-id": "req_cabe35478fba45c8940158ac1ce47814"
         },
-        "status": 200,
-        "statusText": "OK"
+        "status": 200
       }
     },
     {

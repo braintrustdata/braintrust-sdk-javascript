@@ -106,6 +106,7 @@
                       },
                       "metadata": {
                         "model": "gemini-2.5-flash-lite",
+                        "served_service_tier": "standard",
                         "systemInstruction": "You are an agent. Your internal name is \"weather_agent\".\n\nAnswer the user's question in one short sentence.",
                         "temperature": 0
                       },

@@ -1,7 +1,4 @@
-import {
-  MINIMAL_PDF_BASE64,
-  MINIMAL_PNG_BASE64,
-} from "../../helpers/media-fixtures.mjs";
+import { MINIMAL_PNG_BASE64 } from "../../helpers/media-fixtures.mjs";
 import {
   collectAsync,
   runOperation,
@@ -14,8 +11,9 @@ import {
   openaiBatchesRetrieveTraced,
   openaiFilesCreateTraced,
 } from "braintrust";
-import { configureInstrumentation } from "braintrust/instrumentation";
+import "./configure.mjs";
 import { once } from "node:events";
+import { readFileSync } from "node:fs";
 import { Writable } from "node:stream";
 
 const OPENAI_MODEL = "gpt-4o-mini-2024-07-18";
@@ -23,6 +21,10 @@ const OPENAI_AUDIO_MODEL = "gpt-audio-1.5";
 const OPENAI_IMAGE_MODEL = "gpt-image-2";
 const EMBEDDING_MODEL = "text-embedding-3-small";
 const MODERATION_MODEL = "omni-moderation-2024-09-26";
+// Contains: Honeybees pollinate flowers and help plants produce fruit.
+const PDF_BASE64 = readFileSync(
+  new URL("./test-document.pdf", import.meta.url),
+).toString("base64");
 const ROOT_NAME = "openai-instrumentation-root";
 const SCENARIO_NAME = "openai-instrumentation";
 const CHAT_TOOLS = [
@@ -329,7 +331,7 @@ async function runOpenAIMediaOperations(client, openAIMajorVersion) {
         throw new Error("Expected a WAV speech response");
       }
       let pcm;
-      for (let offset = 12; offset + 8 <= wav.length; ) {
+      for (let offset = 12; offset + 8 <= wav.length;) {
         const length = wav.readUInt32LE(offset + 4);
         if (wav.toString("ascii", offset, offset + 4) === "data") {
           pcm = wav.subarray(offset + 8);
@@ -644,14 +646,14 @@ export async function runOpenAIInstrumentationScenario(options) {
                     {
                       type: "file",
                       file: {
-                        file_data: `data:application/pdf;base64,${MINIMAL_PDF_BASE64}`,
+                        file_data: `data:application/pdf;base64,${PDF_BASE64}`,
                         filename: "document.pdf",
                       },
                     },
                   ],
                 },
               ],
-              max_tokens: 24,
+              max_tokens: 64,
               temperature: 0,
             });
           },
@@ -1045,29 +1047,9 @@ export async function runOpenAIInstrumentationScenario(options) {
         );
         for (const mode of ["images", "images-redacted", "images-disabled"]) {
           await flush();
-          const capture = process.env.BRAINTRUST_CAPTURE_ATTACHMENTS;
-          if (mode === "images-disabled")
-            process.env.BRAINTRUST_CAPTURE_ATTACHMENTS = "false";
-          if (mode === "images-redacted") {
-            configureInstrumentation({
-              spanCustomizers: [
-                {
-                  onSpanExport(data) {
-                    if (
-                      data.span_attributes?.name ===
-                        "openai.decisions.create" &&
-                      data.input?.state
-                    ) {
-                      const content = data.input.state[0].content;
-                      content[1].image_url = "[redacted]";
-                      content.splice(3, 1);
-                    }
-                    return data;
-                  },
-                },
-              ],
-            });
-          }
+          process.env.BRAINTRUST_E2E_REDACT_DECISION_IMAGES = String(
+            mode === "images-redacted",
+          );
           try {
             await runOperation(
               `openai-decisions-${mode}-operation`,
@@ -1119,13 +1101,11 @@ export async function runOpenAIInstrumentationScenario(options) {
                 if (data.answers[0].name !== "same")
                   throw new Error("Decision image answer association changed");
               },
+              { autoCaptureAttachments: mode !== "images-disabled" },
             );
             await flush();
           } finally {
-            configureInstrumentation({ spanCustomizers: [] });
-            if (capture === undefined)
-              delete process.env.BRAINTRUST_CAPTURE_ATTACHMENTS;
-            else process.env.BRAINTRUST_CAPTURE_ATTACHMENTS = capture;
+            delete process.env.BRAINTRUST_E2E_REDACT_DECISION_IMAGES;
           }
         }
       }

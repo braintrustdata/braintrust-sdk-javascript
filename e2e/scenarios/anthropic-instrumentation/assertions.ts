@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, test } from "vitest";
+import { beforeAll, describe, expect, test } from "vite-plus/test";
 import type { Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
@@ -137,6 +137,8 @@ function summarizeAnthropicPayload(event: CapturedLogEvent): Json {
       [
         "provider",
         "model",
+        "requested_service_tier",
+        "served_service_tier",
         "operation",
         "scenario",
         "stop_reason",

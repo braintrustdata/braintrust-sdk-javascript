@@ -24,6 +24,7 @@ import { register, type TestFn } from "../helpers/register";
  * Interface for the Braintrust module based on exports.ts
  */
 export interface BraintrustModule {
+  __publicModule?: BraintrustModule;
   // Core logging (REQUIRED)
   initLogger?: unknown;
   Logger?: unknown;
@@ -54,9 +55,6 @@ export interface BraintrustModule {
   Eval?: unknown;
   EvalResultWithSummary?: unknown;
   Reporter?: unknown;
-  runEvaluator?: unknown;
-  buildLocalSummary?: unknown;
-  reportFailures?: unknown;
   defaultErrorScoreHandler?: unknown;
 
   // Tracing (REQUIRED)
@@ -90,10 +88,8 @@ export interface BraintrustModule {
   projects?: unknown;
   PromptBuilder?: unknown;
 
-  // ID Generation (REQUIRED)
+  // Legacy private smoke-test harness fields
   IDGenerator?: unknown;
-
-  // Testing (REQUIRED)
   _exportsForTestingOnly?: unknown;
 
   // State management (REQUIRED)
@@ -103,7 +99,7 @@ export interface BraintrustModule {
   [key: string]: unknown;
 }
 
-export const testCoreLoggingExports = register(
+export const testCoreLoggingExports: TestFn = register(
   "testCoreLoggingExports",
   async (module) => {
     assertDefined(module.initLogger, "initLogger must exist");
@@ -129,17 +125,34 @@ export const testCoreLoggingExports = register(
     assertDefined(module.startSpan, "startSpan must exist");
     assertType(module.startSpan, "function", "startSpan must be a function");
 
-    assertDefined(module.log, "log must exist");
-    assertType(module.log, "function", "log must be a function");
-
     assertDefined(module.flush, "flush must exist");
     assertType(module.flush, "function", "flush must be a function");
 
-    return "Core logging exports verified (7 exports)";
+    const publicModule = module.__publicModule ?? module;
+    for (const removed of [
+      "default",
+      "log",
+      "summarize",
+      "initExperiment",
+      "traceable",
+      "EvalResultWithSummary",
+      "SpanImpl",
+      "_exportsForTestingOnly",
+      "AttachmentReference",
+      "promptDefinitionSchema",
+      "braintrustEveInstrumentation",
+      "braintrustFlueInstrumentation",
+    ]) {
+      if (removed in publicModule) {
+        throw new Error(`${removed} must not be publicly exported`);
+      }
+    }
+
+    return "Core logging exports and removals verified";
   },
 );
 
-export const testDatasetExports = register(
+export const testDatasetExports: TestFn = register(
   "testDatasetExports",
   async (module) => {
     assertDefined(module.initDataset, "initDataset must exist");
@@ -156,7 +169,7 @@ export const testDatasetExports = register(
   },
 );
 
-export const testPromptExports = register(
+export const testPromptExports: TestFn = register(
   "testPromptExports",
   async (module) => {
     assertDefined(module.loadPrompt, "loadPrompt must exist");
@@ -176,15 +189,11 @@ export const testPromptExports = register(
   },
 );
 
-export const testExperimentExports = register(
+export const testExperimentExports: TestFn = register(
   "testExperimentExports",
   async (module) => {
-    assertDefined(module.initExperiment, "initExperiment must exist");
-    assertType(
-      module.initExperiment,
-      "function",
-      "initExperiment must be a function",
-    );
+    assertDefined(module.init, "init must exist");
+    assertType(module.init, "function", "init must be a function");
 
     assertDefined(module.Experiment, "Experiment must exist");
     assertType(
@@ -204,65 +213,34 @@ export const testExperimentExports = register(
   },
 );
 
-export const testEvalExports = register("testEvalExports", async (module) => {
-  assertDefined(module.Eval, "Eval must exist");
-  assertType(module.Eval, "function", "Eval must be a function");
+export const testEvalExports: TestFn = register(
+  "testEvalExports",
+  async (module) => {
+    assertDefined(module.Eval, "Eval must exist");
+    assertType(module.Eval, "function", "Eval must be a function");
 
-  assertDefined(
-    module.EvalResultWithSummary,
-    "EvalResultWithSummary must exist",
-  );
-  assertType(
-    module.EvalResultWithSummary,
-    "function",
-    "EvalResultWithSummary must be a function/class",
-  );
+    assertDefined(module.Reporter, "Reporter must exist");
+    assertType(module.Reporter, "function", "Reporter must be a function");
 
-  assertDefined(module.Reporter, "Reporter must exist");
-  assertType(module.Reporter, "function", "Reporter must be a function");
+    assertDefined(
+      module.defaultErrorScoreHandler,
+      "defaultErrorScoreHandler must exist",
+    );
+    assertType(
+      module.defaultErrorScoreHandler,
+      "function",
+      "defaultErrorScoreHandler must be a function",
+    );
 
-  assertDefined(module.runEvaluator, "runEvaluator must exist");
-  assertType(
-    module.runEvaluator,
-    "function",
-    "runEvaluator must be a function",
-  );
+    return "Eval exports verified (3 runtime exports)";
+  },
+);
 
-  assertDefined(module.buildLocalSummary, "buildLocalSummary must exist");
-  assertType(
-    module.buildLocalSummary,
-    "function",
-    "buildLocalSummary must be a function",
-  );
-
-  assertDefined(module.reportFailures, "reportFailures must exist");
-  assertType(
-    module.reportFailures,
-    "function",
-    "reportFailures must be a function",
-  );
-
-  assertDefined(
-    module.defaultErrorScoreHandler,
-    "defaultErrorScoreHandler must exist",
-  );
-  assertType(
-    module.defaultErrorScoreHandler,
-    "function",
-    "defaultErrorScoreHandler must be a function",
-  );
-
-  return "Eval exports verified (7 runtime exports)";
-});
-
-export const testTracingExports = register(
+export const testTracingExports: TestFn = register(
   "testTracingExports",
   async (module) => {
     assertDefined(module.traced, "traced must exist");
     assertType(module.traced, "function", "traced must be a function");
-
-    assertDefined(module.traceable, "traceable must exist");
-    assertType(module.traceable, "function", "traceable must be a function");
 
     assertDefined(module.wrapTraced, "wrapTraced must exist");
     assertType(module.wrapTraced, "function", "wrapTraced must be a function");
@@ -284,11 +262,11 @@ export const testTracingExports = register(
       "withCurrent must be a function",
     );
 
-    return "Tracing exports verified (6 exports)";
+    return "Tracing exports verified (5 exports)";
   },
 );
 
-export const testClientWrapperExports = register(
+export const testClientWrapperExports: TestFn = register(
   "testClientWrapperExports",
   async (module) => {
     assertDefined(module.wrapOpenAI, "wrapOpenAI must exist");
@@ -300,7 +278,6 @@ export const testClientWrapperExports = register(
       "wrapGoogleGenAI",
       "wrapOpenRouter",
       "wrapAISDK",
-      "wrapMastraAgent",
       "wrapClaudeAgentSDK",
     ];
 
@@ -319,7 +296,7 @@ export const testClientWrapperExports = register(
   },
 );
 
-export const testUtilityExports = register(
+export const testUtilityExports: TestFn = register(
   "testUtilityExports",
   async (module) => {
     assertDefined(module.JSONAttachment, "JSONAttachment must exist");
@@ -336,17 +313,11 @@ export const testUtilityExports = register(
       "Attachment must be a function/class",
     );
 
-    assertDefined(module.newId, "newId must exist");
-    assertType(module.newId, "function", "newId must be a function");
-
-    assertDefined(module.permalink, "permalink must exist");
-    assertType(module.permalink, "function", "permalink must be a function");
-
-    return "Utility exports verified (4 exports)";
+    return "Attachment exports verified (2 exports)";
   },
 );
 
-export const testFunctionExports = register(
+export const testFunctionExports: TestFn = register(
   "testFunctionExports",
   async (module) => {
     assertDefined(module.invoke, "invoke must exist");
@@ -363,27 +334,17 @@ export const testFunctionExports = register(
   },
 );
 
-export const testFramework2Exports = register(
+export const testFramework2Exports: TestFn = register(
   "testFramework2Exports",
   async (module) => {
-    assertDefined(module.Project, "Project must exist");
-    assertType(module.Project, "function", "Project must be a function/class");
-
     assertDefined(module.projects, "projects must exist");
     assertType(module.projects, "object", "projects must be an object");
 
-    assertDefined(module.PromptBuilder, "PromptBuilder must exist");
-    assertType(
-      module.PromptBuilder,
-      "function",
-      "PromptBuilder must be a function/class",
-    );
-
-    return "Framework2 exports verified (3 exports)";
+    return "Project facade export verified";
   },
 );
 
-export const testIDGeneratorExports = register(
+export const testIDGeneratorExports: TestFn = register(
   "testIDGeneratorExports",
   async (module) => {
     assertDefined(module.IDGenerator, "IDGenerator must exist");
@@ -393,11 +354,12 @@ export const testIDGeneratorExports = register(
       "IDGenerator must be a function/class",
     );
 
-    return "ID generator exports verified (1 export)";
+    return "Internal ID generator export verified";
   },
+  { requiresTestHarness: true },
 );
 
-export const testTestingExports = register(
+export const testTestingExports: TestFn = register(
   "testTestingExports",
   async (module) => {
     assertDefined(
@@ -410,11 +372,12 @@ export const testTestingExports = register(
       "_exportsForTestingOnly must be an object",
     );
 
-    return "Testing exports verified (1 export)";
+    return "Internal testing export verified";
   },
+  { requiresTestHarness: true },
 );
 
-export const testStateManagementExports = register(
+export const testStateManagementExports: TestFn = register(
   "testStateManagementExports",
   async (module) => {
     assertDefined(module.BraintrustState, "BraintrustState must exist");
@@ -439,34 +402,39 @@ export function testBuildResolution(
     | "workerd"
     | "node",
 ): TestFn {
-  return register("testBuildResolution", async (module) => {
-    const { buildType: detectedBuild, buildDetails } = detectBuildType(module);
-    const detectedFormat = detectModuleFormat();
+  return register(
+    "testBuildResolution",
+    async (module) => {
+      const { buildType: detectedBuild, buildDetails } =
+        detectBuildType(module);
+      const detectedFormat = detectModuleFormat();
 
-    if (detectedBuild === "unknown") {
-      throw new Error(
-        `Build type is unknown - configureBrowser() or configureNode() was not called. ${buildDetails || ""}`,
-      );
-    }
+      if (detectedBuild === "unknown") {
+        throw new Error(
+          `Build type is unknown - configureBrowser() or configureNode() was not called. ${buildDetails || ""}`,
+        );
+      }
 
-    if (expectedBuildType && detectedBuild !== expectedBuildType) {
-      throw new Error(
-        `Expected build type "${expectedBuildType}" but detected "${detectedBuild}"`,
-      );
-    }
+      if (expectedBuildType && detectedBuild !== expectedBuildType) {
+        throw new Error(
+          `Expected build type "${expectedBuildType}" but detected "${detectedBuild}"`,
+        );
+      }
 
-    const parts: string[] = [`Detected ${detectedBuild} build`];
+      const parts: string[] = [`Detected ${detectedBuild} build`];
 
-    if (expectedBuildType) {
-      parts.push(`(expected: ${expectedBuildType})`);
-    }
+      if (expectedBuildType) {
+        parts.push(`(expected: ${expectedBuildType})`);
+      }
 
-    if (detectedFormat !== "unknown") {
-      parts.push(`${detectedFormat} format`);
-    }
+      if (detectedFormat !== "unknown") {
+        parts.push(`${detectedFormat} format`);
+      }
 
-    return parts.join(", ");
-  });
+      return parts.join(", ");
+    },
+    { requiresTestHarness: true },
+  );
 }
 
 function detectBuildType(module: BraintrustModule): {

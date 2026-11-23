@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, test } from "vitest";
+import { beforeAll, describe, expect, test } from "vite-plus/test";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import type { Json } from "../../helpers/normalize";
 import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
@@ -179,6 +179,23 @@ function validateAttachmentInput(
   expect(serialized).toContain(contentType);
 }
 
+function validatePdfSummary(span: CapturedLogEvent | undefined): void {
+  validateAttachmentInput(span, "application/pdf");
+  const choice = asRecord(
+    Array.isArray(span?.output) ? span.output[0] : undefined,
+  );
+  const message = asRecord(choice?.message);
+
+  expect(choice?.finish_reason).toBe("stop");
+  expect(message?.refusal ?? null).toBeNull();
+  expect(message?.content).toEqual(expect.any(String));
+  const summary = message?.content as string;
+  expect(summary).toMatch(/\bhoney\s?bees?\b/i);
+  expect(summary).toMatch(/\bpollinat\w*\b/i);
+  expect(summary).not.toMatch(/\b(can't|cannot|unable|sorry|access)\b/i);
+  expect(summary.trim().split(/\s+/).length).toBeLessThanOrEqual(20);
+}
+
 function validateAttachmentOutput(
   span: CapturedLogEvent | undefined,
   contentType: string,
@@ -266,7 +283,7 @@ const OPERATION_SPECS: readonly OperationSpec[] = [
                 key: expect.any(String),
               }
             : mode === "images-disabled"
-              ? "<omitted>"
+              ? undefined
               : "[redacted]";
         expect(span?.span.type).toBe("decision");
         expect(span?.input).toEqual({
@@ -275,11 +292,18 @@ const OPERATION_SPECS: readonly OperationSpec[] = [
               role: "user",
               content: [
                 { type: "input_text", text: "Compare these two images." },
-                { type: "input_image", image_url: image },
-                { type: "input_text", text: "Here is the second image." },
-                ...(mode === "images-redacted"
+                ...(image === undefined
                   ? []
                   : [{ type: "input_image", image_url: image }]),
+                { type: "input_text", text: "Here is the second image." },
+                ...(mode === "images-redacted" || image === undefined
+                  ? []
+                  : [
+                      {
+                        type: "input_image",
+                        image_url: image,
+                      },
+                    ]),
               ],
             },
           ],
@@ -446,7 +470,7 @@ const OPERATION_SPECS: readonly OperationSpec[] = [
     name: "openai-chat-pdf-attachment-operation",
     operation: "chat-pdf-attachment",
     testName: "captures trace for chat completion PDF attachments",
-    validate: (span) => validateAttachmentInput(span, "application/pdf"),
+    validate: validatePdfSummary,
   },
   {
     childNames: ["Chat Completion"],
@@ -1100,7 +1124,15 @@ function summarizeOpenAIPayload(
     input: summarizeInput(event.input as Json),
     metadata: pickMetadata(
       event.row.metadata as Record<string, unknown> | undefined,
-      ["model", "openaiSdkVersion", "operation", "provider", "scenario"],
+      [
+        "model",
+        "openaiSdkVersion",
+        "operation",
+        "provider",
+        "scenario",
+        "requested_service_tier",
+        "served_service_tier",
+      ],
     ),
     metrics: fields.metrics as Json,
     name: name || null,

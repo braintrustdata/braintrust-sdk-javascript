@@ -1,6 +1,7 @@
+import { registerInstrumentation } from "../instrumentation/registrations/ollama";
 import { isObject } from "../../util";
 import { debugLogger } from "../debug-logger";
-import { ollamaChannels } from "../instrumentation/plugins/ollama-interceptors";
+import { ollamaChannels } from "../instrumentation/providers/ollama-interceptors";
 import type {
   OllamaChatRequest,
   OllamaChatResult,
@@ -16,6 +17,7 @@ import type {
  * diagnostics-channel events.
  */
 export function wrapOllama<T>(ollama: T): T {
+  registerInstrumentation();
   if (isSupportedOllamaClient(ollama)) {
     return ollamaProxy(ollama) as T;
   }

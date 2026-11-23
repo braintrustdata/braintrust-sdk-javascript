@@ -1,3 +1,4 @@
+import "../auto.js";
 /**
  * Unified loader hook for auto-instrumentation (ESM + CJS).
  *

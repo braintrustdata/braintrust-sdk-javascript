@@ -1,5 +1,5 @@
 import { createTraceState, type SpanContext } from "@opentelemetry/api";
-import type { ReadableSpan } from "@opentelemetry/sdk-trace-base";
+import type { ReadableSpan } from "./types";
 
 type RecordData = Record<string, unknown>;
 const CUSTOMIZED = Symbol.for("braintrust.customizedOtelSpan");
@@ -36,7 +36,7 @@ interface OtelCompatFields {
 }
 
 /** Normalize fields renamed between OTel 1.x and 2.x so either serializer works. */
-export function otelCompatFields(span: ReadableSpan): OtelCompatFields {
+function otelCompatFields(span: ReadableSpan): OtelCompatFields {
   const compatible = span as ReadableSpan & OtelCompatFields;
   return {
     instrumentationScope:
@@ -61,9 +61,9 @@ export function otelCompatFields(span: ReadableSpan): OtelCompatFields {
  * Customize one export batch. Runs at the Braintrust exporter boundary, so
  * filtering, enrichment and sampling have already happened upstream.
  */
-export async function customizeOtelSpans(
-  spans: ReadableSpan[],
-): Promise<ReadableSpan[]> {
+export async function customizeOtelSpans<S extends ReadableSpan>(
+  spans: S[],
+): Promise<S[]> {
   if (!runtime()?.hasCustomizers()) return spans;
   // OTLP serializers wait for async resource detectors. Snapshot only once
   // those attributes exist, so hooks can redact them too. A failed detector
@@ -237,10 +237,10 @@ function contextData(context: SpanContext | undefined): RecordData | undefined {
 }
 
 /** Customize an isolated, plain OTel snapshot, never a live ReadableSpan. */
-function customizeOtelSpan(
-  span: ReadableSpan,
+function customizeOtelSpan<S extends ReadableSpan>(
+  span: S,
   resources: ResourceCache,
-): ReadableSpan {
+): S {
   const policy = runtime();
   if (isCustomizedOtelSpan(span) || !policy) return span;
   const copy = (value: unknown) => copyData(value, policy.isPlainRecord);
@@ -347,7 +347,7 @@ function customizeOtelSpan(
             status: span.status,
             resource: {
               attributes: span.resource.attributes,
-              schemaUrl: (span.resource as unknown as RecordData).schemaUrl,
+              schemaUrl: span.resource.schemaUrl,
             },
             instrumentationScope: compatible.instrumentationScope ?? {
               name: "",
@@ -399,7 +399,7 @@ function customizeOtelSpan(
     ended: true,
   };
   Object.defineProperty(exported, CUSTOMIZED, { value: true });
-  return exported as unknown as ReadableSpan;
+  return exported as unknown as S;
 }
 
 export function isCustomizedOtelSpan(span: ReadableSpan): boolean {

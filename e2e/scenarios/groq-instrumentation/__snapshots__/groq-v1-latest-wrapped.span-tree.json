@@ -33,6 +33,7 @@
                 "max_completion_tokens": 64,
                 "model": "openai/gpt-oss-20b",
                 "provider": "groq",
+                "served_service_tier": "on_demand",
                 "temperature": 0
               },
               "metrics": {
@@ -190,6 +191,7 @@
               "metadata": {
                 "model": "openai/gpt-oss-20b",
                 "provider": "groq",
+                "served_service_tier": "on_demand",
                 "temperature": 0,
                 "tool_choice": {
                   "function": {

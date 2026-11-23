@@ -1,0 +1,18 @@
+{
+  "name": "@braintrust/e2e-fal-instrumentation",
+  "private": true,
+  "braintrustScenario": {
+    "bump": {
+      "dependencies": {
+        "fal-sdk-v1-latest": {
+          "package": "@fal-ai/client",
+          "range": "1"
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "fal-sdk-v1": "npm:@fal-ai/client@1.10.0",
+    "fal-sdk-v1-latest": "npm:@fal-ai/client@1.11.0"
+  }
+}

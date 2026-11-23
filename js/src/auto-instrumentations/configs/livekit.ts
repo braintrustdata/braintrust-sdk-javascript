@@ -1,8 +1,8 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { livekitChannels } from "../../instrumentation/plugins/livekit-interceptors";
+import { livekitChannels } from "../../instrumentation/providers/livekit-interceptors";
 
 // Private lifecycle hooks: widen only after validating the supported release matrix.
-const versionRange = ">=1.9.1 <1.10.0";
+const versionRange = ">=1.9.1 <1.11.0";
 const targets: [
   keyof typeof livekitChannels,
   string,
@@ -52,6 +52,36 @@ const targets: [
     "userCompleted",
     "voice/agent_activity",
     { className: "AgentActivity", methodName: "userTurnCompleted" },
+  ],
+  [
+    "vadInference",
+    "voice/agent_activity",
+    { className: "AgentActivity", methodName: "onVADInferenceDone" },
+  ],
+  [
+    "speechEnd",
+    "voice/agent_activity",
+    { className: "AgentActivity", methodName: "onEndOfSpeech" },
+  ],
+  [
+    "recognitionClose",
+    "voice/audio_recognition",
+    { className: "AudioRecognition", methodName: "close" },
+  ],
+  [
+    "eouWait",
+    "voice/audio_recognition",
+    { className: "AudioRecognition", methodName: "ensureEouWaitSpan" },
+  ],
+  [
+    "eouEvaluation",
+    "voice/audio_recognition",
+    { className: "AudioRecognition", methodName: "runEOUDetection" },
+  ],
+  [
+    "eouEnd",
+    "voice/audio_recognition",
+    { className: "AudioRecognition", methodName: "endEouWaitSpan" },
   ],
   [
     "stt",

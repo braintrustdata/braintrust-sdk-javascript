@@ -11,7 +11,7 @@ span_tree:
       }
     }
     metadata: {
-      "audio.schema.version": "3.0.0",
+      "audio.schema.version": "3.1.0",
       "audio.segments": {
         "part-0": {
           "attachment": {
@@ -477,14 +477,19 @@ span_tree:
     │   │     "testRunId": "<run:1>",
     │   │     "turn.id": "<span:1>"
     │   │   }
-    │   ├── livekit.eou_wait [task]
+    │   ├── eou_wait [task]
     │   │   metadata: {
+    │   │     "audio.source_id": "session-input",
     │   │     "contrib.livekit.eou.endpointing_delay": 0,
+    │   │     "contrib.livekit.eou.native_end_unix_ms": 0,
+    │   │     "contrib.livekit.eou.native_start_unix_ms": 0,
     │   │     "contrib.livekit.eou.not_committed_count": 0,
     │   │     "contrib.livekit.eou.outcome": "committed",
     │   │     "contrib.livekit.eou.rearm_count": 0,
     │   │     "contrib.livekit.eou.source": "manual",
     │   │     "contrib.livekit.eou.wait_duration": 0,
+    │   │     "eou.outcome": "committed",
+    │   │     "eou.speech_end_source": "vad",
     │   │     "scenario": "livekit-instrumentation",
     │   │     "testRunId": "<run:1>",
     │   │     "turn.id": "<span:1>"
@@ -511,6 +516,7 @@ span_tree:
     │   }
     │   └── livekit.eou_wait [task]
     │       metadata: {
+    │         "contrib.livekit.eou.canonical_omitted": "unobserved_speech_end",
     │         "contrib.livekit.eou.endpointing_delay": 0,
     │         "contrib.livekit.eou.not_committed_count": 0,
     │         "contrib.livekit.eou.outcome": "committed",

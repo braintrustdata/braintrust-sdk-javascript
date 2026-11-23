@@ -1,0 +1,173 @@
+{
+  "entries": [
+    {
+      "callIndex": 0,
+      "id": "581c06b7a273a7ed",
+      "matchKey": "POST generativelanguage.googleapis.com/v1beta/decisions",
+      "recordedAt": "2026-11-12T09:42:32.266Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "input": "The customer says: Thank you, the problem is fixed!",
+            "model": "gemini-decision-1",
+            "questions": {
+              "resolved": {
+                "instructions": "Is the problem resolved?",
+                "type": "noul"
+              },
+              "sentiment": {
+                "criteria": {
+                  "negative": "Unhappy or angry",
+                  "positive": "Happy or thankful"
+                },
+                "instructions": "What is the customer's sentiment?",
+                "type": "choice"
+              },
+              "urgency": {
+                "criteria": [
+                  "No action needed",
+                  "Action needed soon",
+                  "Immediate action needed"
+                ],
+                "instructions": "Rate the urgency of the request.",
+                "type": "score"
+              }
+            }
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/decisions"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "answers": {
+              "resolved": {
+                "confidence": 0.9795517168682676,
+                "noul": 0.9795517168682676,
+                "type": "noul"
+              },
+              "sentiment": {
+                "choice": "positive",
+                "confidence": 0.999067401289979,
+                "probabilities": {
+                  "negative": 0.0009325987100210494,
+                  "positive": 0.999067401289979
+                },
+                "type": "choice"
+              },
+              "urgency": {
+                "confidence": 0.9610780756397326,
+                "legend": {
+                  "0": "No action needed",
+                  "1": "Action needed soon",
+                  "2": "Immediate action needed"
+                },
+                "probabilities": {
+                  "0": 0.9610780756397326,
+                  "1": 0.033229283188255625,
+                  "2": 0.005692641172012019
+                },
+                "score": 0.04461456553227966,
+                "type": "score"
+              }
+            },
+            "usage": {
+              "input_tokens_by_modality": [
+                {
+                  "modality": "text",
+                  "tokens": 212
+                }
+              ],
+              "total_input_tokens": 212,
+              "total_output_tokens": 0,
+              "total_tokens": 212
+            }
+          }
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Thu, 12 Nov 2026 09:42:32 GMT",
+          "server": "scaffolding on HTTPServer2",
+          "server-timing": "gfet4t7; dur=151",
+          "transfer-encoding": "chunked",
+          "vary": "Origin, X-Origin, Referer",
+          "x-content-type-options": "nosniff",
+          "x-frame-options": "SAMEORIGIN",
+          "x-xss-protection": "0"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "4337cd0d2e3c73d3",
+      "matchKey": "POST generativelanguage.googleapis.com/v1beta/decisions",
+      "recordedAt": "2026-11-12T09:42:33.258Z",
+      "request": {
+        "body": {
+          "contentType": "application/json",
+          "kind": "binary",
+          "path": "google-genai-decisions-v3-latest.cassette.blobs/0479927e5ed213355903286a338766f629890bde6d75c954e9d45bbb904d4077.bin",
+          "sha256": "0479927e5ed213355903286a338766f629890bde6d75c954e9d45bbb904d4077"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/decisions"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "answers": {
+              "image": {
+                "confidence": 0.8845631928245462,
+                "noul": 0.8845631928245462,
+                "type": "noul"
+              }
+            },
+            "usage": {
+              "input_tokens_by_modality": [
+                {
+                  "modality": "text",
+                  "tokens": 89
+                },
+                {
+                  "modality": "image",
+                  "tokens": 1089
+                }
+              ],
+              "total_input_tokens": 1178,
+              "total_output_tokens": 0,
+              "total_tokens": 1178
+            }
+          }
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Thu, 12 Nov 2026 09:42:33 GMT",
+          "server": "scaffolding on HTTPServer2",
+          "server-timing": "gfet4t7; dur=726",
+          "transfer-encoding": "chunked",
+          "vary": "Origin, X-Origin, Referer",
+          "x-content-type-options": "nosniff",
+          "x-frame-options": "SAMEORIGIN",
+          "x-xss-protection": "0"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    }
+  ],
+  "meta": {
+    "createdAt": "2026-11-12T09:41:20.179Z"
+  }
+}

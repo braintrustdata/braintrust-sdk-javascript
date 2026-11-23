@@ -85,6 +85,7 @@ export interface AnthropicToolRunner<TYield>
 // Requests
 
 export interface AnthropicCreateParams {
+  service_tier?: string;
   messages: AnthropicInputMessage[];
   system?: string | { type: "text"; text: string }[];
   stream?: boolean;
@@ -196,6 +197,7 @@ export type AnthropicOutputContentBlock =
   | { type: string };
 
 export interface AnthropicUsage {
+  service_tier?: string | null;
   input_tokens: number;
   output_tokens: number;
   cache_read_input_tokens?: number;

@@ -2,4 +2,4 @@
 "braintrust": minor
 ---
 
-feat: Support eve 1.0.0
+feat: Support eve v1

@@ -4,6 +4,7 @@ export type OpenRouterChatCreateParams = {
   httpReferer?: string;
   xTitle?: string;
   chatGenerationParams?: {
+    serviceTier?: string | null;
     messages?: unknown;
     stream?: boolean;
     [key: string]: unknown;
@@ -36,6 +37,7 @@ export type OpenRouterChatChoice = {
 };
 
 export type OpenRouterChatCompletion = {
+  serviceTier?: string | null;
   choices?: OpenRouterChatChoice[];
   usage?: unknown;
   [key: string]: unknown;
@@ -46,6 +48,7 @@ export type OpenRouterChatResult =
   | AsyncIterable<OpenRouterChatCompletionChunk>;
 
 export type OpenRouterChatCompletionChunk = {
+  serviceTier?: string | null;
   choices?: Array<{
     delta?: {
       role?: string;
@@ -125,6 +128,7 @@ export type OpenRouterResponsesCreateParams = {
   httpReferer?: string;
   xTitle?: string;
   openResponsesRequest?: {
+    serviceTier?: string | null;
     input?: unknown;
     stream?: boolean;
     [key: string]: unknown;
@@ -133,6 +137,7 @@ export type OpenRouterResponsesCreateParams = {
 };
 
 export type OpenRouterResponse = {
+  serviceTier?: string | null;
   output?: unknown;
   usage?: unknown;
   [key: string]: unknown;

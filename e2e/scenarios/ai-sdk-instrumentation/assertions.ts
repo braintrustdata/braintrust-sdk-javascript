@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, test } from "vitest";
+import { beforeAll, describe, expect, test } from "vite-plus/test";
 import type { Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
@@ -756,6 +756,11 @@ export function defineAISDKInstrumentationAssertions(options: {
       expectAISDKParentSpan(trace.parent);
       expect(trace.child).toBeDefined();
       expectAISDKModelChildSpan(trace.child);
+      if (options.sdkMajorVersion >= 7) {
+        expect(trace.child?.row.metadata).toMatchObject({
+          served_service_tier: "default",
+        });
+      }
       expect(trace.child?.metrics).toMatchObject({
         completion_tokens: expect.any(Number),
         prompt_tokens: expect.any(Number),
@@ -1355,13 +1360,15 @@ export function defineAISDKInstrumentationAssertions(options: {
               parent?.span.id,
             );
 
-            expect(toolSpans.length).toBeGreaterThanOrEqual(1);
-            for (const toolSpan of toolSpans) {
-              expect(toolSpan.output).toEqual({
-                type: "text",
-                value: MODEL_OUTPUT_TOOL_VALUE,
-              });
-            }
+            expect(parent?.output).toMatchObject({
+              text: "1",
+              finishReason: "stop",
+            });
+            expect(toolSpans).toHaveLength(1);
+            expect(toolSpans[0].output).toEqual({
+              type: "text",
+              value: MODEL_OUTPUT_TOOL_VALUE,
+            });
             // Before v7, streamText parents log only text and finishReason.
             if (parentName === "generateText" || options.sdkMajorVersion >= 7) {
               expect(collectToolResultNames(parent?.output)).toContain(

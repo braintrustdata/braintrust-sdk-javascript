@@ -13,7 +13,6 @@ import { cloudflareAgentsConfigs } from "./cloudflare-agents";
 import { cloudflareThinkConfigs } from "./cloudflare-think";
 import { cohereConfigs } from "./cohere";
 import { cursorSDKConfigs } from "./cursor-sdk";
-import { flueConfigs } from "./flue";
 import { genkitConfigs } from "./genkit";
 import { gitHubCopilotConfigs } from "./github-copilot";
 import { googleADKConfigs } from "./google-adk";
@@ -35,6 +34,8 @@ import { openRouterConfigs } from "./openrouter";
 import { openRouterAgentConfigs } from "./openrouter-agent";
 import { piCodingAgentConfigs } from "./pi-coding-agent";
 import { strandsAgentSDKConfigs } from "./strands-agent-sdk";
+import { deepgramConfigs } from "./deepgram";
+import { falConfigs } from "./fal";
 import { elevenLabsConfigs } from "./elevenlabs";
 import { voyageAIConfigs } from "./voyageai";
 import { mcpConfigs } from "./mcp";
@@ -56,11 +57,11 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
     },
     { integrations: ["anthropic"], configs: anthropicConfigs },
     {
-      integrations: ["bedrock", "awsBedrock", "awsBedrockRuntime"],
+      integrations: ["awsBedrockRuntime"],
       configs: bedrockRuntimeConfigs,
     },
     {
-      integrations: ["aisdk", "vercel"],
+      integrations: ["aisdk"],
       configs: aiSDKConfigs,
     },
     {
@@ -79,7 +80,7 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
       integrations: ["cloudflareThink"],
       configs: cloudflareThinkConfigs,
     },
-    { integrations: ["cursor", "cursorSDK"], configs: cursorSDKConfigs },
+    { integrations: ["cursorSDK"], configs: cursorSDKConfigs },
     {
       integrations: ["openAIAgents"],
       configs: openAIAgentsCoreConfigs,
@@ -89,7 +90,7 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
       configs: googleGenerativeAIConfigs,
     },
     {
-      integrations: ["google", "googleGenAI"],
+      integrations: ["googleGenAI"],
       configs: googleGenAIConfigs,
     },
     {
@@ -110,6 +111,7 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
     { integrations: ["langgraphSDK"], configs: langGraphSDKConfigs },
     { integrations: ["ollama"], configs: ollamaConfigs },
     { integrations: ["googleADK"], configs: googleADKConfigs },
+    { integrations: ["fal"], configs: falConfigs },
     { integrations: ["cohere"], configs: cohereConfigs },
     { integrations: ["groq"], configs: groqConfigs },
     {
@@ -133,8 +135,8 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
       configs: livekitConfigs,
     },
     {
-      integrations: ["flue"],
-      configs: flueConfigs,
+      integrations: ["deepgram"],
+      configs: deepgramConfigs,
     },
     {
       integrations: ["elevenlabs"],

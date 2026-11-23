@@ -1,0 +1,244 @@
+import { configureInstrumentation } from "../registry";
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+} from "vite-plus/test";
+import { _exportsForTestingOnly } from "../../logger/testing";
+import { initLogger } from "../../logger/core";
+import { configureNode } from "../../node/config";
+import type { LoggingEvent } from "../../../util/object";
+import type {
+  OpenAIAgentsSpan,
+  OpenAIAgentsSpanData,
+  OpenAIAgentsTrace,
+} from "../../vendor-sdk-types/openai-agents";
+import { openAIAgentsCoreChannels } from "./openai-agents-interceptors";
+import { registerOpenAIAgentsInstrumentation } from "./openai-agents-instrumentation";
+
+try {
+  configureInstrumentation({ integrations: { openAIAgents: false } });
+  configureNode();
+} catch {
+  // Best-effort initialization for test environments.
+}
+
+describe("registerOpenAIAgentsInstrumentation", () => {
+  let backgroundLogger: ReturnType<
+    typeof _exportsForTestingOnly.useTestBackgroundLogger
+  >;
+
+  beforeAll(async () => {
+    await _exportsForTestingOnly.simulateLoginForTests();
+    registerOpenAIAgentsInstrumentation();
+  });
+
+  beforeEach(() => {
+    backgroundLogger = _exportsForTestingOnly.useTestBackgroundLogger();
+    initLogger({
+      projectName: "openai-agents-instrumentation.test.ts",
+      projectId: "test-project-id",
+    });
+  });
+
+  afterEach(() => {
+    _exportsForTestingOnly.clearTestBackgroundLogger();
+  });
+
+  it.each([
+    { type: "task", name: "Agent workflow" },
+    { type: "turn", turn: 2, agent_name: "Weather Agent" },
+  ] satisfies OpenAIAgentsSpanData[])(
+    "records $type span usage",
+    async (spanData) => {
+      const trace = {
+        type: "trace" as const,
+        traceId: "trace-task-turn",
+        name: "Trace",
+        groupId: null,
+      };
+      const span: OpenAIAgentsSpan = {
+        type: "trace.span",
+        traceId: trace.traceId,
+        spanId: "span-task-turn",
+        parentId: null,
+        startedAt: null,
+        endedAt: null,
+        error: null,
+        spanData: {
+          ...spanData,
+          usage: {
+            input_tokens: 20,
+            output_tokens: 5,
+            cached_input_tokens: 10,
+            cache_write_input_tokens: 3,
+            ...(spanData.type === "task"
+              ? { total_tokens: 25, requests: 2 }
+              : {}),
+          },
+        },
+      };
+      await openAIAgentsCoreChannels.onTraceStart.invoke(
+        async () => undefined,
+        undefined,
+        [trace],
+        {},
+      );
+      await openAIAgentsCoreChannels.onSpanStart.invoke(
+        async () => undefined,
+        undefined,
+        [span],
+        {},
+      );
+      await openAIAgentsCoreChannels.onSpanEnd.invoke(
+        async () => undefined,
+        undefined,
+        [span],
+        {},
+      );
+      await openAIAgentsCoreChannels.onTraceEnd.invoke(
+        async () => undefined,
+        undefined,
+        [trace],
+        {},
+      );
+
+      const spans = (await backgroundLogger.drain()) as any[];
+      const recorded = spans.find(
+        (row) =>
+          row.span_attributes?.name ===
+          (spanData.type === "task" ? "Agent workflow" : "Turn"),
+      );
+      expect(recorded?.span_attributes?.type).toBe("task");
+      expect(recorded?.metrics).toMatchObject({
+        prompt_tokens: 20,
+        completion_tokens: 5,
+        tokens: 25,
+        prompt_cached_tokens: 10,
+        prompt_cache_creation_tokens: 3,
+      });
+      if (spanData.type === "turn") {
+        expect(recorded?.metadata).toMatchObject({
+          turn: 2,
+          agent_name: "Weather Agent",
+        });
+      }
+    },
+  );
+
+  it.each([
+    {
+      spanName: "Generation",
+      spanData: {
+        type: "generation",
+        model: "gpt-4.1-mini",
+        input: [{ role: "user", content: "What is 2+2?" }],
+        output: [{ role: "assistant", content: "4" }],
+        usage: { prompt_tokens: 5, completion_tokens: 1, total_tokens: 6 },
+      },
+      metrics: { prompt_tokens: 5, completion_tokens: 1, tokens: 6 },
+      reasoningTokens: undefined,
+    },
+    {
+      spanName: "Response",
+      spanData: {
+        type: "response",
+        _input: "What is 2+2?",
+        _response: {
+          output: [],
+          usage: {
+            input_tokens: 10,
+            input_tokens_details: { cached_tokens: 3 },
+            output_tokens: 8,
+            output_tokens_details: { reasoning_tokens: 6 },
+            total_tokens: 18,
+          },
+        },
+      },
+      metrics: {
+        prompt_tokens: 10,
+        prompt_cached_tokens: 3,
+        completion_tokens: 8,
+        tokens: 18,
+      },
+      reasoningTokens: 6,
+    },
+  ] satisfies {
+    spanName: string;
+    spanData: OpenAIAgentsSpanData;
+    metrics: Record<string, number>;
+    reasoningTokens: number | undefined;
+  }[])(
+    "records $spanName spans from OpenAI Agents trace processor lifecycle events",
+    async ({ spanName, spanData, metrics, reasoningTokens }) => {
+      const trace: OpenAIAgentsTrace = {
+        type: "trace",
+        traceId: "trace-openai-agents-auto",
+        name: "Agent workflow",
+        groupId: "group-openai-agents-auto",
+        metadata: { workflow: "test" },
+      };
+      const span: OpenAIAgentsSpan = {
+        type: "trace.span",
+        traceId: trace.traceId,
+        spanId: "span-model",
+        parentId: null,
+        startedAt: null,
+        endedAt: null,
+        error: null,
+        spanData,
+      };
+
+      await openAIAgentsCoreChannels.onTraceStart.invoke(
+        async () => undefined,
+        undefined,
+        [trace],
+        {},
+      );
+      await openAIAgentsCoreChannels.onSpanStart.invoke(
+        async () => undefined,
+        undefined,
+        [span],
+        {},
+      );
+      await openAIAgentsCoreChannels.onSpanEnd.invoke(
+        async () => undefined,
+        undefined,
+        [span],
+        {},
+      );
+      await openAIAgentsCoreChannels.onTraceEnd.invoke(
+        async () => undefined,
+        undefined,
+        [trace],
+        {},
+      );
+
+      const spans = (await backgroundLogger.drain()).filter(
+        (row): row is LoggingEvent =>
+          "log_id" in row && row.log_id === "g" && "span_attributes" in row,
+      );
+      const taskSpan = spans.find(
+        (row) => row.span_attributes?.name === trace.name,
+      );
+      const modelSpan = spans.find(
+        (row) => row.span_attributes?.name === spanName,
+      );
+
+      expect(taskSpan?.span_attributes?.type).toBe("task");
+      expect(modelSpan?.span_attributes?.type).toBe("llm");
+      for (const instrumentedSpan of [taskSpan, modelSpan]) {
+        expect(instrumentedSpan?.context?.span_origin).toMatchObject({
+          instrumentation: { name: "openai-agents" },
+        });
+      }
+      expect(modelSpan?.metrics).toMatchObject(metrics);
+      expect(modelSpan?.metrics?.completion_reasoning_tokens).toBe(
+        reasoningTokens,
+      );
+    },
+  );
+});

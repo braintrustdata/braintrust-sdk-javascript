@@ -1,4 +1,4 @@
-import { expect } from "vitest";
+import { expect } from "vite-plus/test";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import { findAllSpans } from "../../helpers/trace-selectors";
 
@@ -111,7 +111,7 @@ export function assertAudioTrace(raw: CapturedLogEvent[]) {
   for (const event of events.filter((e) => e.span.name === "session")) {
     const { session, segments } = audioSession(event);
     if (!session) continue;
-    expect(event.metadata?.["audio.schema.version"]).toBe("3.0.0");
+    expect(event.metadata?.["audio.schema.version"]).toBe("3.1.0");
     expect(Number.isInteger(session.timeline.origin_unix_ms)).toBe(true);
     for (const member of [
       ...Object.values(session.participants ?? {}),

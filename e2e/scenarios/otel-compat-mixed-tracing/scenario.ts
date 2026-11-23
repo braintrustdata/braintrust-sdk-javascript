@@ -1,7 +1,14 @@
+import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
+import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { context as otelContext, trace } from "@opentelemetry/api";
 import { AsyncHooksContextManager } from "@opentelemetry/context-async-hooks";
-import { BraintrustSpanProcessor, setupOtelCompat } from "@braintrust/otel";
-import { getContextManager, initLogger } from "braintrust";
+import {
+  BraintrustSpanProcessor,
+  setupOtelCompat,
+  BraintrustExporter,
+  braintrustOtlpConfig,
+} from "@braintrust/otel";
+import { initLogger, withCurrent } from "braintrust";
 import {
   createTracerProvider,
   getTestRunId,
@@ -19,9 +26,17 @@ async function main() {
 
   try {
     const processor = new BraintrustSpanProcessor({
-      apiKey: process.env.BRAINTRUST_API_KEY!,
-      apiUrl: process.env.BRAINTRUST_API_URL!,
-      parent: `project_name:${scopedName("e2e-otel-compat-mixed-tracing", testRunId)}`,
+      processor: new BatchSpanProcessor(
+        new BraintrustExporter({
+          exporter: new OTLPTraceExporter(
+            braintrustOtlpConfig({
+              apiKey: process.env.BRAINTRUST_API_KEY!,
+              apiUrl: process.env.BRAINTRUST_API_URL!,
+              parent: `project_name:${scopedName("e2e-otel-compat-mixed-tracing", testRunId)}`,
+            }),
+          ),
+        }),
+      ),
     });
     const provider = createTracerProvider([processor]);
     trace.setGlobalTracerProvider(provider);
@@ -39,9 +54,7 @@ async function main() {
         },
       },
     });
-    const contextManagerFacade = getContextManager();
-
-    await contextManagerFacade.runInContext(btRoot, async () => {
+    await withCurrent(btRoot, async () => {
       await tracer.startActiveSpan("otel-middle", async (otelSpan) => {
         const btChild = logger.startSpan({
           name: "bt-child-under-otel",

@@ -1,4 +1,4 @@
-import { describe } from "vitest";
+import { describe } from "vite-plus/test";
 import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
@@ -27,11 +27,9 @@ const claudeAgentSDKScenarios = await Promise.all(
       wrapperEntry: "scenario.ts",
     },
   ].map(async (scenario) => {
-    const { expectTaskLifecycleDetails = true, ...scenarioWithoutDefaults } =
-      scenario;
     return {
-      ...scenarioWithoutDefaults,
-      expectTaskLifecycleDetails,
+      ...scenario,
+      expectTaskLifecycleDetails: true,
       version: await readInstalledPackageVersion(
         scenarioDir,
         scenario.dependencyName,

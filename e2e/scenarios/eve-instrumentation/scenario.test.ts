@@ -1,4 +1,6 @@
-import { beforeAll, describe, expect, test } from "vitest";
+import { promises as fs } from "node:fs";
+import path from "node:path";
+import { beforeAll, describe, expect, test } from "vite-plus/test";
 import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import type {
   CapturedLogEvent,
@@ -23,15 +25,26 @@ const originalScenarioDir = resolveScenarioDir(import.meta.url);
 const scenarioDir = await prepareScenarioDir({
   scenarioDir: originalScenarioDir,
 });
+// Stable Eve v1 needs a newer AI SDK whose step output is incompatible with v0.
+// Keep separate install roots so each Eve line resolves its supported peer.
+const v1SourceDir = path.resolve(
+  originalScenarioDir,
+  "../../.bt-tmp/generated-scenarios/eve-instrumentation-v1",
+);
+await fs.rm(v1SourceDir, { force: true, recursive: true });
+await fs.cp(originalScenarioDir, v1SourceDir, {
+  recursive: true,
+  filter: (source) =>
+    !["node_modules", "versions", "__cassettes__", "__snapshots__"].includes(
+      path.basename(source),
+    ),
+});
+await fs.cp(path.join(originalScenarioDir, "versions/v1"), v1SourceDir, {
+  recursive: true,
+});
+const v1ScenarioDir = await prepareScenarioDir({ scenarioDir: v1SourceDir });
 const eveScenarios = await Promise.all(
   [
-    {
-      dependencyName: "eve-v0",
-      label: "v0 pinned",
-      provider: false,
-      tasks: false,
-      variantKey: "eve-v0",
-    },
     {
       dependencyName: "eve-v0-provider",
       label: "v0 provider minimum",
@@ -81,18 +94,24 @@ const eveScenarios = await Promise.all(
       tasks: true,
       variantKey: "eve-v1-latest",
     },
-  ].map(async (scenario) => ({
-    ...scenario,
-    version: await readInstalledPackageVersion(
-      scenarioDir,
-      scenario.dependencyName,
-    ),
-  })),
+  ].map(async (scenario) => {
+    const variantDir = scenario.dependencyName.startsWith("eve-v1")
+      ? v1ScenarioDir
+      : scenarioDir;
+    return {
+      ...scenario,
+      scenarioDir: variantDir,
+      version: await readInstalledPackageVersion(
+        variantDir,
+        scenario.dependencyName,
+      ),
+    };
+  }),
 );
 const TIMEOUT_MS =
   process.env.BRAINTRUST_E2E_CASSETTE_MODE === "record" ? 300_000 : 120_000;
 
-describe.sequential("eve instrumentation variants", () => {
+describe("eve instrumentation variants", { concurrent: false }, () => {
   for (const scenario of eveScenarios) {
     describe(`${scenario.label} (${scenario.version})`, () => {
       const [major, minor] = scenario.version.split(".").map(Number);
@@ -120,7 +139,7 @@ describe.sequential("eve instrumentation variants", () => {
                 originalScenarioDir,
                 variantKey: scenario.variantKey,
               },
-              scenarioDir,
+              scenarioDir: scenario.scenarioDir,
               timeoutMs: TIMEOUT_MS,
             });
             events = harnessEvents();
@@ -220,15 +239,9 @@ describe.sequential("eve instrumentation variants", () => {
           },
         ]);
         expect(root?.output).toContain("Final answer from read");
-        if (scenario.provider) {
-          expect(root?.metrics).not.toHaveProperty("completion_tokens");
-          expect(root?.metrics).not.toHaveProperty("prompt_tokens");
-          expect(root?.metrics).not.toHaveProperty("tokens");
-        } else {
-          expect(root?.metrics?.completion_tokens).toEqual(expect.any(Number));
-          expect(root?.metrics?.prompt_tokens).toEqual(expect.any(Number));
-          expect(root?.metrics?.tokens).toEqual(expect.any(Number));
-        }
+        expect(root?.metrics?.completion_tokens).toEqual(expect.any(Number));
+        expect(root?.metrics?.prompt_tokens).toEqual(expect.any(Number));
+        expect(root?.metrics?.tokens).toEqual(expect.any(Number));
 
         // Eve 0.70+ runs the researcher as a task, so the parent waits for its
         // result in an extra step before answering.
@@ -326,7 +339,7 @@ describe.sequential("eve instrumentation variants", () => {
             ? "Started task researcher-"
             : "Researcher result",
         );
-        expect(researcher?.error).toBeUndefined();
+        expect(researcher?.row.error).toBeUndefined();
 
         expect(childTurn).toBeDefined();
         expect(childTurn?.span.parentIds).toEqual([researcher?.span.id]);
@@ -485,7 +498,7 @@ describe.sequential("eve instrumentation variants", () => {
         ]);
         expect(secondResearcher?.span.type).toBe("tool");
         expect(secondResearcher?.span.ended).toBe(true);
-        expect(secondResearcher?.error).toBeUndefined();
+        expect(secondResearcher?.row.error).toBeUndefined();
         expect(secondResearcher?.span.parentIds).toEqual([secondRoot?.span.id]);
         expect(secondResearcher?.metadata).toMatchObject({
           "eve.session_id": secondRoot?.metadata?.["eve.session_id"],

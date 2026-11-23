@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeAll } from "vitest";
+import { describe, test, expect, beforeAll } from "vite-plus/test";
 import { registerTemplatePlugin, Prompt } from "braintrust";
 import { nunjucksPlugin } from "./index";
 

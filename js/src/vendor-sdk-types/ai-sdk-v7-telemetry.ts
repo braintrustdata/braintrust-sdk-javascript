@@ -43,6 +43,12 @@ export interface AISDKV7OperationEvent
   [key: string]: unknown;
 }
 
+export interface AISDKV7StepStartEvent {
+  callId: string;
+  providerOptions?: unknown;
+  [BRAINTRUST_AI_SDK_V7_OPERATION_KEY]?: string;
+}
+
 export interface AISDKV7LanguageModelCallStartEvent
   extends AISDKV7TelemetryOptions, AISDKV7ModelInfo {
   callId: string;
@@ -200,7 +206,7 @@ export interface AISDKV7Telemetry {
     event: AISDKV7DecisionEndEvent,
   ) => void | PromiseLike<void>;
   onStart?: (event: AISDKV7OperationEvent) => void | PromiseLike<void>;
-  onStepStart?: (event: unknown) => void | PromiseLike<void>;
+  onStepStart?: (event: AISDKV7StepStartEvent) => void | PromiseLike<void>;
   onLanguageModelCallStart?: (
     event: AISDKV7LanguageModelCallStartEvent,
   ) => void | PromiseLike<void>;

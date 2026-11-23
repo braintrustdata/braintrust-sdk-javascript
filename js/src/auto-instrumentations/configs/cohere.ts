@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { cohereChannels } from "../../instrumentation/plugins/cohere-interceptors";
+import { cohereChannels } from "../../instrumentation/providers/cohere-interceptors";
 
 // Keep major-version ranges separate to preserve prerelease matching.
 export const cohereConfigs: InstrumentationConfig[] = (

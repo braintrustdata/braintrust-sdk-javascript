@@ -1,0 +1,30 @@
+{
+  "name": "@braintrust/e2e-deepgram-instrumentation",
+  "private": true,
+  "braintrustScenario": {
+    "bump": {
+      "dependencies": {
+        "deepgram-sdk-v3-latest": {
+          "package": "@deepgram/sdk",
+          "range": "3"
+        },
+        "deepgram-sdk-v4-latest": {
+          "package": "@deepgram/sdk",
+          "range": "4"
+        },
+        "deepgram-sdk-v5-latest": {
+          "package": "@deepgram/sdk",
+          "range": "5"
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "deepgram-sdk-v3": "npm:@deepgram/sdk@3.13.0",
+    "deepgram-sdk-v3-latest": "npm:@deepgram/sdk@3.13.0",
+    "deepgram-sdk-v4": "npm:@deepgram/sdk@4.0.0",
+    "deepgram-sdk-v4-latest": "npm:@deepgram/sdk@4.11.3",
+    "deepgram-sdk-v5": "npm:@deepgram/sdk@5.0.0",
+    "deepgram-sdk-v5-latest": "npm:@deepgram/sdk@5.20.0"
+  }
+}

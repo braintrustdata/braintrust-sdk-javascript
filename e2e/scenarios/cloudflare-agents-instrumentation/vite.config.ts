@@ -3,13 +3,11 @@ import { defineConfig } from "vite";
 import { braintrustVitePlugin } from "braintrust/vite";
 
 const agentsPackageName =
-  process.env.CLOUDFLARE_AGENTS_PACKAGE_NAME ?? "agents-v0-32-latest";
+  process.env.CLOUDFLARE_AGENTS_PACKAGE_NAME ?? "agents-v0-33-latest";
 const instrumentationMode =
   process.env.CLOUDFLARE_AGENTS_INSTRUMENTATION_MODE ?? "auto";
 const braintrustPlugins =
-  instrumentationMode === "auto"
-    ? braintrustVitePlugin({ useDiagnosticChannelCompatShim: true })
-    : [];
+  instrumentationMode === "auto" ? braintrustVitePlugin({ browser: true }) : [];
 
 export default defineConfig({
   define: {

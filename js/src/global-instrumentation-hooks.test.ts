@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { randomUUID } from "node:crypto";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vite-plus/test";
 import {
   GLOBAL_INSTRUMENTATION_HOOKS_KEY,
   GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION,

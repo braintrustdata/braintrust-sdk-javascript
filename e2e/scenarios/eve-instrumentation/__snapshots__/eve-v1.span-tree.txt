@@ -12,6 +12,13 @@ span_tree:
 │     "scenario": "eve-instrumentation",
 │     "testRunId": "<run:1>"
 │   }
+│   metrics: {
+│     "completion_tokens": 1058,
+│     "prompt_cache_creation_tokens": 0,
+│     "prompt_cached_tokens": 0,
+│     "prompt_tokens": 9765,
+│     "tokens": 10823
+│   }
 │   context: {
 │     "caller_filename": "<node-internal>",
 │     "caller_functionname": "<node-internal>",
@@ -324,7 +331,7 @@ span_tree:
 │   │             "additionalProperties": false,
 │   │             "properties": {
 │   │               "timeoutSeconds": {
-│   │                 "description": "Optional. Seconds to wait before returning without a result. Omit it to wait for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
+│   │                 "description": "Optional. Seconds to wait before returning without a result. There is no upper limit, so set it above 1800 to wait longer than 30 minutes. Omit it to wait up to 30 minutes for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
 │   │                 "minimum": 1,
 │   │                 "type": "integer"
 │   │               }
@@ -377,7 +384,6 @@ span_tree:
 │   │   }
 │   │   output: "Researcher result: Eve instrumentation https://eve.dev/docs/guides/instrumentation"
 │   │   metadata: {
-│   │     "eve.action_kind": "subagent-call",
 │   │     "eve.session_id": "<eve.session_id:1>",
 │   │     "scenario": "eve-instrumentation",
 │   │     "testRunId": "<run:1>"
@@ -399,6 +405,13 @@ span_tree:
 │   │         "eve.session_id": "<eve.session_id:1>",
 │   │         "scenario": "eve-instrumentation",
 │   │         "testRunId": "<run:1>"
+│   │       }
+│   │       metrics: {
+│   │         "completion_tokens": 368,
+│   │         "prompt_cache_creation_tokens": 0,
+│   │         "prompt_cached_tokens": 0,
+│   │         "prompt_tokens": 3924,
+│   │         "tokens": 4292
 │   │       }
 │   │       context: {
 │   │         "caller_filename": "<node-internal>",
@@ -650,7 +663,6 @@ span_tree:
 │   │       │     "url": "https://eve.dev/docs/guides/instrumentation"
 │   │       │   }
 │   │       │   metadata: {
-│   │       │     "eve.action_kind": "tool-call",
 │   │       │     "eve.session_id": "<eve.session_id:1>",
 │   │       │     "scenario": "eve-instrumentation",
 │   │       │     "testRunId": "<run:1>"
@@ -931,7 +943,6 @@ span_tree:
 │   │     "url": "https://eve.dev/docs/guides/instrumentation"
 │   │   }
 │   │   metadata: {
-│   │     "eve.action_kind": "tool-call",
 │   │     "eve.session_id": "<eve.session_id:1>",
 │   │     "scenario": "eve-instrumentation",
 │   │     "testRunId": "<run:1>"
@@ -1297,7 +1308,7 @@ span_tree:
 │   │             "additionalProperties": false,
 │   │             "properties": {
 │   │               "timeoutSeconds": {
-│   │                 "description": "Optional. Seconds to wait before returning without a result. Omit it to wait for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
+│   │                 "description": "Optional. Seconds to wait before returning without a result. There is no upper limit, so set it above 1800 to wait longer than 30 minutes. Omit it to wait up to 30 minutes for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
 │   │                 "minimum": 1,
 │   │                 "type": "integer"
 │   │               }
@@ -1347,7 +1358,6 @@ span_tree:
 │   ├── eve__task_wait [tool]
 │   │   output: "researcher-<id> completed; its result follows."
 │   │   metadata: {
-│   │     "eve.action_kind": "tool-call",
 │   │     "eve.session_id": "<eve.session_id:1>",
 │   │     "scenario": "eve-instrumentation",
 │   │     "testRunId": "<run:1>"
@@ -1740,7 +1750,7 @@ span_tree:
 │                 "additionalProperties": false,
 │                 "properties": {
 │                   "timeoutSeconds": {
-│                     "description": "Optional. Seconds to wait before returning without a result. Omit it to wait for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
+│                     "description": "Optional. Seconds to wait before returning without a result. There is no upper limit, so set it above 1800 to wait longer than 30 minutes. Omit it to wait up to 30 minutes for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
 │                     "minimum": 1,
 │                     "type": "integer"
 │                   }
@@ -1799,6 +1809,13 @@ span_tree:
 │     "eve.session_id": "<eve.session_id:1>",
 │     "scenario": "eve-instrumentation",
 │     "testRunId": "<run:1>"
+│   }
+│   metrics: {
+│     "completion_tokens": 1678,
+│     "prompt_cache_creation_tokens": 0,
+│     "prompt_cached_tokens": 0,
+│     "prompt_tokens": 11048,
+│     "tokens": 12726
 │   }
 │   context: {
 │     "caller_filename": "<node-internal>",
@@ -2223,7 +2240,7 @@ span_tree:
 │   │             "additionalProperties": false,
 │   │             "properties": {
 │   │               "timeoutSeconds": {
-│   │                 "description": "Optional. Seconds to wait before returning without a result. Omit it to wait for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
+│   │                 "description": "Optional. Seconds to wait before returning without a result. There is no upper limit, so set it above 1800 to wait longer than 30 minutes. Omit it to wait up to 30 minutes for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
 │   │                 "minimum": 1,
 │   │                 "type": "integer"
 │   │               }
@@ -2276,7 +2293,6 @@ span_tree:
 │   │   }
 │   │   output: "Researcher result: The Braintrust Eve instrumentation end-to-end scenario is documented in the \"Eve instrumentation\" guide at https://eve.dev/docs/guides/instrumentation."
 │   │   metadata: {
-│   │     "eve.action_kind": "subagent-call",
 │   │     "eve.session_id": "<eve.session_id:1>",
 │   │     "scenario": "eve-instrumentation",
 │   │     "testRunId": "<run:1>"
@@ -2298,6 +2314,13 @@ span_tree:
 │   │         "eve.session_id": "<eve.session_id:1>",
 │   │         "scenario": "eve-instrumentation",
 │   │         "testRunId": "<run:1>"
+│   │       }
+│   │       metrics: {
+│   │         "completion_tokens": 325,
+│   │         "prompt_cache_creation_tokens": 0,
+│   │         "prompt_cached_tokens": 0,
+│   │         "prompt_tokens": 3871,
+│   │         "tokens": 4196
 │   │       }
 │   │       context: {
 │   │         "caller_filename": "<node-internal>",
@@ -2549,7 +2572,6 @@ span_tree:
 │   │       │     "url": "https://eve.dev/docs/guides/instrumentation"
 │   │       │   }
 │   │       │   metadata: {
-│   │       │     "eve.action_kind": "tool-call",
 │   │       │     "eve.session_id": "<eve.session_id:1>",
 │   │       │     "scenario": "eve-instrumentation",
 │   │       │     "testRunId": "<run:1>"
@@ -2830,7 +2852,6 @@ span_tree:
 │   │     "url": "https://eve.dev/docs/guides/instrumentation"
 │   │   }
 │   │   metadata: {
-│   │     "eve.action_kind": "tool-call",
 │   │     "eve.session_id": "<eve.session_id:1>",
 │   │     "scenario": "eve-instrumentation",
 │   │     "testRunId": "<run:1>"
@@ -3307,7 +3328,7 @@ span_tree:
 │   │             "additionalProperties": false,
 │   │             "properties": {
 │   │               "timeoutSeconds": {
-│   │                 "description": "Optional. Seconds to wait before returning without a result. Omit it to wait for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
+│   │                 "description": "Optional. Seconds to wait before returning without a result. There is no upper limit, so set it above 1800 to wait longer than 30 minutes. Omit it to wait up to 30 minutes for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
 │   │                 "minimum": 1,
 │   │                 "type": "integer"
 │   │               }
@@ -3357,7 +3378,6 @@ span_tree:
 │   ├── eve__task_wait [tool]
 │   │   output: "researcher-<id> completed; its result follows."
 │   │   metadata: {
-│   │     "eve.action_kind": "tool-call",
 │   │     "eve.session_id": "<eve.session_id:1>",
 │   │     "scenario": "eve-instrumentation",
 │   │     "testRunId": "<run:1>"
@@ -3861,7 +3881,7 @@ span_tree:
 │                 "additionalProperties": false,
 │                 "properties": {
 │                   "timeoutSeconds": {
-│                     "description": "Optional. Seconds to wait before returning without a result. Omit it to wait for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
+│                     "description": "Optional. Seconds to wait before returning without a result. There is no upper limit, so set it above 1800 to wait longer than 30 minutes. Omit it to wait up to 30 minutes for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
 │                     "minimum": 1,
 │                     "type": "integer"
 │                   }
@@ -3914,7 +3934,7 @@ span_tree:
       "testRunId": "<run:1>"
     }
     context: {
-      "caller_filename": "<repo>/e2e/scenarios/eve-instrumentation/scenario.ts",
+      "caller_filename": "<repo>/e2e/scenarios/eve-instrumentation-v1/scenario.ts",
       "caller_functionname": "runTracedCallerSession",
       "caller_lineno": 0
     }
@@ -3930,6 +3950,13 @@ span_tree:
           "eve.session_id": "<eve.session_id:1>",
           "scenario": "eve-instrumentation",
           "testRunId": "<run:1>"
+        }
+        metrics: {
+          "completion_tokens": 1660,
+          "prompt_cache_creation_tokens": 0,
+          "prompt_cached_tokens": 0,
+          "prompt_tokens": 9698,
+          "tokens": 11358
         }
         context: {
           "caller_filename": "<node-internal>",
@@ -4243,7 +4270,7 @@ span_tree:
         │             "additionalProperties": false,
         │             "properties": {
         │               "timeoutSeconds": {
-        │                 "description": "Optional. Seconds to wait before returning without a result. Omit it to wait for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
+        │                 "description": "Optional. Seconds to wait before returning without a result. There is no upper limit, so set it above 1800 to wait longer than 30 minutes. Omit it to wait up to 30 minutes for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
         │                 "minimum": 1,
         │                 "type": "integer"
         │               }
@@ -4296,7 +4323,6 @@ span_tree:
         │   }
         │   output: "Researcher result: Eve instrumentation https://eve.dev/docs/guides/instrumentation"
         │   metadata: {
-        │     "eve.action_kind": "subagent-call",
         │     "eve.session_id": "<eve.session_id:1>",
         │     "scenario": "eve-instrumentation",
         │     "testRunId": "<run:1>"
@@ -4318,6 +4344,13 @@ span_tree:
         │         "eve.session_id": "<eve.session_id:1>",
         │         "scenario": "eve-instrumentation",
         │         "testRunId": "<run:1>"
+        │       }
+        │       metrics: {
+        │         "completion_tokens": 325,
+        │         "prompt_cache_creation_tokens": 0,
+        │         "prompt_cached_tokens": 0,
+        │         "prompt_tokens": 3906,
+        │         "tokens": 4231
         │       }
         │       context: {
         │         "caller_filename": "<node-internal>",
@@ -4569,7 +4602,6 @@ span_tree:
         │       │     "url": "https://eve.dev/docs/guides/instrumentation"
         │       │   }
         │       │   metadata: {
-        │       │     "eve.action_kind": "tool-call",
         │       │     "eve.session_id": "<eve.session_id:1>",
         │       │     "scenario": "eve-instrumentation",
         │       │     "testRunId": "<run:1>"
@@ -4850,7 +4882,6 @@ span_tree:
         │     "url": "https://eve.dev/docs/guides/instrumentation"
         │   }
         │   metadata: {
-        │     "eve.action_kind": "tool-call",
         │     "eve.session_id": "<eve.session_id:1>",
         │     "scenario": "eve-instrumentation",
         │     "testRunId": "<run:1>"
@@ -5216,7 +5247,7 @@ span_tree:
         │             "additionalProperties": false,
         │             "properties": {
         │               "timeoutSeconds": {
-        │                 "description": "Optional. Seconds to wait before returning without a result. Omit it to wait for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
+        │                 "description": "Optional. Seconds to wait before returning without a result. There is no upper limit, so set it above 1800 to wait longer than 30 minutes. Omit it to wait up to 30 minutes for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
         │                 "minimum": 1,
         │                 "type": "integer"
         │               }
@@ -5266,7 +5297,6 @@ span_tree:
         ├── eve__task_wait [tool]
         │   output: "researcher-<id> completed; its result follows."
         │   metadata: {
-        │     "eve.action_kind": "tool-call",
         │     "eve.session_id": "<eve.session_id:1>",
         │     "scenario": "eve-instrumentation",
         │     "testRunId": "<run:1>"
@@ -5659,7 +5689,7 @@ span_tree:
                       "additionalProperties": false,
                       "properties": {
                         "timeoutSeconds": {
-                          "description": "Optional. Seconds to wait before returning without a result. Omit it to wait for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
+                          "description": "Optional. Seconds to wait before returning without a result. There is no upper limit, so set it above 1800 to wait longer than 30 minutes. Omit it to wait up to 30 minutes for a result or a new message, which is almost always right. Don't use short timeouts to check on tasks: results reach you without checking.",
                           "minimum": 1,
                           "type": "integer"
                         }

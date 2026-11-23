@@ -177,16 +177,8 @@
                         "type": "input_text"
                       },
                       {
-                        "image_url": "<omitted>",
-                        "type": "input_image"
-                      },
-                      {
                         "text": "Here is the second image.",
                         "type": "input_text"
-                      },
-                      {
-                        "image_url": "<omitted>",
-                        "type": "input_image"
                       }
                     ],
                     "role": "user"
@@ -414,6 +406,7 @@
                 "max_tokens": 12,
                 "model": "gpt-4o-mini-2024-07-18",
                 "provider": "openai",
+                "served_service_tier": "default",
                 "temperature": 0
               },
               "metrics": {
@@ -470,6 +463,7 @@
                 "max_tokens": 12,
                 "model": "gpt-4o-mini-2024-07-18",
                 "provider": "openai",
+                "served_service_tier": "default",
                 "temperature": 0
               },
               "metrics": {
@@ -542,6 +536,7 @@
                 "max_tokens": 24,
                 "model": "gpt-4o-mini-2024-07-18",
                 "provider": "openai",
+                "served_service_tier": "default",
                 "temperature": 0
               },
               "metrics": {
@@ -600,21 +595,22 @@
               ],
               "output": [
                 {
-                  "finish_reason": "length",
+                  "finish_reason": "stop",
                   "index": 0,
                   "logprobs": null,
                   "message": {
                     "annotations": [],
-                    "content": "I can't access the content of the document to summarize it. If you can provide text or details from it, I'd be",
+                    "content": "Honeybees are essential for pollinating flowers and aiding fruit production.",
                     "refusal": null,
                     "role": "assistant"
                   }
                 }
               ],
               "metadata": {
-                "max_tokens": 24,
+                "max_tokens": 64,
                 "model": "gpt-4o-mini-2024-07-18",
                 "provider": "openai",
+                "served_service_tier": "default",
                 "temperature": 0
               },
               "metrics": {
@@ -622,12 +618,12 @@
                 "completion_audio_tokens": 0,
                 "completion_reasoning_tokens": 0,
                 "completion_rejected_prediction_tokens": 0,
-                "completion_tokens": 24,
+                "completion_tokens": 14,
                 "prompt_audio_tokens": 0,
                 "prompt_cached_tokens": 0,
-                "prompt_tokens": 236,
+                "prompt_tokens": 245,
                 "time_to_first_token": 0,
-                "tokens": 260
+                "tokens": 259
               }
             }
           ],
@@ -681,6 +677,7 @@
                 "max_tokens": 64,
                 "model": "gpt-4o-mini-2024-07-18",
                 "provider": "openai",
+                "served_service_tier": "default",
                 "temperature": 0,
                 "tool_choice": {
                   "function": {
@@ -762,6 +759,7 @@
                 "max_tokens": 12,
                 "model": "gpt-4o-mini-2024-07-18",
                 "provider": "openai",
+                "served_service_tier": "default",
                 "stream": true,
                 "stream_options": {
                   "include_usage": true
@@ -908,6 +906,7 @@
                 ],
                 "model": "gpt-audio-1.5",
                 "provider": "openai",
+                "served_service_tier": "default",
                 "stream": true,
                 "stream_options": {
                   "include_usage": true
@@ -968,6 +967,7 @@
                 "max_tokens": 24,
                 "model": "gpt-4o-mini-2024-07-18",
                 "provider": "openai",
+                "served_service_tier": "default",
                 "stream": true,
                 "stream_options": {
                   "include_usage": true
@@ -1035,6 +1035,7 @@
                 "max_tokens": 64,
                 "model": "gpt-4o-mini-2024-07-18",
                 "provider": "openai",
+                "served_service_tier": "default",
                 "stream": true,
                 "stream_options": {
                   "include_usage": true
@@ -1339,7 +1340,8 @@
                     }
                   },
                   "type": "json_schema"
-                }
+                },
+                "served_service_tier": "default"
               },
               "metrics": {
                 "completion_accepted_prediction_tokens": 0,
@@ -1395,6 +1397,7 @@
                 "max_tokens": 24,
                 "model": "gpt-4o-mini-2024-07-18",
                 "provider": "openai",
+                "served_service_tier": "default",
                 "temperature": 0
               },
               "metrics": {
@@ -2454,6 +2457,7 @@
                   "summary": null
                 },
                 "safety_identifier": null,
+                "served_service_tier": "default",
                 "service_tier": "default",
                 "status": "completed",
                 "store": true,
@@ -2564,6 +2568,7 @@
                   "summary": null
                 },
                 "safety_identifier": null,
+                "served_service_tier": "default",
                 "service_tier": "default",
                 "status": "completed",
                 "store": true,
@@ -2670,6 +2675,7 @@
                   "summary": null
                 },
                 "safety_identifier": null,
+                "served_service_tier": "default",
                 "service_tier": "default",
                 "status": "completed",
                 "store": true,
@@ -2777,6 +2783,7 @@
                   "summary": null
                 },
                 "safety_identifier": null,
+                "served_service_tier": "default",
                 "service_tier": "default",
                 "status": "completed",
                 "store": true,
@@ -2906,6 +2913,7 @@
                   "summary": null
                 },
                 "safety_identifier": null,
+                "served_service_tier": "default",
                 "service_tier": "default",
                 "status": "incomplete",
                 "store": true,
@@ -3016,6 +3024,7 @@
                   "summary": null
                 },
                 "safety_identifier": null,
+                "served_service_tier": "default",
                 "service_tier": "default",
                 "status": "incomplete",
                 "store": true,
@@ -3134,6 +3143,7 @@
                   "summary": null
                 },
                 "safety_identifier": null,
+                "served_service_tier": "default",
                 "service_tier": "default",
                 "status": "completed",
                 "store": true,

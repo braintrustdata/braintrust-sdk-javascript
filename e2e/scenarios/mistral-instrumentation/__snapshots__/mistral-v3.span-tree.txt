@@ -4,10 +4,280 @@ span_tree:
       "scenario": "mistral-instrumentation",
       "testRunId": "<run:1>"
     }
+    context: {
+      "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+      "caller_functionname": "runTracedScenario",
+      "caller_lineno": 0
+    }
+    ├── ocr
+    │   metadata: {
+    │     "operation": "ocr",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
+    │   }
+    │   └── mistral.ocr.process [llm]
+    │       input: {
+    │         "content": [
+    │           {
+    │             "file": {
+    │               "file_data": {
+    │                 "content_type": "application/pdf",
+    │                 "filename": "media.pdf",
+    │                 "key": "<uuid:1>",
+    │                 "type": "braintrust_attachment"
+    │               },
+    │               "filename": "document.pdf"
+    │             },
+    │             "type": "file"
+    │           }
+    │         ],
+    │         "operation": "ocr",
+    │         "parameters": {
+    │           "include_images": true
+    │         }
+    │       }
+    │       output: {
+    │         "annotations": {
+    │           "documentAnnotation": null,
+    │           "pages": [
+    │             {
+    │               "dimensions": {
+    │                 "dpi": 93,
+    │                 "height": 1023,
+    │                 "width": 791
+    │               },
+    │               "footer": null,
+    │               "header": null,
+    │               "hyperlinks": [],
+    │               "images": [],
+    │               "index": 0,
+    │               "markdown": "This is a test PDF. It contains only a few sentences.",
+    │               "tables": []
+    │             }
+    │           ],
+    │           "usage": {
+    │             "docSizeBytes": 10853,
+    │             "pagesProcessed": 1
+    │           }
+    │         },
+    │         "content": []
+    │       }
+    │       metadata: {
+    │         "model": "mistral-ocr-latest",
+    │         "provider": "mistral"
+    │       }
+    ├── transcription
+    │   metadata: {
+    │     "operation": "transcription",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
+    │   }
+    │   └── mistral.audio.transcriptions.complete [llm]
+    │       input: {
+    │         "content": [
+    │           {
+    │             "file": {
+    │               "file_data": {
+    │                 "content_type": "audio/wav",
+    │                 "filename": "test-audio.wav",
+    │                 "key": "<uuid:1>",
+    │                 "type": "braintrust_attachment"
+    │               },
+    │               "filename": "test-audio.wav"
+    │             },
+    │             "type": "file"
+    │           }
+    │         ],
+    │         "operation": "transcribe",
+    │         "parameters": {
+    │           "language": "en"
+    │         }
+    │       }
+    │       output: {
+    │         "annotations": {
+    │           "duration": 0,
+    │           "language": null,
+    │           "segments": []
+    │         },
+    │         "content": [
+    │           {
+    │             "text": "How old is the Brooklyn Bridge?",
+    │             "type": "text"
+    │           }
+    │         ]
+    │       }
+    │       metadata: {
+    │         "model": "voxtral-mini-latest",
+    │         "provider": "mistral",
+    │         "served_service_tier": "standard"
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 8,
+    │         "prompt_audio_tokens": 375,
+    │         "prompt_cached_tokens": 1,
+    │         "prompt_tokens": 380,
+    │         "tokens": 388
+    │       }
+    ├── transcription-stream
+    │   metadata: {
+    │     "operation": "transcription-stream",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
+    │   }
+    │   └── mistral.audio.transcriptions.stream [llm]
+    │       input: {
+    │         "content": [
+    │           {
+    │             "file": {
+    │               "file_data": {
+    │                 "content_type": "audio/wav",
+    │                 "filename": "test-audio.wav",
+    │                 "key": "<uuid:1>",
+    │                 "type": "braintrust_attachment"
+    │               },
+    │               "filename": "test-audio.wav"
+    │             },
+    │             "type": "file"
+    │           }
+    │         ],
+    │         "operation": "transcribe",
+    │         "parameters": {
+    │           "language": "en"
+    │         }
+    │       }
+    │       output: {
+    │         "annotations": {
+    │           "duration": 0,
+    │           "language": null,
+    │           "segments": []
+    │         },
+    │         "content": [
+    │           {
+    │             "text": "How old is the Brooklyn Bridge?",
+    │             "type": "text"
+    │           }
+    │         ]
+    │       }
+    │       metadata: {
+    │         "model": "voxtral-mini-latest",
+    │         "provider": "mistral",
+    │         "served_service_tier": "standard"
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 8,
+    │         "prompt_audio_tokens": 375,
+    │         "prompt_cached_tokens": 1,
+    │         "prompt_tokens": 380,
+    │         "time_to_first_token": 0,
+    │         "tokens": 388
+    │       }
+    ├── speech
+    │   metadata: {
+    │     "operation": "speech",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
+    │   }
+    │   └── mistral.audio.speech.complete [llm]
+    │       input: {
+    │         "operation": "speech",
+    │         "parameters": {
+    │           "format": "mp3",
+    │           "voice": "<uuid:1>"
+    │         },
+    │         "prompt": "Hello from Braintrust."
+    │       }
+    │       output: {
+    │         "content": [
+    │           {
+    │             "file": {
+    │               "byte_size": 12694,
+    │               "file_data": {
+    │                 "content_type": "audio/mpeg",
+    │                 "filename": "speech.mp3",
+    │                 "key": "<uuid:1>",
+    │                 "type": "braintrust_attachment"
+    │               },
+    │               "filename": "speech.mp3"
+    │             },
+    │             "type": "file"
+    │           }
+    │         ]
+    │       }
+    │       metadata: {
+    │         "model": "voxtral-mini-tts-2603",
+    │         "provider": "mistral"
+    │       }
+    ├── speech-stream
+    │   metadata: {
+    │     "operation": "speech-stream",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
+    │   }
+    │   └── mistral.audio.speech.complete [llm]
+    │       input: {
+    │         "operation": "speech",
+    │         "parameters": {
+    │           "format": "mp3",
+    │           "voice": "<uuid:1>"
+    │         },
+    │         "prompt": "Hello from Braintrust."
+    │       }
+    │       output: {
+    │         "content": [
+    │           {
+    │             "file": {
+    │               "byte_size": 10558,
+    │               "file_data": {
+    │                 "content_type": "audio/mpeg",
+    │                 "filename": "speech.mp3",
+    │                 "key": "<uuid:1>",
+    │                 "type": "braintrust_attachment"
+    │               },
+    │               "filename": "speech.mp3"
+    │             },
+    │             "type": "file"
+    │           }
+    │         ]
+    │       }
+    │       metadata: {
+    │         "model": "voxtral-mini-tts-2603",
+    │         "provider": "mistral"
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 32640,
+    │         "prompt_tokens": 142,
+    │         "time_to_first_token": 0,
+    │         "tokens": 32782
+    │       }
     ├── mistral-chat-complete-operation
     │   metadata: {
     │     "operation": "chat-complete",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── mistral.chat.complete [llm]
     │       input: [
@@ -53,6 +323,11 @@ span_tree:
     │     "operation": "chat-stream",
     │     "testRunId": "<run:1>"
     │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
+    │   }
     │   └── mistral.chat.stream [llm]
     │       input: [
     │         {
@@ -91,6 +366,11 @@ span_tree:
     │   metadata: {
     │     "operation": "chat-stream-reasoning",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── mistral.chat.stream [llm]
     │       input: [
@@ -132,6 +412,11 @@ span_tree:
     │     "operation": "chat-stream-thinking",
     │     "testRunId": "<run:1>"
     │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
+    │   }
     │   └── mistral.chat.stream [llm]
     │       input: [
     │         {
@@ -170,6 +455,11 @@ span_tree:
     │   metadata: {
     │     "operation": "chat-tool-call",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   ├── mistral.chat.complete [llm]
     │   │   input: [
@@ -327,6 +617,11 @@ span_tree:
     │     "operation": "fim-complete",
     │     "testRunId": "<run:1>"
     │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
+    │   }
     │   └── mistral.fim.complete [llm]
     │       input: "function add(a, b) {"
     │       output: [
@@ -362,6 +657,11 @@ span_tree:
     │     "operation": "fim-stream",
     │     "testRunId": "<run:1>"
     │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
+    │   }
     │   └── mistral.fim.stream [llm]
     │       input: "const project = "
     │       output: [
@@ -395,6 +695,11 @@ span_tree:
     │   metadata: {
     │     "operation": "agents-complete",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── mistral.agents.complete [llm]
     │       input: [
@@ -439,6 +744,11 @@ span_tree:
     │   metadata: {
     │     "operation": "agents-tool-call",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── mistral.agents.complete [llm]
     │       input: [
@@ -495,6 +805,11 @@ span_tree:
     │     "operation": "agents-stream",
     │     "testRunId": "<run:1>"
     │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
+    │   }
     │   └── mistral.agents.stream [llm]
     │       input: [
     │         {
@@ -538,6 +853,11 @@ span_tree:
     │     "operation": "embeddings-create",
     │     "testRunId": "<run:1>"
     │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
+    │   }
     │   └── mistral.embeddings.create [llm]
     │       input: "braintrust mistral instrumentation"
     │       output: {
@@ -558,6 +878,11 @@ span_tree:
     │   metadata: {
     │     "operation": "classifiers-moderate",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
     │   }
     │   └── mistral.classifiers.moderate [llm]
     │       input: "A short and harmless moderation fixture."
@@ -600,6 +925,11 @@ span_tree:
         metadata: {
           "operation": "classifiers-moderate-chat",
           "testRunId": "<run:1>"
+        }
+        context: {
+          "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+          "caller_functionname": "runOperation",
+          "caller_lineno": 0
         }
         └── mistral.classifiers.moderateChat [llm]
             input: [

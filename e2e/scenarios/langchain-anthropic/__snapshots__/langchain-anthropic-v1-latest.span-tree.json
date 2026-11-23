@@ -185,6 +185,7 @@
                   "lc": 1,
                   "type": "constructor"
                 },
+                "served_service_tier": "standard",
                 "tags": []
               },
               "metrics": {
@@ -349,6 +350,7 @@
                   "lc": 1,
                   "type": "constructor"
                 },
+                "served_service_tier": "standard",
                 "tags": []
               },
               "metrics": {
@@ -522,6 +524,7 @@
                   "lc": 1,
                   "type": "constructor"
                 },
+                "served_service_tier": "standard",
                 "tags": []
               },
               "metrics": {
@@ -730,6 +733,7 @@
                   "lc": 1,
                   "type": "constructor"
                 },
+                "served_service_tier": "standard",
                 "tags": []
               },
               "metrics": {
@@ -894,6 +898,7 @@
                   "lc": 1,
                   "type": "constructor"
                 },
+                "served_service_tier": "standard",
                 "tags": []
               },
               "metrics": {
@@ -1067,6 +1072,7 @@
                   "lc": 1,
                   "type": "constructor"
                 },
+                "served_service_tier": "standard",
                 "tags": []
               },
               "metrics": {

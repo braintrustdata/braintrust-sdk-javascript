@@ -27,9 +27,7 @@ export interface SpanCustomizer {
 export interface InstrumentationIntegrationsConfig {
   openai?: boolean;
   anthropic?: boolean;
-  vercel?: boolean;
   aisdk?: boolean;
-  google?: boolean;
   googleGenAI?: boolean;
   googleGenerativeAI?: boolean;
   googleADK?: boolean;
@@ -37,9 +35,7 @@ export interface InstrumentationIntegrationsConfig {
   claudeAgentSDK?: boolean;
   cloudflareAIChat?: boolean;
   cloudflareThink?: boolean;
-  cursor?: boolean;
   cursorSDK?: boolean;
-  flue?: boolean;
   mastra?: boolean;
   openAIAgents?: boolean;
   openrouter?: boolean;
@@ -48,8 +44,6 @@ export interface InstrumentationIntegrationsConfig {
   ollama?: boolean;
   cohere?: boolean;
   groq?: boolean;
-  bedrock?: boolean;
-  awsBedrock?: boolean;
   awsBedrockRuntime?: boolean;
   genkit?: boolean;
   gitHubCopilot?: boolean;
@@ -64,6 +58,8 @@ export interface InstrumentationIntegrationsConfig {
   voyageai?: boolean;
   typesafe?: boolean;
   workersAI?: boolean;
+  deepgram?: boolean;
+  fal?: boolean;
   elevenlabs?: boolean;
   /** Set to false to disable, or pass options; options keep LiveKit enabled. */
   livekit?: boolean | LiveKitIntegrationConfig;
@@ -121,12 +117,14 @@ export interface AudioEncodingConfig {
   container?: { name: "ogg" };
 }
 
-export const DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES = 4 * 1024 * 1024;
+export const DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES: number =
+  4 * 1024 * 1024;
 
 export interface InstrumentationConfig {
   /**
    * Capture settings for automatically injected LangChain/LangGraph handlers.
-   * All fields default to true. Disabled payloads are omitted before copying.
+   * Capture defaults to true. Tool definitions follow captureModelInputs unless
+   * captureModelToolDefinitions is set. Disabled payloads are omitted before copying.
    * Spans, timing, errors, and metadata remain available.
    * Configure before initializing the SDK or loading braintrust/hook.mjs.
    * Use provider instrumentation to capture model payloads and usage when
@@ -201,24 +199,22 @@ const envIntegrationAliases: Record<
   aisdk: "aisdk",
   "ai-sdk": "aisdk",
   "vercel-ai": "aisdk",
-  vercel: "vercel",
+  vercel: "aisdk",
   claudeagentsdk: "claudeAgentSDK",
   "claude-agent-sdk": "claudeAgentSDK",
   cloudflareaichat: "cloudflareAIChat",
   "cloudflare-ai-chat": "cloudflareAIChat",
   "@cloudflare/ai-chat": "cloudflareAIChat",
   cloudflarethink: "cloudflareThink",
-  cursor: "cursor",
+  cursor: "cursorSDK",
   "cursor-sdk": "cursorSDK",
   cursorsdk: "cursorSDK",
-  flue: "flue",
-  "flue-runtime": "flue",
   mastra: "mastra",
   "openai-agents": "openAIAgents",
   openaiagents: "openAIAgents",
   "openai-agents-core": "openAIAgents",
   openaiagentscore: "openAIAgents",
-  google: "google",
+  google: "googleGenAI",
   "google-generative-ai": "googleGenerativeAI",
   googlegenerativeai: "googleGenerativeAI",
   "google-genai": "googleGenAI",
@@ -236,9 +232,9 @@ const envIntegrationAliases: Record<
   cohere: "cohere",
   groq: "groq",
   "groq-sdk": "groq",
-  bedrock: "bedrock",
-  "aws-bedrock": "awsBedrock",
-  awsbedrock: "awsBedrock",
+  bedrock: "awsBedrockRuntime",
+  "aws-bedrock": "awsBedrockRuntime",
+  awsbedrock: "awsBedrockRuntime",
   "aws-bedrock-runtime": "awsBedrockRuntime",
   awsbedrockruntime: "awsBedrockRuntime",
   "@aws-sdk/client-bedrock-runtime": "awsBedrockRuntime",
@@ -263,6 +259,10 @@ const envIntegrationAliases: Record<
   typesafe: "typesafe",
   "typesafe-ai": "typesafe",
   "@typesafe-ai/sdk": "typesafe",
+  deepgram: "deepgram",
+  "@deepgram/sdk": "deepgram",
+  fal: "fal",
+  "@fal-ai/client": "fal",
   elevenlabs: "elevenlabs",
   "@elevenlabs/elevenlabs-js": "elevenlabs",
   livekit: "livekit",
@@ -275,58 +275,6 @@ const envIntegrationAliases: Record<
   mcphandler: "mcpHandler",
   "mcp-handler": "mcpHandler",
 };
-
-export function getDefaultInstrumentationIntegrations(): Record<
-  keyof InstrumentationIntegrationsConfig,
-  boolean
-> {
-  return {
-    openai: true,
-    openaiCodexSDK: true,
-    anthropic: true,
-    vercel: true,
-    aisdk: true,
-    google: true,
-    googleGenAI: true,
-    googleGenerativeAI: true,
-    googleADK: true,
-    huggingface: true,
-    claudeAgentSDK: true,
-    cloudflareAIChat: true,
-    cloudflareThink: true,
-    cursor: true,
-    cursorSDK: true,
-    flue: true,
-    mastra: true,
-    openAIAgents: true,
-    openrouter: true,
-    openrouterAgent: true,
-    mistral: true,
-    ollama: true,
-    cohere: true,
-    groq: true,
-    bedrock: true,
-    awsBedrock: true,
-    awsBedrockRuntime: true,
-    genkit: true,
-    gitHubCopilot: true,
-    langchain: true,
-    langgraph: true,
-    langgraphSDK: true,
-    langsmith: true,
-    voyageai: true,
-    typesafe: true,
-    workersAI: true,
-    elevenlabs: true,
-    livekit: true,
-    mcp: true,
-    fastmcp: true,
-    mcpHandler: true,
-    piCodingAgent: true,
-    strandsAgentSDK: true,
-    cloudflareAgents: true,
-  };
-}
 
 export function readDisabledInstrumentationEnvConfig(
   disabledList: string | undefined,

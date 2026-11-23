@@ -69,6 +69,14 @@
       {
         "variantKey": "cloudflare-agents-v0-32-latest",
         "label": "v0.32 latest"
+      },
+      {
+        "variantKey": "cloudflare-agents-v0-33",
+        "label": "v0.33 pinned"
+      },
+      {
+        "variantKey": "cloudflare-agents-v0-33-latest",
+        "label": "v0.33 latest"
       }
     ]
   },
@@ -389,6 +397,21 @@
     ]
   },
   {
+    "scenarioDirName": "google-genai-decisions-instrumentation",
+    "label": "Google GenAI Decisions Instrumentation",
+    "metadataScenario": "google-genai-decisions-instrumentation",
+    "variants": [
+      {
+        "variantKey": "google-genai-decisions-v3",
+        "label": "v3 pinned"
+      },
+      {
+        "variantKey": "google-genai-decisions-v3-latest",
+        "label": "v3 latest"
+      }
+    ]
+  },
+  {
     "scenarioDirName": "genkit-instrumentation",
     "label": "Genkit Instrumentation",
     "metadataScenario": "genkit-instrumentation",
@@ -555,7 +578,7 @@
     "variants": [
       {
         "variantKey": "mistral-v1",
-        "label": "v1 pinned"
+        "label": "v1 pinned (chat 1.3.4, media 1.9.17)"
       },
       {
         "variantKey": "mistral-v1-latest",
@@ -768,14 +791,6 @@
     "metadataScenario": "ai-sdk-instrumentation",
     "variants": [
       {
-        "variantKey": "ai-sdk-v3",
-        "label": "v3 pinned"
-      },
-      {
-        "variantKey": "ai-sdk-v3-latest",
-        "label": "v3 latest"
-      },
-      {
         "variantKey": "ai-sdk-v4",
         "label": "v4 pinned"
       },
@@ -860,14 +875,6 @@
     "metadataScenario": "flue-instrumentation",
     "variants": [
       {
-        "variantKey": "flue-v0-8-0",
-        "label": "v0.8 pinned"
-      },
-      {
-        "variantKey": "flue-v0-8-latest",
-        "label": "v0.8 latest"
-      },
-      {
         "variantKey": "flue-v1-0-0-beta-3",
         "label": "v1 pinned"
       },
@@ -890,10 +897,6 @@
     "label": "Eve Instrumentation",
     "metadataScenario": "eve-instrumentation",
     "variants": [
-      {
-        "variantKey": "eve-v0",
-        "label": "v0 pinned"
-      },
       {
         "variantKey": "eve-v0-provider",
         "label": "v0 provider minimum"
@@ -930,20 +933,20 @@
     "metadataScenario": "github-copilot-instrumentation",
     "variants": [
       {
-        "variantKey": "github-copilot-v0-wrapped",
-        "label": "v0 pinned wrapped"
+        "variantKey": "github-copilot-v0",
+        "label": "v0 pinned"
       },
       {
-        "variantKey": "github-copilot-v0-auto",
-        "label": "v0 pinned auto-hook"
+        "variantKey": "github-copilot-v0-latest",
+        "label": "v0 latest"
       },
       {
-        "variantKey": "github-copilot-v0-latest-wrapped",
-        "label": "v0 latest wrapped"
+        "variantKey": "github-copilot-v1",
+        "label": "v1 pinned"
       },
       {
-        "variantKey": "github-copilot-v0-latest-auto",
-        "label": "v0 latest auto-hook"
+        "variantKey": "github-copilot-v1-latest",
+        "label": "v1 latest"
       }
     ]
   },
@@ -1027,6 +1030,14 @@
       {
         "variantKey": "vitest-v4-latest",
         "label": "v4 latest"
+      },
+      {
+        "variantKey": "vitest-v5",
+        "label": "v5 pinned"
+      },
+      {
+        "variantKey": "vitest-v5-latest",
+        "label": "v5 latest"
       }
     ],
     "evals": [
@@ -1035,21 +1046,6 @@
         "experimentNameTemplate": "vitest-evals-reporter-{testRunId}",
         "label": "vitest-evals reporter",
         "variantKey": "vitest-evals-reporter"
-      }
-    ]
-  },
-  {
-    "scenarioDirName": "wrap-langchain-js-traces",
-    "label": "LangChain JS Wrapper Traces",
-    "metadataScenario": "wrap-langchain-js-traces",
-    "variants": [
-      {
-        "variantKey": "wrap-langchain-js-traces-v1",
-        "label": "v1 pinned"
-      },
-      {
-        "variantKey": "wrap-langchain-js-traces-v1-latest",
-        "label": "v1 latest"
       }
     ]
   },
@@ -1147,7 +1143,7 @@
       },
       {
         "variantKey": "livekit-v1-latest",
-        "label": "v1.9 latest"
+        "label": "v1.10 latest"
       }
     ]
   },
@@ -1165,6 +1161,122 @@
         "variantKey": "miniflare-v4-latest",
         "variantKeys": ["miniflare-v4-latest", "miniflare-v4-latest-binding"],
         "label": "v4 latest"
+      }
+    ]
+  },
+  {
+    "scenarioDirName": "otel-sdk-compat",
+    "label": "OpenTelemetry SDK compatibility",
+    "metadataScenario": "otel-sdk-compat",
+    "variants": [
+      {
+        "variantKey": "otel-v1",
+        "label": "v1 pinned"
+      },
+      {
+        "variantKey": "otel-v1-latest",
+        "label": "v1 latest"
+      },
+      {
+        "variantKey": "otel-v2",
+        "label": "v2 pinned"
+      },
+      {
+        "variantKey": "otel-v2-latest",
+        "label": "v2 latest"
+      },
+      {
+        "variantKey": "otel-v3",
+        "label": "v3 pinned"
+      },
+      {
+        "variantKey": "otel-v3-latest",
+        "label": "v3 latest"
+      }
+    ]
+  },
+  {
+    "scenarioDirName": "ai-sdk-audio-instrumentation",
+    "label": "AI SDK Speech and Transcription",
+    "metadataScenario": "ai-sdk-audio-instrumentation",
+    "variants": [
+      {
+        "variantKey": "ai-sdk-v4",
+        "label": "v4 pinned"
+      },
+      {
+        "variantKey": "ai-sdk-v4-latest",
+        "label": "v4 latest"
+      },
+      {
+        "variantKey": "ai-sdk-v5",
+        "label": "v5 pinned"
+      },
+      {
+        "variantKey": "ai-sdk-v5-latest",
+        "label": "v5 latest"
+      },
+      {
+        "variantKey": "ai-sdk-v6",
+        "label": "v6 pinned"
+      },
+      {
+        "variantKey": "ai-sdk-v6-latest",
+        "label": "v6 latest"
+      },
+      {
+        "variantKey": "ai-sdk-v7",
+        "label": "v7 pinned"
+      },
+      {
+        "variantKey": "ai-sdk-v7-latest",
+        "label": "v7 latest"
+      }
+    ]
+  },
+  {
+    "scenarioDirName": "fal-instrumentation",
+    "label": "fal Instrumentation",
+    "metadataScenario": "fal-instrumentation",
+    "variants": [
+      {
+        "variantKey": "fal-v1",
+        "label": "v1.10 pinned"
+      },
+      {
+        "variantKey": "fal-v1-latest",
+        "label": "v1 latest"
+      }
+    ]
+  },
+  {
+    "scenarioDirName": "deepgram-instrumentation",
+    "label": "Deepgram Instrumentation",
+    "metadataScenario": "deepgram-instrumentation",
+    "variants": [
+      {
+        "variantKey": "deepgram-v3",
+        "label": "v3 pinned"
+      },
+      {
+        "variantKey": "deepgram-v3-latest",
+        "label": "v3 latest"
+      },
+      {
+        "variantKey": "deepgram-v4",
+        "label": "v4 pinned"
+      },
+      {
+        "variantKey": "deepgram-v4-latest",
+        "label": "v4 latest"
+      },
+      {
+        "variantKey": "deepgram-v5",
+        "label": "v5 pinned"
+      },
+      {
+        "variantKey": "deepgram-v5-latest",
+        "label": "v5 latest"
       }
     ]
   }

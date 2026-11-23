@@ -1,5 +1,11 @@
-import { currentSpan, initLogger, NOOP_SPAN, startSpan } from "../../logger";
-import type { Span } from "../../logger";
+import { serviceTierMetadata } from "../../instrumentation/core/service-tier";
+import {
+  currentSpan,
+  initLogger,
+  NOOP_SPAN,
+  startSpan,
+} from "../../logger/core";
+import type { Span } from "../../logger/core";
 import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
@@ -15,22 +21,18 @@ import type {
 export const BRAINTRUST_LANGCHAIN_CALLBACK_HANDLER_NAME =
   "BraintrustCallbackHandler";
 
-export class BraintrustLangChainCallbackHandler<
-  IsAsyncFlush extends boolean = true,
-> {
-  name = BRAINTRUST_LANGCHAIN_CALLBACK_HANDLER_NAME;
+export class BraintrustLangChainCallbackHandler {
+  name: string = BRAINTRUST_LANGCHAIN_CALLBACK_HANDLER_NAME;
   private spans = new Map<string, Span>();
   private skippedRuns = new Set<string>();
   private parent?: Span | (() => Span);
   private rootRunId?: string;
-  private options: LangChainCallbackHandlerOptions<IsAsyncFlush>;
+  private options: LangChainCallbackHandlerOptions;
   private startTimes = new Map<string, number>();
   private firstTokenTimes = new Map<string, number>();
   private ttftMs = new Map<string, number>();
 
-  constructor(
-    options?: Partial<LangChainCallbackHandlerOptions<IsAsyncFlush>>,
-  ) {
+  constructor(options?: Partial<LangChainCallbackHandlerOptions>) {
     this.parent = options?.parent;
     this.options = {
       ...options,
@@ -94,13 +96,14 @@ export class BraintrustLangChainCallbackHandler<
       INSTRUMENTATION_NAMES.LANGCHAIN,
     );
 
-    let span = parentSpan.startSpan(spanArgs);
+    const { parent: _ignoredParent, ...publicSpanArgs } = spanArgs;
+    let span = parentSpan.startSpan(publicSpanArgs);
 
     if (
       !Object.is(this.options.logger, NOOP_SPAN) &&
       Object.is(span, NOOP_SPAN)
     ) {
-      span = initLogger().startSpan(spanArgs);
+      span = initLogger().startSpan(publicSpanArgs);
     }
 
     this.spans.set(runId, span);
@@ -156,8 +159,14 @@ export class BraintrustLangChainCallbackHandler<
           serialized: llm,
           name: runName,
           metadata,
-          ...extraParams,
+          ...getModelInvocationMetadata(
+            extraParams,
+            this.options.captureModelToolDefinitions ??
+              this.options.captureModelInputs ??
+              true,
+          ),
           model: getModelNameFromInvocation(extraParams),
+          ...getServiceTierFromInvocation(extraParams),
         },
       },
     });
@@ -198,7 +207,10 @@ export class BraintrustLangChainCallbackHandler<
       ...(this.options.captureModelOutputs !== false ? { output } : {}),
       metrics,
       tags,
-      metadata: modelName !== undefined ? { model: modelName } : undefined,
+      metadata: {
+        ...(modelName !== undefined ? { model: modelName } : {}),
+        ...getServiceTierFromResponse(output),
+      },
     });
   }
 
@@ -230,8 +242,14 @@ export class BraintrustLangChainCallbackHandler<
           serialized: llm,
           name: runName,
           metadata,
-          ...extraParams,
+          ...getModelInvocationMetadata(
+            extraParams,
+            this.options.captureModelToolDefinitions ??
+              this.options.captureModelInputs ??
+              true,
+          ),
           model: getModelNameFromInvocation(extraParams),
+          ...getServiceTierFromInvocation(extraParams),
         },
       },
     });
@@ -320,7 +338,7 @@ export class BraintrustLangChainCallbackHandler<
       runId,
       parentRunId,
       name: runName ?? getSerializedName(tool) ?? "Tool",
-      type: "llm",
+      type: "tool",
       event: {
         input: safeJsonParse(input),
         tags,
@@ -362,7 +380,7 @@ export class BraintrustLangChainCallbackHandler<
     this.startSpan({
       runId,
       parentRunId,
-      type: "llm",
+      type: "tool",
       name: typeof action.tool === "string" ? action.tool : "Agent",
       event: {
         input: action,
@@ -435,7 +453,15 @@ export class BraintrustLangChainCallbackHandler<
     runId: string,
     _parentRunId?: string,
     _tags?: string[],
+    fields?: { chunk?: unknown },
   ): Promise<void> {
+    if (isRecord(fields?.chunk)) {
+      const metadata = getServiceTierFromResponse({
+        generations: [[fields.chunk]],
+      });
+      if (Object.keys(metadata).length)
+        this.spans.get(runId)?.log({ metadata });
+    }
     if (!this.firstTokenTimes.has(runId)) {
       const now = Date.now();
       this.firstTokenTimes.set(runId, now);
@@ -504,6 +530,78 @@ function walkGenerations(
     }
   }
   return result;
+}
+
+function getModelInvocationMetadata(
+  extraParams: Record<string, unknown> | undefined,
+  captureToolDefinitions: boolean,
+): Record<string, unknown> | undefined {
+  if (captureToolDefinitions || !extraParams) return extraParams;
+
+  // Only copy the invocation containers, never walk or serialize tool schemas.
+  // Leave the provider's request objects intact.
+  return Object.fromEntries(
+    Object.keys(extraParams)
+      .filter((key) => key !== "tools" && key !== "functions")
+      .map((key) => {
+        const value = extraParams[key];
+        if (
+          (key === "options" || key === "invocation_params") &&
+          isRecord(value)
+        ) {
+          return [
+            key,
+            Object.fromEntries(
+              Object.keys(value)
+                .filter((key) => key !== "tools" && key !== "functions")
+                .map((key) => [key, value[key]]),
+            ),
+          ];
+        }
+        return [key, value];
+      }),
+  );
+}
+
+function getServiceTierFromInvocation(
+  extraParams: Record<string, unknown> | undefined,
+): Record<string, string> {
+  const params = extraParams?.invocation_params;
+  if (!isRecord(params)) return {};
+  const tier = params.service_tier ?? params.serviceTier;
+  return serviceTierMetadata({ requested: isRecord(tier) ? tier.type : tier });
+}
+
+function getServiceTierFromResponse(
+  response: LangChainLLMResult,
+): Record<string, string> {
+  const metadata: Record<string, string> = {};
+  for (const source of [
+    response.llmOutput,
+    ...walkGenerations(response).flatMap((generation) => {
+      const message = generation.message;
+      return [
+        generation.generationInfo,
+        ...(isRecord(message) ? [message.response_metadata] : []),
+      ];
+    }),
+  ]) {
+    if (!isRecord(source)) continue;
+    const usage = isRecord(source.usage) ? source.usage : undefined;
+    const usageMetadata = isRecord(source.usageMetadata)
+      ? source.usageMetadata
+      : undefined;
+    const tier =
+      source.service_tier ??
+      source.serviceTier ??
+      usage?.service_tier ??
+      usageMetadata?.serviceTier;
+    Object.assign(
+      metadata,
+      serviceTierMetadata({ served: isRecord(tier) ? tier.type : tier }),
+    );
+  }
+  return metadata;
 }
 
 function getModelNameFromInvocation(

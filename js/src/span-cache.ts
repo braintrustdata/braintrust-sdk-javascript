@@ -9,7 +9,8 @@
  * the cache becomes a no-op (all lookups return undefined).
  */
 
-import iso from "./isomorph";
+import iso from "#braintrust-platform";
+import { debugLogger } from "./debug-logger";
 import { mergeDicts } from "../util/object_util";
 
 // Global registry of active span caches for process exit cleanup
@@ -183,7 +184,12 @@ export class SpanCache {
       this.registerExitHandler();
     })();
 
-    return this.initPromise;
+    try {
+      await this.initPromise;
+    } catch (err) {
+      if (generation === this.generation) this.initPromise = null;
+      throw err;
+    }
   }
 
   /**
@@ -254,7 +260,9 @@ export class SpanCache {
 
     if (!this.flushPromise) {
       // Keep failed writes buffered for retry. Explicit waiters still see the error.
-      void this.flushWriteBuffer().catch(() => {});
+      void this.flushWriteBuffer().catch((err) => {
+        debugLogger.warn("Failed to flush span cache writes:", err);
+      });
     }
   }
 

@@ -1,4 +1,5 @@
-import { beforeAll, describe, expect, test } from "vitest";
+import { beforeAll, describe, expect, test } from "vite-plus/test";
+import { isObject } from "../../../js/util/type_util";
 import type {
   CapturedLogEvent,
   CapturedLogRow,
@@ -15,7 +16,11 @@ import {
   spanTreeFields,
   type SpanTreeEntry,
 } from "../../helpers/span-tree";
-import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
+import {
+  findAllSpans,
+  findChildSpans,
+  findLatestSpan,
+} from "../../helpers/trace-selectors";
 import {
   ADJUSTABLE_REASONING_MODEL,
   FIM_MODEL,
@@ -31,6 +36,7 @@ import {
 type RunMistralScenario = (harness: {
   runNodeScenarioDir: (options: {
     entry: string;
+    env?: Record<string, string>;
     nodeArgs: string[];
     runContext?: ScenarioRunContext;
     scenarioDir: string;
@@ -38,6 +44,7 @@ type RunMistralScenario = (harness: {
   }) => Promise<unknown>;
   runScenarioDir: (options: {
     entry: string;
+    env?: Record<string, string>;
     runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
@@ -61,10 +68,6 @@ function findMistralSpan(
   }
 
   return undefined;
-}
-
-function isRecord(value: Json | undefined): value is Record<string, Json> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function nonEmptyString(value: string | undefined): string | null {
@@ -97,7 +100,7 @@ function summarizeInput(
   if (Array.isArray(input)) {
     const roles = input
       .map((message) =>
-        isRecord(message as Json) && typeof message.role === "string"
+        isObject(message) && typeof message.role === "string"
           ? message.role
           : null,
       )
@@ -114,7 +117,7 @@ function summarizeInput(
     return "<string>";
   }
 
-  if (!isRecord(input as Json)) {
+  if (!isObject(input)) {
     return null;
   }
 
@@ -133,7 +136,7 @@ function summarizeInput(
 function summarizeOutput(output: unknown): Json {
   if (Array.isArray(output)) {
     const firstChoice = output[0] as Json;
-    if (!isRecord(firstChoice) || !isRecord(firstChoice.message)) {
+    if (!isObject(firstChoice) || !isObject(firstChoice.message)) {
       return {
         choice_count: output.length,
         finish_reason: null,
@@ -157,7 +160,7 @@ function summarizeOutput(output: unknown): Json {
     const contentParts = Array.isArray(message.content) ? message.content : [];
     const contentPartTypes = contentParts
       .map((part) =>
-        isRecord(part) && typeof part.type === "string" ? part.type : null,
+        isObject(part) && typeof part.type === "string" ? part.type : null,
       )
       .filter((part): part is string => part !== null);
     const summary = {
@@ -193,7 +196,7 @@ function summarizeOutput(output: unknown): Json {
     return summary;
   }
 
-  if (!isRecord(output as Json)) {
+  if (!isObject(output)) {
     return output === undefined ? null : "<scalar>";
   }
 
@@ -258,9 +261,9 @@ function normalizeLegacyV134PayloadSummaryRow(
     snapshotName === "mistral-v1" &&
     spanName &&
     unstableLegacyV134SpanNames.has(spanName) &&
-    isRecord(summaryRow)
+    isObject(summaryRow)
   ) {
-    const output = isRecord(summaryRow.output) ? summaryRow.output : null;
+    const output = isObject(summaryRow.output) ? summaryRow.output : null;
 
     normalizedSummaryRow = {
       ...summaryRow,
@@ -276,14 +279,14 @@ function normalizeLegacyV134PayloadSummaryRow(
     };
   }
 
-  if (!isRecord(normalizedSummaryRow)) {
+  if (!isObject(normalizedSummaryRow)) {
     return normalizedSummaryRow;
   }
 
-  const output = isRecord(normalizedSummaryRow.output)
+  const output = isObject(normalizedSummaryRow.output)
     ? normalizedSummaryRow.output
     : null;
-  const metadata = isRecord(normalizedSummaryRow.metadata)
+  const metadata = isObject(normalizedSummaryRow.metadata)
     ? normalizedSummaryRow.metadata
     : null;
 
@@ -480,6 +483,7 @@ export function defineMistralInstrumentationAssertions(options: {
   supportsClassifiers?: boolean;
   supportsClassify?: boolean;
   supportsThinkingStream?: boolean;
+  supportsSpeech: boolean;
   testFileUrl: string;
   timeoutMs: number;
 }): void {
@@ -506,6 +510,110 @@ export function defineMistralInstrumentationAssertions(options: {
         events = harness.events();
       });
     }, timeoutMs);
+
+    test(
+      "captures OCR text, document usage, and the input attachment",
+      testConfig,
+      () => {
+        const spans = findAllSpans(events, "mistral.ocr.process");
+        expect(spans).toHaveLength(1);
+        const span = spans[0];
+        expect(span.output).toMatchObject({
+          annotations: {
+            pages: [{ index: 0, markdown: expect.any(String) }],
+            usage: { pagesProcessed: 1 },
+          },
+        });
+        expect(span.input).toMatchObject({
+          operation: "ocr",
+          content: [{ file: { file_data: { type: "braintrust_attachment" } } }],
+        });
+        expect(span.metadata).toMatchObject({
+          provider: "mistral",
+          model: "mistral-ocr-latest",
+        });
+        expect(span.row.error).toBeUndefined();
+        expect(span.span.parentIds).toEqual([
+          findLatestSpan(events, "ocr")?.span.id,
+        ]);
+      },
+    );
+
+    for (const method of ["complete", "stream"]) {
+      test(
+        `captures transcription ${method} text, audio, and usage`,
+        testConfig,
+        () => {
+          const spans = findAllSpans(
+            events,
+            `mistral.audio.transcriptions.${method}`,
+          );
+          expect(spans).toHaveLength(1);
+          const span = spans[0];
+          expect(span.output).toMatchObject({
+            content: [{ type: "text", text: expect.any(String) }],
+            annotations: { duration: expect.any(Number) },
+          });
+          expect(span.input).toMatchObject({
+            operation: "transcribe",
+            content: [
+              {
+                file: {
+                  file_data: {
+                    type: "braintrust_attachment",
+                    content_type: "audio/wav",
+                  },
+                },
+              },
+            ],
+          });
+          expect(span.metadata).toMatchObject({
+            provider: "mistral",
+            model: "voxtral-mini-latest",
+          });
+          expect(span.metrics).toMatchObject({
+            prompt_tokens: expect.any(Number),
+            completion_tokens: expect.any(Number),
+            tokens: expect.any(Number),
+          });
+          expect(span.row.error).toBeUndefined();
+          const operation =
+            method === "stream" ? "transcription-stream" : "transcription";
+          expect(span.span.parentIds).toEqual([
+            findLatestSpan(events, operation)?.span.id,
+          ]);
+        },
+      );
+    }
+
+    if (options.supportsSpeech) {
+      test("captures direct and streamed speech audio", testConfig, () => {
+        const spans = findAllSpans(events, "mistral.audio.speech.complete");
+        expect(spans).toHaveLength(2);
+        for (const span of spans) {
+          expect(span.output).toMatchObject({
+            content: [
+              {
+                type: "file",
+                file: {
+                  byte_size: expect.any(Number),
+                  file_data: {
+                    type: "braintrust_attachment",
+                    content_type: "audio/mpeg",
+                  },
+                },
+              },
+            ],
+          });
+          expect(span.metadata).toMatchObject({
+            provider: "mistral",
+            model: "voxtral-mini-tts-2603",
+          });
+          expect(span.row.error).toBeUndefined();
+          expect(span.span.parentIds).toHaveLength(1);
+        }
+      });
+    }
 
     test("captures the root trace for the scenario", testConfig, () => {
       const root = findLatestSpan(events, ROOT_NAME);
@@ -662,7 +770,7 @@ export function defineMistralInstrumentationAssertions(options: {
         operation?.span.id,
       );
       const selectedSpans = pickOutputSpans(spans);
-      const toolCallCountBySpanId = new Map<string, number>(
+      const toolCallCountBySpanId = new Map<string | undefined, number>(
         selectedSpans.map((span) => {
           const output = span.output as
             | Array<{
@@ -1037,9 +1145,16 @@ export function defineMistralInstrumentationAssertions(options: {
       "matches the shared span tree snapshot",
       testConfig,
       async ({ expect }) => {
-        await matchSpanTreeSnapshot(events, spanSnapshotPath, {
-          snapshotExpect: expect,
-        });
+        await matchSpanTreeSnapshot(
+          events.map((event) => ({
+            event,
+            fields: { ...spanTreeFields(event), context: event.context },
+          })),
+          spanSnapshotPath,
+          {
+            snapshotExpect: expect,
+          },
+        );
       },
     );
   });

@@ -1,4 +1,4 @@
-import { describe } from "vitest";
+import { describe } from "vite-plus/test";
 import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
@@ -21,6 +21,14 @@ const githubCopilotScenarios = await Promise.all(
     {
       dependencyName: "github-copilot-sdk-v0-latest",
       snapshotName: "github-copilot-v0-latest",
+    },
+    {
+      dependencyName: "github-copilot-sdk-v1",
+      snapshotName: "github-copilot-v1",
+    },
+    {
+      dependencyName: "github-copilot-sdk-v1-latest",
+      snapshotName: "github-copilot-v1-latest",
     },
   ].map(async (scenario) => ({
     ...scenario,

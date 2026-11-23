@@ -1,0 +1,119 @@
+span_tree:
+└── google-genai-decisions-root [task]
+    metadata: {
+      "scenario": "google-genai-decisions-instrumentation",
+      "testRunId": "<run:1>"
+    }
+    context: {
+      "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+      "caller_functionname": "runTracedScenario",
+      "caller_lineno": 0
+    }
+    ├── create_decision [decision]
+    │   input: {
+    │     "questions": [
+    │       {
+    │         "id": "<span:1>",
+    │         "instructions": "Is the problem resolved?",
+    │         "type": "boolean"
+    │       },
+    │       {
+    │         "criteria": {
+    │           "negative": "Unhappy or angry",
+    │           "positive": "Happy or thankful"
+    │         },
+    │         "id": "<span:2>",
+    │         "instructions": "What is the customer's sentiment?",
+    │         "type": "choice"
+    │       },
+    │       {
+    │         "criteria": [
+    │           "No action needed",
+    │           "Action needed soon",
+    │           "Immediate action needed"
+    │         ],
+    │         "id": "<span:3>",
+    │         "instructions": "Rate the urgency of the request.",
+    │         "type": "score"
+    │       }
+    │     ],
+    │     "state": "The customer says: Thank you, the problem is fixed!"
+    │   }
+    │   output: {
+    │     "answers": [
+    │       {
+    │         "id": "<span:1>",
+    │         "probability": 0.9795517168682676,
+    │         "type": "boolean"
+    │       },
+    │       {
+    │         "choice": "positive",
+    │         "confidence": 0.999067401289979,
+    │         "id": "<span:2>",
+    │         "probabilities": {
+    │           "negative": 0.0009325987100210494,
+    │           "positive": 0.999067401289979
+    │         },
+    │         "type": "choice"
+    │       },
+    │       {
+    │         "confidence": 0.9610780756397326,
+    │         "id": "<span:3>",
+    │         "legend": {
+    │           "0": "No action needed",
+    │           "1": "Action needed soon",
+    │           "2": "Immediate action needed"
+    │         },
+    │         "probabilities": {
+    │           "0": 0.9610780756397326,
+    │           "1": 0.033229283188255625,
+    │           "2": 0.005692641172012019
+    │         },
+    │         "score": 0.04461456553227966,
+    │         "type": "score"
+    │       }
+    │     ]
+    │   }
+    │   metadata: {
+    │     "model": "gemini-decision-1",
+    │     "provider": "google"
+    │   }
+    │   metrics: {
+    │     "completion_tokens": 0,
+    │     "prompt_tokens": 212,
+    │     "tokens": 212
+    │   }
+    └── create_decision [decision]
+        input: {
+          "questions": [
+            {
+              "id": "<span:1>",
+              "instructions": "Is this an image?",
+              "type": "boolean"
+            }
+          ],
+          "state": [
+            {
+              "mime_type": "image/png",
+              "type": "image"
+            }
+          ]
+        }
+        output: {
+          "answers": [
+            {
+              "id": "<span:1>",
+              "probability": 0.8845631928245462,
+              "type": "boolean"
+            }
+          ]
+        }
+        metadata: {
+          "model": "gemini-decision-1",
+          "provider": "google"
+        }
+        metrics: {
+          "completion_tokens": 0,
+          "prompt_tokens": 1178,
+          "tokens": 1178
+        }

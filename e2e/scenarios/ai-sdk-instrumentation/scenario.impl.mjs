@@ -1,3 +1,4 @@
+import assert from "node:assert/strict";
 import { wrapAISDK } from "braintrust";
 import { z } from "zod";
 import {
@@ -18,38 +19,6 @@ const CACHE_PROMPT_PREFIX = "braintrust cache prefix ".repeat(900).trim();
 const OPENAI_CACHE_KEY = "braintrust-ai-sdk-e2e-cache";
 const CACHE_FILL_DELAY_MS = 5_000;
 export const AI_SDK_SCENARIO_SPECS = [
-  {
-    autoEntry: "scenario.ai-sdk-v3.mjs",
-    dependencyName: "ai-sdk-v3",
-    maxTokensKey: "maxTokens",
-    openaiModuleName: "ai-sdk-openai-v3",
-    packageName: "ai-sdk-v3",
-    snapshotName: "ai-sdk-v3",
-    supportsEmbedMany: false,
-    supportsProviderCacheAssertions: false,
-    supportsGenerateObject: true,
-    supportsRerank: false,
-    supportsStreamObject: true,
-    supportsToolExecution: false,
-    toolSchemaKey: "parameters",
-    wrapperEntry: "scenario.ai-sdk-v3.ts",
-  },
-  {
-    autoEntry: "scenario.ai-sdk-v3.mjs",
-    dependencyName: "ai-sdk-v3-latest",
-    maxTokensKey: "maxTokens",
-    openaiModuleName: "ai-sdk-openai-v3-latest",
-    packageName: "ai-sdk-v3-latest",
-    snapshotName: "ai-sdk-v3-latest",
-    supportsEmbedMany: false,
-    supportsProviderCacheAssertions: false,
-    supportsGenerateObject: true,
-    supportsRerank: false,
-    supportsStreamObject: true,
-    supportsToolExecution: false,
-    toolSchemaKey: "parameters",
-    wrapperEntry: "scenario.ai-sdk-v3.ts",
-  },
   {
     autoEntry: "scenario.ai-sdk-v4.mjs",
     dependencyName: "ai-sdk-v4",
@@ -462,7 +431,10 @@ async function runToolModelOutputOperations({
     // Send prior tool items inline instead of referencing stored responses.
     providerOptions: { openai: { store: false } },
     temperature: 0,
-    toolChoice: "required",
+    // Force the lookup first, then reserve the second step for the answer.
+    prepareStep: ({ stepNumber }) => ({
+      toolChoice: stepNumber === 0 ? "required" : "none",
+    }),
     stopWhen: ai.stepCountIs(2),
     tools: {
       lookup_signups: createModelOutputTool(ai, sdkMajorVersion),
@@ -474,7 +446,9 @@ async function runToolModelOutputOperations({
     "ai-sdk-tool-model-output-operation",
     "tool-model-output",
     async () => {
-      await instrumentedAI.generateText(createRequest());
+      const result = await instrumentedAI.generateText(createRequest());
+      assert.equal(result.text, "1");
+      assert.equal(result.finishReason, "stop");
     },
   );
 
@@ -485,6 +459,8 @@ async function runToolModelOutputOperations({
       const result = await instrumentedAI.streamText(createRequest());
       for await (const _chunk of result.textStream) {
       }
+      assert.equal(await result.text, "1");
+      assert.equal(await result.finishReason, "stop");
     },
   );
 }

@@ -1,9 +1,10 @@
+import { aiSDKServiceTierMetadata } from "../../instrumentation/providers/ai-sdk-service-tier";
 import { debugLogger } from "../../debug-logger";
 import {
   AI_SDK_TOOL_CALL_ID,
   AI_SDK_TOOL_CAPTURE,
   type AISDKToolSpan,
-} from "../../instrumentation/plugins/ai-sdk-tool-tracing";
+} from "../../instrumentation/providers/ai-sdk-tool-tracing";
 import { isAutoInstrumentationSuppressed } from "../../instrumentation/auto-instrumentation-suppression";
 import {
   SpanTypeAttribute,
@@ -11,7 +12,7 @@ import {
   isObject,
   isObjectOrArray,
 } from "../../util";
-import { logError, startSpan, withCurrent, type Span } from "../../logger";
+import { logError, startSpan, withCurrent, type Span } from "../../logger/core";
 import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
@@ -36,7 +37,7 @@ import {
   processAISDKWorkflowAgentCallInput,
   processAISDKWorkflowAgentModelCallInput,
   serializeModelWithProvider,
-} from "../../instrumentation/plugins/ai-sdk-plugin";
+} from "../../instrumentation/providers/ai-sdk-instrumentation";
 import type {
   AISDKCallParams,
   AISDKEvaluationResult,
@@ -61,7 +62,7 @@ import { currentWorkflowAgentWrapperSpan } from "./workflow-agent-context";
 import {
   currentCloudflareThinkRun,
   type CloudflareThinkRun,
-} from "../../instrumentation/plugins/cloudflare-think-context";
+} from "../../instrumentation/providers/cloudflare-think-context";
 import {
   currentHarnessTurnParent,
   startHarnessTurnChildSpan,
@@ -83,6 +84,7 @@ type OperationState = {
   toolExecutionIds?: Set<string>;
   recordInputs?: boolean;
   recordOutputs?: boolean;
+  modelCallProviderOptions?: unknown;
   tools?: unknown;
   // Tool spans that log their toModelOutput result once the SDK reports it.
   modelOutputToolSpans?: Map<string, Span>;
@@ -394,10 +396,13 @@ export function braintrustAISDKTelemetry(): any {
       span.log({
         ...(shouldRecordOutputs(event)
           ? {
-              output: processAISDKOutput(result, DEFAULT_DENY_OUTPUT_PATHS),
+              output: withCurrent(span, () =>
+                processAISDKOutput(result, DEFAULT_DENY_OUTPUT_PATHS),
+              ),
             }
           : {}),
         metrics: extractTokenMetrics(result),
+        metadata: aiSDKServiceTierMetadata(event.providerMetadata, "served"),
       });
       span.end();
       objectSpans.delete(operationKey);
@@ -467,6 +472,7 @@ export function braintrustAISDKTelemetry(): any {
   const onEnd = (
     event: Parameters<NonNullable<AISDKV7Telemetry["onEnd"]>>[0],
   ) => {
+    if (isAutoInstrumentationSuppressed()) return;
     runSafely("onEnd", () => {
       const operationKey = operationKeyFromEvent(event, "finish");
       const state = operationKey ? operations.get(operationKey) : undefined;
@@ -523,9 +529,11 @@ export function braintrustAISDKTelemetry(): any {
       state.span.log({
         ...(shouldRecordOutputs(event)
           ? {
-              output: applyAISDKToolModelOutputs(
-                finishOutput(result, state.operationName),
-                aiSDKModelOutputToolNames(state.tools),
+              output: withCurrent(state.span, () =>
+                applyAISDKToolModelOutputs(
+                  finishOutput(result, state.operationName),
+                  aiSDKModelOutputToolNames(state.tools),
+                ),
               ),
             }
           : {}),
@@ -583,6 +591,7 @@ export function braintrustAISDKTelemetry(): any {
     experimental_onDecideStart: onDecisionStart,
     experimental_onDecideEnd: onEnd,
     onStart(event) {
+      if (isAutoInstrumentationSuppressed()) return;
       runSafely("onStart", () => {
         const operationName = operationNameFromId(event.operationId);
         const workflowAgent = operationName === "WorkflowAgent.stream";
@@ -645,6 +654,7 @@ export function braintrustAISDKTelemetry(): any {
           providerTools: new Map(),
           recordInputs: event.recordInputs,
           recordOutputs: event.recordOutputs,
+          modelCallProviderOptions: event.providerOptions,
           tools: (event as { tools?: unknown }).tools,
         });
 
@@ -672,9 +682,11 @@ export function braintrustAISDKTelemetry(): any {
         if (shouldRecordInputs(event)) {
           const callInput =
             workflowAgentCallInput ?? operationInput(event, operationName);
-          const { input, outputPromise } = workflowAgent
-            ? processAISDKWorkflowAgentCallInput(callInput)
-            : processAISDKCallInput(callInput);
+          const { input, outputPromise } = withCurrent(span, () =>
+            workflowAgent
+              ? processAISDKWorkflowAgentCallInput(callInput)
+              : processAISDKCallInput(callInput),
+          );
           logPayload.input = input;
           const state = operations.get(operationKey);
           if (state) {
@@ -705,6 +717,14 @@ export function braintrustAISDKTelemetry(): any {
       });
     },
 
+    onStepStart(event) {
+      runSafely("onStepStart", () => {
+        const operationKey = operationKeyFromEvent(event);
+        const state = operationKey ? operations.get(operationKey) : undefined;
+        if (state) state.modelCallProviderOptions = event.providerOptions;
+      });
+    },
+
     onLanguageModelCallStart(event) {
       runSafely("onLanguageModelCallStart", () => {
         const operationKey = operationKeyFromEvent(event);
@@ -715,12 +735,15 @@ export function braintrustAISDKTelemetry(): any {
         const operationName = state?.operationName ?? "generateText";
         const callInput = operationInput(event, operationName);
         const workflowAgent = operationName === "WorkflowAgent.stream";
-        const processedInput =
+        const processInput = () =>
           shouldRecordInputs(event) && workflowAgent
             ? processAISDKWorkflowAgentModelCallInput(callInput).input
             : shouldRecordInputs(event)
               ? processAISDKCallInput(callInput).input
               : undefined;
+        const processedInput = state
+          ? withCurrent(state.span, processInput)
+          : processInput();
         if (
           workflowAgent &&
           state?.ownsSpan &&
@@ -756,12 +779,20 @@ export function braintrustAISDKTelemetry(): any {
                   input: processedInput,
                 }
               : {}),
-            metadata: workflowAgent
-              ? {
-                  ...metadataFromEvent(event),
-                  ...extractWorkflowMetadataFromCallParams(callInput),
-                }
-              : metadataFromEvent(event),
+            metadata: {
+              ...(workflowAgent
+                ? {
+                    ...metadataFromEvent(event),
+                    ...extractWorkflowMetadataFromCallParams(callInput),
+                  }
+                : metadataFromEvent(event)),
+              ...aiSDKServiceTierMetadata(
+                event.providerOptions ?? state?.modelCallProviderOptions,
+                "requested",
+                event.provider,
+                event.modelId,
+              ),
+            },
           },
         );
         const spanKey = operationKey ?? event.callId;
@@ -866,10 +897,13 @@ export function braintrustAISDKTelemetry(): any {
         span.log({
           ...(shouldRecordOutputs(event)
             ? {
-                output: processAISDKOutput(result, DEFAULT_DENY_OUTPUT_PATHS),
+                output: withCurrent(span, () =>
+                  processAISDKOutput(result, DEFAULT_DENY_OUTPUT_PATHS),
+                ),
               }
             : {}),
           metrics: extractTokenMetrics(result),
+          metadata: aiSDKServiceTierMetadata(event.providerMetadata, "served"),
         });
         span.end();
       });
@@ -902,7 +936,15 @@ export function braintrustAISDKTelemetry(): any {
                   },
                 }
               : {}),
-            metadata: metadataFromEvent(event),
+            metadata: {
+              ...metadataFromEvent(event),
+              ...aiSDKServiceTierMetadata(
+                event.providerOptions ?? state?.modelCallProviderOptions,
+                "requested",
+                event.provider,
+                event.modelId,
+              ),
+            },
           },
         );
         objectSpans.set(operationKey ?? event.callId, span);
@@ -1112,6 +1154,16 @@ export function braintrustAISDKTelemetry(): any {
         }
         const operationKey = operationKeyForCallId(callId);
         const state = operationKey ? operations.get(operationKey) : undefined;
+        if (operationKey) {
+          const spans = modelSpans.get(operationKey);
+          const span =
+            spans?.[spans.length - 1] ?? objectSpans.get(operationKey);
+          const metadata = aiSDKServiceTierMetadata(
+            event.chunk?.providerMetadata,
+            "served",
+          );
+          if (span && Object.keys(metadata).length) span.log({ metadata });
+        }
         if (!state || state.firstChunkTime !== undefined) {
           return;
         }

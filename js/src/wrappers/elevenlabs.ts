@@ -1,6 +1,7 @@
+import { registerInstrumentation } from "../instrumentation/registrations/elevenlabs";
 import { isObject } from "../../util";
 import { debugLogger } from "../debug-logger";
-import { elevenLabsChannels } from "../instrumentation/plugins/elevenlabs-interceptors";
+import { elevenLabsChannels } from "../instrumentation/providers/elevenlabs-interceptors";
 import type {
   ElevenLabsClient,
   ElevenLabsSpeechArgs,
@@ -25,6 +26,7 @@ const clients = new WeakMap<object, object>();
  *
  */
 export function wrapElevenLabs<T>(client: T): T {
+  registerInstrumentation();
   if (
     !isObject(client) ||
     !isObject(client.textToSpeech) ||
