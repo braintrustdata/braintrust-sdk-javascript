@@ -174,7 +174,7 @@ type GroqAudioTextParams =
   | GroqAudioTranscriptionCreateParams
   | GroqAudioTranslationCreateParams;
 
-function extractGroqAudioInput(
+export function extractGroqAudioInput(
   params: GroqAudioTextParams,
   operation: "transcribe" | "translate",
   span: Span,
@@ -387,7 +387,9 @@ function audioContentTypeFromFilename(filename: string | undefined) {
     : undefined;
 }
 
-function extractGroqAudioTextOutput(result: GroqAudioTextResult | string) {
+export function extractGroqAudioTextOutput(
+  result: GroqAudioTextResult | string,
+) {
   if (typeof result === "string") {
     return { content: [{ type: "text", text: result }] };
   }
