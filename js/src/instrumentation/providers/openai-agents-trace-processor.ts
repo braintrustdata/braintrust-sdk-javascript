@@ -177,6 +177,10 @@ function parseUsageMetrics(usage: unknown): Record<string, number> {
   if (cacheWriteTokens !== undefined) {
     metrics.prompt_cache_creation_tokens = cacheWriteTokens;
   }
+  const audioTokens = getNumberProperty(inputDetails, "audio_tokens");
+  if (audioTokens !== undefined) {
+    metrics.prompt_audio_tokens = audioTokens;
+  }
 
   const reasoningTokens = getNumberProperty(
     usage.output_tokens_details,

@@ -159,48 +159,39 @@ const channelSamples = (bytes: Uint8Array, channel: number) => {
 };
 
 describe("tracing", () => {
-  test.each([
-    { timing: "before inference ends", audioTokens: 7, late: false },
-    { timing: "after inference ends", audioTokens: 7, late: true },
-    {
-      timing: "without an audio breakdown",
-      audioTokens: undefined,
-      late: false,
-    },
-  ])("maps realtime model usage $timing", async ({ audioTokens, late }) => {
+  test("omits realtime audio output tokens when only input audio usage is reported", async () => {
     const session = start("agent_session");
     const turn = start("agent_turn", session);
     const inference = start("realtime_inference", turn, {
       "gen_ai.request.model": "gpt-realtime",
       "gen_ai.provider.name": "openai",
     });
-    if (late) inference.end([2, 0]);
-    const usageSpan = late ? start("realtime_metrics", inference) : inference;
-    usageSpan.setAttributes({
+    inference.setAttributes({
       "gen_ai.usage.input_tokens": 10,
       "gen_ai.usage.output_tokens": 9,
       "gen_ai.usage.audio.input_tokens": 4,
-      ...(audioTokens === undefined
-        ? {}
-        : { "gen_ai.usage.audio.output_tokens": audioTokens }),
     });
-    usageSpan.end(late ? [3, 0] : [2, 0]);
+    inference.end([2, 0]);
     turn.end([3, 0]);
     session.end([3, 0]);
 
-    const { named, one } = await rows();
+    const { one } = await rows();
     const turnRow = one("agent_turn");
     const modelRow = one("livekit.realtime_inference");
     expect(modelRow).toMatchObject({
       span_parents: [turnRow.span_id],
       span_attributes: { type: "llm" },
-      metrics: { prompt_tokens: 10, completion_tokens: 9, tokens: 19, end: 2 },
+      metrics: {
+        prompt_tokens: 10,
+        completion_tokens: 9,
+        prompt_audio_tokens: 4,
+        tokens: 19,
+        end: 2,
+      },
       metadata: { model: "gpt-realtime", provider: "openai" },
     });
-    expect(modelRow.metrics.completion_audio_tokens).toBe(audioTokens);
-    expect(modelRow.metrics.prompt_audio_tokens).toBeUndefined();
+    expect(modelRow.metrics.completion_audio_tokens).toBeUndefined();
     expect(turnRow.metrics.completion_audio_tokens).toBeUndefined();
-    expect(named("livekit.realtime_metrics")).toHaveLength(0);
   });
 
   test("maps a voice conversation to standard spans, messages, metrics and turn links", async () => {
@@ -347,6 +338,63 @@ describe("tracing", () => {
       input: { text: "It arrives Friday." },
       output: [{ role: "assistant", content: "It arrives Friday." }],
     });
+  });
+
+  test("realtime inference spans record audio input and output usage, including late reports", async () => {
+    // LiveKit's recordRealtimeMetrics attributes for a realtime model response.
+    const usage = (input: number, audio: number, outputAudio: number) => ({
+      "gen_ai.request.model": "gpt-realtime-mini",
+      "gen_ai.provider.name": "openai",
+      "gen_ai.usage.input_tokens": input,
+      "gen_ai.usage.output_tokens": 7,
+      "gen_ai.usage.text.input_tokens": input - audio,
+      "gen_ai.usage.audio.input_tokens": audio,
+      "gen_ai.usage.audio.output_tokens": outputAudio,
+      "gen_ai.usage.input_audio_tokens": audio,
+      "gen_ai.usage.cache_read.input_tokens": 0,
+    });
+    const root = start("agent_session");
+    const agent = start("agent_turn", root);
+    // Metrics reported while the inference span is recording land on it.
+    const live = start("realtime_inference", agent);
+    live.setAttributes(usage(40, 30, 5));
+    live.end([2, 0]);
+    // Late metrics land on a child of the already-ended inference span.
+    const ended = start("realtime_inference", agent);
+    ended.end([2, 0]);
+    start("realtime_metrics", ended, usage(25, 20, 6)).end([3, 0]);
+    for (const span of [agent, root]) span.end([3, 0]);
+
+    const { named, one } = await rows();
+    expect(named("livekit.realtime_inference")).toMatchObject([
+      {
+        metrics: {
+          prompt_tokens: 40,
+          completion_tokens: 7,
+          tokens: 47,
+          prompt_audio_tokens: 30,
+          completion_audio_tokens: 5,
+          cache_read_input_tokens: 0,
+        },
+        metadata: { model: "gpt-realtime-mini", provider: "openai" },
+      },
+      {
+        span_attributes: { type: "llm" },
+        metrics: {
+          start: 1,
+          end: 2,
+          prompt_tokens: 25,
+          completion_tokens: 7,
+          tokens: 32,
+          prompt_audio_tokens: 20,
+          completion_audio_tokens: 6,
+        },
+        metadata: { model: "gpt-realtime-mini", provider: "openai" },
+      },
+    ]);
+    expect(named("livekit.realtime_metrics")).toHaveLength(0);
+    expect(one("agent_turn").metrics.prompt_audio_tokens).toBeUndefined();
+    expect(one("agent_turn").metrics.completion_audio_tokens).toBeUndefined();
   });
 
   test("links requests, tool results, transcribed context and generated speech", async () => {

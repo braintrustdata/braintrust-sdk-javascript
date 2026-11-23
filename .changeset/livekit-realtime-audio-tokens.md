@@ -2,4 +2,4 @@
 "braintrust": patch
 ---
 
-feat(livekit): emit completion_audio_tokens for realtime model spans
+fix: record prompt audio tokens for livekit realtime and openai agents
