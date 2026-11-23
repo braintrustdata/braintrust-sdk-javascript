@@ -143,6 +143,28 @@ describe("registerOpenAIAgentsInstrumentation", () => {
       reasoningTokens: undefined,
     },
     {
+      spanName: "Generation",
+      spanData: {
+        type: "generation",
+        model: "gpt-realtime-mini",
+        input: [{ role: "user", content: "What is 2+2?" }],
+        output: [{ role: "assistant", content: "4" }],
+        usage: {
+          input_tokens: 12,
+          input_tokens_details: { cached_tokens: 2, audio_tokens: 9 },
+          output_tokens: 1,
+        },
+      },
+      metrics: {
+        prompt_tokens: 12,
+        prompt_cached_tokens: 2,
+        prompt_audio_tokens: 9,
+        completion_tokens: 1,
+        tokens: 13,
+      },
+      reasoningTokens: undefined,
+    },
+    {
       spanName: "Response",
       spanData: {
         type: "response",
