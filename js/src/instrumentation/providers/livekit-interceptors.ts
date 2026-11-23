@@ -5,6 +5,7 @@ import type {
   LiveKitSpan,
   TraceOptions,
   PipelineOptions,
+  RealtimeGenerationOptions,
   SpeechEvent,
   SpeechEndEvent,
   VadInferenceEvent,
@@ -47,6 +48,9 @@ export const livekitChannels = defineInterceptor("@livekit/agents", {
   }),
   activity: channel<[unknown], Promise<void>>({
     channelName: "activity.start",
+  }),
+  realtimeGeneration: channel<[RealtimeGenerationOptions], Promise<void>>({
+    channelName: "activity.realtimeGeneration",
   }),
   userTurn: channel<[EndOfTurnInfo], Promise<boolean>>({
     channelName: "activity.userTurn",

@@ -29,6 +29,11 @@ const targets: [
     { className: "AgentActivity", methodName: "_startSessionImpl" },
   ],
   [
+    "realtimeGeneration",
+    "voice/agent_activity",
+    { className: "AgentActivity", methodName: "_realtimeGenerationTaskImpl" },
+  ],
+  [
     "input",
     "voice/agent_activity",
     { className: "AgentActivity", methodName: "attachAudioInput" },
