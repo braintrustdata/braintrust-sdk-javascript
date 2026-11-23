@@ -139,7 +139,7 @@
     "node": ">=22.18.0"
   },
   "devDependencies": {
-    "@anthropic-ai/sdk": "^0.60.0",
+    "@anthropic-ai/sdk": "^0.137.0",
     "@types/async": "^3.2.24",
     "@types/esquery": "^1.5.4",
     "@types/mustache": "^4.2.5",
