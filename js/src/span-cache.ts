@@ -10,6 +10,7 @@
  */
 
 import iso from "#braintrust-platform";
+import { debugLogger } from "./debug-logger";
 import { mergeDicts } from "../util/object_util";
 
 // Global registry of active span caches for process exit cleanup
@@ -275,14 +276,26 @@ export class SpanCache {
       return;
     }
 
-    await this.ensureInitialized();
+    try {
+      await this.ensureInitialized();
+    } catch (err) {
+      // Don't cache a rejected initialization forever: allow a later retry.
+      this.initPromise = null;
+      debugLogger.warn("Failed to initialize span cache file:", err);
+      return;
+    }
 
     if (generation !== this.generation || !this.fileHandle) {
       return;
     }
 
     const lines = recordsToFlush.map((r) => JSON.stringify(r) + "\n").join("");
-    await this.fileHandle.appendFile(lines, "utf8");
+    try {
+      await this.fileHandle.appendFile(lines, "utf8");
+    } catch (err) {
+      debugLogger.warn("Failed to flush span cache writes:", err);
+      return;
+    }
 
     // Only now remove the flushed records from the buffer.
     // Filter out the records we just wrote (compare by reference).
