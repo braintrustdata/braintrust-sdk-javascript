@@ -13,6 +13,8 @@ import type {
   PlaybackFinishedEvent,
   PipelineOptions,
   PlaybackProgressedEvent,
+  RealtimeGenerationOptions,
+  RealtimeLLMSession,
   SpanTime,
   SpeechEvent,
   SpeechEndEvent,
@@ -153,6 +155,12 @@ class LiveKitInstrumentationConsumer {
       return tracing.scope(session.sessionSpan, () =>
         Reflect.apply(target, self, args),
       );
+    });
+    livekitChannels.realtimeGeneration.intercept((target, self, args) => {
+      runInstrumentation(() =>
+        tracing.observeRealtimeUsage(self as AgentActivity, args[0]),
+      );
+      return Reflect.apply(target, self, args);
     });
     livekitChannels.pipeline.intercept((target, self, args) => {
       runInstrumentation(() => {
@@ -354,6 +362,7 @@ class LiveKitTracing {
     { waits: Map<LiveKitSpan, EouWaitOptions>; evaluated: boolean }
   >();
   private pauses = new WeakMap<AudioRecognition, Row>();
+  private realtimeActivities = new WeakMap<RealtimeLLMSession, AgentActivity>();
   private creatingWait = iso.newAsyncLocalStorage<AudioRecognition>();
 
   constructor(
@@ -424,6 +433,52 @@ class LiveKitTracing {
 
   private sessionOf(session: AgentSession): SessionState | undefined {
     return this.sessions.get(this.rowOf(session.sessionSpan)?.id ?? "");
+  }
+
+  observeRealtimeUsage(
+    activity: AgentActivity,
+    { span, inferenceSpan }: RealtimeGenerationOptions,
+  ): void {
+    const realtime = activity.realtimeLLMSession;
+    if (
+      !realtime ||
+      typeof realtime.on !== "function" ||
+      !this.sessionOf(activity.agentSession)
+    )
+      return;
+    this.observeSpan(inferenceSpan, {
+      name: "realtime_inference",
+      context: { getValue: () => span },
+    });
+    if (!this.realtimeActivities.has(realtime)) {
+      // The normalized LiveKit metric defaults a missing audio count to zero.
+      realtime.on("openai_server_event_received", (event) =>
+        runInstrumentation(() => this.realtimeUsage(realtime, event)),
+      );
+    }
+    this.realtimeActivities.set(realtime, activity);
+  }
+
+  private realtimeUsage(realtime: RealtimeLLMSession, event: unknown): void {
+    if (this.disabled || !isObject(event) || event.type !== "response.done")
+      return;
+    const response = event.response;
+    if (!isObject(response) || typeof response.id !== "string") return;
+    const usage = response.usage;
+    const input = isObject(usage) ? usage.input_token_details : undefined;
+    const cache = isObject(input) ? input.cached_tokens_details : undefined;
+    const audio =
+      isObject(cache) && Object.hasOwn(cache, "audio_tokens")
+        ? cache.audio_tokens
+        : undefined;
+    if (typeof audio !== "number" || !Number.isFinite(audio) || audio < 0)
+      return;
+
+    // LiveKit emits the raw event before the normalized metric consumes this mapping.
+    const activity = this.realtimeActivities.get(realtime);
+    const row = this.rowOf(activity?.realtimeSpans?.get(response.id));
+    if (row?.name === "realtime_inference")
+      row.span.log({ metrics: { prompt_cached_audio_tokens: audio } });
   }
 
   /** Observe LiveKit's span API without installing or changing an OTel provider. */

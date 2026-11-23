@@ -125,6 +125,58 @@ async function rows() {
     },
   };
 }
+test.each([
+  { cacheDetails: { audio_tokens: 3, text_tokens: 5 }, expected: 3 },
+  { cacheDetails: { audio_tokens: 0, text_tokens: 8 }, expected: 0 },
+  { cacheDetails: { text_tokens: 8 }, expected: undefined },
+  { cacheDetails: undefined, expected: undefined },
+])(
+  "reports only provider-supplied realtime cached audio ($cacheDetails)",
+  async ({ cacheDetails, expected }) => {
+    const session = start("agent_session");
+    const turn = start("agent_turn", session);
+    const model = nativeSpan();
+    const realtime = new EventEmitter();
+    const activity = {
+      agentSession: { sessionSpan: session },
+      realtimeLLMSession: realtime,
+      realtimeSpans: new Map([["response-1", model]]),
+    };
+    const options = { span: turn, inferenceSpan: model };
+    tracing.observeRealtimeUsage(activity, options);
+    tracing.observeRealtimeUsage(activity, options);
+    expect(realtime.listenerCount("openai_server_event_received")).toBe(1);
+
+    const emitResponse = (id: string, details: typeof cacheDetails) =>
+      realtime.emit("openai_server_event_received", {
+        type: "response.done",
+        response: {
+          id,
+          usage: {
+            input_token_details: {
+              audio_tokens: 9,
+              cached_tokens: 8,
+              cached_tokens_details: details,
+            },
+          },
+        },
+      });
+    emitResponse("untracked", { audio_tokens: 42, text_tokens: 0 });
+    emitResponse("response-1", cacheDetails);
+    model.end();
+    turn.end();
+    session.end();
+
+    const { one } = await rows();
+    const metrics = one("livekit.realtime_inference").metrics;
+    if (expected === undefined) {
+      expect(metrics).not.toHaveProperty("prompt_cached_audio_tokens");
+    } else {
+      expect(metrics.prompt_cached_audio_tokens).toBe(expected);
+    }
+  },
+);
+
 const frame = (samples = 480, value = 1234) => ({
   data: new Int16Array(samples).fill(value),
   sampleRate: 24000,

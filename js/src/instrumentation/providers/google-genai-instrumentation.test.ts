@@ -186,6 +186,13 @@ describe("registerGoogleGenAIInstrumentation", () => {
       {
         name: "modality-detail usage",
         usageMetadata: {
+          cachedContentTokenCount: 30,
+          cacheTokensDetails: [
+            { modality: "TEXT", tokenCount: 18 },
+            { modality: "AUDIO", tokenCount: 5 },
+            { modality: "AUDIO", tokenCount: 7 },
+            { modality: "AUDIO" },
+          ],
           candidatesTokensDetails: [
             { modality: "AUDIO", tokenCount: 29 },
             { modality: "IMAGE", tokenCount: 31 },
@@ -200,8 +207,20 @@ describe("registerGoogleGenAIInstrumentation", () => {
           completion_audio_tokens: 29,
           completion_image_tokens: 31,
           prompt_audio_tokens: 41,
+          prompt_cached_audio_tokens: 12,
+          prompt_cached_tokens: 30,
         },
         absentMetrics: ["prompt_tokens", "completion_tokens", "tokens"],
+      },
+      {
+        name: "audio usage with only text cache details",
+        usageMetadata: {
+          cachedContentTokenCount: 8,
+          cacheTokensDetails: [{ modality: "TEXT", tokenCount: 8 }],
+          promptTokensDetails: [{ modality: "AUDIO", tokenCount: 6 }],
+        },
+        expectedMetrics: { prompt_audio_tokens: 6, prompt_cached_tokens: 8 },
+        absentMetrics: ["prompt_cached_audio_tokens"],
       },
     ])(
       "normalizes $name",
@@ -253,6 +272,7 @@ describe("registerGoogleGenAIInstrumentation", () => {
       event.result = {
         usageMetadata: {
           cachedContentTokenCount: 0,
+          cacheTokensDetails: [{ modality: "AUDIO", tokenCount: 0 }],
           candidatesTokenCount: 0,
           candidatesTokensDetails: [
             { modality: "AUDIO", tokenCount: 0 },
@@ -273,6 +293,7 @@ describe("registerGoogleGenAIInstrumentation", () => {
         completion_reasoning_tokens: 0,
         completion_tokens: 0,
         prompt_audio_tokens: 0,
+        prompt_cached_audio_tokens: 0,
         prompt_cached_tokens: 0,
         prompt_tokens: 0,
         tokens: 0,

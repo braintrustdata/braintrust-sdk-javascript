@@ -16,12 +16,24 @@ export interface AgentSession {
 export interface AgentActivity {
   agent?: Agent;
   agentSession: AgentSession;
+  readonly realtimeLLMSession?: RealtimeLLMSession;
+  realtimeSpans?: Map<string, LiveKitSpan>;
   /** The VAD in use: the agent's own, else the session's (LiveKit provides a default). */
   vad?: unknown;
   /** How LiveKit detects turns; "stt" lets the STT provider's speech events drive them. */
   turnDetectionMode?: string;
   audioRecognition?: AudioRecognition;
   currentSpeech?: SpeechHandle;
+}
+export interface RealtimeLLMSession {
+  on(
+    event: "openai_server_event_received",
+    listener: (event: unknown) => void,
+  ): unknown;
+}
+export interface RealtimeGenerationOptions {
+  span: LiveKitSpan;
+  inferenceSpan: LiveKitSpan;
 }
 export interface AudioRecognition {
   eouWaitSpan?: LiveKitSpan;

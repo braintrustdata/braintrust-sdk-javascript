@@ -308,6 +308,41 @@ describe("registerGoogleADKInstrumentation", () => {
         absentMetrics: ["prompt_tokens", "completion_tokens", "tokens"],
       },
       {
+        name: "cache modality details across events",
+        usageMetadata: [
+          {
+            cachedContentTokenCount: 5,
+            cacheTokensDetails: [
+              { modality: "AUDIO", tokenCount: 1 },
+              { modality: "TEXT", tokenCount: 4 },
+            ],
+            promptTokensDetails: [{ modality: "AUDIO", tokenCount: 2 }],
+          },
+          {
+            cachedContentTokenCount: 2,
+            cacheTokensDetails: [{ modality: "AUDIO", tokenCount: 2 }],
+            promptTokensDetails: [{ modality: "AUDIO", tokenCount: 3 }],
+          },
+        ],
+        expectedMetrics: {
+          prompt_audio_tokens: 5,
+          prompt_cached_audio_tokens: 3,
+          prompt_cached_tokens: 7,
+        },
+        absentMetrics: [],
+      },
+      {
+        name: "audio usage and cached totals without cache details",
+        usageMetadata: [
+          {
+            cachedContentTokenCount: 8,
+            promptTokensDetails: [{ modality: "AUDIO", tokenCount: 6 }],
+          },
+        ],
+        expectedMetrics: { prompt_audio_tokens: 6, prompt_cached_tokens: 8 },
+        absentMetrics: ["prompt_cached_audio_tokens"],
+      },
+      {
         name: "missing usage",
         usageMetadata: [{}],
         expectedMetrics: {},
@@ -317,6 +352,7 @@ describe("registerGoogleADKInstrumentation", () => {
           "completion_reasoning_tokens",
           "completion_tokens",
           "prompt_audio_tokens",
+          "prompt_cached_audio_tokens",
           "prompt_cached_tokens",
           "prompt_tokens",
           "tokens",
@@ -367,6 +403,7 @@ describe("registerGoogleADKInstrumentation", () => {
         yield {
           usageMetadata: {
             cachedContentTokenCount: 0,
+            cacheTokensDetails: [{ modality: "AUDIO", tokenCount: 0 }],
             candidatesTokenCount: 0,
             candidatesTokensDetails: [
               { modality: "AUDIO", tokenCount: 0 },
@@ -396,6 +433,7 @@ describe("registerGoogleADKInstrumentation", () => {
         completion_reasoning_tokens: 0,
         completion_tokens: 0,
         prompt_audio_tokens: 0,
+        prompt_cached_audio_tokens: 0,
         prompt_cached_tokens: 0,
         prompt_tokens: 0,
         tokens: 0,

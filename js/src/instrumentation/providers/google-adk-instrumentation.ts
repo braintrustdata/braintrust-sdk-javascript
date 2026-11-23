@@ -988,6 +988,12 @@ function populateUsageMetrics(
         (metrics.prompt_audio_tokens ?? 0) + detail.tokenCount;
     }
   }
+  for (const detail of usage.cacheTokensDetails ?? []) {
+    if (detail?.modality === "AUDIO" && typeof detail.tokenCount === "number") {
+      metrics.prompt_cached_audio_tokens =
+        (metrics.prompt_cached_audio_tokens ?? 0) + detail.tokenCount;
+    }
+  }
   for (const detail of usage.candidatesTokensDetails ?? []) {
     if (detail.modality === "AUDIO" && detail.tokenCount !== undefined) {
       metrics.completion_audio_tokens =

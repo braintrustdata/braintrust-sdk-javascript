@@ -72,6 +72,11 @@ function wrapActivity(activity: AgentActivity | undefined) {
     }
   });
   wrapMethod(activity, "_startSessionImpl", livekitChannels.activity);
+  wrapMethod(
+    activity,
+    "_realtimeGenerationTaskImpl",
+    livekitChannels.realtimeGeneration,
+  );
   wrapMethod(activity, "onEndOfTurn", livekitChannels.userTurn);
   wrapMethod(activity, "onStartOfSpeech", livekitChannels.speechStart);
   wrapMethod(activity, "onEndOfSpeech", livekitChannels.speechEnd);
