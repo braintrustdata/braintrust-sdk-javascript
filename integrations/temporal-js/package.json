@@ -34,7 +34,7 @@
     "@temporalio/workflow": "^1.25.0",
     "@types/node": "^22.15.21",
     "braintrust": "workspace:*",
-    "typescript": "5.5.4",
+    "typescript": "5.9.3",
     "vitest": "catalog:",
     "vite-plus": "catalog:"
   },

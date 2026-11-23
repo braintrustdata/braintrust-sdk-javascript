@@ -29,7 +29,7 @@
     "@opentelemetry/context-async-hooks": "2.6.1",
     "@types/node": "^22.15.21",
     "braintrust": "workspace:*",
-    "typescript": "5.5.4",
+    "typescript": "5.9.3",
     "vite-plus": "catalog:",
     "@opentelemetry/api": "1.9.0",
     "@opentelemetry/core": "2.0.0",
