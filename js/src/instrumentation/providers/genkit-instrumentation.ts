@@ -605,8 +605,8 @@ function parseGenkitUsageMetrics(
     tokens: usage.totalTokens,
     prompt_tokens: usage.inputTokens,
     completion_tokens: usage.outputTokens,
-    cached_tokens: usage.cachedContentTokens,
-    reasoning_tokens: usage.thoughtsTokens,
+    prompt_cached_tokens: usage.cachedContentTokens,
+    completion_reasoning_tokens: usage.thoughtsTokens,
   });
 }
 
