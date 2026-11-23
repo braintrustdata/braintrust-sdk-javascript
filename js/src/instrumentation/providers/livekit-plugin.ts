@@ -94,6 +94,7 @@ const SPANS = new Map<string, { name: string; type: "task" | "llm" | "tool" }>([
   ["user_speaking", { name: "user_speech", type: "task" }],
   ["agent_speaking", { name: "agent_speech", type: "task" }],
   ["llm_node", { name: "llm_response", type: "llm" }],
+  ["realtime_inference", { name: "livekit.realtime_inference", type: "llm" }],
   ["tts_node", { name: "tts", type: "task" }],
   ["function_tool", { name: "function_tool", type: "tool" }],
 ]);
@@ -101,6 +102,7 @@ const SPANS = new Map<string, { name: string; type: "task" | "llm" | "tool" }>([
 const METRICS = {
   prompt_tokens: "gen_ai.usage.input_tokens",
   completion_tokens: "gen_ai.usage.output_tokens",
+  completion_audio_tokens: "gen_ai.usage.audio.output_tokens",
   cache_read_input_tokens: "gen_ai.usage.cache_read.input_tokens",
   cache_creation_input_tokens: "gen_ai.usage.cache_write.input_tokens",
   reasoning_tokens: "gen_ai.usage.reasoning.output_tokens",
@@ -524,11 +526,11 @@ class LiveKitTracing {
     }
     observedRows.set(span, row);
     this.observeRedaction(row);
-    // Only model requests inside an llm_node contribute to their exported owner.
-    // Leave other folded spans untouched, including their native recording state.
+    // Only cascade model requests contribute usage to their exported owner.
     if (
       row.owner &&
-      (row.name !== "llm_request" || row.owner.name !== "llm_node")
+      row.name === "llm_request" &&
+      row.owner.name !== "llm_node"
     )
       return;
     const finish = () => this.end(row);
@@ -644,10 +646,14 @@ class LiveKitTracing {
       type: "task" as const,
     };
     const start = spanTimeSeconds(options.startTime);
-    // llm_request duplicates its model response lifecycle, so it folds into its parent.
-    // Its attempts (llm_request_run) still export to show retries and failures.
+    // Fold cascade requests and delayed realtime usage into their model spans.
+    // Cascade attempts (llm_request_run) still export to show retries and failures.
     const owner =
-      name === "llm_request" ? (parent!.owner ?? parent!) : undefined;
+      name === "llm_request"
+        ? (parent!.owner ?? parent!)
+        : name === "realtime_metrics" && parent?.name === "realtime_inference"
+          ? parent
+          : undefined;
     const args =
       !owner &&
       withSpanInstrumentationName(
@@ -813,7 +819,6 @@ class LiveKitTracing {
         row.span.log({ metadata: participantIds(state, native) });
       row.span.end({ endTime: this.waitEnd(row) ?? row.end });
     } else {
-      // Native request spans duplicate the public inference lifecycle.
       row.span.log(modelFields(attrs));
     }
     row.attributes = new Map();
