@@ -184,7 +184,12 @@ export class SpanCache {
       this.registerExitHandler();
     })();
 
-    return this.initPromise;
+    try {
+      await this.initPromise;
+    } catch (err) {
+      if (generation === this.generation) this.initPromise = null;
+      throw err;
+    }
   }
 
   /**
@@ -237,7 +242,6 @@ export class SpanCache {
 
   // Buffer for pending writes - flushed asynchronously
   private writeBuffer: DiskSpanRecord[] = [];
-  private flushScheduled = false;
   private flushPromise: Promise<void> | null = null;
 
   /**
@@ -254,10 +258,11 @@ export class SpanCache {
     this.writeBuffer.push(record);
     this.rootSpanIndex.add(rootSpanId);
 
-    // Schedule async flush if not already scheduled
-    if (!this.flushScheduled) {
-      this.flushScheduled = true;
-      this.flushPromise = this.flushWriteBuffer();
+    if (!this.flushPromise) {
+      // Keep failed writes buffered for retry. Explicit waiters still see the error.
+      void this.flushWriteBuffer().catch((err) => {
+        debugLogger.warn("Failed to flush span cache writes:", err);
+      });
     }
   }
 
@@ -265,43 +270,36 @@ export class SpanCache {
    * Flush the write buffer to disk asynchronously.
    * Called automatically after queueWrite, but can also be called explicitly.
    */
-  async flushWriteBuffer(): Promise<void> {
+  flushWriteBuffer(): Promise<void> {
+    if (this.flushPromise) {
+      return this.flushPromise;
+    }
+
+    if (this.writeBuffer.length === 0) {
+      return Promise.resolve();
+    }
     const generation = this.generation;
-    // Take a snapshot of records to flush, but DON'T clear the buffer yet.
-    // Records stay in writeBuffer until disk write succeeds so getByRootSpanId can find them.
-    const recordsToFlush = [...this.writeBuffer];
-    this.flushScheduled = false;
+    this.flushPromise = (async () => {
+      try {
+        await this.ensureInitialized();
+        while (
+          generation === this.generation &&
+          this.fileHandle &&
+          this.writeBuffer.length > 0
+        ) {
+          const count = this.writeBuffer.length;
+          const lines = this.writeBuffer.map((r) => JSON.stringify(r) + "\n");
+          await this.fileHandle.appendFile(lines.join(""), "utf8");
 
-    if (recordsToFlush.length === 0) {
-      return;
-    }
-
-    try {
-      await this.ensureInitialized();
-    } catch (err) {
-      // Don't cache a rejected initialization forever: allow a later retry.
-      this.initPromise = null;
-      debugLogger.warn("Failed to initialize span cache file:", err);
-      return;
-    }
-
-    if (generation !== this.generation || !this.fileHandle) {
-      return;
-    }
-
-    const lines = recordsToFlush.map((r) => JSON.stringify(r) + "\n").join("");
-    try {
-      await this.fileHandle.appendFile(lines, "utf8");
-    } catch (err) {
-      debugLogger.warn("Failed to flush span cache writes:", err);
-      return;
-    }
-
-    // Only now remove the flushed records from the buffer.
-    // Filter out the records we just wrote (compare by reference).
-    this.writeBuffer = this.writeBuffer.filter(
-      (r) => !recordsToFlush.includes(r),
-    );
+          // Disposal replaces the buffer. Leave the new generation's writes alone.
+          if (generation !== this.generation) return;
+          this.writeBuffer.splice(0, count);
+        }
+      } finally {
+        if (generation === this.generation) this.flushPromise = null;
+      }
+    })();
+    return this.flushPromise;
   }
 
   /**
@@ -309,10 +307,7 @@ export class SpanCache {
    * Call this before reading from the cache to ensure consistency.
    */
   async waitForPendingWrites(): Promise<void> {
-    if (this.flushPromise) {
-      await this.flushPromise;
-      this.flushPromise = null;
-    }
+    await this.flushPromise;
   }
 
   /**
@@ -440,7 +435,6 @@ export class SpanCache {
 
     // Clear pending writes
     this.writeBuffer = [];
-    this.flushScheduled = false;
     this.flushPromise = null;
 
     if (this.fileHandle) {
