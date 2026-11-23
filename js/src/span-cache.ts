@@ -252,7 +252,10 @@ export class SpanCache {
     this.writeBuffer.push(record);
     this.rootSpanIndex.add(rootSpanId);
 
-    void this.flushWriteBuffer();
+    if (!this.flushPromise) {
+      // Keep failed writes buffered for retry. Explicit waiters still see the error.
+      void this.flushWriteBuffer().catch(() => {});
+    }
   }
 
   /**
@@ -268,51 +271,27 @@ export class SpanCache {
       return Promise.resolve();
     }
     const generation = this.generation;
-    const flush = async () => {
-      // Keep one writer active, including while initialization or appendFile is pending.
-      // Writes queued during an append are drained by the next iteration.
-      while (generation === this.generation && this.writeBuffer.length > 0) {
-        const recordsToFlush = new Set(this.writeBuffer);
+    this.flushPromise = (async () => {
+      try {
         await this.ensureInitialized();
+        while (
+          generation === this.generation &&
+          this.fileHandle &&
+          this.writeBuffer.length > 0
+        ) {
+          const count = this.writeBuffer.length;
+          const lines = this.writeBuffer.map((r) => JSON.stringify(r) + "\n");
+          await this.fileHandle.appendFile(lines.join(""), "utf8");
 
-        if (generation !== this.generation || !this.fileHandle) {
-          return;
+          // Disposal replaces the buffer. Leave the new generation's writes alone.
+          if (generation !== this.generation) return;
+          this.writeBuffer.splice(0, count);
         }
-
-        const lines = [...recordsToFlush]
-          .map((r) => JSON.stringify(r) + "\n")
-          .join("");
-        await this.fileHandle.appendFile(lines, "utf8");
-
-        // Retain records until the append succeeds so synchronous reads can still find them.
-        // An old writer must not remove records queued after disposal and reuse.
-        if (generation !== this.generation) return;
-        this.writeBuffer = this.writeBuffer.filter(
-          (r) => !recordsToFlush.has(r),
-        );
+      } finally {
+        if (generation === this.generation) this.flushPromise = null;
       }
-    };
-    const promise: Promise<void> = flush().then(
-      () => {
-        if (this.flushPromise === promise) {
-          this.flushPromise = null;
-          // Include writes queued between the drain finishing and this continuation.
-          if (
-            generation === this.generation &&
-            this.writeBuffer.length > 0 &&
-            !this.disabled
-          ) {
-            return this.flushWriteBuffer();
-          }
-        }
-      },
-      (error) => {
-        if (this.flushPromise === promise) this.flushPromise = null;
-        throw error;
-      },
-    );
-    this.flushPromise = promise;
-    return promise;
+    })();
+    return this.flushPromise;
   }
 
   /**

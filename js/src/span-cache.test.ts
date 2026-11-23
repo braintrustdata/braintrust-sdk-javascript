@@ -64,6 +64,7 @@ describe("SpanCache (disk-based)", () => {
           cache.queueWrite("root-123", `span-${i}`, { span_id: `span-${i}` });
         }
         await cache.waitForPendingWrites();
+        expect(appendFile).toHaveBeenCalledOnce();
         const records = appendFile.mock.calls.flatMap(([lines]) =>
           String(lines)
             .trim()
