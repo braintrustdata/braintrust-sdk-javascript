@@ -159,6 +159,50 @@ const channelSamples = (bytes: Uint8Array, channel: number) => {
 };
 
 describe("tracing", () => {
+  test.each([
+    { timing: "before inference ends", audioTokens: 7, late: false },
+    { timing: "after inference ends", audioTokens: 7, late: true },
+    {
+      timing: "without an audio breakdown",
+      audioTokens: undefined,
+      late: false,
+    },
+  ])("maps realtime model usage $timing", async ({ audioTokens, late }) => {
+    const session = start("agent_session");
+    const turn = start("agent_turn", session);
+    const inference = start("realtime_inference", turn, {
+      "gen_ai.request.model": "gpt-realtime",
+      "gen_ai.provider.name": "openai",
+    });
+    if (late) inference.end([2, 0]);
+    const usageSpan = late ? start("realtime_metrics", inference) : inference;
+    usageSpan.setAttributes({
+      "gen_ai.usage.input_tokens": 10,
+      "gen_ai.usage.output_tokens": 9,
+      "gen_ai.usage.audio.input_tokens": 4,
+      ...(audioTokens === undefined
+        ? {}
+        : { "gen_ai.usage.audio.output_tokens": audioTokens }),
+    });
+    usageSpan.end(late ? [3, 0] : [2, 0]);
+    turn.end([3, 0]);
+    session.end([3, 0]);
+
+    const { named, one } = await rows();
+    const turnRow = one("agent_turn");
+    const modelRow = one("livekit.realtime_inference");
+    expect(modelRow).toMatchObject({
+      span_parents: [turnRow.span_id],
+      span_attributes: { type: "llm" },
+      metrics: { prompt_tokens: 10, completion_tokens: 9, tokens: 19, end: 2 },
+      metadata: { model: "gpt-realtime", provider: "openai" },
+    });
+    expect(modelRow.metrics.completion_audio_tokens).toBe(audioTokens);
+    expect(modelRow.metrics.prompt_audio_tokens).toBeUndefined();
+    expect(turnRow.metrics.completion_audio_tokens).toBeUndefined();
+    expect(named("livekit.realtime_metrics")).toHaveLength(0);
+  });
+
   test("maps a voice conversation to standard spans, messages, metrics and turn links", async () => {
     const root = start("agent_session");
     const user = start("user_turn", root);
