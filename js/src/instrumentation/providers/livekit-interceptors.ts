@@ -1,7 +1,6 @@
 import type {
   AudioFrame,
   EndOfTurnInfo,
-  ChatMessage,
   LiveKitSpan,
   TraceOptions,
   PipelineOptions,
@@ -9,10 +8,24 @@ import type {
   SpeechEndEvent,
   VadInferenceEvent,
   EouWaitOptions,
+  AgentActivity,
 } from "../../vendor-sdk-types/livekit";
 import { channel, defineInterceptor } from "../core/interceptor-definitions";
 
 export const livekitChannels = defineInterceptor("@livekit/agents", {
+  modelEnqueue: channel<[unknown], unknown, { stream: object }>({
+    channelName: "model.enqueue",
+  }),
+  modelRun: channel<unknown[], unknown>({ channelName: "model.run" }),
+  model: channel<
+    unknown[],
+    unknown,
+    {
+      kind: "llm" | "stt" | "tts";
+      method: string;
+      activity: AgentActivity;
+    }
+  >({ channelName: "model.call" }),
   startSpan: channel<[TraceOptions], LiveKitSpan>({
     channelName: "telemetry.startSpan",
   }),
@@ -27,8 +40,8 @@ export const livekitChannels = defineInterceptor("@livekit/agents", {
   inference: channel<unknown[], unknown>({
     channelName: "generation.inference",
   }),
-  conversation: channel<[ChatMessage], void>({
-    channelName: "session.conversation",
+  sessionEvent: channel<[string, ...unknown[]], boolean>({
+    channelName: "session.emit",
   }),
   userCompleted: channel<[EndOfTurnInfo, unknown?], Promise<void>>({
     channelName: "activity.userCompleted",

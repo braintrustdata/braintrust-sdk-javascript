@@ -55,3 +55,73 @@ test("new sessions hand LiveKit's job context lookup to the job context hook", (
     remove();
   }
 });
+
+test("manual sessions route all model services through shared hooks exactly once", async () => {
+  const output = Promise.resolve("result");
+  class AgentSession {
+    activity = {
+      agentSession: this,
+      llm: { chat: vi.fn(() => output) },
+      stt: { recognize: vi.fn(() => output), stream: vi.fn(() => output) },
+      tts: { synthesize: vi.fn(() => output), stream: vi.fn(() => output) },
+      async _startSessionImpl() {},
+    };
+    emit() {
+      return true;
+    }
+  }
+  const module = { voice: { AgentSession }, telemetry: { tracer: {} } };
+  const session = new (wrapLiveKit(module).voice.AgentSession)();
+  session.emit();
+  await session.activity._startSessionImpl();
+  session.emit();
+  await session.activity._startSessionImpl();
+  const calls: unknown[] = [];
+  const remove = livekitChannels.model.intercept(
+    (target, receiver, args, additional) => {
+      calls.push({
+        receiver,
+        args,
+        kind: additional.kind,
+        method: additional.method,
+      });
+      return Reflect.apply(target, receiver, args);
+    },
+  );
+  try {
+    expect(session.activity.llm.chat()).toBe(output);
+    expect(session.activity.stt.recognize()).toBe(output);
+    expect(session.activity.stt.stream()).toBe(output);
+    expect(session.activity.tts.synthesize()).toBe(output);
+    expect(session.activity.tts.stream()).toBe(output);
+    expect(calls).toEqual([
+      { receiver: session.activity.llm, args: [], kind: "llm", method: "chat" },
+      {
+        receiver: session.activity.stt,
+        args: [],
+        kind: "stt",
+        method: "recognize",
+      },
+      {
+        receiver: session.activity.stt,
+        args: [],
+        kind: "stt",
+        method: "stream",
+      },
+      {
+        receiver: session.activity.tts,
+        args: [],
+        kind: "tts",
+        method: "synthesize",
+      },
+      {
+        receiver: session.activity.tts,
+        args: [],
+        kind: "tts",
+        method: "stream",
+      },
+    ]);
+  } finally {
+    remove();
+  }
+});

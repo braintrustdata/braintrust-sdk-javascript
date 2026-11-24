@@ -14,6 +14,9 @@ export interface AgentSession {
   output?: { audio?: AudioOutput | null };
 }
 export interface AgentActivity {
+  llm?: ModelService;
+  stt?: ModelService;
+  tts?: ModelService;
   agent?: Agent;
   agentSession: AgentSession;
   /** The VAD in use: the agent's own, else the session's (LiveKit provides a default). */
@@ -22,6 +25,14 @@ export interface AgentActivity {
   turnDetectionMode?: string;
   audioRecognition?: AudioRecognition;
   currentSpeech?: SpeechHandle;
+}
+/** Relevant service surface shared by LiveKit's cascade adapters. */
+export interface ModelService {
+  [method: string]: unknown;
+  model?: string;
+  provider?: string;
+  client?: unknown;
+  capabilities?: { streaming?: boolean };
 }
 export interface AudioRecognition {
   eouWaitSpan?: LiveKitSpan;
@@ -180,4 +191,12 @@ export interface LiveKitModule {
   voice: { AgentSession: new (...args: unknown[]) => AgentSession };
   telemetry: { tracer: LiveKitTracer };
   getJobContext?: (required?: boolean) => JobContext | undefined;
+}
+
+/** Declared protected plugin extension points on LiveKit's model streams.
+ * No public event exposes attempt-local partial output before the shared queue.
+ */
+export interface ModelWorker {
+  run?: unknown;
+  queue?: { put?: unknown };
 }
