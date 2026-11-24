@@ -214,9 +214,10 @@ export function defineCohereInstrumentationAssertions(options: {
         expect(metrics).toMatchObject({
           completion_tokens: expect.any(Number),
           prompt_tokens: expect.any(Number),
-          reasoning_tokens: expect.any(Number),
+          completion_reasoning_tokens: expect.any(Number),
           time_to_first_token: expect.any(Number),
         });
+        expect(metrics).not.toHaveProperty("reasoning_tokens");
         expect(
           output?.content?.some(
             (block) =>
