@@ -189,7 +189,15 @@
                 "model": "mock-model-id",
                 "provider": "mock-provider"
               }
-            },
+            }
+          ],
+          "metadata": {
+            "operation": "generate"
+          }
+        },
+        {
+          "name": "mastra-agent-stream-operation",
+          "children": [
             {
               "name": "agent run: 'weather-agent'",
               "type": "task",
@@ -372,7 +380,22 @@
                 "model": "mock-model-id",
                 "provider": "mock-provider"
               }
-            },
+            }
+          ],
+          "metadata": {
+            "operation": "stream"
+          }
+        },
+        {
+          "name": "mastra-tool-operation",
+          "children": [],
+          "metadata": {
+            "operation": "tool"
+          }
+        },
+        {
+          "name": "mastra-workflow-operation",
+          "children": [
             {
               "name": "workflow run: 'travel-flow'",
               "type": "task",
@@ -407,27 +430,6 @@
               }
             }
           ],
-          "metadata": {
-            "operation": "generate"
-          }
-        },
-        {
-          "name": "mastra-agent-stream-operation",
-          "children": [],
-          "metadata": {
-            "operation": "stream"
-          }
-        },
-        {
-          "name": "mastra-tool-operation",
-          "children": [],
-          "metadata": {
-            "operation": "tool"
-          }
-        },
-        {
-          "name": "mastra-workflow-operation",
-          "children": [],
           "metadata": {
             "operation": "workflow"
           }

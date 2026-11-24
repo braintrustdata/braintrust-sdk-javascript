@@ -24,7 +24,8 @@ import { debugLogger } from "../debug-logger";
 import {
   _internalGetGlobalState,
   _internalSetInitialState,
-  currentSpan,
+  type BraintrustState,
+  type Logger,
   startSpan,
   type StartSpanArgs,
   type Span,
@@ -243,15 +244,15 @@ export class BraintrustObservabilityExporter implements MastraObservabilityExpor
   public readonly name: "braintrust" = MASTRA_BRAINTRUST_EXPORTER_NAME;
 
   private readonly spans = new Map<string, SpanRecord>();
-  // Captured at the first SPAN_STARTED event. Mastra's observability bus may
-  // dispatch later events outside the user's AsyncLocalStorage context, where
-  // `currentSpan()` returns NOOP_SPAN — which would make our `startSpan()`
-  // calls go to a no-op logger and silently drop. Anchoring on the parent
-  // we observe while still in-context keeps the whole Mastra subtree under
-  // the user's traced scenario.
-  private capturedParent: Span | undefined;
+  private readonly roots = new Map<string, SpanRecord>();
+  private readonly loggerStates = new Set<BraintrustState>();
 
-  constructor() {
+  constructor(
+    private readonly options: {
+      /** Start roots on this logger, or choose a logger from each Mastra root span. */
+      logger?: Logger | ((root: Readonly<MastraExportedSpan>) => Logger);
+    } = {},
+  ) {
     // The auto-instrumentations bundle and the main braintrust bundle each
     // have their own module-scoped `_globalState`. The main bundle initializes
     // state via `configureNode`; this call rehydrates our bundle's copy from
@@ -286,15 +287,20 @@ export class BraintrustObservabilityExporter implements MastraObservabilityExpor
   }
 
   async flush(): Promise<void> {
-    const state = _internalGetGlobalState();
-    if (state) {
-      await state.bgLogger().flush();
+    if (this.options.logger) {
+      await Promise.all(
+        Array.from(this.loggerStates, (state) => state.bgLogger().flush()),
+      );
+    } else {
+      await _internalGetGlobalState()?.bgLogger().flush();
     }
   }
 
   async shutdown(): Promise<void> {
     await this.flush();
     this.spans.clear();
+    this.roots.clear();
+    this.loggerStates.clear();
   }
 
   private onStart(exported: MastraExportedSpan): void {
@@ -315,27 +321,29 @@ export class BraintrustObservabilityExporter implements MastraObservabilityExpor
       INSTRUMENTATION_NAMES.MASTRA,
     );
 
-    const parentRecord = exported.parentSpanId
-      ? this.spans.get(exported.parentSpanId)
+    // A skipped internal span can leave a child without a direct parent.
+    const isRoot = exported.isRootSpan || !exported.parentSpanId;
+    const parent = exported.parentSpanId
+      ? (this.spans.get(exported.parentSpanId) ??
+        this.roots.get(exported.traceId))
       : undefined;
-
-    // Capture the user's current span on the very first event we see; later
-    // events from Mastra's bus may run outside that AsyncLocalStorage scope.
-    if (!this.capturedParent) {
-      const probe = currentSpan();
-      if (probe && (probe as Span).spanId) {
-        this.capturedParent = probe;
-      }
+    let owner: Span | Logger | undefined = parent?.span;
+    if (!owner && this.options.logger) {
+      const configured = this.options.logger;
+      // A child with no known root cannot identify its agent's logger.
+      if (typeof configured === "function" && !isRoot) return;
+      const logger =
+        typeof configured === "function" ? configured(exported) : configured;
+      // Logger.startSpan otherwise inherits the active trace, even across projects.
+      args.parentSpanIds = { rootSpanId: exported.traceId, parentSpanIds: [] };
+      this.loggerStates.add(logger.loggingState);
+      owner = logger;
     }
 
     const { parent: _ignoredParent, ...publicArgs } = args;
-    const span = parentRecord
-      ? parentRecord.span.startSpan(publicArgs)
-      : this.capturedParent
-        ? this.capturedParent.startSpan(publicArgs)
-        : startSpan(publicArgs);
-
+    const span = owner ? owner.startSpan(publicArgs) : startSpan(publicArgs);
     const record: SpanRecord = { span, hasLoggedInput: false };
+    if (isRoot && !exported.isEvent) this.roots.set(exported.traceId, record);
     this.logPayload(record, exported);
     this.spans.set(exported.id, record);
 
@@ -369,6 +377,9 @@ export class BraintrustObservabilityExporter implements MastraObservabilityExpor
     }
 
     record.span.end({ endTime: epochSeconds(exported.endTime) });
+    if (this.roots.get(exported.traceId) === record) {
+      this.roots.delete(exported.traceId);
+    }
     this.spans.delete(exported.id);
   }
 
