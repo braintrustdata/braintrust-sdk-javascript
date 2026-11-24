@@ -492,6 +492,13 @@ function extractMetrics(
     ]);
   }
 
+  assignFirstMetric(
+    metrics,
+    "completion_reasoning_tokens",
+    ownValue(usage, "output_token_details"),
+    ["reasoning"],
+  );
+
   if (
     metrics.tokens === undefined &&
     (metrics.prompt_tokens !== undefined ||
