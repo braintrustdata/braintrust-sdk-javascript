@@ -25,7 +25,7 @@ export interface SpanCustomizer {
 }
 
 export interface InstrumentationIntegrationsConfig {
-  openai?: boolean;
+  openai?: boolean | OpenAIIntegrationConfig;
   anthropic?: boolean;
   aisdk?: boolean;
   googleGenAI?: boolean;
@@ -76,9 +76,20 @@ export interface MCPIntegrationConfig {
   captureContent?: boolean;
 }
 
+export interface OpenAIIntegrationConfig {
+  /**
+   * Encode captured PCM audio as Ogg/Opus when @braintrust/audio is installed.
+   * Set false to skip OpenAI audio capture while retaining spans and text.
+   * Directional audio capture environment variables still apply. This setting
+   * does not affect other integrations or already compressed audio.
+   */
+  audio?: false | AudioEncodingConfig;
+}
+
 export interface LiveKitIntegrationConfig {
   /**
-   * How recorded call audio is encoded. Recording itself still requires
+   * Set false to skip LiveKit audio capture without affecting provider capture.
+   * Otherwise controls how recorded audio is encoded. Recording still requires
    * BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS or
    * BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS.
    *
@@ -96,7 +107,7 @@ export interface LiveKitIntegrationConfig {
    * });
    * ```
    */
-  audio?: AudioEncodingConfig;
+  audio?: false | AudioEncodingConfig;
 }
 
 export interface AudioEncodingConfig {

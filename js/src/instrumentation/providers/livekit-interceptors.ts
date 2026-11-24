@@ -37,9 +37,6 @@ export const livekitChannels = defineInterceptor("@livekit/agents", {
     [(span: LiveKitSpan) => unknown, TraceOptions],
     unknown
   >({ channelName: "telemetry.startActiveSpanSync" }),
-  inference: channel<unknown[], unknown>({
-    channelName: "generation.inference",
-  }),
   sessionEvent: channel<[string, ...unknown[]], boolean>({
     channelName: "session.emit",
   }),

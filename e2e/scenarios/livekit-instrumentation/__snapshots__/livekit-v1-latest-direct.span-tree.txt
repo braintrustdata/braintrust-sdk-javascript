@@ -1,0 +1,888 @@
+span_tree:
+└── session [task]
+    input: {
+      "audio": {
+        "part-0": {
+          "content_type": "audio/ogg",
+          "filename": "part-0.ogg",
+          "key": "<uuid:1>",
+          "type": "braintrust_attachment"
+        }
+      }
+    }
+    metadata: {
+      "audio.schema.version": "3.1.0",
+      "audio.segments": {
+        "part-0": {
+          "attachment": {
+            "ref": "/input/audio/part-0"
+          },
+          "attributes": {
+            "opus.application": "audio",
+            "opus.bitrate_bps": 64000,
+            "opus.complexity": 5
+          },
+          "channels": {
+            "0": {
+              "sources": []
+            },
+            "1": {
+              "sources": [
+                "agent-output"
+              ]
+            }
+          },
+          "duration_ms": 0,
+          "encoding": "opus",
+          "mime_type": "audio/ogg",
+          "sample_rate_hz": 48000,
+          "start_offset_ms": 0,
+          "state": "ready"
+        }
+      },
+      "audio.sources": {
+        "agent-output": {
+          "label": "Agent audio"
+        },
+        "session-input": {
+          "label": "Agent input audio"
+        }
+      },
+      "audio.timeline": {
+        "origin_unix_ms": 0
+      },
+      "contrib.livekit.agent_label": "default_agent",
+      "contrib.livekit.audio.input_formats": [],
+      "contrib.livekit.audio.output_formats": [
+        {
+          "channel_count": 1,
+          "sample_rate_hz": 24000
+        }
+      ],
+      "contrib.livekit.events": [
+        {
+          "attributes": {
+            "contrib.livekit.new_state": "listening",
+            "contrib.livekit.old_state": "initializing"
+          },
+          "name": "agent_state_changed",
+          "time_unix_ms": 0
+        },
+        {
+          "attributes": {
+            "contrib.livekit.new_state": "thinking",
+            "contrib.livekit.old_state": "listening"
+          },
+          "name": "agent_state_changed",
+          "time_unix_ms": 0
+        },
+        {
+          "attributes": {
+            "contrib.livekit.new_state": "speaking",
+            "contrib.livekit.old_state": "thinking"
+          },
+          "name": "agent_state_changed",
+          "time_unix_ms": 0
+        },
+        {
+          "attributes": {
+            "contrib.livekit.new_state": "listening",
+            "contrib.livekit.old_state": "speaking"
+          },
+          "name": "agent_state_changed",
+          "time_unix_ms": 0
+        }
+      ],
+      "gen_ai.operation.name": "invoke_workflow",
+      "gen_ai.workflow.name": "agent_session",
+      "scenario": "livekit-instrumentation",
+      "testRunId": "<run:1>"
+    }
+    context: {
+      "caller_filename": "<node-internal>",
+      "caller_functionname": "<node-internal>",
+      "caller_lineno": 0
+    }
+    ├── livekit.session_start [task]
+    │   metadata: {
+    │     "scenario": "livekit-instrumentation",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<node-internal>",
+    │     "caller_functionname": "<node-internal>",
+    │     "caller_lineno": 0
+    │   }
+    │   └── livekit.start_agent_activity [task]
+    │       metadata: {
+    │         "contrib.livekit.agent_label": "default_agent",
+    │         "gen_ai.agent.name": "default_agent",
+    │         "gen_ai.operation.name": "create_agent",
+    │         "gen_ai.provider.name": "openai",
+    │         "gen_ai.request.model": "gpt-5.4-nano",
+    │         "model": "gpt-5.4-nano",
+    │         "provider": "openai",
+    │         "scenario": "livekit-instrumentation",
+    │         "testRunId": "<run:1>"
+    │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
+    │       ├── livekit.setup_toolsets [task]
+    │       │   metadata: {
+    │       │     "scenario": "livekit-instrumentation",
+    │       │     "testRunId": "<run:1>"
+    │       │   }
+    │       │   context: {
+    │       │     "caller_filename": "<node-internal>",
+    │       │     "caller_functionname": "<node-internal>",
+    │       │     "caller_lineno": 0
+    │       │   }
+    │       └── livekit.on_enter [task]
+    │           metadata: {
+    │             "contrib.livekit.agent_label": "default_agent",
+    │             "scenario": "livekit-instrumentation",
+    │             "testRunId": "<run:1>"
+    │           }
+    │           context: {
+    │             "caller_filename": "<node-internal>",
+    │             "caller_functionname": "<node-internal>",
+    │             "caller_lineno": 0
+    │           }
+    ├── stt [task]
+    │   output: [
+    │     {
+    │       "content": "Where is my order, DMO1042?",
+    │       "role": "user"
+    │     }
+    │   ]
+    │   metadata: {
+    │     "audio.source_id": "session-input",
+    │     "model": "gpt-4o-mini-transcribe",
+    │     "provider": "api.openai.com",
+    │     "scenario": "livekit-instrumentation",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<node-internal>",
+    │     "caller_functionname": "<node-internal>",
+    │     "caller_lineno": 0
+    │   }
+    │   └── livekit.stt [llm]
+    │       input: {
+    │         "content": [
+    │           {
+    │             "file": {
+    │               "byte_size": 29720,
+    │               "file_data": {
+    │                 "content_type": "audio/ogg",
+    │                 "filename": "input-0.ogg",
+    │                 "key": "<uuid:1>",
+    │                 "type": "braintrust_attachment"
+    │               },
+    │               "filename": "input-0.ogg"
+    │             },
+    │             "type": "file"
+    │           }
+    │         ],
+    │         "operation": "transcribe"
+    │       }
+    │       output: {
+    │         "content": [
+    │           {
+    │             "text": "Where is my order, DMO1042?",
+    │             "type": "text"
+    │           }
+    │         ]
+    │       }
+    │       metadata: {
+    │         "contrib.audio.encodings": [
+    │           {
+    │             "original": {
+    │               "content_type": "audio/pcm",
+    │               "filename": "input-0.pcm"
+    │             },
+    │             "stored": {
+    │               "content_type": "audio/ogg",
+    │               "filename": "input-0.ogg"
+    │             }
+    │           }
+    │         ],
+    │         "contrib.livekit.audio.segments": [
+    │           {
+    │             "byte_offset": 0,
+    │             "channel_count": 1,
+    │             "content_index": 0,
+    │             "sample_format": "s16le",
+    │             "sample_rate_hz": 24000
+    │           }
+    │         ],
+    │         "model": "gpt-4o-mini-transcribe",
+    │         "provider": "api.openai.com",
+    │         "scenario": "livekit-instrumentation",
+    │         "testRunId": "<run:1>"
+    │       }
+    │       metrics: {
+    │         "time_to_first_token": 0
+    │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
+    ├── agent_turn [task]
+    │   input: [
+    │     {
+    │       "content": "Where is my order, DMO1042?",
+    │       "role": "user"
+    │     }
+    │   ]
+    │   metadata: {
+    │     "contrib.livekit.events": [
+    │       {
+    │         "attributes": {
+    │           "contrib.livekit.generation_id": "<native:3>"
+    │         },
+    │         "name": "generation",
+    │         "time_unix_ms": 0
+    │       },
+    │       {
+    │         "attributes": {
+    │           "contrib.livekit.generation_id": "<native:2>",
+    │           "contrib.livekit.parent_generation_id": "<native:3>"
+    │         },
+    │         "name": "generation",
+    │         "time_unix_ms": 0
+    │       }
+    │     ],
+    │     "contrib.livekit.generation_count": 2,
+    │     "contrib.livekit.generation_id": "<native:2>",
+    │     "contrib.livekit.interrupted": false,
+    │     "contrib.livekit.playback_events": [
+    │       {
+    │         "attributes": {
+    │           "interrupted": false,
+    │           "playbackPosition": 0
+    │         },
+    │         "name": "playbackFinished",
+    │         "time_unix_ms": 0
+    │       }
+    │     ],
+    │     "contrib.livekit.speech.queue_wait": 0,
+    │     "contrib.livekit.speech_id": "<native:1>",
+    │     "gen_ai.agent.name": "default_agent",
+    │     "gen_ai.operation.name": "invoke_agent",
+    │     "scenario": "livekit-instrumentation",
+    │     "testRunId": "<run:1>",
+    │     "turn.id": "<span:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<node-internal>",
+    │     "caller_functionname": "<node-internal>",
+    │     "caller_lineno": 0
+    │   }
+    │   ├── llm_response [task]
+    │   │   input: [
+    │   │     {
+    │   │       "content": "You help customers check orders. Always call lookup_order when an order number is supplied. Answer with one short sentence giving the delivery day.",
+    │   │       "role": "system"
+    │   │     },
+    │   │     {
+    │   │       "content": "Where is my order, DMO1042?",
+    │   │       "role": "user"
+    │   │     }
+    │   │   ]
+    │   │   output: [
+    │   │     {
+    │   │       "content": null,
+    │   │       "role": "assistant",
+    │   │       "tool_calls": [
+    │   │         {
+    │   │           "function": {
+    │   │             "arguments": "{\"order_id\":\"DMO1042\"}",
+    │   │             "name": "lookup_order"
+    │   │           },
+    │   │           "id": "<span:1>",
+    │   │           "type": "function"
+    │   │         }
+    │   │       ]
+    │   │     }
+    │   │   ]
+    │   │   metadata: {
+    │   │     "contrib.livekit.function_tools": "[\"lookup_order\"]",
+    │   │     "gen_ai.operation.name": "chat",
+    │   │     "gen_ai.request.stream": true,
+    │   │     "gen_ai.response.finish_reasons": [
+    │   │       "tool_call"
+    │   │     ],
+    │   │     "model": "gpt-5.4-nano",
+    │   │     "provider": "api.openai.com",
+    │   │     "scenario": "livekit-instrumentation",
+    │   │     "testRunId": "<run:1>",
+    │   │     "tools": [
+    │   │       {
+    │   │         "function": {
+    │   │           "description": "Look up an order delivery status.",
+    │   │           "name": "lookup_order",
+    │   │           "parameters": {
+    │   │             "$schema": "http://json-schema.org/draft-07/schema#",
+    │   │             "additionalProperties": false,
+    │   │             "properties": {
+    │   │               "order_id": {
+    │   │                 "type": "string"
+    │   │               }
+    │   │             },
+    │   │             "required": [
+    │   │               "order_id"
+    │   │             ],
+    │   │             "type": "object"
+    │   │           }
+    │   │         },
+    │   │         "type": "function"
+    │   │       }
+    │   │     ],
+    │   │     "turn.id": "<span:1>"
+    │   │   }
+    │   │   context: {
+    │   │     "caller_filename": "<node-internal>",
+    │   │     "caller_functionname": "<node-internal>",
+    │   │     "caller_lineno": 0
+    │   │   }
+    │   │   ├── livekit.llm_response [llm]
+    │   │   │   input: [
+    │   │   │     {
+    │   │   │       "content": "You help customers check orders. Always call lookup_order when an order number is supplied. Answer with one short sentence giving the delivery day.",
+    │   │   │       "role": "system"
+    │   │   │     },
+    │   │   │     {
+    │   │   │       "content": "Where is my order, DMO1042?",
+    │   │   │       "role": "user"
+    │   │   │     }
+    │   │   │   ]
+    │   │   │   output: [
+    │   │   │     {
+    │   │   │       "index": 0,
+    │   │   │       "message": {
+    │   │   │         "content": null,
+    │   │   │         "role": "assistant",
+    │   │   │         "tool_calls": [
+    │   │   │           {
+    │   │   │             "function": {
+    │   │   │               "arguments": "{\"order_id\":\"DMO1042\"}",
+    │   │   │               "name": "lookup_order"
+    │   │   │             },
+    │   │   │             "id": "<span:1>",
+    │   │   │             "type": "function"
+    │   │   │           }
+    │   │   │         ]
+    │   │   │       }
+    │   │   │     }
+    │   │   │   ]
+    │   │   │   metadata: {
+    │   │   │     "model": "gpt-5.4-nano",
+    │   │   │     "provider": "api.openai.com",
+    │   │   │     "scenario": "livekit-instrumentation",
+    │   │   │     "testRunId": "<run:1>",
+    │   │   │     "tools": [
+    │   │   │       {
+    │   │   │         "function": {
+    │   │   │           "description": "Look up an order delivery status.",
+    │   │   │           "name": "lookup_order",
+    │   │   │           "parameters": {
+    │   │   │             "$schema": "http://json-schema.org/draft-07/schema#",
+    │   │   │             "additionalProperties": false,
+    │   │   │             "properties": {
+    │   │   │               "order_id": {
+    │   │   │                 "type": "string"
+    │   │   │               }
+    │   │   │             },
+    │   │   │             "required": [
+    │   │   │               "order_id"
+    │   │   │             ],
+    │   │   │             "type": "object"
+    │   │   │           }
+    │   │   │         },
+    │   │   │         "type": "function"
+    │   │   │       }
+    │   │   │     ]
+    │   │   │   }
+    │   │   │   metrics: {
+    │   │   │     "completion_reasoning_tokens": 0,
+    │   │   │     "completion_tokens": 21,
+    │   │   │     "prompt_cached_tokens": 0,
+    │   │   │     "prompt_tokens": 166,
+    │   │   │     "time_to_first_token": 0,
+    │   │   │     "tokens": 187
+    │   │   │   }
+    │   │   │   context: {
+    │   │   │     "caller_filename": "<node-internal>",
+    │   │   │     "caller_functionname": "<node-internal>",
+    │   │   │     "caller_lineno": 0
+    │   │   │   }
+    │   │   └── livekit.llm_request_run [task]
+    │   │       metadata: {
+    │   │         "contrib.livekit.provider_request_ids": [
+    │   │           "chatcmpl-Eliwy79XfY1FPfksUUfOEPmcAFi8Y"
+    │   │         ],
+    │   │         "contrib.livekit.retry_count": 0,
+    │   │         "scenario": "livekit-instrumentation",
+    │   │         "testRunId": "<run:1>",
+    │   │         "turn.id": "<span:1>"
+    │   │       }
+    │   │       context: {
+    │   │         "caller_filename": "<node-internal>",
+    │   │         "caller_functionname": "<node-internal>",
+    │   │         "caller_lineno": 0
+    │   │       }
+    │   ├── llm_response [task]
+    │   │   input: [
+    │   │     {
+    │   │       "content": "You help customers check orders. Always call lookup_order when an order number is supplied. Answer with one short sentence giving the delivery day.",
+    │   │       "role": "system"
+    │   │     },
+    │   │     {
+    │   │       "content": "Where is my order, DMO1042?",
+    │   │       "role": "user"
+    │   │     },
+    │   │     {
+    │   │       "content": null,
+    │   │       "role": "assistant",
+    │   │       "tool_calls": [
+    │   │         {
+    │   │           "function": {
+    │   │             "arguments": "{\"order_id\":\"DMO1042\"}",
+    │   │             "name": "lookup_order"
+    │   │           },
+    │   │           "id": "<span:1>",
+    │   │           "type": "function"
+    │   │         }
+    │   │       ]
+    │   │     },
+    │   │     {
+    │   │       "content": "{\"order_id\":\"DMO1042\",\"status\":\"in_transit\",\"delivery\":\"Friday\"}",
+    │   │       "role": "tool",
+    │   │       "tool_call_id": "call_ABnquVY8jRQH3ymbDUHkzHUt"
+    │   │     }
+    │   │   ]
+    │   │   output: [
+    │   │     {
+    │   │       "content": "Your order DMO1042 is scheduled for delivery on **Friday**.",
+    │   │       "role": "assistant"
+    │   │     }
+    │   │   ]
+    │   │   metadata: {
+    │   │     "contrib.livekit.function_tools": "[\"lookup_order\"]",
+    │   │     "gen_ai.operation.name": "chat",
+    │   │     "gen_ai.request.stream": true,
+    │   │     "gen_ai.response.finish_reasons": [
+    │   │       "stop"
+    │   │     ],
+    │   │     "links": [
+    │   │       {
+    │   │         "attributes": {
+    │   │           "braintrust.relationship.type": "consumes_tool_result"
+    │   │         },
+    │   │         "context": {
+    │   │           "spanId": "<span:3>",
+    │   │           "traceFlags": 1,
+    │   │           "traceId": "<span:2>"
+    │   │         }
+    │   │       }
+    │   │     ],
+    │   │     "model": "gpt-5.4-nano",
+    │   │     "provider": "api.openai.com",
+    │   │     "scenario": "livekit-instrumentation",
+    │   │     "testRunId": "<run:1>",
+    │   │     "tool_choice": "auto",
+    │   │     "tools": [
+    │   │       {
+    │   │         "function": {
+    │   │           "description": "Look up an order delivery status.",
+    │   │           "name": "lookup_order",
+    │   │           "parameters": {
+    │   │             "$schema": "http://json-schema.org/draft-07/schema#",
+    │   │             "additionalProperties": false,
+    │   │             "properties": {
+    │   │               "order_id": {
+    │   │                 "type": "string"
+    │   │               }
+    │   │             },
+    │   │             "required": [
+    │   │               "order_id"
+    │   │             ],
+    │   │             "type": "object"
+    │   │           }
+    │   │         },
+    │   │         "type": "function"
+    │   │       }
+    │   │     ],
+    │   │     "turn.id": "<span:1>"
+    │   │   }
+    │   │   context: {
+    │   │     "caller_filename": "<node-internal>",
+    │   │     "caller_functionname": "<node-internal>",
+    │   │     "caller_lineno": 0
+    │   │   }
+    │   │   ├── livekit.llm_response [llm]
+    │   │   │   input: [
+    │   │   │     {
+    │   │   │       "content": "You help customers check orders. Always call lookup_order when an order number is supplied. Answer with one short sentence giving the delivery day.",
+    │   │   │       "role": "system"
+    │   │   │     },
+    │   │   │     {
+    │   │   │       "content": "Where is my order, DMO1042?",
+    │   │   │       "role": "user"
+    │   │   │     },
+    │   │   │     {
+    │   │   │       "content": null,
+    │   │   │       "role": "assistant",
+    │   │   │       "tool_calls": [
+    │   │   │         {
+    │   │   │           "function": {
+    │   │   │             "arguments": "{\"order_id\":\"DMO1042\"}",
+    │   │   │             "name": "lookup_order"
+    │   │   │           },
+    │   │   │           "id": "<span:1>",
+    │   │   │           "type": "function"
+    │   │   │         }
+    │   │   │       ]
+    │   │   │     },
+    │   │   │     {
+    │   │   │       "content": "{\"order_id\":\"DMO1042\",\"status\":\"in_transit\",\"delivery\":\"Friday\"}",
+    │   │   │       "role": "tool",
+    │   │   │       "tool_call_id": "call_ABnquVY8jRQH3ymbDUHkzHUt"
+    │   │   │     }
+    │   │   │   ]
+    │   │   │   output: [
+    │   │   │     {
+    │   │   │       "index": 0,
+    │   │   │       "message": {
+    │   │   │         "content": "Your order DMO1042 is scheduled for delivery on **Friday**.",
+    │   │   │         "role": "assistant"
+    │   │   │       }
+    │   │   │     }
+    │   │   │   ]
+    │   │   │   metadata: {
+    │   │   │     "model": "gpt-5.4-nano",
+    │   │   │     "provider": "api.openai.com",
+    │   │   │     "scenario": "livekit-instrumentation",
+    │   │   │     "testRunId": "<run:1>",
+    │   │   │     "tool_choice": "auto",
+    │   │   │     "tools": [
+    │   │   │       {
+    │   │   │         "function": {
+    │   │   │           "description": "Look up an order delivery status.",
+    │   │   │           "name": "lookup_order",
+    │   │   │           "parameters": {
+    │   │   │             "$schema": "http://json-schema.org/draft-07/schema#",
+    │   │   │             "additionalProperties": false,
+    │   │   │             "properties": {
+    │   │   │               "order_id": {
+    │   │   │                 "type": "string"
+    │   │   │               }
+    │   │   │             },
+    │   │   │             "required": [
+    │   │   │               "order_id"
+    │   │   │             ],
+    │   │   │             "type": "object"
+    │   │   │           }
+    │   │   │         },
+    │   │   │         "type": "function"
+    │   │   │       }
+    │   │   │     ]
+    │   │   │   }
+    │   │   │   metrics: {
+    │   │   │     "completion_reasoning_tokens": 0,
+    │   │   │     "completion_tokens": 18,
+    │   │   │     "prompt_cached_tokens": 0,
+    │   │   │     "prompt_tokens": 217,
+    │   │   │     "time_to_first_token": 0,
+    │   │   │     "tokens": 235
+    │   │   │   }
+    │   │   │   context: {
+    │   │   │     "caller_filename": "<node-internal>",
+    │   │   │     "caller_functionname": "<node-internal>",
+    │   │   │     "caller_lineno": 0
+    │   │   │   }
+    │   │   └── livekit.llm_request_run [task]
+    │   │       metadata: {
+    │   │         "contrib.livekit.provider_request_ids": [
+    │   │           "chatcmpl-EliwymXbQgn98eJdeIMIRVJhYOCjY"
+    │   │         ],
+    │   │         "contrib.livekit.retry_count": 0,
+    │   │         "scenario": "livekit-instrumentation",
+    │   │         "testRunId": "<run:1>",
+    │   │         "turn.id": "<span:1>"
+    │   │       }
+    │   │       context: {
+    │   │         "caller_filename": "<node-internal>",
+    │   │         "caller_functionname": "<node-internal>",
+    │   │         "caller_lineno": 0
+    │   │       }
+    │   ├── lookup_order [tool]
+    │   │   input: {
+    │   │     "order_id": "DMO1042"
+    │   │   }
+    │   │   output: {
+    │   │     "delivery": "Friday",
+    │   │     "order_id": "DMO1042",
+    │   │     "status": "in_transit"
+    │   │   }
+    │   │   metadata: {
+    │   │     "contrib.livekit.function_tool.is_error": false,
+    │   │     "contrib.livekit.function_tool.name": "lookup_order",
+    │   │     "gen_ai.agent.name": "default_agent",
+    │   │     "gen_ai.operation.name": "execute_tool",
+    │   │     "gen_ai.tool.call.id": "call_ABnquVY8jRQH3ymbDUHkzHUt",
+    │   │     "gen_ai.tool.name": "lookup_order",
+    │   │     "gen_ai.tool.type": "function",
+    │   │     "links": [
+    │   │       {
+    │   │         "attributes": {
+    │   │           "braintrust.relationship.type": "requested_by"
+    │   │         },
+    │   │         "context": {
+    │   │           "spanId": "<span:3>",
+    │   │           "traceFlags": 1,
+    │   │           "traceId": "<span:2>"
+    │   │         }
+    │   │       }
+    │   │     ],
+    │   │     "scenario": "livekit-instrumentation",
+    │   │     "testRunId": "<run:1>",
+    │   │     "turn.id": "<span:1>"
+    │   │   }
+    │   │   context: {
+    │   │     "caller_filename": "<node-internal>",
+    │   │     "caller_functionname": "<node-internal>",
+    │   │     "caller_lineno": 0
+    │   │   }
+    │   ├── tts [task]
+    │   │   metadata: {
+    │   │     "contrib.livekit.response.ttfb": 0,
+    │   │     "gen_ai.provider.name": "api.openai.com",
+    │   │     "gen_ai.request.model": "gpt-4o-mini-tts",
+    │   │     "links": [
+    │   │       {
+    │   │         "attributes": {
+    │   │           "braintrust.relationship.type": "generated_by"
+    │   │         },
+    │   │         "context": {
+    │   │           "spanId": "<span:2>",
+    │   │           "traceFlags": 1,
+    │   │           "traceId": "<span:1>"
+    │   │         }
+    │   │       }
+    │   │     ],
+    │   │     "model": "gpt-4o-mini-tts",
+    │   │     "provider": "api.openai.com",
+    │   │     "scenario": "livekit-instrumentation",
+    │   │     "testRunId": "<run:1>",
+    │   │     "turn.id": "<span:3>"
+    │   │   }
+    │   │   context: {
+    │   │     "caller_filename": "<node-internal>",
+    │   │     "caller_functionname": "<node-internal>",
+    │   │     "caller_lineno": 0
+    │   │   }
+    │   │   ├── livekit.tts_request [task]
+    │   │   │   metadata: {
+    │   │   │     "contrib.livekit.tts.label": "openai.TTS",
+    │   │   │     "contrib.livekit.tts.streaming": true,
+    │   │   │     "scenario": "livekit-instrumentation",
+    │   │   │     "testRunId": "<run:1>",
+    │   │   │     "turn.id": "<span:1>"
+    │   │   │   }
+    │   │   │   context: {
+    │   │   │     "caller_filename": "<node-internal>",
+    │   │   │     "caller_functionname": "<node-internal>",
+    │   │   │     "caller_lineno": 0
+    │   │   │   }
+    │   │   │   └── livekit.tts_request_run [task]
+    │   │   │       metadata: {
+    │   │   │         "contrib.livekit.provider_request_ids": [
+    │   │   │           "<native:4>"
+    │   │   │         ],
+    │   │   │         "contrib.livekit.retry_count": 0,
+    │   │   │         "scenario": "livekit-instrumentation",
+    │   │   │         "testRunId": "<run:1>",
+    │   │   │         "turn.id": "<span:1>"
+    │   │   │       }
+    │   │   │       context: {
+    │   │   │         "caller_filename": "<node-internal>",
+    │   │   │         "caller_functionname": "<node-internal>",
+    │   │   │         "caller_lineno": 0
+    │   │   │       }
+    │   │   │       └── livekit.tts_request [task]
+    │   │   │           metadata: {
+    │   │   │             "contrib.livekit.tts.label": "openai.TTS",
+    │   │   │             "contrib.livekit.tts.streaming": false,
+    │   │   │             "contrib.livekit.tts_metrics": {
+    │   │   │               "audioDurationMs": 0,
+    │   │   │               "cancelled": false,
+    │   │   │               "charactersCount": 55,
+    │   │   │               "durationMs": 0,
+    │   │   │               "inputTokens": 0,
+    │   │   │               "label": "openai.TTS",
+    │   │   │               "metadata": {
+    │   │   │                 "modelName": "gpt-4o-mini-tts",
+    │   │   │                 "modelProvider": "api.openai.com"
+    │   │   │               },
+    │   │   │               "outputTokens": 0,
+    │   │   │               "requestId": "<native:4>",
+    │   │   │               "streamed": false,
+    │   │   │               "timestamp": 0,
+    │   │   │               "ttfbMs": 0,
+    │   │   │               "type": "tts_metrics"
+    │   │   │             },
+    │   │   │             "scenario": "livekit-instrumentation",
+    │   │   │             "testRunId": "<run:1>",
+    │   │   │             "turn.id": "<span:1>"
+    │   │   │           }
+    │   │   │           context: {
+    │   │   │             "caller_filename": "<node-internal>",
+    │   │   │             "caller_functionname": "<node-internal>",
+    │   │   │             "caller_lineno": 0
+    │   │   │           }
+    │   │   │           └── livekit.tts_request_run [task]
+    │   │   │               metadata: {
+    │   │   │                 "contrib.livekit.retry_count": 0,
+    │   │   │                 "scenario": "livekit-instrumentation",
+    │   │   │                 "testRunId": "<run:1>",
+    │   │   │                 "turn.id": "<span:1>"
+    │   │   │               }
+    │   │   │               context: {
+    │   │   │                 "caller_filename": "<node-internal>",
+    │   │   │                 "caller_functionname": "<node-internal>",
+    │   │   │                 "caller_lineno": 0
+    │   │   │               }
+    │   │   └── livekit.tts [llm]
+    │   │       input: {
+    │   │         "operation": "speech",
+    │   │         "prompt": "Your order DMO1042 is scheduled for delivery on Friday."
+    │   │       }
+    │   │       output: {
+    │   │         "content": []
+    │   │       }
+    │   │       metadata: {
+    │   │         "model": "gpt-4o-mini-tts",
+    │   │         "provider": "api.openai.com",
+    │   │         "scenario": "livekit-instrumentation",
+    │   │         "testRunId": "<run:1>"
+    │   │       }
+    │   │       context: {
+    │   │         "caller_filename": "<node-internal>",
+    │   │         "caller_functionname": "<node-internal>",
+    │   │         "caller_lineno": 0
+    │   │       }
+    │   └── agent_speech [task]
+    │       output: [
+    │         {
+    │           "content": "Your order DMO1042 is scheduled for delivery on **Friday**.",
+    │           "role": "assistant"
+    │         }
+    │       ]
+    │       metadata: {
+    │         "audio.selections": {
+    │           "selection-0": {
+    │             "end_offset_ms": 0,
+    │             "start_offset_ms": 0
+    │           }
+    │         },
+    │         "audio.source_id": "agent-output",
+    │         "contrib.livekit.message_ids": [
+    │           "<native:5>"
+    │         ],
+    │         "links": [
+    │           {
+    │             "attributes": {
+    │               "braintrust.relationship.type": "generated_by"
+    │             },
+    │             "context": {
+    │               "spanId": "<span:2>",
+    │               "traceFlags": 1,
+    │               "traceId": "<span:1>"
+    │             }
+    │           }
+    │         ],
+    │         "scenario": "livekit-instrumentation",
+    │         "testRunId": "<run:1>",
+    │         "turn.id": "<span:3>"
+    │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
+    ├── livekit.session_close [task]
+    │   metadata: {
+    │     "contrib.livekit.close.drain": false,
+    │     "contrib.livekit.close_reason": "user_initiated",
+    │     "scenario": "livekit-instrumentation",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<node-internal>",
+    │     "caller_functionname": "<node-internal>",
+    │     "caller_lineno": 0
+    │   }
+    │   └── livekit.drain_agent_activity [task]
+    │       metadata: {
+    │         "contrib.livekit.agent_label": "default_agent",
+    │         "scenario": "livekit-instrumentation",
+    │         "testRunId": "<run:1>"
+    │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
+    │       └── livekit.on_exit [task]
+    │           metadata: {
+    │             "contrib.livekit.agent_label": "default_agent",
+    │             "scenario": "livekit-instrumentation",
+    │             "testRunId": "<run:1>"
+    │           }
+    │           context: {
+    │             "caller_filename": "<node-internal>",
+    │             "caller_functionname": "<node-internal>",
+    │             "caller_lineno": 0
+    │           }
+    └── user_turn [task]
+        metadata: {
+          "contrib.livekit.end_of_turn_delay": 0,
+          "contrib.livekit.transcript_confidence": 0,
+          "contrib.livekit.transcription_delay": 0,
+          "gen_ai.provider.name": "openai",
+          "gen_ai.request.model": "gpt-4o-mini-transcribe",
+          "model": "gpt-4o-mini-transcribe",
+          "provider": "openai",
+          "scenario": "livekit-instrumentation",
+          "testRunId": "<run:1>",
+          "turn.id": "<span:1>"
+        }
+        context: {
+          "caller_filename": "<node-internal>",
+          "caller_functionname": "<node-internal>",
+          "caller_lineno": 0
+        }
+        └── livekit.eou_wait [task]
+            metadata: {
+              "contrib.livekit.eou.canonical_omitted": "unobserved_speech_end",
+              "contrib.livekit.eou.endpointing_delay": 0,
+              "contrib.livekit.eou.not_committed_count": 0,
+              "contrib.livekit.eou.outcome": "committed",
+              "contrib.livekit.eou.rearm_count": 0,
+              "contrib.livekit.eou.source": "manual",
+              "contrib.livekit.eou.wait_duration": 0,
+              "scenario": "livekit-instrumentation",
+              "testRunId": "<run:1>",
+              "turn.id": "<span:1>"
+            }
+            context: {
+              "caller_filename": "<node-internal>",
+              "caller_functionname": "<node-internal>",
+              "caller_lineno": 0
+            }

@@ -681,7 +681,7 @@ const OPERATION_SPECS: readonly OperationSpec[] = [
     name: "openai-audio-speech-operation",
     operation: "audio-speech",
     testName: "captures trace for client.audio.speech.create()",
-    validate: (span) => validateAttachmentOutput(span, "audio/wav"),
+    validate: (span) => validateAttachmentOutput(span, "audio/ogg"),
   },
   {
     childNames: ["openai.audio.transcriptions.create"],

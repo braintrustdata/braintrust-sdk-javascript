@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { setTimeout as sleep } from "node:timers/promises";
 import { z } from "zod";
-import { initLogger, setFetch, wrapLiveKit } from "braintrust";
+import { initLogger, setFetch, wrapLiveKit, wrapOpenAI } from "braintrust";
 import { scopedName } from "../../helpers/provider-runtime.mjs";
 import { AudioFrame, dispose } from "@livekit/rtc-node";
 const livekit = await import("@livekit/agents");
@@ -74,6 +74,7 @@ function oggDurationMs(file) {
   return (granule - preSkip) / 48;
 }
 const logger = initLogger({ projectName: scopedName("e2e-livekit") });
+const directMode = process.env.LIVEKIT_DIRECT_CLIENT === "1";
 const providerMode = process.env.LIVEKIT_PROVIDER === "1";
 class Output extends voice.AudioOutput {
   samples = 0;
@@ -145,22 +146,63 @@ class Output extends voice.AudioOutput {
 }
 const options = {};
 const diarized = process.env.LIVEKIT_DIARIZATION === "1";
+const discreteStt = process.env.LIVEKIT_DISCRETE_STT === "1";
 const streamingStt = process.env.LIVEKIT_STREAMING_STT === "1" || diarized;
 let ws;
 if (providerMode) {
-  const { LLM, TTS } = await import("@livekit/agents-plugin-openai");
+  const module = await import("@livekit/agents-plugin-openai");
+  const { LLM, TTS } =
+    process.env.LIVEKIT_WRAP === "1" ? wrapLiveKit(module) : module;
+  const { directClient } = await import("./direct-client.mjs");
+  const direct = directClient();
+  const { default: OpenAI } = await import("openai");
+  const client =
+    process.env.LIVEKIT_WRAP_PROVIDER === "1"
+      ? wrapOpenAI(
+          new OpenAI({
+            apiKey: process.env.OPENAI_API_KEY ?? "replay",
+            baseURL: process.env.OPENAI_BASE_URL,
+            maxRetries: 0,
+          }),
+        )
+      : undefined;
   // GPT-5 models only support the default temperature.
   options.llm = new LLM({
     model: "gpt-5.4-nano",
+    ...(directMode ? { client: direct } : client ? { client } : {}),
     baseURL: process.env.OPENAI_BASE_URL,
   });
   options.tts = new TTS({
     model: "gpt-4o-mini-tts",
+    ...(directMode ? { client: direct } : client ? { client } : {}),
     voice: "alloy",
     baseURL: process.env.OPENAI_BASE_URL,
   });
 }
-if (diarized) {
+if (discreteStt) {
+  const module = await import("@livekit/agents-plugin-openai");
+  const { STT } =
+    process.env.LIVEKIT_WRAP === "1" ? wrapLiveKit(module) : module;
+  const { default: OpenAI } = await import("openai");
+  const client =
+    process.env.LIVEKIT_WRAP_PROVIDER === "1"
+      ? wrapOpenAI(
+          new OpenAI({
+            apiKey: process.env.OPENAI_API_KEY ?? "replay",
+            baseURL: process.env.OPENAI_BASE_URL,
+            maxRetries: 0,
+          }),
+        )
+      : undefined;
+  const { directClient } = await import("./direct-client.mjs");
+  options.stt = new STT({
+    model: "gpt-4o-mini-transcribe",
+    useRealtime: false,
+    baseURL: process.env.OPENAI_BASE_URL,
+    ...(directMode ? { client: directClient() } : client ? { client } : {}),
+  });
+  options.turnDetection = "manual";
+} else if (diarized) {
   // Two callers share one microphone; LiveKit Inference labels each speaker.
   const { websocketCassette } = await import("./websocket-cassette.mjs");
   ws = await websocketCassette(
@@ -270,7 +312,21 @@ try {
     },
   });
   if (providerMode) {
-    if (streamingStt) {
+    if (discreteStt) {
+      // Submit the fixed recording as one request. VAD-chosen chunks vary with
+      // scheduler timing; recognition itself is the boundary under test here.
+      const bytes = await readFile(
+        new URL("./fixtures/order-24khz.pcm", import.meta.url),
+      );
+      const pcm = new Int16Array(bytes.length / 2);
+      for (let i = 0; i < pcm.length; i++) pcm[i] = bytes.readInt16LE(i * 2);
+      const event = await options.stt.recognize(
+        new AudioFrame(pcm, 24000, 1, pcm.length),
+      );
+      await session
+        .generateReply({ userInput: event.alternatives[0].text })
+        .waitForPlayout();
+    } else if (streamingStt) {
       // Mono s16le speech synthesized by OpenAI for fictional callers,
       // followed by two seconds of silence. Order (24 kHz): "Where is my
       // order DEMO 1042?" Two callers (16 kHz, resampled once with LiveKit's
