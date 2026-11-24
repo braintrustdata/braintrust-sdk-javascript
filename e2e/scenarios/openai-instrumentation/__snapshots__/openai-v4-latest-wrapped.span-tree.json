@@ -1851,7 +1851,7 @@
               "metrics": {
                 "completion_reasoning_tokens": 0,
                 "completion_tokens": 3,
-                "prompt_cache_write_tokens": 0,
+                "prompt_cache_creation_tokens": 0,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 13,
                 "time_to_first_token": 0,
@@ -1962,7 +1962,7 @@
               "metrics": {
                 "completion_reasoning_tokens": 0,
                 "completion_tokens": 2,
-                "prompt_cache_write_tokens": 0,
+                "prompt_cache_creation_tokens": 0,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 21,
                 "time_to_first_token": 0,
@@ -2070,7 +2070,7 @@
               "metrics": {
                 "completion_reasoning_tokens": 0,
                 "completion_tokens": 5,
-                "prompt_cache_write_tokens": 0,
+                "prompt_cache_creation_tokens": 0,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 13,
                 "time_to_first_token": 0,
@@ -2177,7 +2177,7 @@
               "metrics": {
                 "completion_reasoning_tokens": 0,
                 "completion_tokens": 2,
-                "prompt_cache_write_tokens": 0,
+                "prompt_cache_creation_tokens": 0,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 21,
                 "time_to_first_token": 0,
@@ -2308,7 +2308,7 @@
               "metrics": {
                 "completion_reasoning_tokens": 0,
                 "completion_tokens": 16,
-                "prompt_cache_write_tokens": 0,
+                "prompt_cache_creation_tokens": 0,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 19,
                 "time_to_first_token": 0,
@@ -2418,7 +2418,7 @@
               "metrics": {
                 "completion_reasoning_tokens": 0,
                 "completion_tokens": 16,
-                "prompt_cache_write_tokens": 0,
+                "prompt_cache_creation_tokens": 0,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 20,
                 "time_to_first_token": 0,
@@ -2556,7 +2556,7 @@
               "metrics": {
                 "completion_reasoning_tokens": 0,
                 "completion_tokens": 22,
-                "prompt_cache_write_tokens": 0,
+                "prompt_cache_creation_tokens": 0,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 46,
                 "time_to_first_token": 0,
