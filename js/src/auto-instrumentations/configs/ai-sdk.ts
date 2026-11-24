@@ -198,6 +198,19 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     },
   },
 
+  // Newer v7 builds share the dispatcher through a chunk with a generated hash.
+  {
+    channelName: aiSDKChannels.v7CreateTelemetryDispatcher.channelName,
+    module: {
+      name: "ai",
+      versionRange: ">=7.0.0-0 <8.0.0",
+      filePath: "dist/default-stop-condition-*.js",
+    },
+    functionQuery: {
+      functionName: "createTelemetryDispatcher",
+    },
+  },
+
   // Agent.generate - async method (v5 only)
   // The compiled AI SDK bundle emits this as an anonymous class method, so we
   // target the first async `generate` method in the file instead of a class name.
