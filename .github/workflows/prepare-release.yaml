@@ -2,16 +2,21 @@ name: Prepare Release
 
 on:
   workflow_dispatch:
+    inputs:
+      source_branch:
+        description: Branch to prepare (defaults to the selected workflow branch)
+        type: string
 
 permissions:
   contents: write
   pull-requests: write
 
 concurrency:
-  group: prepare-release-${{ github.ref_name }}
+  group: prepare-release-${{ inputs.source_branch || github.ref_name }}
   cancel-in-progress: false
 
 env:
+  SOURCE_BRANCH: ${{ inputs.source_branch || github.ref_name }}
   HUSKY: "0"
 
 jobs:
@@ -19,18 +24,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Require main branch
-        run: |
-          if [ "${{ github.ref_name }}" != "main" ]; then
-            {
-              echo "## Prepare release"
-              echo
-              echo "This workflow must be run from \`main\`. Selected ref: \`${{ github.ref_name }}\`."
-            } >> "$GITHUB_STEP_SUMMARY"
-            exit 1
-          fi
+      - name: Validate source branch
+        run: git check-ref-format "refs/heads/$SOURCE_BRANCH"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: refs/heads/${{ env.SOURCE_BRANCH }}
           fetch-depth: 0
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
@@ -44,13 +42,13 @@ jobs:
       - name: Record source commit and prepare branch
         id: source
         run: |
-          main_sha="$(git rev-parse HEAD)"
-          short_main_sha="$(git rev-parse --short=12 HEAD)"
-          prepare_branch="prepare-release/${short_main_sha}"
+          source_sha="$(git rev-parse HEAD)"
+          short_source_sha="$(git rev-parse --short=12 HEAD)"
+          prepare_branch="prepare-release/$SOURCE_BRANCH-$short_source_sha"
 
           {
-            echo "main_sha=$main_sha"
-            echo "short_main_sha=$short_main_sha"
+            echo "source_sha=$source_sha"
+            echo "short_source_sha=$short_source_sha"
             echo "prepare_branch=$prepare_branch"
           } >> "$GITHUB_OUTPUT"
       - name: Run changeset version
@@ -61,13 +59,19 @@ jobs:
         id: release_version
         run: |
           release_version="$(node -p "require('./js/package.json').version")"
+          if [[ "$SOURCE_BRANCH" =~ ^v([0-9]+)$ && "${release_version%%.*}" != "${BASH_REMATCH[1]}" ]]; then
+            echo "SDK version $release_version does not match maintenance branch $SOURCE_BRANCH." >&2
+            exit 1
+          fi
           echo "version=$release_version" >> "$GITHUB_OUTPUT"
       - name: Create release commit
         id: release_commit
+        env:
+          PREPARE_BRANCH: ${{ steps.source.outputs.prepare_branch }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git switch -c "${{ steps.source.outputs.prepare_branch }}"
+          git switch -c "$PREPARE_BRANCH"
           git add -A
 
           if git diff --cached --quiet; then
@@ -78,7 +82,7 @@ jobs:
 
           git commit -m "chore: Prepare release"
           release_sha="$(git rev-parse HEAD)"
-          git push origin HEAD:refs/heads/${{ steps.source.outputs.prepare_branch }}
+          git push origin "HEAD:refs/heads/$PREPARE_BRANCH"
           echo "has_changes=true" >> "$GITHUB_OUTPUT"
           echo "release_sha=$release_sha" >> "$GITHUB_OUTPUT"
       - name: Summarize empty release
@@ -93,14 +97,16 @@ jobs:
         if: steps.release_commit.outputs.has_changes == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-          SOURCE_MAIN_SHA: ${{ steps.source.outputs.main_sha }}
+          PREPARE_BRANCH: ${{ steps.source.outputs.prepare_branch }}
+          RELEASE_VERSION: ${{ steps.release_version.outputs.version }}
+          SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
         run: |
           node <<'NODE' > release-packages.md
           const { execFileSync } = require("node:child_process");
           const fs = require("node:fs");
           const paths = execFileSync(
             "git",
-            ["diff", "--name-only", process.env.SOURCE_MAIN_SHA, "HEAD", "--", "**/package.json", "package.json"],
+            ["diff", "--name-only", process.env.SOURCE_SHA, "HEAD", "--", "**/package.json", "package.json"],
             { encoding: "utf8" },
           )
             .trim()
@@ -110,7 +116,7 @@ jobs:
             .map((path) => ({ path, manifest: JSON.parse(fs.readFileSync(path, "utf8")) }))
             .filter(({ path, manifest }) => {
               const previous = JSON.parse(
-                execFileSync("git", ["show", `${process.env.SOURCE_MAIN_SHA}:${path}`], { encoding: "utf8" }),
+                execFileSync("git", ["show", `${process.env.SOURCE_SHA}:${path}`], { encoding: "utf8" }),
               );
               return manifest.version !== previous.version;
             })
@@ -131,13 +137,13 @@ jobs:
             echo
             cat release-packages.md
             echo
-            echo "Source-main-sha: ${{ steps.source.outputs.main_sha }}"
+            echo "Source-sha: ${{ steps.source.outputs.source_sha }}"
           } > release-pr-body.md
 
           pr_url="$(gh pr create \
-            --base main \
-            --head "${{ steps.source.outputs.prepare_branch }}" \
-            --title "chore: Prepare release v${{ steps.release_version.outputs.version }} (${{ steps.source.outputs.short_main_sha }})" \
+            --base "$SOURCE_BRANCH" \
+            --head "$PREPARE_BRANCH" \
+            --title "chore: Prepare release v$RELEASE_VERSION (${{ steps.source.outputs.short_source_sha }})" \
             --body-file release-pr-body.md)"
 
           {
@@ -148,6 +154,7 @@ jobs:
             echo "To publish this release, run the \`Publish Release\` workflow with:"
             echo
             echo "\`\`\`text"
+            echo "source_branch: $SOURCE_BRANCH"
             echo "release_sha: ${{ steps.release_commit.outputs.release_sha }}"
             echo "\`\`\`"
           } >> "$GITHUB_STEP_SUMMARY"
