@@ -208,6 +208,8 @@ export class Transformer {
 
     if ("className" in functionQuery) {
       const { className, methodName } = functionQuery;
+      if (methodName === "constructor")
+        return `[id.name="${className}"][type=/^Class/], VariableDeclarator[id.name="${className}"] > ClassExpression`;
       queries.push(
         `[id.name="${className}"]`,
         `[id.name="${className}"] > ClassExpression`,

@@ -200,3 +200,13 @@ export interface ModelWorker {
   run?: unknown;
   queue?: { put?: unknown };
 }
+
+/** Public constructor options shared by the OpenAI cascade adapters. */
+export interface OpenAIAdapterOptions {
+  client?: unknown;
+}
+export interface LiveKitOpenAIPlugin {
+  LLM: new (...args: unknown[]) => ModelService;
+  STT: new (...args: unknown[]) => ModelService;
+  TTS: new (...args: unknown[]) => ModelService;
+}
