@@ -825,7 +825,7 @@
           "integration_name": "cloudflare-think",
           "sdk_language": "typescript"
         },
-        "cloudflare_think.version": "0.23.0",
+        "cloudflare_think.version": "0.24.0",
         "functionId": "TestThink",
         "model": "gpt-5-nano",
         "provider": "openai.chat"

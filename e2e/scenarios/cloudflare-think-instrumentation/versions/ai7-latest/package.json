@@ -4,15 +4,16 @@
   "type": "module",
   "dependencies": {
     "@ai-sdk/openai": "4.0.93",
+    "@cloudflare/computer": "0.10.0",
     "@cloudflare/vite-plugin": "1.45.1",
-    "agents": "0.32.0",
+    "agents": "0.34.0",
     "ai": "7.0.138",
     "ai-unwrapped": "npm:ai@7.0.138",
+    "cloudflare-think-v0-latest": "npm:@cloudflare/think@0.24.0",
     "dc-browser": "1.0.4",
     "vite": "7.3.5",
     "wrangler": "4.112.0",
-    "zod": "4.6.7",
-    "cloudflare-think-v0-latest": "npm:@cloudflare/think@0.23.0"
+    "zod": "4.6.7"
   },
   "pnpm": {
     "overrides": {
