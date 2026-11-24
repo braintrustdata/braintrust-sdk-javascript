@@ -10,6 +10,7 @@ import {
 import { type ExperimentEvent } from "../util";
 import {
   defaultErrorScoreHandler,
+  defineScorer,
   Eval,
   EvalScorer,
   runEvaluator,
@@ -23,6 +24,7 @@ import {
   injectTraceContext,
   TestBackgroundLogger,
   _internalWithParent,
+  _internalGetGlobalState,
 } from "./logger/core";
 import { parseBaggage } from "./propagation";
 import { configureNode } from "./node/config";
@@ -40,6 +42,78 @@ class NoopProgressReporter implements ProgressReporter {
   public stop() {}
   public increment() {}
 }
+
+test("defineScorer keeps the score name and accepts sync and async callbacks", async () => {
+  const callback = ({ output }: { input: string; output: string }) =>
+    Number(output.length > 0);
+  const scorer = defineScorer(callback);
+  expect(scorer.name).toBe(callback.name);
+  const score: number = await scorer({ input: "", output: "yes" });
+  expect(score).toBe(1);
+  const asyncScorer = defineScorer(async ({ output, expected, trace }) =>
+    trace ? null : Number(output === expected),
+  ) satisfies EvalScorer<string, string, string>;
+  const result: Promise<number | null> = asyncScorer({
+    input: "question",
+    output: "answer",
+    expected: "answer",
+  });
+  expect(await result).toBe(1);
+
+  const evaluation = await runEvaluator(
+    null,
+    {
+      projectName: "proj",
+      evalName: "eval",
+      data: [{ input: "question", expected: "answer" }],
+      task: () => "answer",
+      scores: [scorer],
+    },
+    new NoopProgressReporter(),
+    undefined,
+    undefined,
+    true,
+  );
+  expect(evaluation.results[0].scores).toEqual({ callback: 1 });
+});
+
+test("a hosted scorer logs in per invocation and flushes on success and failure", async () => {
+  const state = _internalGetGlobalState();
+  const login = vi.spyOn(state, "login").mockResolvedValue(undefined);
+  const flush = vi
+    .spyOn(state.bgLogger(), "flush")
+    .mockResolvedValue(undefined);
+  const failure = new Error("scorer failed");
+  const scorer = defineScorer(async ({ input }) => {
+    await Promise.resolve();
+    expect(state.currentParent.getStore()).toBe(input);
+    expect(flush).not.toHaveBeenCalled();
+    if (input === "second") throw failure;
+    return 1;
+  });
+  try {
+    for (const parent of ["first", "second"]) {
+      const apiKey = `test-token-${parent}`;
+      vi.stubEnv("BRAINTRUST_API_KEY", apiKey);
+      vi.stubEnv("BRAINTRUST_TRACE_PARENT", parent);
+      const result = scorer({ input: parent, output: 1 });
+      if (parent === "first") {
+        await expect(result).resolves.toBe(1);
+      } else {
+        await expect(result).rejects.toBe(failure);
+      }
+      expect(login).toHaveBeenCalledWith({ apiKey, forceLogin: true });
+      expect(flush).toHaveBeenCalledOnce();
+      expect(state.currentParent.getStore()).toBeUndefined();
+      flush.mockClear();
+      login.mockClear();
+    }
+  } finally {
+    flush.mockRestore();
+    login.mockRestore();
+    vi.unstubAllEnvs();
+  }
+});
 
 test("meta (write) is passed to task", async () => {
   const metadata = {

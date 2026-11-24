@@ -15,6 +15,11 @@
     ]
   },
   {
+    "scenarioDirName": "trace-context-and-continuation",
+    "label": "Trace continuation and inline scorers",
+    "metadataScenario": "trace-context-and-continuation"
+  },
+  {
     "scenarioDirName": "trace-primitives-basic",
     "label": "Trace primitives and project caching",
     "metadataScenario": "trace-primitives-basic"

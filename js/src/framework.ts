@@ -34,6 +34,7 @@ import {
   StartSpanArgs,
   currentSpan,
   flush,
+  login,
   logError as logSpanError,
   startSpan,
   traced,
@@ -189,6 +190,42 @@ export type EvalScorer<
 > = (
   args: EvalScorerArgs<Input, Output, Expected, Metadata>,
 ) => OneOrMoreScores | Promise<OneOrMoreScores>;
+
+/**
+ * Define an inline scorer or reuse it in an Eval scores array.
+ * With BRAINTRUST_TRACE_PARENT set, each invocation logs in from the environment,
+ * runs the callback with that parent, and flushes before it settles.
+ * Without a runtime parent, Eval or the caller owns the logging lifecycle.
+ *
+ * @example
+ * export default defineScorer(({ output, expected }) => Number(output === expected));
+ */
+export function defineScorer<
+  Args extends EvalScorerArgs<unknown, unknown, void> & {
+    expected?: unknown;
+    metadata?: Record<string, unknown>;
+  },
+  Result extends OneOrMoreScores,
+>(
+  callback: (args: Args) => Result | Promise<Result>,
+): (args: Args) => Promise<Result> {
+  const scorer = async (args: Args) => {
+    const parent = iso.getEnv("BRAINTRUST_TRACE_PARENT");
+    if (!parent) {
+      return callback(args);
+    }
+
+    // A reused worker can receive a different token or organization on each call.
+    await login({ apiKey: iso.getEnv("BRAINTRUST_API_KEY"), forceLogin: true });
+    try {
+      return await _internalWithParent(parent, () => callback(args));
+    } finally {
+      await flush();
+    }
+  };
+  Object.defineProperty(scorer, "name", { value: callback.name });
+  return scorer;
+}
 
 type OneOrMoreClassifications = Classification | Classification[] | null;
 

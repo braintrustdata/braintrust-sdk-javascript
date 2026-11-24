@@ -142,6 +142,7 @@ export {
   Eval,
   Reporter,
   defaultErrorScoreHandler,
+  defineScorer,
 } from "./framework";
 
 export type { WorkflowEvalStore } from "./workflow-eval";

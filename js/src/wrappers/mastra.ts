@@ -255,7 +255,7 @@ export class BraintrustObservabilityExporter implements MastraObservabilityExpor
     // The auto-instrumentations bundle and the main braintrust bundle each
     // have their own module-scoped `_globalState`. The main bundle initializes
     // state via `configureNode`; this call rehydrates our bundle's copy from
-    // the shared `globalThis[Symbol.for("braintrust-state")]` so subsequent
+    // the shared `globalThis[Symbol.for("braintrust-state-v4")]` so subsequent
     // `currentSpan()` / `startSpan()` calls hit a real state, not undefined.
     _internalSetInitialState();
   }
