@@ -117,6 +117,9 @@ describe("registerLangSmithInstrumentation", () => {
                     cache_read: 1,
                     cache_creation: 2,
                   },
+                  output_token_details: {
+                    reasoning: 7,
+                  },
                 },
               },
             },
@@ -169,6 +172,7 @@ describe("registerLangSmithInstrumentation", () => {
         tokens: 5,
         prompt_cached_tokens: 1,
         prompt_cache_creation_tokens: 2,
+        completion_reasoning_tokens: 7,
         time_to_first_token: 0.25,
       },
       span_attributes: { name: "answer", type: "llm" },
@@ -176,6 +180,60 @@ describe("registerLangSmithInstrumentation", () => {
     expect(child).not.toHaveProperty("serialized");
     expect(child.metadata).not.toHaveProperty("usage_metadata");
     expect(child.metadata).not.toHaveProperty("runtime");
+  });
+
+  it("records completion_reasoning_tokens only for numeric output_token_details.reasoning", async () => {
+    const cases = [
+      {
+        id: "88888888-8888-4888-8888-888888888801",
+        usage: { output_tokens: 4, output_token_details: { reasoning: 0 } },
+        expected: 0,
+      },
+      {
+        id: "88888888-8888-4888-8888-888888888802",
+        usage: { output_tokens: 4 },
+        expected: undefined,
+      },
+      {
+        id: "88888888-8888-4888-8888-888888888803",
+        usage: { output_tokens: 4, output_token_details: { reasoning: "7" } },
+        expected: undefined,
+      },
+      {
+        id: "88888888-8888-4888-8888-888888888804",
+        usage: {
+          output_tokens: 4,
+          input_token_details: { reasoning: 9 },
+          output_token_details: { audio: 3 },
+        },
+        expected: undefined,
+      },
+    ];
+
+    for (const { id, usage } of cases) {
+      await langSmithChannels.createRun.invoke(
+        async () => undefined,
+        undefined,
+        [
+          {
+            id,
+            trace_id: id,
+            name: "reasoning",
+            run_type: "llm",
+            outputs: { usage_metadata: usage },
+            end_time: new Date().toISOString(),
+          },
+        ],
+        {},
+      );
+    }
+
+    const spans = (await backgroundLogger.drain()) as any[];
+    for (const { id, expected } of cases) {
+      const span = spans.find((candidate) => candidate.span_id === id);
+      expect(span?.metrics?.completion_tokens).toBe(4);
+      expect(span?.metrics?.completion_reasoning_tokens).toBe(expected);
+    }
   });
 
   it("deduplicates mixed lifecycle sources and tolerates update-only runs", async () => {
