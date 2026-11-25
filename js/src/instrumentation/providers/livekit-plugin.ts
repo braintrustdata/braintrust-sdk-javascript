@@ -33,9 +33,14 @@ import {
   withoutPii,
 } from "./livekit-pii";
 import { v4 as uuidv4 } from "uuid";
+import {
+  withInstrumentationContentPolicy,
+  type InstrumentationContentPolicy,
+} from "../../instrumentation-content-policy";
 import { runWithAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
 import {
   Attachment,
+  _internalAttachmentCapturePermitted,
   startSpan,
   withCurrent,
   type Span,
@@ -264,6 +269,7 @@ class LiveKitInstrumentationConsumer {
 }
 
 type Row = {
+  privacy: { redacted: boolean; job?: JobContext };
   id: string;
   name: string;
   span: Span;
@@ -322,12 +328,6 @@ type SessionState = {
   /** Captures audio into `audio`; only when attachment capture is enabled. */
   recording?: Recording;
   playback?: Playback;
-  /**
-   * Whether LiveKit marked one of the session's spans for redaction. It marks
-   * every span of a redacted job, so this also covers observations that have no
-   * native span of their own, such as transcripts and playback.
-   */
-  redacted?: boolean;
   closing?: Promise<void>;
   closed: boolean;
 };
@@ -387,6 +387,7 @@ class LiveKitTracing {
     span: Span,
     origin: number,
     capturing: boolean,
+    allowed: () => boolean = () => true,
   ): AudioSessionRecorder {
     // Each recording builds its own stack, so plugin state is never shared.
     let middleware: AudioMiddlewareStack = [];
@@ -413,6 +414,7 @@ class LiveKitTracing {
         },
       }),
       onFile: async ({ id, data, mimeType, metadata }) => {
+        if (!allowed()) return;
         if (!data || !mimeType) return span.log({ metadata });
         const attachment = new Attachment({
           data: data.slice().buffer,
@@ -663,13 +665,18 @@ class LiveKitTracing {
     const id = uuidv4();
     // Keep our own data, without retaining LiveKit's span or historical chat context.
     const row: Row = {
+      privacy: parent?.privacy ?? {
+        redacted: options.attributes?.[REDACTION_ENABLED] === true,
+        job: this.jobContext?.(),
+      },
       id,
       name,
       span: !args
         ? owner!.span
-        : parent
-          ? parent.span.startSpan(args)
-          : startSpan(args),
+        : withInstrumentationContentPolicy(
+            this.policy(() => row),
+            () => (parent ? parent.span.startSpan(args) : startSpan(args)),
+          ),
       owner,
       session: name === "agent_session" ? id : parent!.session,
       turn: name === "user_turn" || name === "agent_turn" ? id : parent?.turn,
@@ -684,12 +691,18 @@ class LiveKitTracing {
       const rows = new Map<string, Row>();
       const relationships = new Relationships();
       const captures = {
-        input: isEnvFlagEnabled(CAPTURE_USER_AUDIO),
-        output: isEnvFlagEnabled(CAPTURE_AGENT_AUDIO),
+        input:
+          _internalAttachmentCapturePermitted() &&
+          isEnvFlagEnabled(CAPTURE_USER_AUDIO),
+        output:
+          _internalAttachmentCapturePermitted() &&
+          isEnvFlagEnabled(CAPTURE_AGENT_AUDIO),
       };
       const capturing = captures.input || captures.output;
       const origin = Date.now();
-      const audio = this.audioSession(row.span, origin, capturing);
+      const audio = this.audioSession(row.span, origin, capturing, () =>
+        this.piiAllowed(row),
+      );
       row.span.log({
         metadata: { ...audio.session(), "audio.schema.version": "3.1.0" },
       });
@@ -706,7 +719,7 @@ class LiveKitTracing {
         origin,
         audio,
         recording: capturing
-          ? new Recording(audio, origin, captures)
+          ? new Recording(audio, origin, captures, () => this.piiAllowed(row))
           : undefined,
         closed: false,
       });
@@ -839,16 +852,15 @@ class LiveKitTracing {
   private piiAllowed(row: Row): boolean {
     return (
       row.attributes.get(REDACTION_ENABLED) !== true &&
-      !this.sessions.get(row.session)?.redacted &&
-      livekitPiiAllowed(this.jobContext?.())
+      !row.privacy.redacted &&
+      livekitPiiAllowed(row.privacy.job)
     );
   }
 
   /** Remembers LiveKit's redaction flag for the session, once a span carries it. */
   private observeRedaction(row: Row): void {
-    const state = this.sessions.get(row.session);
-    if (state && row.attributes.get(REDACTION_ENABLED) === true)
-      state.redacted = true;
+    if (row.attributes.get(REDACTION_ENABLED) === true)
+      row.privacy.redacted = true;
   }
 
   /** Native attributes as LiveKit would export them: without PII when it's not allowed. */
@@ -1168,8 +1180,78 @@ class LiveKitTracing {
         : (outer?.inference ?? (found ? { tts: [found] } : {}));
     return this.context.run(
       { native, row, inference, request: request ?? outer?.request },
-      () => (found ? withCurrent(row!.span, fn) : fn()),
+      () =>
+        found
+          ? withInstrumentationContentPolicy(
+              this.policy(() => row!),
+              () => withCurrent(row!.span, fn),
+            )
+          : fn(),
     );
+  }
+
+  private policy(row: () => Row): InstrumentationContentPolicy {
+    return {
+      allowed: () => this.piiAllowed(row()),
+      filterFramework: (data) => {
+        const { input: _input, output: _output, error: _error, ...safe } = data;
+        if (data.error !== undefined) safe.error = REDACTED_EXCEPTION_MESSAGE;
+        if (isObject(data.metadata)) {
+          const metadata = Object.fromEntries(
+            Object.entries(data.metadata).filter(
+              ([key]) =>
+                ![
+                  "audio.participants",
+                  "audio.speakers",
+                  "audio.participant_ids",
+                  "audio.speaker_ids",
+                  "tools",
+                  "tool_choice",
+                ].includes(key),
+            ),
+          );
+          // Native fields use their contributed namespace at this point.
+          safe.metadata = Object.fromEntries(
+            withoutPii(
+              Object.entries(metadata).map(([key, value]) => [
+                key.replace(/^contrib\.livekit\./, "lk."),
+                value,
+              ]),
+            ),
+          ) as Record<string, unknown>;
+          safe.metadata = Object.fromEntries(
+            Object.entries(safe.metadata as Record<string, unknown>).map(
+              ([key, value]) => [
+                key.replace(/^lk\./, "contrib.livekit."),
+                value,
+              ],
+            ),
+          );
+          const events = (safe.metadata as Record<string, unknown>)[
+            "contrib.livekit.events"
+          ];
+          if (Array.isArray(events))
+            (safe.metadata as Record<string, unknown>)[
+              "contrib.livekit.events"
+            ] = events
+              .filter((ev) => !isPiiEvent(ev.name))
+              .map((ev) => ({
+                ...ev,
+                ...(ev.attributes
+                  ? {
+                      attributes: Object.fromEntries(
+                        withoutPii(Object.entries(ev.attributes)),
+                      ),
+                    }
+                  : {}),
+              }));
+          delete (safe.metadata as Record<string, unknown>)[
+            "contrib.livekit.playback_events"
+          ];
+        }
+        return safe;
+      },
+    };
   }
 
   inference<T>(fn: () => T): T {
@@ -2003,10 +2085,11 @@ class Recording {
     readonly origin: number,
     /** Which directions this recording captures: caller input, agent output. */
     readonly captures = { input: true, output: true },
+    private allowed: () => boolean = () => true,
   ) {}
 
   get active(): boolean {
-    return this.audio.active;
+    return this.allowed() && this.audio.active;
   }
   get closed(): boolean {
     return this.audio.closed;

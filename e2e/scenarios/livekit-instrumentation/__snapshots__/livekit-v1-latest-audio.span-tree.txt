@@ -90,10 +90,20 @@ span_tree:
       "scenario": "livekit-instrumentation",
       "testRunId": "<run:1>"
     }
+    context: {
+      "caller_filename": "<node-internal>",
+      "caller_functionname": "<node-internal>",
+      "caller_lineno": 0
+    }
     ├── livekit.session_start [task]
     │   metadata: {
     │     "scenario": "livekit-instrumentation",
     │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<node-internal>",
+    │     "caller_functionname": "<node-internal>",
+    │     "caller_lineno": 0
     │   }
     │   └── livekit.start_agent_activity [task]
     │       metadata: {
@@ -103,16 +113,31 @@ span_tree:
     │         "scenario": "livekit-instrumentation",
     │         "testRunId": "<run:1>"
     │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
     │       ├── livekit.setup_toolsets [task]
     │       │   metadata: {
     │       │     "scenario": "livekit-instrumentation",
     │       │     "testRunId": "<run:1>"
+    │       │   }
+    │       │   context: {
+    │       │     "caller_filename": "<node-internal>",
+    │       │     "caller_functionname": "<node-internal>",
+    │       │     "caller_lineno": 0
     │       │   }
     │       └── livekit.on_enter [task]
     │           metadata: {
     │             "contrib.livekit.agent_label": "default_agent",
     │             "scenario": "livekit-instrumentation",
     │             "testRunId": "<run:1>"
+    │           }
+    │           context: {
+    │             "caller_filename": "<node-internal>",
+    │             "caller_functionname": "<node-internal>",
+    │             "caller_lineno": 0
     │           }
     ├── agent_turn [task]
     │   metadata: {
@@ -145,6 +170,11 @@ span_tree:
     │     "testRunId": "<run:1>",
     │     "turn.id": "<span:1>"
     │   }
+    │   context: {
+    │     "caller_filename": "<node-internal>",
+    │     "caller_functionname": "<node-internal>",
+    │     "caller_lineno": 0
+    │   }
     │   └── agent_speech [task]
     │       output: [
     │         {
@@ -167,6 +197,11 @@ span_tree:
     │         "testRunId": "<run:1>",
     │         "turn.id": "<span:1>"
     │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
     ├── livekit.session_close [task]
     │   metadata: {
     │     "contrib.livekit.close.drain": false,
@@ -174,17 +209,32 @@ span_tree:
     │     "scenario": "livekit-instrumentation",
     │     "testRunId": "<run:1>"
     │   }
+    │   context: {
+    │     "caller_filename": "<node-internal>",
+    │     "caller_functionname": "<node-internal>",
+    │     "caller_lineno": 0
+    │   }
     │   └── livekit.drain_agent_activity [task]
     │       metadata: {
     │         "contrib.livekit.agent_label": "default_agent",
     │         "scenario": "livekit-instrumentation",
     │         "testRunId": "<run:1>"
     │       }
+    │       context: {
+    │         "caller_filename": "<node-internal>",
+    │         "caller_functionname": "<node-internal>",
+    │         "caller_lineno": 0
+    │       }
     │       └── livekit.on_exit [task]
     │           metadata: {
     │             "contrib.livekit.agent_label": "default_agent",
     │             "scenario": "livekit-instrumentation",
     │             "testRunId": "<run:1>"
+    │           }
+    │           context: {
+    │             "caller_filename": "<node-internal>",
+    │             "caller_functionname": "<node-internal>",
+    │             "caller_lineno": 0
     │           }
     └── user_turn [task]
         metadata: {
@@ -194,6 +244,11 @@ span_tree:
           "scenario": "livekit-instrumentation",
           "testRunId": "<run:1>",
           "turn.id": "<span:1>"
+        }
+        context: {
+          "caller_filename": "<node-internal>",
+          "caller_functionname": "<node-internal>",
+          "caller_lineno": 0
         }
         └── livekit.eou_wait [task]
             metadata: {
@@ -208,6 +263,11 @@ span_tree:
               "testRunId": "<run:1>",
               "turn.id": "<span:1>"
             }
+            context: {
+              "caller_filename": "<node-internal>",
+              "caller_functionname": "<node-internal>",
+              "caller_lineno": 0
+            }
             └── livekit.eou_detection [task]
                 metadata: {
                   "contrib.livekit.eou.endpointing_delay": 0,
@@ -217,4 +277,9 @@ span_tree:
                   "scenario": "livekit-instrumentation",
                   "testRunId": "<run:1>",
                   "turn.id": "<span:1>"
+                }
+                context: {
+                  "caller_filename": "<node-internal>",
+                  "caller_functionname": "<node-internal>",
+                  "caller_lineno": 0
                 }

@@ -1,4 +1,10 @@
 /// <reference lib="dom" />
+import {
+  currentInstrumentationContentPolicy,
+  filterInstrumentationContent,
+  withInheritedInstrumentationContentPolicy,
+  type InstrumentationContentPolicy,
+} from "../instrumentation-content-policy";
 import { TypedAttachmentProcessor } from "../typed-attachments";
 import {
   formatLogTemplate,
@@ -681,6 +687,32 @@ function normalizeProxyConnUrl(proxyUrl: string): string {
 export const CAPTURE_ATTACHMENTS: unique symbol = Symbol.for(
   "braintrust.captureAttachments",
 );
+
+const captureOverrideKey = Symbol.for("braintrust.attachmentCaptureOverrides");
+const captureOverrideState: typeof globalThis & {
+  [captureOverrideKey]?: WeakMap<object, boolean>;
+} = globalThis;
+const captureOverrides = () =>
+  (captureOverrideState[captureOverrideKey] ??= new WeakMap<object, boolean>());
+function attachmentCaptureOverride(parent?: object): boolean | undefined {
+  const owner = parent ?? (_globalState ? getSpanParentObject() : undefined);
+  return (
+    (owner ? captureOverrides().get(owner) : undefined) ??
+    _globalState?.autoCaptureAttachments
+  );
+}
+function inheritCaptureOverride<T extends object>(
+  parent: object | undefined,
+  child: T,
+): T {
+  const value = attachmentCaptureOverride(parent);
+  if (value !== undefined) captureOverrides().set(child, value);
+  return child;
+}
+/** @internal Explicit logger/span opt-outs also restrict directional voice capture. */
+export function _internalAttachmentCapturePermitted(): boolean {
+  return attachmentCaptureOverride() !== false;
+}
 
 function autoCaptureAttachmentsFromEnv(): boolean {
   return ["1", "true"].includes(
@@ -2843,6 +2875,8 @@ export class Logger implements Exportable {
     this.lazyId = new LazyValue(() => this.id);
     this.calledStartSpan = false;
     this.autoCaptureAttachments = options.autoCaptureAttachments;
+    if (options.autoCaptureAttachments !== undefined)
+      captureOverrides().set(this, options.autoCaptureAttachments);
     this.state = state;
   }
 
@@ -3050,23 +3084,26 @@ export class Logger implements Exportable {
   }
 
   private startSpanImpl(args?: StartSpanArgs): Span {
-    return new SpanImpl({
-      [CAPTURE_ATTACHMENTS]: this[CAPTURE_ATTACHMENTS],
-      ...args,
-      // Sometimes `args` gets passed directly into this function, and it contains an undefined value for `state`.
-      // To ensure that we always use this logger's state, we override the `state` argument no matter what.
-      state: this.state,
-      ...startSpanParentArgs({
+    return inheritCaptureOverride(
+      this,
+      new SpanImpl({
+        [CAPTURE_ATTACHMENTS]: this[CAPTURE_ATTACHMENTS],
+        ...args,
+        // Sometimes `args` gets passed directly into this function, and it contains an undefined value for `state`.
+        // To ensure that we always use this logger's state, we override the `state` argument no matter what.
         state: this.state,
-        parent: args?.parent,
-        parentObjectType: this.parentObjectType(),
-        parentObjectId: this.lazyId,
-        parentComputeObjectMetadataArgs: this.computeMetadataArgs,
-        parentSpanIds: args?.parentSpanIds,
-        propagatedEvent: args?.propagatedEvent,
+        ...startSpanParentArgs({
+          state: this.state,
+          parent: args?.parent,
+          parentObjectType: this.parentObjectType(),
+          parentObjectId: this.lazyId,
+          parentComputeObjectMetadataArgs: this.computeMetadataArgs,
+          parentSpanIds: args?.parentSpanIds,
+          propagatedEvent: args?.propagatedEvent,
+        }),
+        defaultRootType: SpanTypeAttribute.TASK,
       }),
-      defaultRootType: SpanTypeAttribute.TASK,
-    });
+    );
   }
 
   /**
@@ -6474,6 +6511,8 @@ function _resolveSpanIds(
  * We suggest using one of the various `traced` methods, instead of creating Spans directly. See {@link Span.startSpan} for full details.
  */
 export class SpanImpl implements Span {
+  private contentPolicy: InstrumentationContentPolicy | undefined;
+  private instrumentationName: string;
   private _state: BraintrustState;
 
   private isMerge: boolean;
@@ -6527,6 +6566,10 @@ export class SpanImpl implements Span {
     const instrumentationName =
       getSpanInstrumentationName(args) ??
       INSTRUMENTATION_NAMES.BRAINTRUST_JS_LOGGER;
+
+    this.contentPolicy = currentInstrumentationContentPolicy();
+    this.instrumentationName = instrumentationName;
+    inheritCaptureOverride(undefined, this);
 
     const spanAttributes = args.spanAttributes ?? {};
     const rawEvent = args.event ?? {};
@@ -6717,7 +6760,11 @@ export class SpanImpl implements Span {
       };
       // Customize inside the memoized lazy value, before attachment processing,
       // merging, and masking. Retries reuse the customized or stripped record.
-      const customized = customizeSpanExport(record) as BackgroundLogEvent;
+      const customized = filterInstrumentationContent(
+        customizeSpanExport(record),
+        this.contentPolicy,
+        this.instrumentationName,
+      ) as BackgroundLogEvent;
       // Background flushes run outside this span's context. Keep its policy on
       // the record without exposing internal metadata to customizers or JSON.
       Object.defineProperty(customized, CAPTURE_ATTACHMENTS, {
@@ -6759,24 +6806,34 @@ export class SpanImpl implements Span {
   }
 
   public startSpan(args?: StartSpanArgs): Span {
+    // Avoid adding context-wrapper frames to ordinary calls: caller-location
+    // capture must still see the application within the stack trace limit.
+    if (this.contentPolicy && !currentInstrumentationContentPolicy()) {
+      return withInheritedInstrumentationContentPolicy(this.contentPolicy, () =>
+        this.startSpan(args),
+      );
+    }
     const parentSpanIds: ParentSpanIds | undefined = args?.parent
       ? undefined
       : { spanId: this._spanId, rootSpanId: this._rootSpanId };
-    return new SpanImpl({
-      state: this._state,
-      [CAPTURE_ATTACHMENTS]: this[CAPTURE_ATTACHMENTS],
-      ...args,
-      ...startSpanParentArgs({
+    return inheritCaptureOverride(
+      this,
+      new SpanImpl({
         state: this._state,
-        parent: args?.parent,
-        parentObjectType: this.parentObjectType,
-        parentObjectId: this.parentObjectId,
-        parentComputeObjectMetadataArgs: this.parentComputeObjectMetadataArgs,
-        parentSpanIds,
-        propagatedEvent: args?.propagatedEvent ?? this.propagatedEvent,
-        propagatedState: this._propagatedState,
+        [CAPTURE_ATTACHMENTS]: this[CAPTURE_ATTACHMENTS],
+        ...args,
+        ...startSpanParentArgs({
+          state: this._state,
+          parent: args?.parent,
+          parentObjectType: this.parentObjectType,
+          parentObjectId: this.parentObjectId,
+          parentComputeObjectMetadataArgs: this.parentComputeObjectMetadataArgs,
+          parentSpanIds,
+          propagatedEvent: args?.propagatedEvent ?? this.propagatedEvent,
+          propagatedState: this._propagatedState,
+        }),
       }),
-    });
+    );
   }
 
   public startSpanWithParents(
@@ -6784,26 +6841,34 @@ export class SpanImpl implements Span {
     spanParents: string[],
     args?: StartSpanArgs,
   ): Span {
+    if (this.contentPolicy && !currentInstrumentationContentPolicy()) {
+      return withInheritedInstrumentationContentPolicy(this.contentPolicy, () =>
+        this.startSpanWithParents(spanId, spanParents, args),
+      );
+    }
     const parentSpanIds: MultiParentSpanIds = {
       parentSpanIds: spanParents,
       rootSpanId: this._rootSpanId,
     };
-    return new SpanImpl({
-      state: this._state,
-      [CAPTURE_ATTACHMENTS]: this[CAPTURE_ATTACHMENTS],
-      ...args,
-      ...startSpanParentArgs({
+    return inheritCaptureOverride(
+      this,
+      new SpanImpl({
         state: this._state,
-        parent: args?.parent,
-        parentObjectType: this.parentObjectType,
-        parentObjectId: this.parentObjectId,
-        parentComputeObjectMetadataArgs: this.parentComputeObjectMetadataArgs,
-        parentSpanIds,
-        propagatedEvent: args?.propagatedEvent ?? this.propagatedEvent,
-        propagatedState: this._propagatedState,
+        [CAPTURE_ATTACHMENTS]: this[CAPTURE_ATTACHMENTS],
+        ...args,
+        ...startSpanParentArgs({
+          state: this._state,
+          parent: args?.parent,
+          parentObjectType: this.parentObjectType,
+          parentObjectId: this.parentObjectId,
+          parentComputeObjectMetadataArgs: this.parentComputeObjectMetadataArgs,
+          parentSpanIds,
+          propagatedEvent: args?.propagatedEvent ?? this.propagatedEvent,
+          propagatedState: this._propagatedState,
+        }),
+        spanId,
       }),
-      spanId,
-    });
+    );
   }
 
   public end(args?: EndSpanArgs): number {
