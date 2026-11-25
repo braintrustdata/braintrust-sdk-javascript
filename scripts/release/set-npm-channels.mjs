@@ -2,12 +2,21 @@ import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 
-const [path, option] = process.argv.slice(2);
+const [path, requestedMode, option] = process.argv.slice(2);
 const manifest = JSON.parse(readFileSync(path, "utf8"));
+
+if (requestedMode !== "stable" && requestedMode !== "prerelease") {
+  throw new Error(`Unknown requested release mode: ${requestedMode}`);
+}
+if (manifest.mode !== requestedMode) {
+  throw new Error(
+    `Requested a ${requestedMode} release, but the manifest specifies ${manifest.mode}.`,
+  );
+}
 
 for (const pkg of manifest.packages) {
   let channel = "rc";
-  if (manifest.mode === "stable") {
+  if (requestedMode === "stable") {
     const response = await fetch(
       `https://registry.npmjs.org/-/package/${encodeURIComponent(pkg.name)}/dist-tags`,
     );
@@ -35,8 +44,12 @@ for (const pkg of manifest.packages) {
         `Cannot publish ${pkg.name}@${pkg.version} to ${channel}: the tag already points to ${current}.`,
       );
     }
-  } else if (manifest.mode !== "prerelease") {
-    throw new Error(`Unknown release mode: ${manifest.mode}`);
+  } else if (
+    !/^\d+\.\d+\.\d+-rc\.[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*$/.test(pkg.version)
+  ) {
+    throw new Error(
+      `Expected an RC snapshot for ${pkg.name}, received ${pkg.version}`,
+    );
   }
 
   if (option === "--check") {

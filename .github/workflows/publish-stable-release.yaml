@@ -172,7 +172,7 @@ jobs:
         run: |
           # Use the workflow revision for channel selection, including when releasing an older SDK.
           git show "$GITHUB_SHA:scripts/release/set-npm-channels.mjs" > "$RUNNER_TEMP/set-npm-channels.mjs"
-          node "$RUNNER_TEMP/set-npm-channels.mjs" .release-manifest.json
+          node "$RUNNER_TEMP/set-npm-channels.mjs" .release-manifest.json ${{ inputs.prerelease && 'prerelease' || 'stable' }}
           jq -r '.packages[] | "- \(.name)@\(.version) → \(.channel)"' .release-manifest.json >> "$GITHUB_STEP_SUMMARY"
           echo "json=$(jq -c . .release-manifest.json)" >> "$GITHUB_OUTPUT"
       - name: Build packages
@@ -303,7 +303,7 @@ jobs:
             fi
           done < <(jq -r '.packages[].tag' release-artifacts/release-manifest.json)
       - name: Verify approved npm tags and tarballs
-        run: node scripts/release/set-npm-channels.mjs release-artifacts/release-manifest.json --check
+        run: node scripts/release/set-npm-channels.mjs release-artifacts/release-manifest.json ${{ inputs.prerelease && 'prerelease' || 'stable' }} --check
       - name: Publish package tarballs
         uses: braintrustdata/sdk-actions/actions/release/lang/js/publish-npm-tarballs@337c5475631d724441403f5a4d8ad0b32ce12e29
         with:
