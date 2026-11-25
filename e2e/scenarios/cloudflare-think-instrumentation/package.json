@@ -13,7 +13,7 @@
         },
         "cloudflare-think-v0-latest-ai7": {
           "package": "@cloudflare/think",
-          "range": ">=0.20.0 <0.24.0",
+          "range": ">=0.20.0 <0.25.0",
           "targetManifest": "versions/ai7-latest/package.json",
           "targetDependency": "cloudflare-think-v0-latest"
         }
