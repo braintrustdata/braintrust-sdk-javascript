@@ -173,30 +173,20 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
   },
 
   // AI SDK v7 exposes its telemetry lifecycle through a dispatcher created for
-  // each operation. We patch that dispatcher in the consumer instead of rewriting
-  // the module to call registerTelemetry().
-  {
+  // each operation. Newer builds put it in a shared, hashed bundle chunk rather
+  // than an entrypoint, so match all dist files that can define the dispatcher.
+  // Patching the dispatcher also captures operations without explicit telemetry.
+  ...["dist/*.js", "dist/internal/index.js"].map((filePath) => ({
     channelName: aiSDKChannels.v7CreateTelemetryDispatcher.channelName,
     module: {
       name: "ai",
       versionRange: ">=7.0.0-0 <8.0.0",
-      filePath: "dist/index.js",
+      filePath,
     },
     functionQuery: {
       functionName: "createTelemetryDispatcher",
     },
-  },
-  {
-    channelName: aiSDKChannels.v7CreateTelemetryDispatcher.channelName,
-    module: {
-      name: "ai",
-      versionRange: ">=7.0.0-0 <8.0.0",
-      filePath: "dist/internal/index.js",
-    },
-    functionQuery: {
-      functionName: "createTelemetryDispatcher",
-    },
-  },
+  })),
 
   // Agent.generate - async method (v5 only)
   // The compiled AI SDK bundle emits this as an anonymous class method, so we
