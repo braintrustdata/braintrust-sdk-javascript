@@ -676,6 +676,10 @@ function getMetricsFromResponse(
       prompt_cache_creation_1h_tokens:
         inputTokenDetails.ephemeral_1h_input_tokens,
       prompt_cached_tokens: inputTokenDetails.cache_read,
+      prompt_audio_tokens: inputTokenDetails.audio,
+      completion_audio_tokens: isRecord(outputTokenDetails)
+        ? outputTokenDetails.audio
+        : undefined,
       completion_reasoning_tokens: isRecord(outputTokenDetails)
         ? outputTokenDetails.reasoning
         : undefined,

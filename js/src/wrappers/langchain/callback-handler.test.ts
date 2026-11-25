@@ -278,9 +278,112 @@ describe("BraintrustLangChainCallbackHandler metrics", () => {
     expect(endLog.metrics).toEqual({
       prompt_tokens: 12,
       completion_tokens: 2,
+      prompt_audio_tokens: 0,
+      completion_audio_tokens: 0,
       prompt_cached_tokens: 0,
       completion_reasoning_tokens: 0,
       tokens: 14,
+    });
+  });
+
+  it("preserves audio metrics from message usage metadata", async () => {
+    const { endLog } = await finishChatModelRun({
+      generations: [
+        [
+          {
+            message: {
+              usage_metadata: {
+                input_tokens: 30,
+                output_tokens: 20,
+                total_tokens: 50,
+                input_token_details: {
+                  audio: 7,
+                  cache_read: 3,
+                },
+                output_token_details: {
+                  audio: 5,
+                  reasoning: 4,
+                },
+              },
+            },
+          },
+        ],
+      ],
+    });
+
+    expect(endLog.metrics).toEqual({
+      prompt_tokens: 30,
+      completion_tokens: 20,
+      prompt_audio_tokens: 7,
+      completion_audio_tokens: 5,
+      prompt_cached_tokens: 3,
+      completion_reasoning_tokens: 4,
+      tokens: 50,
+    });
+  });
+
+  it.each([
+    {
+      name: "absent details",
+      usage: {},
+      expected: {},
+    },
+    {
+      name: "details without audio",
+      usage: {
+        input_token_details: { cache_read: 3 },
+        output_token_details: { reasoning: 4 },
+      },
+      expected: { prompt_cached_tokens: 3, completion_reasoning_tokens: 4 },
+    },
+    {
+      name: "non-number audio values",
+      usage: {
+        input_token_details: { audio: "7" },
+        output_token_details: { audio: null },
+      },
+      expected: {},
+    },
+    {
+      name: "non-record details",
+      usage: {
+        input_token_details: "audio",
+        output_token_details: 5,
+      },
+      expected: {},
+    },
+    {
+      name: "only input audio",
+      usage: { input_token_details: { audio: 7 } },
+      expected: { prompt_audio_tokens: 7 },
+    },
+    {
+      name: "only output audio",
+      usage: { output_token_details: { audio: 5 } },
+      expected: { completion_audio_tokens: 5 },
+    },
+  ])("handles audio metrics with $name", async ({ usage, expected }) => {
+    const { endLog } = await finishChatModelRun({
+      generations: [
+        [
+          {
+            message: {
+              usage_metadata: {
+                input_tokens: 10,
+                output_tokens: 2,
+                ...usage,
+              },
+            },
+          },
+        ],
+      ],
+    });
+
+    expect(endLog.metrics).toEqual({
+      prompt_tokens: 10,
+      completion_tokens: 2,
+      tokens: 12,
+      ...expected,
     });
   });
 });
