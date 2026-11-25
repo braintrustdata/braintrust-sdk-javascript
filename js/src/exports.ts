@@ -56,6 +56,7 @@ export {
 
 export { registerSandbox } from "./sandbox";
 
+export { startGroqBatchTrace, completeGroqBatchTrace } from "./groq-batch";
 export { startAISDKBatchTrace, completeAISDKBatchTrace } from "./ai-sdk-batch";
 
 export {
