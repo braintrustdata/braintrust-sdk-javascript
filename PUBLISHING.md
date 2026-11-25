@@ -62,11 +62,14 @@ The build/attest, approval, publish, and GitHub-release steps run through the sh
 
 If publishing succeeds but the prepare release PR cannot be merged cleanly afterward, the release is still published. Repair or recreate the prepare release PR manually afterward.
 
-The source branch determines the npm dist-tag for all packages in the release:
+Each stable package gets its own npm dist-tag, regardless of the source branch.
+If npm’s `latest` tag points to a higher major, the package publishes to `latest-<package-major>`.
+A first release, a release on the current major, or a new major publishes to `latest`.
 
-- `main` publishes to `latest`.
-- Maintenance branches named `v<number>` publish to `latest-<number>`. For example, install the v3 release with `npm install braintrust@latest-3`.
-- Other branches publish to `branch-<hash>`, using the first 16 hex digits of the SHA-256 of the branch name. The approval request shows the exact tag.
+For example, if `braintrust@latest` is 4.x and `@braintrust/otel@latest` is 1.x, the same release can publish `braintrust@3.45.0` to `latest-3` and `@braintrust/otel@1.2.0` to `latest`.
+The approval manifest records each tag.
+The workflow stops if the selected npm tag already points to a newer version.
+If a new major changes a tag choice while approval is pending, start a new run to approve the updated tags.
 
 Only stable releases from `main` are eligible for GitHub’s Latest release.
 Each package version must still be unique across branches because npm dist-tags share the same package versions.
