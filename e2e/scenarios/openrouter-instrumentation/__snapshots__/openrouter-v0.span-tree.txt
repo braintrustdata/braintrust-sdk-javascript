@@ -160,7 +160,7 @@ span_tree:
     │         "provider": "openai"
     │       }
     │       metrics: {
-    │         "cost": 6e-8,
+    │         "estimated_cost": 6e-8,
     │         "prompt_tokens": 3,
     │         "tokens": 3
     │       }
@@ -227,10 +227,10 @@ span_tree:
     │       metrics: {
     │         "completion_reasoning_tokens": 0,
     │         "completion_tokens": 3,
-    │         "cost": 0.0000039,
     │         "cost_upstream_inference_cost": 0.0000039,
     │         "cost_upstream_inference_input_cost": 0.0000021,
     │         "cost_upstream_inference_output_cost": 0.0000018,
+    │         "estimated_cost": 0.0000039,
     │         "prompt_cached_tokens": 0,
     │         "prompt_tokens": 14,
     │         "time_to_first_token": 0,
@@ -300,10 +300,10 @@ span_tree:
     │       metrics: {
     │         "completion_reasoning_tokens": 0,
     │         "completion_tokens": 3,
-    │         "cost": 0.0000039,
     │         "cost_upstream_inference_cost": 0.0000039,
     │         "cost_upstream_inference_input_cost": 0.0000021,
     │         "cost_upstream_inference_output_cost": 0.0000018,
+    │         "estimated_cost": 0.0000039,
     │         "prompt_cached_tokens": 0,
     │         "prompt_tokens": 14,
     │         "time_to_first_token": 0,
@@ -465,10 +465,10 @@ span_tree:
             │   metrics: {
             │     "completion_reasoning_tokens": 0,
             │     "completion_tokens": 5,
-            │     "cost": 0.0000054,
             │     "cost_upstream_inference_cost": 0.0000054,
             │     "cost_upstream_inference_input_cost": 0.0000034,
             │     "cost_upstream_inference_output_cost": 0.000002,
+            │     "estimated_cost": 0.0000054,
             │     "prompt_cached_tokens": 0,
             │     "prompt_tokens": 34,
             │     "tokens": 39
@@ -581,10 +581,10 @@ span_tree:
                 metrics: {
                   "completion_reasoning_tokens": 0,
                   "completion_tokens": 3,
-                  "cost": 0.0000058,
                   "cost_upstream_inference_cost": 0.0000058,
                   "cost_upstream_inference_input_cost": 0.0000046,
                   "cost_upstream_inference_output_cost": 0.0000012,
+                  "estimated_cost": 0.0000058,
                   "prompt_cached_tokens": 0,
                   "prompt_tokens": 46,
                   "tokens": 49

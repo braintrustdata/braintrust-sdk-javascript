@@ -39,10 +39,10 @@ span_tree:
     │         "completion_audio_tokens": 0,
     │         "completion_reasoning_tokens": 0,
     │         "completion_tokens": 2,
-    │         "cost": 0.000003,
     │         "cost_upstream_inference_completions_cost": 0.0000012,
     │         "cost_upstream_inference_cost": 0.000003,
     │         "cost_upstream_inference_prompt_cost": 0.0000018,
+    │         "estimated_cost": 0.000003,
     │         "prompt_audio_tokens": 0,
     │         "prompt_cache_write_tokens": 0,
     │         "prompt_cached_tokens": 0,
@@ -88,10 +88,10 @@ span_tree:
     │         "completion_audio_tokens": 0,
     │         "completion_reasoning_tokens": 0,
     │         "completion_tokens": 1,
-    │         "cost": 0.0000024,
     │         "cost_upstream_inference_completions_cost": 6e-7,
     │         "cost_upstream_inference_cost": 0.0000024,
     │         "cost_upstream_inference_prompt_cost": 0.0000018,
+    │         "estimated_cost": 0.0000024,
     │         "prompt_audio_tokens": 0,
     │         "prompt_cache_write_tokens": 0,
     │         "prompt_cached_tokens": 0,
@@ -141,10 +141,10 @@ span_tree:
     │         "completion_audio_tokens": 0,
     │         "completion_reasoning_tokens": 260,
     │         "completion_tokens": 256,
-    │         "cost": 0.0006505,
     │         "cost_upstream_inference_completions_cost": 0.00064,
     │         "cost_upstream_inference_cost": 0.0006505,
     │         "cost_upstream_inference_prompt_cost": 0.0000105,
+    │         "estimated_cost": 0.0006505,
     │         "prompt_audio_tokens": 0,
     │         "prompt_cache_write_tokens": 0,
     │         "prompt_cached_tokens": 0,
@@ -173,10 +173,10 @@ span_tree:
     │         "provider": "openai"
     │       }
     │       metrics: {
-    │         "cost": 6e-8,
     │         "cost_upstream_inference_completions_cost": 0,
     │         "cost_upstream_inference_cost": 6e-8,
     │         "cost_upstream_inference_prompt_cost": 6e-8,
+    │         "estimated_cost": 6e-8,
     │         "prompt_tokens": 3,
     │         "tokens": 3
     │       }
@@ -244,10 +244,10 @@ span_tree:
     │       metrics: {
     │         "completion_reasoning_tokens": 0,
     │         "completion_tokens": 3,
-    │         "cost": 0.0000039,
     │         "cost_upstream_inference_cost": 0.0000039,
     │         "cost_upstream_inference_input_cost": 0.0000021,
     │         "cost_upstream_inference_output_cost": 0.0000018,
+    │         "estimated_cost": 0.0000039,
     │         "prompt_cached_tokens": 0,
     │         "prompt_tokens": 14,
     │         "time_to_first_token": 0,
@@ -318,10 +318,10 @@ span_tree:
     │       metrics: {
     │         "completion_reasoning_tokens": 0,
     │         "completion_tokens": 4,
-    │         "cost": 0.0000045,
     │         "cost_upstream_inference_cost": 0.0000045,
     │         "cost_upstream_inference_input_cost": 0.0000021,
     │         "cost_upstream_inference_output_cost": 0.0000024,
+    │         "estimated_cost": 0.0000045,
     │         "prompt_cached_tokens": 0,
     │         "prompt_tokens": 14,
     │         "time_to_first_token": 0,
@@ -375,6 +375,6 @@ span_tree:
               "topN": 2
             }
             metrics: {
-              "cost": 0.001,
+              "estimated_cost": 0.001,
               "search_units": 1
             }
