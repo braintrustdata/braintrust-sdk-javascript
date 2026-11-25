@@ -1,5 +1,58 @@
 # braintrust
 
+## 4.0.0
+
+### Major Changes
+
+- feat(v4)!: Add Node Engine to package json (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2378)
+- build(sdk)!: Migrate to Vite+ and tree-shakeable ESM (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2626)
+- feat!: Add `BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS` env var option and `autoCaptureAttachments` logger option for all integrations (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2519)
+- ref!: Reduce API to a minimum that makes sense (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2429)
+- ref(ai-sdk)!: Remove AI SDK v3 support (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2474)
+- ref(eve)!: Bump minimum eve version to `0.34.0` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2385)
+- ref(v4)!: Remove flue pre-v1 support (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2380)
+- ref!: Remove `asyncFlush` option (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2409)
+- ref(v4)!: Remove JS Braintrust CLI (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2377)
+- ref!: Remove packaged `bt` binary from `braintrust` package (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2520)
+- ref!: Remove plugins as part of public API (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2386)
+- ref!: Remove Zod derived types from public SDK declarations (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2404)
+- refactor(sdk)!: Rename automatic attachment capture options (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2636)
+- ref!: Simplify Eval type definitions (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2516)
+- ref!: Don't make generated types part of public api (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2517)
+
+### Minor Changes
+
+- feat: Add deepgram instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2788)
+- feat: Add fal instrumenation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2778)
+- feat: Add AI SDK generate speech and transcribe instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2784)
+- feat: Bump support for ai sdk harness (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2833)
+- feat: Bump support for ai sdk v7 (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2832)
+- feat: Bump support for cloudflare agents (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2760)
+- feat: Bump support for github copilot (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2775)
+- feat: Bump support for livekit (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2797)
+- feat: Bump support for cloudflare agents (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2834)
+- feat(google-genai): Trace decision calls (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2774)
+- feat(langchain): Add tool definition capture control (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2800)
+- feat(livekit): trace end-of-utterance waits Thanks @delner! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2806)
+- feat: Add Mistral audio and OCR instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2782)
+- feat: Support eve v1 (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2777)
+- feat(sdk): Add trace-aware scorers (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2839)
+- feat(groq): Trace batch requests (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2827)
+
+### Patch Changes
+
+- fix(instrumentation): Initialize tracing automatically in bundles (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2630)
+- refactor(otel)!: Decouple from OpenTelemetry SDK versions (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2765)
+- fix(logger): Keep automatic attachment uploads enabled after a failure (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2837)
+- fix(genkit): Record cached and reasoning tokens under the canonical prompt_cached_tokens and completion_reasoning_tokens metric names Thanks @pcbeingused333! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2813)
+- fix(langchain): Record tool and agent action spans with the tool span type LangChain tool runs and agent actions were previously typed as `llm` spans. They now use the `tool` type, matching the Python SDK. (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2779)
+- fix: record prompt audio tokens for livekit realtime and openai agents Thanks @devin-ai-integration! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2828)
+- feat(livekit): emit completion_audio_tokens for realtime model spans Thanks @devin-ai-integration! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2830)
+- fix(openai-agents): Record reasoning tokens as metric Thanks @dylanpulver! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2805)
+- feat: emit prompt_cached_audio_tokens in sdk integrations Google GenAI, Google ADK, and LiveKit with OpenAI Realtime now report cached audio tokens separately when the provider includes a count. Thanks @devin-ai-integration! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2829)
+- fix: serialize span-cache disk flushes so each queued record is written once and waiting for pending writes covers the whole drain. Thanks @sivadheeraj5356! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2767)
+- fix: Don't crash the process when the span cache can't write its temp file during an eval Thanks @gshost1! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2804)
+
 ## 3.44.0
 
 ### Minor Changes

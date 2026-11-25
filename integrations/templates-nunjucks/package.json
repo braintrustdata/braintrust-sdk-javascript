@@ -1,6 +1,6 @@
 {
   "name": "@braintrust/templates-nunjucks-js",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Nunjucks templating support for the Braintrust JS SDK",
   "main": "./dist/index.js",
   "module": "./dist/index.js",

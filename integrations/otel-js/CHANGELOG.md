@@ -1,5 +1,17 @@
 # @braintrust/otel
 
+## 2.0.0
+
+### Major Changes
+
+- build(sdk)!: Migrate to Vite+ and tree-shakeable ESM (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2626)
+- refactor(otel)!: Decouple from OpenTelemetry SDK versions (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2765)
+- ref!: Reduce API to a minimum that makes sense (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2429)
+
+### Patch Changes
+
+- Updated dependencies: braintrust@4.0.0
+
 ## 1.1.0
 
 ### Minor Changes
