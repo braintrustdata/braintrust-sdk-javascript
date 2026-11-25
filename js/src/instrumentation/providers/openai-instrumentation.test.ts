@@ -116,6 +116,57 @@ describe("parseMetricsFromUsage", () => {
       });
     });
 
+    it("should parse prompt_tokens_details.cache_write_tokens -> prompt_cache_creation_tokens", () => {
+      const usage = {
+        prompt_tokens: 100,
+        prompt_tokens_details: {
+          cached_tokens: 10,
+          cache_write_tokens: 5,
+        },
+      };
+
+      const result = parseMetricsFromUsage(usage);
+
+      expect(result).toEqual({
+        prompt_tokens: 100,
+        prompt_cached_tokens: 10,
+        prompt_cache_creation_tokens: 5,
+      });
+      expect(result).not.toHaveProperty("prompt_cache_write_tokens");
+    });
+
+    it("should parse input_tokens_details.cache_write_tokens -> prompt_cache_creation_tokens", () => {
+      const usage = {
+        input_tokens: 100,
+        input_tokens_details: {
+          cached_tokens: 10,
+          cache_write_tokens: 3,
+        },
+      };
+
+      const result = parseMetricsFromUsage(usage);
+
+      expect(result).toEqual({
+        prompt_tokens: 100,
+        prompt_cached_tokens: 10,
+        prompt_cache_creation_tokens: 3,
+      });
+      expect(result).not.toHaveProperty("prompt_cache_write_tokens");
+    });
+
+    it("should keep an existing prompt_cache_creation_tokens over cache_write_tokens", () => {
+      const result = parseMetricsFromUsage({
+        prompt_tokens: 100,
+        prompt_cache_creation_tokens: 7,
+        prompt_tokens_details: { cache_write_tokens: 5 },
+      });
+
+      expect(result).toEqual({
+        prompt_tokens: 100,
+        prompt_cache_creation_tokens: 7,
+      });
+    });
+
     it("should parse output_tokens_details.reasoning_tokens -> completion_reasoning_tokens", () => {
       const usage = {
         output_tokens: 80,

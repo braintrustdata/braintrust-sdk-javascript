@@ -188,7 +188,7 @@ describe("OpenAI decisions", () => {
         completion_tokens: 0,
         tokens: 20,
         prompt_cached_tokens: 10,
-        prompt_cache_write_tokens: 0,
+        prompt_cache_creation_tokens: 0,
         completion_reasoning_tokens: 0,
       },
     });

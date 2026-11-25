@@ -60,6 +60,12 @@ export function parseMetricsFromUsage(usage: unknown): Record<string, number> {
     }
   }
 
+  const cacheWriteTokens = metrics.prompt_cache_write_tokens;
+  if (cacheWriteTokens !== undefined) {
+    delete metrics.prompt_cache_write_tokens;
+    metrics.prompt_cache_creation_tokens ??= cacheWriteTokens;
+  }
+
   return metrics;
 }
 

@@ -79,7 +79,7 @@ span_tree:
 │   │       metrics: {
 │   │         "completion_reasoning_tokens": 0,
 │   │         "completion_tokens": 0,
-│   │         "prompt_cache_write_tokens": 0,
+│   │         "prompt_cache_creation_tokens": 0,
 │   │         "prompt_cached_tokens": 0,
 │   │         "prompt_tokens": 171,
 │   │         "tokens": 171
@@ -139,7 +139,7 @@ span_tree:
 │   │       metrics: {
 │   │         "completion_reasoning_tokens": 0,
 │   │         "completion_tokens": 0,
-│   │         "prompt_cache_write_tokens": 0,
+│   │         "prompt_cache_creation_tokens": 0,
 │   │         "prompt_cached_tokens": 0,
 │   │         "prompt_tokens": 171,
 │   │         "tokens": 171
@@ -195,7 +195,7 @@ span_tree:
 │   │       metrics: {
 │   │         "completion_reasoning_tokens": 0,
 │   │         "completion_tokens": 0,
-│   │         "prompt_cache_write_tokens": 0,
+│   │         "prompt_cache_creation_tokens": 0,
 │   │         "prompt_cached_tokens": 0,
 │   │         "prompt_tokens": 171,
 │   │         "tokens": 171
@@ -285,7 +285,7 @@ span_tree:
 │   │       metrics: {
 │   │         "completion_reasoning_tokens": 0,
 │   │         "completion_tokens": 0,
-│   │         "prompt_cache_write_tokens": 0,
+│   │         "prompt_cache_creation_tokens": 0,
 │   │         "prompt_cached_tokens": 0,
 │   │         "prompt_tokens": 388,
 │   │         "tokens": 388
@@ -337,7 +337,7 @@ span_tree:
 │   │       metrics: {
 │   │         "completion_reasoning_tokens": 0,
 │   │         "completion_tokens": 0,
-│   │         "prompt_cache_write_tokens": 0,
+│   │         "prompt_cache_creation_tokens": 0,
 │   │         "prompt_cached_tokens": 0,
 │   │         "prompt_tokens": 161,
 │   │         "tokens": 161
@@ -2202,7 +2202,7 @@ span_tree:
 │   │       metrics: {
 │   │         "completion_reasoning_tokens": 0,
 │   │         "completion_tokens": 4,
-│   │         "prompt_cache_write_tokens": 0,
+│   │         "prompt_cache_creation_tokens": 0,
 │   │         "prompt_cached_tokens": 0,
 │   │         "prompt_tokens": 13,
 │   │         "time_to_first_token": 0,
@@ -2305,7 +2305,7 @@ span_tree:
 │   │       metrics: {
 │   │         "completion_reasoning_tokens": 0,
 │   │         "completion_tokens": 2,
-│   │         "prompt_cache_write_tokens": 0,
+│   │         "prompt_cache_creation_tokens": 0,
 │   │         "prompt_cached_tokens": 0,
 │   │         "prompt_tokens": 21,
 │   │         "time_to_first_token": 0,
@@ -2405,7 +2405,7 @@ span_tree:
 │   │       metrics: {
 │   │         "completion_reasoning_tokens": 0,
 │   │         "completion_tokens": 4,
-│   │         "prompt_cache_write_tokens": 0,
+│   │         "prompt_cache_creation_tokens": 0,
 │   │         "prompt_cached_tokens": 0,
 │   │         "prompt_tokens": 13,
 │   │         "time_to_first_token": 0,
@@ -2504,7 +2504,7 @@ span_tree:
 │   │       metrics: {
 │   │         "completion_reasoning_tokens": 0,
 │   │         "completion_tokens": 2,
-│   │         "prompt_cache_write_tokens": 0,
+│   │         "prompt_cache_creation_tokens": 0,
 │   │         "prompt_cached_tokens": 0,
 │   │         "prompt_tokens": 21,
 │   │         "time_to_first_token": 0,
@@ -2619,7 +2619,7 @@ span_tree:
 │   │       metrics: {
 │   │         "completion_reasoning_tokens": 0,
 │   │         "completion_tokens": 16,
-│   │         "prompt_cache_write_tokens": 0,
+│   │         "prompt_cache_creation_tokens": 0,
 │   │         "prompt_cached_tokens": 0,
 │   │         "prompt_tokens": 19,
 │   │         "time_to_first_token": 0,
@@ -2721,7 +2721,7 @@ span_tree:
 │   │       metrics: {
 │   │         "completion_reasoning_tokens": 0,
 │   │         "completion_tokens": 16,
-│   │         "prompt_cache_write_tokens": 0,
+│   │         "prompt_cache_creation_tokens": 0,
 │   │         "prompt_cached_tokens": 0,
 │   │         "prompt_tokens": 20,
 │   │         "time_to_first_token": 0,
@@ -2851,7 +2851,7 @@ span_tree:
 │   │       metrics: {
 │   │         "completion_reasoning_tokens": 0,
 │   │         "completion_tokens": 24,
-│   │         "prompt_cache_write_tokens": 0,
+│   │         "prompt_cache_creation_tokens": 0,
 │   │         "prompt_cached_tokens": 0,
 │   │         "prompt_tokens": 46,
 │   │         "time_to_first_token": 0,
@@ -2918,7 +2918,7 @@ span_tree:
 │           metrics: {
 │             "completion_reasoning_tokens": 0,
 │             "completion_tokens": 235,
-│             "prompt_cache_write_tokens": 0,
+│             "prompt_cache_creation_tokens": 0,
 │             "prompt_cached_tokens": 0,
 │             "prompt_tokens": 133,
 │             "time_to_first_token": 0,
