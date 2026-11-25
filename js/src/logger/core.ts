@@ -3549,7 +3549,6 @@ class HTTPBackgroundLogger implements BackgroundLogger {
   private _pendingBytes: number = 0;
 
   private _disabled = false;
-  private automaticAttachmentsDisabled = false;
 
   private queueDropLoggingState = {
     numDropped: 0,
@@ -3816,20 +3815,16 @@ class HTTPBackgroundLogger implements BackgroundLogger {
       );
       return true;
     });
-    for (const attachment of automatic) {
-      if (this.automaticAttachmentsDisabled) break;
-      try {
+    try {
+      for (const attachment of automatic) {
         const status = await attachment.upload();
         if (status.upload_status === "error")
           throw new Error("Automatic attachment upload failed");
-      } catch {
-        this.automaticAttachmentsDisabled = true;
-        debugLogger.warn(
-          "Automatic attachment uploads disabled after an upload failure; exporting original inline media.",
-        );
       }
-    }
-    if (this.automaticAttachmentsDisabled && automatic.length) {
+    } catch {
+      debugLogger.warn(
+        "Automatic attachment upload failed. Exporting original inline media for this batch.",
+      );
       for (const group of allItems) {
         for (let i = 0; i < group.length; i++) {
           group[i] = restoreAutomaticAttachments(

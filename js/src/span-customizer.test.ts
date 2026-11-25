@@ -1409,18 +1409,27 @@ describe("onSpanExport", () => {
         });
       } else {
         expect(exported.input).toEqual(expected);
-        // A failed pipeline skips uploads for subsequent spans and keeps inline data.
         const later = processInputAttachments(input, true);
-        const laterUpload = vi.spyOn(
-          later.state[0].content[2].image_url,
-          "upload",
-        );
+        const laterUpload = vi
+          .spyOn(Attachment.prototype, "upload")
+          .mockResolvedValue({ upload_status: "done" });
         const next = logger.startSpan({ name: "next" });
         next.log({ input: later });
         next.end();
         await logger.flush();
-        expect(laterUpload).not.toHaveBeenCalled();
-        expect(rows.find((row) => row.id === next.id)?.input).toEqual(expected);
+        expect(laterUpload).toHaveBeenCalledTimes(2);
+        expect(rows.find((row) => row.id === next.id)?.input).toMatchObject({
+          state: [
+            {
+              content: [
+                { type: "input_text", text: "inspect" },
+                { image_url: "[redacted]" },
+                { image_url: later.state[0].content[2].image_url.reference },
+                { image_url: later.state[0].content[3].image_url.reference },
+              ],
+            },
+          ],
+        });
       }
       expect(uploads[0]).not.toHaveBeenCalled();
       expect(uploads[1]).toHaveBeenCalledOnce();
