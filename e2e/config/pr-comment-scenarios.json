@@ -82,6 +82,14 @@
       {
         "variantKey": "cloudflare-agents-v0-33-latest",
         "label": "v0.33 latest"
+      },
+      {
+        "variantKey": "cloudflare-agents-v0-34",
+        "label": "v0.34 pinned"
+      },
+      {
+        "variantKey": "cloudflare-agents-v0-34-latest",
+        "label": "v0.34 latest"
       }
     ]
   },

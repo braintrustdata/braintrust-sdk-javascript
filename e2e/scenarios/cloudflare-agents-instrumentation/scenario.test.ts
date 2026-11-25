@@ -43,6 +43,16 @@ const scenarios = await Promise.all(
       label: "v0.33 latest",
       variantKey: "cloudflare-agents-v0-33-latest",
     },
+    {
+      dependencyName: "agents-v0-34",
+      label: "v0.34 pinned",
+      variantKey: "cloudflare-agents-v0-34",
+    },
+    {
+      dependencyName: "agents-v0-34-latest",
+      label: "v0.34 latest",
+      variantKey: "cloudflare-agents-v0-34-latest",
+    },
   ].map(async (scenario) => ({
     ...scenario,
     version: await readInstalledPackageVersion(

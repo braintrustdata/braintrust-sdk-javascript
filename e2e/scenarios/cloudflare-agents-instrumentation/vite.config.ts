@@ -3,7 +3,7 @@ import { defineConfig } from "vite";
 import { braintrustVitePlugin } from "braintrust/vite";
 
 const agentsPackageName =
-  process.env.CLOUDFLARE_AGENTS_PACKAGE_NAME ?? "agents-v0-33-latest";
+  process.env.CLOUDFLARE_AGENTS_PACKAGE_NAME ?? "agents-v0-34-latest";
 const instrumentationMode =
   process.env.CLOUDFLARE_AGENTS_INSTRUMENTATION_MODE ?? "auto";
 const braintrustPlugins =
