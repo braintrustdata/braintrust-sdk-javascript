@@ -232,10 +232,19 @@ export class SpanCache {
         }
       };
 
+      // A signal listener replaces Node's default exit, so re-raise the signal
+      // after cleanup unless the application listens for it too.
+      const cleanupAndExit = (signal: NodeJS.Signals) => {
+        cleanupAllCaches();
+        if (process.listenerCount(signal) === 0) {
+          process.kill(process.pid, signal);
+        }
+      };
+
       // Register for multiple exit scenarios
       process.on("exit", cleanupAllCaches);
-      process.on("SIGINT", cleanupAllCaches);
-      process.on("SIGTERM", cleanupAllCaches);
+      process.once("SIGINT", cleanupAndExit);
+      process.once("SIGTERM", cleanupAndExit);
       process.on("beforeExit", cleanupAllCaches);
     }
   }
