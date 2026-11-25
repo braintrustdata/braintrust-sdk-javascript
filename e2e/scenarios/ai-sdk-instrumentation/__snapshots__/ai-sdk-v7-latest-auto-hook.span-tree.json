@@ -14257,7 +14257,7 @@
         }
       ],
       "metadata": {
-        "aiSdkVersion": "7.0.138",
+        "aiSdkVersion": "7.0.179",
         "scenario": "ai-sdk-instrumentation",
         "testRunId": "<run:1>"
       }

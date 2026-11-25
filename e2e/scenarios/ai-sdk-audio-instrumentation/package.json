@@ -53,7 +53,7 @@
     "ai-sdk-openai-v6": "npm:@ai-sdk/openai@3.0.7",
     "ai-sdk-openai-v6-latest": "npm:@ai-sdk/openai@3.0.143",
     "ai-sdk-v7": "npm:ai@7.0.103",
-    "ai-sdk-v7-latest": "npm:ai@7.0.173",
+    "ai-sdk-v7-latest": "npm:ai@7.0.179",
     "ai-sdk-openai-v7": "npm:@ai-sdk/openai@4.0.0",
     "ai-sdk-openai-v7-latest": "npm:@ai-sdk/openai@4.0.118"
   }

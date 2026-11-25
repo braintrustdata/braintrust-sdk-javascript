@@ -1383,6 +1383,7 @@ export class BraintrustState {
   }
 }
 
+const stateKey = Symbol.for("braintrust-state-v4");
 let _globalState: BraintrustState;
 
 /**
@@ -1398,11 +1399,10 @@ export function _internalSetInitialState(): void {
   if (_globalState) {
     return;
   }
-  const sym = Symbol.for("braintrust-state");
-  let existing = (globalThis as any)[sym];
+  let existing = (globalThis as any)[stateKey];
   if (!existing) {
     const state = new BraintrustState({});
-    (globalThis as any)[sym] = state;
+    (globalThis as any)[stateKey] = state;
     existing = state;
   }
   _globalState = existing;
@@ -3549,7 +3549,6 @@ class HTTPBackgroundLogger implements BackgroundLogger {
   private _pendingBytes: number = 0;
 
   private _disabled = false;
-  private automaticAttachmentsDisabled = false;
 
   private queueDropLoggingState = {
     numDropped: 0,
@@ -3816,20 +3815,16 @@ class HTTPBackgroundLogger implements BackgroundLogger {
       );
       return true;
     });
-    for (const attachment of automatic) {
-      if (this.automaticAttachmentsDisabled) break;
-      try {
+    try {
+      for (const attachment of automatic) {
         const status = await attachment.upload();
         if (status.upload_status === "error")
           throw new Error("Automatic attachment upload failed");
-      } catch {
-        this.automaticAttachmentsDisabled = true;
-        debugLogger.warn(
-          "Automatic attachment uploads disabled after an upload failure; exporting original inline media.",
-        );
       }
-    }
-    if (this.automaticAttachmentsDisabled && automatic.length) {
+    } catch {
+      debugLogger.warn(
+        "Automatic attachment upload failed. Exporting original inline media for this batch.",
+      );
       for (const group of allItems) {
         for (let i = 0; i < group.length; i++) {
           group[i] = restoreAutomaticAttachments(
@@ -4906,7 +4901,10 @@ function getSpanParentObjectAndPropagatedState(
     return { parentObject: parentSpan, propagatedState: undefined };
   }
 
-  const parent = options?.parent ?? state.currentParent.getStore();
+  const parent =
+    options?.parent ??
+    state.currentParent.getStore() ??
+    iso.getEnv("BRAINTRUST_TRACE_PARENT");
   const { parentSlug, propagatedState } = normalizeParent(parent, state);
   if (parentSlug) {
     return {
@@ -4928,7 +4926,7 @@ function getSpanParentObjectAndPropagatedState(
 
 /**
  * Mainly for internal use. Return the parent object for starting a span in a global context.
- * Applies precedence: current span > propagated parent > experiment > logger.
+ * Applies precedence: current span > propagated parent > environment parent > experiment > logger.
  *
  * `parent` may be an exported slug string or an opaque W3C trace-context (from
  * {@link extractTraceContextFromHeaders}).
@@ -5806,7 +5804,7 @@ export async function flush(options?: OptionalStateArg): Promise<void> {
       globalThis as typeof globalThis & {
         [key: symbol]: BraintrustState | undefined;
       }
-    )[Symbol.for("braintrust-state")];
+    )[stateKey];
   await state?.bgLogger().flush();
 }
 

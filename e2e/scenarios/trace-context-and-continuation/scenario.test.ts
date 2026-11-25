@@ -27,8 +27,8 @@ const lateUpdatePayloadsSnapshotPath = resolveFileSnapshotPath(
 
 test("trace-context-and-continuation supports reattachment and late span updates", async () => {
   await withScenarioHarness(
-    async ({ payloads, runScenarioDir, testRunEvents, testRunId }) => {
-      await runScenarioDir({ scenarioDir });
+    async ({ events, payloads, runScenarioDir, testRunEvents, testRunId }) => {
+      const { stdout } = await runScenarioDir({ scenarioDir });
 
       const capturedEvents = testRunEvents();
       const root = findLatestSpan(capturedEvents, "context-root");
@@ -76,6 +76,18 @@ test("trace-context-and-continuation supports reattachment and late span updates
         formatJsonFileSnapshot(mutationRows as Json),
         lateUpdatePayloadsSnapshotPath,
       );
+
+      await runScenarioDir({
+        scenarioDir,
+        entry: "invoke-scorer.ts",
+        env: { BRAINTRUST_TRACE_PARENT: stdout.trim() },
+      });
+      const score = findLatestSpan(events(), "score");
+      const child = findLatestSpan(events(), "score-child");
+      expect(score?.row.project_id).toBe(root?.row.project_id);
+      expect(score?.span.parentIds).toEqual([root?.span.id]);
+      expect(child?.span.parentIds).toEqual([score?.span.id]);
+      expect(child?.span.rootId).toBe(root?.span.rootId);
     },
   );
 });

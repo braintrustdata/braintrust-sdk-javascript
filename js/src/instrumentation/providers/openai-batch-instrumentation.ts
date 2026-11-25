@@ -1,3 +1,4 @@
+import { jsonlRecords } from "./batch-jsonl";
 import { serviceTierMetadata } from "../core/service-tier";
 import { debugLogger } from "../../debug-logger";
 import {
@@ -92,21 +93,6 @@ function read(value: unknown, key: PropertyKey): unknown {
   } catch {
     return undefined;
   }
-}
-
-function isBatchRecordIterable(
-  value: unknown,
-): value is Iterable<unknown> | AsyncIterable<unknown> {
-  if (
-    value === null ||
-    (typeof value !== "object" && typeof value !== "function")
-  ) {
-    return false;
-  }
-  return (
-    typeof read(value, Symbol.iterator) === "function" ||
-    typeof read(value, Symbol.asyncIterator) === "function"
-  );
 }
 
 function validCustomId(value: unknown): value is string {
@@ -228,113 +214,6 @@ async function startBatchChild(
       ),
     ),
   );
-}
-
-async function* jsonlRecords(
-  file: OpenAIBatchFile,
-  onIssue: (error: Error) => void = () => {},
-): AsyncGenerator<unknown> {
-  const resolvedFile = await file;
-  if (
-    typeof resolvedFile === "string" ||
-    resolvedFile instanceof Uint8Array ||
-    resolvedFile instanceof ArrayBuffer ||
-    (typeof Buffer !== "undefined" && Buffer.isBuffer(resolvedFile))
-  ) {
-    const text =
-      typeof resolvedFile === "string"
-        ? resolvedFile
-        : new TextDecoder().decode(resolvedFile);
-    for (const line of text.split("\n")) {
-      if (!line.trim()) {
-        continue;
-      }
-      try {
-        yield JSON.parse(line.replace(/\r$/, ""));
-      } catch (error) {
-        logBatchInstrumentationError("skipped malformed JSONL", error);
-        onIssue(new Error("OpenAI Batch file contains malformed JSONL"));
-      }
-    }
-    return;
-  }
-
-  const body = read(resolvedFile, "body");
-  const getReader = read(body, "getReader");
-  if (isObject(body) && typeof getReader === "function") {
-    let reader: unknown;
-    try {
-      reader = Reflect.apply(getReader, body, []);
-      const decoder = new TextDecoder();
-      let pending = "";
-      while (true) {
-        const readChunk = read(reader, "read");
-        if (typeof readChunk !== "function") {
-          throw new Error("Response body stream has no read method");
-        }
-        const chunk = await Reflect.apply(readChunk, reader, []);
-        if (!isObject(chunk)) {
-          throw new Error("Response body stream returned an invalid chunk");
-        }
-        if (chunk.done === true) {
-          pending += decoder.decode();
-          break;
-        }
-        if (!(chunk.value instanceof Uint8Array)) {
-          throw new Error("Response body stream returned a non-byte chunk");
-        }
-        pending += decoder.decode(chunk.value, { stream: true });
-        let newline = pending.indexOf("\n");
-        while (newline !== -1) {
-          const line = pending.slice(0, newline).replace(/\r$/, "");
-          pending = pending.slice(newline + 1);
-          if (line.trim()) {
-            try {
-              yield JSON.parse(line);
-            } catch (error) {
-              logBatchInstrumentationError("skipped malformed JSONL", error);
-              onIssue(new Error("OpenAI Batch file contains malformed JSONL"));
-            }
-          }
-          newline = pending.indexOf("\n");
-        }
-      }
-      if (pending.trim()) {
-        try {
-          yield JSON.parse(pending.replace(/\r$/, ""));
-        } catch (error) {
-          logBatchInstrumentationError("skipped malformed JSONL", error);
-          onIssue(new Error("OpenAI Batch file contains malformed JSONL"));
-        }
-      }
-    } catch (error) {
-      logBatchInstrumentationError("could not read JSONL response body", error);
-      onIssue(new Error("OpenAI Batch response body could not be read"));
-    } finally {
-      const releaseLock = read(reader, "releaseLock");
-      if (typeof releaseLock === "function") {
-        try {
-          Reflect.apply(releaseLock, reader, []);
-        } catch (error) {
-          logBatchInstrumentationError(
-            "could not release stream reader",
-            error,
-          );
-        }
-      }
-    }
-    return;
-  }
-
-  if (isBatchRecordIterable(resolvedFile)) {
-    for await (const record of resolvedFile) {
-      yield record;
-    }
-    return;
-  }
-
-  logBatchInstrumentationError("skipped invalid JSONL source", resolvedFile);
-  onIssue(new Error("OpenAI Batch file source is invalid"));
 }
 
 async function readBatchInputs(file: OpenAIBatchFile): Promise<BatchInputs> {

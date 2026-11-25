@@ -5,11 +5,11 @@ All package publishing happens in GitHub Actions. Do not publish from your local
 ## Short Version
 
 - If your PR changes a publishable package, add a `.changeset/*.md` file to it.
-- Merge the PR into `main`.
+- Merge the PR into the branch you want to release.
 - For a stable release:
-  - Run **Prepare Release** on `main`.
+  - Run **Prepare Release** from `main`. For a maintenance release, set `source_branch` (for example, `v3`).
   - Review the generated prepare release PR.
-  - Run **Publish Release** with the `release_sha` shown in the prepare workflow summary and leave `prerelease` unchecked.
+  - Run **Publish Release** with the `source_branch` and `release_sha` shown in the prepare workflow summary and leave `prerelease` unchecked.
   - Approve the `npm-publish` environment.
   - The publish workflow builds, packs, and attests the packages _before_ the gate, then (after approval) publishes from the exact commit SHA, creates tags and GitHub Releases for that commit, and comments on issues closed by released PRs.
   - Merge the prepare release PR after publishing succeeds.
@@ -29,39 +29,50 @@ If no release is intended, bypass the check with either:
 - the `skip-changeset` PR label
 - `#skip-changeset` in the PR title or body
 
-## Stable Release (`latest`)
+## Stable Release
 
 This is the normal production release flow.
 
-1. Merge feature PRs into `main`.
-2. Run **Prepare Release** from `main`.
+1. Merge the changes into the source branch.
+2. Run **Prepare Release** from `main`. Set `source_branch` to the branch you want to release. If you leave it empty, the workflow uses the branch selected in the Actions branch picker (normally `main`).
 3. That workflow:
    - validates publishable package metadata
    - runs `changeset version`
-   - creates a branch named `prepare-release/{short-main-sha}`
-   - opens a prepare release PR from that branch into `main`
+   - creates a branch named `prepare-release/{source-branch}-{short-source-sha}`
+   - opens a prepare release PR from that branch into the source branch
    - writes the `release_sha` to the workflow summary
 4. Review the prepare release PR to confirm the package versions, changelogs, and consumed changeset deletions look right.
-5. Run **Publish Release** with:
+5. Run **Publish Release** from the same workflow branch with:
    - `release_sha=<full commit SHA to publish>`
+   - the same `source_branch` as in the prepare workflow summary
    - `prerelease=false` (the default)
 6. Approve the `npm-publish` environment when GitHub asks.
 7. Merge the prepare release PR after publishing succeeds.
 
-The stable publish workflow checks out `release_sha` exactly. It accepts any full commit SHA with a parent, does not resolve the prepare release PR, and does not publish from the current tip of `main`.
+The stable publish workflow checks out `release_sha` exactly. It checks that the commit belongs to the source branch or is the version commit on its prepare release branch.
 
 The workflow runs in stages, and the `npm-publish` approval gate sits _after_ the build so nothing is published until a reviewer approves:
 
-1. **Build & pack (before the gate).** Detects packages whose versions changed between the release commit and its first parent, builds them, packs the tarballs, generates an SBOM per package, and attests build provenance for the tarballs. If no package versions changed, there is no work to approve.
+1. **Build & pack (before the gate).** Checks the package versions at the release commit against npm and the Git release tags, builds them, packs the tarballs, generates an SBOM per package, and attests build provenance for the tarballs. If the manifest is empty, approval is skipped.
 2. **Attest SBOMs.** Produces a signed attestation for each package's SBOM.
 3. **Request approval.** Posts the release (SHA + package list) for review and waits on the `npm-publish` environment gate.
-4. **Publish (after approval).** Publishes the prebuilt tarballs to the npm `latest` dist-tag (skipping versions already on npm), pushes Changesets-style release tags for the release commit, creates GitHub Releases with the SBOM assets attached, and comments on issues closed by PRs included in the release.
+4. **Publish (after approval).** Publishes the prebuilt tarballs to the npm dist-tag shown in the approval request (skipping versions already on npm), pushes Changesets-style release tags for the release commit, creates GitHub Releases with the SBOM assets attached, and comments on issues closed by PRs included in the release.
 
 The build/attest, approval, publish, and GitHub-release steps run through the shared release actions in [`braintrustdata/sdk-actions`](https://github.com/braintrustdata/sdk-actions) (pinned by commit SHA).
 
 If publishing succeeds but the prepare release PR cannot be merged cleanly afterward, the release is still published. Repair or recreate the prepare release PR manually afterward.
 
-Stable releases publish to the npm `latest` dist-tag.
+Each stable package gets its own npm dist-tag, regardless of the source branch.
+If npm’s `latest` tag points to a higher major, the package publishes to `latest-<package-major>`.
+A first release, a release on the current major, or a new major publishes to `latest`.
+
+For example, if `braintrust@latest` is 4.x and `@braintrust/otel@latest` is 1.x, the same release can publish `braintrust@3.45.0` to `latest-3` and `@braintrust/otel@1.2.0` to `latest`.
+The approval manifest records each tag.
+The workflow stops if the selected npm tag already points to a newer version.
+If a new major changes a tag choice while approval is pending, start a new run to approve the updated tags.
+
+Only stable releases from `main` are eligible for GitHub’s Latest release.
+Each package version must still be unique across branches because npm dist-tags share the same package versions.
 
 ## Prerelease (`rc`)
 
@@ -88,7 +99,7 @@ Prereleases:
 
 ## Notes
 
-- **Prepare Release** must be run from `main`.
+- For an older branch such as `v3`, run both workflows from `main` and enter `v3` for `source_branch`. This uses the workflows on `main` and the package code on `v3`.
 - Both release types use `publish-stable-release.yaml`, the workflow configured for npm trusted publishing.
 - Publishing must use a full 40-character commit SHA, not a PR number. In the normal prepare release flow, use the `release_sha` from the **Prepare Release** summary.
 - The old `release` branch and backsync workflow are no longer part of the release process.

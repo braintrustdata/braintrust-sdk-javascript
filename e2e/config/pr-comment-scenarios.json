@@ -15,6 +15,11 @@
     ]
   },
   {
+    "scenarioDirName": "trace-context-and-continuation",
+    "label": "Trace continuation and inline scorers",
+    "metadataScenario": "trace-context-and-continuation"
+  },
+  {
     "scenarioDirName": "trace-primitives-basic",
     "label": "Trace primitives and project caching",
     "metadataScenario": "trace-primitives-basic"
@@ -77,6 +82,14 @@
       {
         "variantKey": "cloudflare-agents-v0-33-latest",
         "label": "v0.33 latest"
+      },
+      {
+        "variantKey": "cloudflare-agents-v0-34",
+        "label": "v0.34 pinned"
+      },
+      {
+        "variantKey": "cloudflare-agents-v0-34-latest",
+        "label": "v0.34 latest"
       }
     ]
   },

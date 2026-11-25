@@ -1,3 +1,4 @@
+import assert from "node:assert/strict";
 import {
   flush,
   extractTraceContextFromHeaders,
@@ -30,6 +31,7 @@ async function main() {
     },
   });
   const propagatedRoot = extractTraceContextFromHeaders(rootSpan.inject());
+  assert(propagatedRoot, "Expected trace context from the root span");
 
   await withCurrent(rootSpan, async () => {
     const currentChild = startSpan({
@@ -49,6 +51,7 @@ async function main() {
     currentChild.end();
   });
 
+  console.log(await rootSpan.export());
   rootSpan.end();
 
   await withParent(propagatedRoot, async () => {

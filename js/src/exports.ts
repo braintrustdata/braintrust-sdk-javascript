@@ -56,6 +56,7 @@ export {
 
 export { registerSandbox } from "./sandbox";
 
+export { startGroqBatchTrace, completeGroqBatchTrace } from "./groq-batch";
 export { startAISDKBatchTrace, completeAISDKBatchTrace } from "./ai-sdk-batch";
 
 export {
@@ -142,6 +143,7 @@ export {
   Eval,
   Reporter,
   defaultErrorScoreHandler,
+  defineScorer,
 } from "./framework";
 
 export type { WorkflowEvalStore } from "./workflow-eval";
