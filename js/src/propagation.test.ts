@@ -23,6 +23,9 @@ import {
   initLogger,
   injectTraceContext,
   startSpan,
+  _internalWithParent,
+  withCurrent,
+  NOOP_SPAN,
 } from "./logger/core";
 import {
   BAGGAGE_HEADER,
@@ -509,6 +512,46 @@ describe("inject / extract / round-trip", () => {
   function makeLogger() {
     return initLogger({ projectName: PROJECT_NAME });
   }
+
+  test("environment parent follows the invocation and yields to scoped parents", async () => {
+    const parent = (spanId: string) =>
+      new SpanComponentsV4({
+        object_type: SpanObjectTypeV3.PROJECT_LOGS,
+        object_id: EXPERIMENT_ID,
+        row_id: uuidv4(),
+        span_id: spanId,
+        root_span_id: VALID_TRACE_ID,
+      }).toStr();
+    const first = parent(VALID_SPAN_ID);
+    const secondId = "1111111111111111";
+    try {
+      vi.stubEnv("BRAINTRUST_TRACE_PARENT", first);
+      const span = startSpan();
+      expect(span.spanParents).toEqual([VALID_SPAN_ID]);
+      vi.stubEnv("BRAINTRUST_TRACE_PARENT", parent(secondId));
+      const next = startSpan();
+      expect(next.spanParents).toEqual([secondId]);
+      withCurrent(span, () => {
+        const child = startSpan();
+        expect(child.spanParents).toEqual([span.spanId]);
+        child.end();
+      });
+      await _internalWithParent(first, () => {
+        const child = startSpan();
+        expect(child.spanParents).toEqual([VALID_SPAN_ID]);
+        child.end();
+      });
+      const explicit = _internalStartSpan({ parent: first });
+      expect(explicit.spanParents).toEqual([VALID_SPAN_ID]);
+      explicit.end();
+      next.end();
+      span.end();
+      vi.stubEnv("BRAINTRUST_TRACE_PARENT", undefined);
+      expect(startSpan()).toBe(NOOP_SPAN);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
 
   describe("inject", () => {
     test("traceparent well-formed and matches span", () => {

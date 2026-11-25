@@ -9,7 +9,7 @@ import {
 } from "vite-plus/test";
 
 type EdgeEntrypoint = "./edge-light/index" | "./workerd/index";
-const braintrustStateSymbol = Symbol.for("braintrust-state");
+const braintrustStateSymbol = Symbol.for("braintrust-state-v4");
 
 describe.each([
   ["./workerd/index", "workerd"],
