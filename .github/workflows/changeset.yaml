@@ -28,7 +28,7 @@ jobs:
         with:
           node-version-file: .tool-versions
       - name: Fetch pull request base ref
-        run: git fetch origin "${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}"
+        run: git fetch origin "refs/heads/$GITHUB_BASE_REF:refs/remotes/origin/$GITHUB_BASE_REF"
       - name: Validate changeset summaries
         run: |
           node --test scripts/release/validate-changesets.test.mjs
