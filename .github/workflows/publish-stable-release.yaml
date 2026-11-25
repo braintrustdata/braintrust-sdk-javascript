@@ -269,7 +269,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-          ref: ${{ needs.build-package-artifacts.outputs.release_sha }}
+          ref: ${{ github.sha }}
       - name: Download release package artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
@@ -277,6 +277,7 @@ jobs:
           path: release-artifacts
       - name: Verify approved release manifest
         env:
+          RELEASE_SHA: ${{ needs.build-package-artifacts.outputs.release_sha }}
           APPROVED_MANIFEST: ${{ needs.build-package-artifacts.outputs.manifest_json }}
         run: |
           manifest="$(jq -c . release-artifacts/release-manifest.json)"
@@ -284,11 +285,25 @@ jobs:
             echo "The downloaded manifest differs from the approved release manifest." >&2
             exit 1
           fi
-      - name: Verify approved npm tags
-        if: ${{ !inputs.prerelease }}
+          if [[ "$(jq -r .commit <<< "$manifest")" != "$RELEASE_SHA" ]]; then
+            echo "The manifest commit differs from the requested release SHA." >&2
+            exit 1
+          fi
+          git fetch --no-tags origin "$RELEASE_SHA"
+      - name: Check release tags before publication
+        env:
+          RELEASE_SHA: ${{ needs.build-package-artifacts.outputs.release_sha }}
         run: |
-          git show "$GITHUB_SHA:scripts/release/set-npm-channels.mjs" > "$RUNNER_TEMP/set-npm-channels.mjs"
-          node "$RUNNER_TEMP/set-npm-channels.mjs" release-artifacts/release-manifest.json --check
+          while IFS= read -r tag; do
+            git check-ref-format "refs/tags/$tag"
+            if git show-ref --verify --quiet "refs/tags/$tag" &&
+               [[ "$(git rev-list -n 1 "refs/tags/$tag")" != "$RELEASE_SHA" ]]; then
+              echo "Release tag $tag already exists on another commit." >&2
+              exit 1
+            fi
+          done < <(jq -r '.packages[].tag' release-artifacts/release-manifest.json)
+      - name: Verify approved npm tags and tarballs
+        run: node scripts/release/set-npm-channels.mjs release-artifacts/release-manifest.json --check
       - name: Publish package tarballs
         uses: braintrustdata/sdk-actions/actions/release/lang/js/publish-npm-tarballs@337c5475631d724441403f5a4d8ad0b32ce12e29
         with:
@@ -298,62 +313,15 @@ jobs:
           slack_token: ${{ secrets.SLACK_BOT_TOKEN }}
           slack_channel: C0ABHT0SWA2
       - name: Push Changesets release tags
+        env:
+          RELEASE_SHA: ${{ needs.build-package-artifacts.outputs.release_sha }}
         run: |
-          set -euo pipefail
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          manifest="release-artifacts/release-manifest.json"
-          target_commit="$(jq -r '.commit // empty' "$manifest")"
-          mapfile -t tags < <(
-            jq -r '.packages[]? | .tag // "\(.name)@\(.version)"' "$manifest"
-          )
-
-          if [ "${#tags[@]}" -eq 0 ]; then
-            echo "No release tags to push."
-            exit 0
-          fi
-
-          if [ -z "$target_commit" ]; then
-            echo "Release manifest is missing commit." >&2
-            exit 1
-          fi
-
-          to_push=()
-          for tag in "${tags[@]}"; do
-            remote_ref="$(git ls-remote --tags origin "refs/tags/$tag" | head -n 1 || true)"
-            if [ -n "$remote_ref" ]; then
-              remote_target="$(printf '%s\n' "$remote_ref" | awk '{print $1}')"
-              if [ "$remote_target" != "$target_commit" ]; then
-                echo "Remote tag $tag already exists on $remote_target, expected $target_commit." >&2
-                exit 1
-              fi
-              continue
-            fi
-
-            if git rev-parse -q --verify "refs/tags/$tag" >/dev/null 2>&1; then
-              local_target="$(git rev-list -n 1 "$tag")"
-              if [ "$local_target" != "$target_commit" ]; then
-                echo "Local tag $tag already exists on $local_target, expected $target_commit." >&2
-                exit 1
-              fi
-            else
-              git tag "$tag" "$target_commit"
-            fi
-
-            to_push+=("refs/tags/$tag")
-          done
-
-          if [ "${#to_push[@]}" -eq 0 ]; then
-            echo "All release tags already exist on origin."
-            exit 0
-          fi
-
           # Repository rules limit each push to five branches or tags.
-          for ref in "${to_push[@]}"; do
-            git push origin "$ref"
-          done
+          while IFS= read -r tag; do
+            if ! git show-ref --verify --quiet "refs/tags/$tag"; then
+              git push origin "$RELEASE_SHA:refs/tags/$tag"
+            fi
+          done < <(jq -r '.packages[].tag' release-artifacts/release-manifest.json)
       - name: Create GitHub Releases
         if: needs.build-package-artifacts.outputs.github_latest == 'true'
         uses: braintrustdata/sdk-actions/actions/release/create-package-github-releases@337c5475631d724441403f5a4d8ad0b32ce12e29

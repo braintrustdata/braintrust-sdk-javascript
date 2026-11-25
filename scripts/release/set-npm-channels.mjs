@@ -1,4 +1,6 @@
+import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
+import { basename, dirname, join } from "node:path";
 
 const [path, option] = process.argv.slice(2);
 const manifest = JSON.parse(readFileSync(path, "utf8"));
@@ -41,6 +43,28 @@ for (const pkg of manifest.packages) {
     if (pkg.channel !== channel || pkg.registries.npm.channel !== channel) {
       throw new Error(
         `The approved npm tag for ${pkg.name}@${pkg.version} was ${pkg.channel}. It now needs ${channel}. Start a new release run for approval.`,
+      );
+    }
+
+    const response = await fetch(
+      `https://registry.npmjs.org/${encodeURIComponent(pkg.name)}/${encodeURIComponent(pkg.version)}`,
+    );
+    if (response.status === 404) continue;
+    if (!response.ok) {
+      throw new Error(
+        `Cannot read npm version ${pkg.name}@${pkg.version}: ${response.status}`,
+      );
+    }
+
+    if (basename(pkg.tarball_asset) !== pkg.tarball_asset) {
+      throw new Error(`Invalid tarball filename: ${pkg.tarball_asset}`);
+    }
+    const tarball = readFileSync(join(dirname(path), pkg.tarball_asset));
+    const integrity = createHash("sha512").update(tarball).digest("base64");
+    const { dist } = await response.json();
+    if (dist.integrity !== `sha512-${integrity}`) {
+      throw new Error(
+        `${pkg.name}@${pkg.version} is already published with a different tarball.`,
       );
     }
   } else {
