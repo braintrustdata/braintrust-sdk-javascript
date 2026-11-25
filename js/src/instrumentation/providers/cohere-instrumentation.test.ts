@@ -26,11 +26,19 @@ describe("parseCohereMetricsFromUsage", () => {
     ).toEqual({
       prompt_tokens: 10,
       completion_tokens: 4,
-      reasoning_tokens: 6,
+      completion_reasoning_tokens: 6,
       tokens: 14,
       prompt_cached_tokens: 3,
       search_units: 1,
     });
+  });
+
+  it("records reasoning tokens only under the canonical metric name", () => {
+    const metrics = parseCohereMetricsFromUsage({
+      usage: { tokens: { inputTokens: 2, thinkingTokens: 9 } },
+    });
+    expect(metrics).toHaveProperty("completion_reasoning_tokens", 9);
+    expect(metrics).not.toHaveProperty("reasoning_tokens");
   });
 
   it("returns an empty object for unknown values", () => {
@@ -294,9 +302,10 @@ describe("aggregateCohereChatStreamChunks", () => {
     expect(aggregated.metrics).toEqual({
       prompt_tokens: 7,
       completion_tokens: 3,
-      reasoning_tokens: 11,
+      completion_reasoning_tokens: 11,
       tokens: 10,
     });
+    expect(aggregated.metrics).not.toHaveProperty("reasoning_tokens");
     expect(aggregated.output).toEqual({
       role: "assistant",
       toolPlan: "Answer directly",

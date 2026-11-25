@@ -449,7 +449,7 @@ function mergeUsageMetrics(
     );
     setMetricIfNumber(
       metrics,
-      "reasoning_tokens",
+      "completion_reasoning_tokens",
       tokenContainer.reasoningTokens ??
         tokenContainer.reasoning_tokens ??
         tokenContainer.thinkingTokens ??
