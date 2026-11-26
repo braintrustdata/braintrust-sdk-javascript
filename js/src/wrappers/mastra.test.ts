@@ -6,6 +6,7 @@ import {
   expect,
   test,
 } from "vite-plus/test";
+import type { LoggingEvent } from "../../util/object";
 import { configureNode } from "../node/config";
 import { _exportsForTestingOnly } from "../logger/testing";
 import { initLogger } from "../logger/core";
@@ -81,6 +82,89 @@ describe("BraintrustObservabilityExporter", () => {
     expect(merged[0].context?.span_origin).toMatchObject({
       instrumentation: { name: "mastra" },
     });
+  });
+
+  test.each(["fixed", "per agent"] as const)(
+    "routes overlapping traces with a %s logger",
+    async (mode) => {
+      const first = initLogger({
+        projectId: "first",
+        projectName: "first",
+        setCurrent: false,
+      });
+      const second = initLogger({
+        projectId: "second",
+        projectName: "second",
+        setCurrent: false,
+      });
+      const selected: string[] = [];
+      const exporter = new BraintrustObservabilityExporter({
+        logger:
+          mode === "fixed"
+            ? first
+            : (root) => {
+                selected.push(root.id);
+                return root.entityId === "a" ? first : second;
+              },
+      });
+
+      await logger.traced(async () => {
+        for (const id of ["a", "b"]) {
+          await exporter.exportTracingEvent({
+            type: "span_started",
+            exportedSpan: span({ id, traceId: id, entityId: id }),
+          });
+        }
+      });
+      for (const id of ["b", "a"]) {
+        await exporter.exportTracingEvent({
+          type: "span_started",
+          exportedSpan: span({
+            id: id + "-tool",
+            traceId: id,
+            parentSpanId: id,
+            isEvent: true,
+          }),
+        });
+        await exporter.exportTracingEvent({
+          type: "span_ended",
+          exportedSpan: span({ id, traceId: id }),
+        });
+      }
+      await exporter.shutdown();
+      const rows = (await backgroundLogger.drain()) as LoggingEvent[];
+      expect(selected).toEqual(mode === "fixed" ? [] : ["a", "b"]);
+      for (const id of ["a", "b"]) {
+        const project = id === "a" || mode === "fixed" ? "first" : "second";
+        const root = rows.find((row) => row.id === id);
+        expect(root?.project_id).toBe(project);
+        expect(root?.span_parents ?? []).toEqual([]);
+        expect(rows.find((row) => row.id === id + "-tool")).toMatchObject({
+          project_id: project,
+          root_span_id: root?.root_span_id,
+          span_parents: [root?.span_id],
+        });
+      }
+    },
+  );
+
+  test("captures the current parent separately for each Mastra run", async () => {
+    const exporter = new BraintrustObservabilityExporter();
+    for (const id of ["first", "second"]) {
+      await logger.traced(async (parent) => {
+        const exportedSpan = span({ id, traceId: id });
+        await exporter.exportTracingEvent({
+          type: "span_started",
+          exportedSpan,
+        });
+        await exporter.exportTracingEvent({ type: "span_ended", exportedSpan });
+        await exporter.flush();
+        const rows = (await backgroundLogger.drain()) as LoggingEvent[];
+        expect(rows.find((row) => row.id === id)?.span_parents).toEqual([
+          parent.spanId,
+        ]);
+      });
+    }
   });
 
   // Run a model span's full lifecycle through the exporter and return the logged

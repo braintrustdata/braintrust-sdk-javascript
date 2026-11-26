@@ -103,7 +103,15 @@
                 "entity_name": "Weather Agent",
                 "entity_type": "agent"
               }
-            },
+            }
+          ],
+          "metadata": {
+            "operation": "generate"
+          }
+        },
+        {
+          "name": "mastra-agent-stream-operation",
+          "children": [
             {
               "name": "agent run: 'weather-agent'",
               "type": "task",
@@ -200,7 +208,22 @@
                 "entity_name": "Weather Agent",
                 "entity_type": "agent"
               }
-            },
+            }
+          ],
+          "metadata": {
+            "operation": "stream"
+          }
+        },
+        {
+          "name": "mastra-tool-operation",
+          "children": [],
+          "metadata": {
+            "operation": "tool"
+          }
+        },
+        {
+          "name": "mastra-workflow-operation",
+          "children": [
             {
               "name": "workflow run: 'travel-flow'",
               "type": "task",
@@ -235,27 +258,6 @@
               }
             }
           ],
-          "metadata": {
-            "operation": "generate"
-          }
-        },
-        {
-          "name": "mastra-agent-stream-operation",
-          "children": [],
-          "metadata": {
-            "operation": "stream"
-          }
-        },
-        {
-          "name": "mastra-tool-operation",
-          "children": [],
-          "metadata": {
-            "operation": "tool"
-          }
-        },
-        {
-          "name": "mastra-workflow-operation",
-          "children": [],
           "metadata": {
             "operation": "workflow"
           }
