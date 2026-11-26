@@ -128,12 +128,17 @@ export class BraintrustStream {
     const reader = this.stream.getReader();
     return {
       async next() {
-        const { done, value } = await reader.read();
-        if (done) {
+        try {
+          const { done, value } = await reader.read();
+          if (done) {
+            reader.releaseLock();
+            return { done: true, value: undefined };
+          }
+          return { done: false, value };
+        } catch (error) {
           reader.releaseLock();
-          return { done: true, value: undefined };
+          throw error;
         }
-        return { done: false, value };
       },
       async return() {
         reader.releaseLock();
