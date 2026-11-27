@@ -1,4 +1,5 @@
 import { registerInstrumentation as fal } from "./registrations/fal";
+import { registerInstrumentation as agentKit } from "./registrations/agentKit";
 import { registerInstrumentation as mcpHandler } from "./registrations/mcpHandler";
 import { registerInstrumentation as fastmcp } from "./registrations/fastmcp";
 import { registerInstrumentation as mcp } from "./registrations/mcp";
@@ -40,6 +41,7 @@ import { registerInstrumentation as mastra } from "./registrations/mastra";
 
 /** Register every enabled provider. Only explicit auto setup imports this module. */
 export function registerInstrumentationConsumers(): void {
+  agentKit();
   mcp();
   mcpHandler();
   fastmcp();

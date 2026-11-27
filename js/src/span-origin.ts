@@ -52,6 +52,7 @@ export const INSTRUMENTATION_NAMES = {
   DEEPGRAM: "deepgram",
   FAL: "fal",
   ELEVENLABS: "elevenlabs",
+  AGENT_KIT: "agent-kit",
 } as const;
 
 export type SpanInstrumentationName =
@@ -93,9 +94,7 @@ export function getSpanInstrumentationName(
   if (typeof args !== "object" || args === null) {
     return undefined;
   }
-  const value = (args as InternalSpanInstrumentationName)[
-    INTERNAL_SPAN_INSTRUMENTATION_NAME
-  ];
+  const value: unknown = Reflect.get(args, INTERNAL_SPAN_INSTRUMENTATION_NAME);
   return isSpanInstrumentationName(value) ? value : undefined;
 }
 
