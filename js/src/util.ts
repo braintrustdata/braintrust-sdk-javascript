@@ -1,3 +1,5 @@
+import { isPromiseLike } from "../util/type_util";
+
 export * from "../util";
 
 export const GLOBAL_PROJECT = "Global";
@@ -13,10 +15,10 @@ export function runCatchFinally<R>(
   let runSyncCleanup = true;
   try {
     const ret = f();
-    if (ret instanceof Promise) {
+    if (isPromiseLike(ret)) {
       runSyncCleanup = false;
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
-      return (ret as any).catch(catchF).finally(finallyF) as R;
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      return Promise.resolve(ret).catch(catchF).finally(finallyF) as R;
     } else {
       return ret;
     }

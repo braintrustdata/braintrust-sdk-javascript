@@ -95,6 +95,7 @@ import {
   getCurrentUnixTimestamp,
   GLOBAL_PROJECT,
   isEmpty,
+  isPromiseLike,
   LazyValue,
   SyncLazyValue,
   runCatchFinally,
@@ -5727,7 +5728,7 @@ export function wrapTraced<F extends (...args: any[]) => any>(
       const output = fn(...fnArgs);
 
       if (!noTraceIO && !hasExplicitOutput) {
-        if (output instanceof Promise) {
+        if (isPromiseLike(output)) {
           return (async () => {
             const result = await output;
             span.log({ output: result });
