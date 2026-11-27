@@ -22,6 +22,7 @@ const contextKey = "__braintrust_trace_context";
 function serializableSpan(exported = vi.fn()): Span {
   return {
     export: exported,
+    state: _internalGetGlobalState,
     getParentInfo: () =>
       ({
         computeObjectMetadataArgs: undefined,

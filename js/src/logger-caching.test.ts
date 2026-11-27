@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test, vi } from "vite-plus/test";
+import { afterEach, assert, describe, expect, test, vi } from "vite-plus/test";
 import {
   BraintrustState,
   initLogger,
@@ -259,6 +259,7 @@ describe("project metadata caching", () => {
         first.project,
         second.project,
       ]);
+      assert(firstProject && secondProject);
       firstProject.id = "changed-id";
       firstProject.name = "changed-name";
       (firstProject.fullInfo.metadata as typeof project.metadata).labels.push(
@@ -461,7 +462,7 @@ describe("project metadata caching", () => {
       expect(vi.getTimerCount()).toBe(0);
 
       const replacement = await initLogger(options).project;
-      expect(replacement.id).toBe(projectId);
+      expect(replacement?.id).toBe(projectId);
       expect(fetch).toHaveBeenCalledTimes(3);
       expect(vi.getTimerCount()).toBe(0);
 
