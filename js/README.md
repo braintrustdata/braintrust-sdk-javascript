@@ -150,6 +150,32 @@ BRAINTRUST_DISABLE_INSTRUMENTATION=langsmith node --import braintrust/hook.mjs a
 
 When Braintrust LangChain/LangGraph instrumentation is enabled, LangSmith runs serialized by LangChain are ignored to avoid duplicate spans. Set `langchain: false` (and use LangSmith instrumentation) when LangSmith should be the source for those runs instead.
 
+### Retell AI
+
+Retell SDK `>=6.2.22 <7` is supported by the Node.js hook and bundler plugins.
+For explicit instrumentation, wrap a client:
+
+```typescript
+import Retell from "retell-sdk";
+import { wrapRetell } from "braintrust";
+
+const client = wrapRetell(new Retell());
+```
+
+This traces `call.createPhoneCall`, `call.createWebCall`, `call.retrieve`,
+`chat.create`, and `chat.createChatCompletion`. Call creation and retrieval are
+task spans measuring the API request, not the lifetime of the voice conversation.
+Chat completion records returned text messages. Retrieved call transcripts record
+text; recordings are not downloaded. Tokens, transport credentials, phone numbers,
+request options and arbitrary metadata are omitted.
+
+The original SDK promise is retained. Its response helpers wait for tracing to
+read a cloned body before parsing or returning the application's response, as in
+the TypeSafe integration. `.asResponse()` retains an unread response body.
+
+Disable with `configureInstrumentation({ integrations: { retell: false } })`
+before registration, or `BRAINTRUST_DISABLE_INSTRUMENTATION=retell`.
+
 ## Migration Guides
 
 ### Upgrading from 3.x to 4.x
