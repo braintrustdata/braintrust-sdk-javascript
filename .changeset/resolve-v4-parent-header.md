@@ -2,6 +2,6 @@
 "braintrust": patch
 ---
 
-fix(otel): decode v4 exports in resolveParentHeader
+fix(tracing): preserve span ids in v4 parent exports
 
-OTLP parent headers accept V4 span exports and preserve their span and root span IDs.
+V4 span exports preserve the original spelling of span and root span IDs when they cannot be encoded losslessly as binary hex.
