@@ -24,52 +24,21 @@ import { mergeDicts } from "./object_util";
 
 const ENCODING_VERSION_NUMBER_V4 = 4;
 
-/**
- * Try to convert hex string to 16-byte binary (for trace IDs)
- */
-function tryMakeHexTraceId(
-  s: string,
-): { bytes: Uint8Array; isHex: true } | { bytes: undefined; isHex: false } {
-  try {
-    if (typeof s === "string" && s.length === 32) {
-      // 32 hex chars = 16 bytes
-      const bytes = new Uint8Array(16);
-      for (let i = 0; i < 16; i++) {
-        const hex = s.substr(i * 2, 2);
-        const byte = parseInt(hex, 16);
-        if (isNaN(byte)) throw new Error();
-        bytes[i] = byte;
-      }
-      return { bytes, isHex: true };
-    }
-  } catch {
-    // Fall through
+function tryMakeHexId(id: string, byteLength: number): Uint8Array | undefined {
+  // The binary decoder returns lowercase hex. Keep other IDs verbatim in JSON.
+  if (
+    typeof id !== "string" ||
+    id.length !== byteLength * 2 ||
+    /[^0-9a-f]/.test(id)
+  ) {
+    return undefined;
   }
-  return { bytes: undefined, isHex: false };
-}
 
-/**
- * Try to convert hex string to 8-byte binary (for span IDs)
- */
-function tryMakeHexSpanId(
-  s: string,
-): { bytes: Uint8Array; isHex: true } | { bytes: undefined; isHex: false } {
-  try {
-    if (typeof s === "string" && s.length === 16) {
-      // 16 hex chars = 8 bytes
-      const bytes = new Uint8Array(8);
-      for (let i = 0; i < 8; i++) {
-        const hex = s.substr(i * 2, 2);
-        const byte = parseInt(hex, 16);
-        if (isNaN(byte)) throw new Error();
-        bytes[i] = byte;
-      }
-      return { bytes, isHex: true };
-    }
-  } catch {
-    // Fall through
+  const bytes = new Uint8Array(byteLength);
+  for (let i = 0; i < byteLength; i++) {
+    bytes[i] = parseInt(id.slice(i * 2, i * 2 + 2), 16);
   }
-  return { bytes: undefined, isHex: false };
+  return bytes;
 }
 
 const INVALID_ENCODING_ERRMSG_V4 = `SpanComponents string is not properly encoded. This library only supports encoding versions up to ${ENCODING_VERSION_NUMBER_V4}. Please make sure the SDK library used to decode the SpanComponents is at least as new as any library used to encode it.`;
@@ -151,22 +120,15 @@ export class SpanComponentsV4 {
     const hexEntries: Array<Uint8Array> = [];
 
     function addHexField(origVal: string, fieldId: Fields) {
-      let hexResult:
-        | { bytes: Uint8Array; isHex: true }
-        | { bytes: undefined; isHex: false };
-
+      let bytes: Uint8Array | undefined;
       if (fieldId === Fields.SPAN_ID) {
-        hexResult = tryMakeHexSpanId(origVal);
+        bytes = tryMakeHexId(origVal, 8);
       } else if (fieldId === Fields.ROOT_SPAN_ID) {
-        hexResult = tryMakeHexTraceId(origVal);
-      } else {
-        hexResult = { bytes: undefined, isHex: false };
+        bytes = tryMakeHexId(origVal, 16);
       }
 
-      if (hexResult.isHex) {
-        hexEntries.push(
-          concatUint8Arrays(new Uint8Array([fieldId]), hexResult.bytes),
-        );
+      if (bytes) {
+        hexEntries.push(concatUint8Arrays(new Uint8Array([fieldId]), bytes));
       } else {
         jsonObj[FIELDS_ID_TO_NAME[fieldId]] = origVal;
       }
@@ -216,6 +178,10 @@ export class SpanComponentsV4 {
         jsonObj["root_span_id"] = v3Components.data.root_span_id;
         jsonObj["propagated_event"] = v3Components.data.propagated_event;
       } else {
+        if (rawBytes[0] !== ENCODING_VERSION_NUMBER_V4 || rawBytes.length < 3) {
+          throw new Error();
+        }
+
         // V4 binary format
         jsonObj["object_type"] = rawBytes[1];
         const numHexEntries = rawBytes[2];
@@ -237,14 +203,23 @@ export class SpanComponentsV4 {
             jsonObj[FIELDS_ID_TO_NAME[fieldId]] = Array.from(hexBytes, (b) =>
               b.toString(16).padStart(2, "0"),
             ).join("");
-          } else {
+          } else if (
+            fieldId === Fields.OBJECT_ID ||
+            fieldId === Fields.ROW_ID
+          ) {
             // Should not happen for object_id/row_id in V4, but handle gracefully
             const hexBytes = rawBytes.subarray(byteOffset + 1, byteOffset + 17); // assume 16 bytes
             byteOffset += 17;
             jsonObj[FIELDS_ID_TO_NAME[fieldId]] = Array.from(hexBytes, (b) =>
               b.toString(16).padStart(2, "0"),
             ).join("");
+          } else {
+            throw new Error();
           }
+        }
+
+        if (byteOffset > rawBytes.length) {
+          throw new Error();
         }
 
         if (byteOffset < rawBytes.length) {
