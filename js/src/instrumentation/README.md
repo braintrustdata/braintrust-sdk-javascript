@@ -245,3 +245,23 @@ Test at the narrowest useful layers:
 
 After instrumentation changes, run e2e tests in cassette replay mode. When an
 e2e scenario itself changes, run it three times to catch flakes.
+
+## LangGraph Platform background runs
+
+When you preload `braintrust/hook.mjs` or pass a LangGraph Platform client to
+`wrapLangGraphSDK(client)`, Braintrust traces `runs.create`,
+`runs.createBatch`, `runs.join`, and `runs.joinStream` alongside
+`runs.wait` and `runs.stream`.
+
+- `langgraph.runs.create` and `langgraph.runs.createBatch` measure the time
+  until the Platform acknowledges submission. Their output contains the
+  returned run and thread IDs.
+- `langgraph.runs.join` measures the request waiting for an existing run and
+  records its returned state. `langgraph.runs.joinStream` observes the
+  stream until it finishes, fails, or the caller closes it.
+- Match `langgraph.run_id` and `langgraph.thread_id` across submissions and
+  later joins, even when separate processes make the calls. For batches,
+  `langgraph.runs` lists the run and thread ID pairs. Each operation keeps
+  its caller's active span as its parent.
+- Observing an existing run does not count its tokens again. To see
+  execution-side spans, instrument the graph's server separately.

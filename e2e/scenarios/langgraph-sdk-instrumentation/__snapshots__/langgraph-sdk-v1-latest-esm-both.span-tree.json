@@ -5,8 +5,156 @@
       "type": "task",
       "children": [
         {
-          "name": "Uninstrumented background APIs",
-          "children": [],
+          "name": "Background run APIs",
+          "children": [
+            {
+              "name": "langgraph.runs.create",
+              "type": "task",
+              "children": [],
+              "input": {
+                "messages": [
+                  {
+                    "content": "Reply with exactly: hello from langgraph",
+                    "role": "user"
+                  }
+                ]
+              },
+              "output": {
+                "run_id": "<uuid:1>",
+                "thread_id": "<uuid:2>"
+              },
+              "metadata": {
+                "langgraph.assistant_id": "agent",
+                "langgraph.run_id": "<uuid:2>",
+                "langgraph.thread_id": "<uuid:1>"
+              }
+            },
+            {
+              "name": "langgraph.runs.create",
+              "type": "task",
+              "children": [],
+              "input": {
+                "value": "joined stream"
+              },
+              "output": {
+                "run_id": "<uuid:1>",
+                "thread_id": "<uuid:2>"
+              },
+              "metadata": {
+                "langgraph.assistant_id": "background",
+                "langgraph.run_id": "<uuid:2>",
+                "langgraph.thread_id": "<uuid:1>",
+                "streamMode": [
+                  "values"
+                ]
+              }
+            },
+            {
+              "name": "langgraph.runs.create",
+              "type": "task",
+              "children": [],
+              "input": {
+                "value": "cancel"
+              },
+              "output": {
+                "run_id": "<uuid:1>",
+                "thread_id": "<uuid:2>"
+              },
+              "metadata": {
+                "langgraph.assistant_id": "background",
+                "langgraph.run_id": "<uuid:2>",
+                "langgraph.thread_id": "<uuid:1>",
+                "streamMode": [
+                  "values"
+                ]
+              }
+            },
+            {
+              "name": "langgraph.runs.join",
+              "type": "task",
+              "children": [],
+              "output": {
+                "content": "hello from langgraph",
+                "role": "assistant"
+              },
+              "metadata": {
+                "langgraph.run_id": "<uuid:2>",
+                "langgraph.thread_id": "<uuid:1>"
+              }
+            },
+            {
+              "name": "langgraph.runs.join",
+              "type": "task",
+              "children": [],
+              "metadata": {
+                "langgraph.run_id": "<uuid:2>",
+                "langgraph.thread_id": "<uuid:1>"
+              },
+              "error": "This operation was aborted"
+            },
+            {
+              "name": "langgraph.runs.createBatch",
+              "type": "task",
+              "children": [],
+              "input": [
+                {
+                  "assistant_id": "background",
+                  "input": {
+                    "value": "batch one"
+                  }
+                },
+                {
+                  "assistant_id": "background",
+                  "input": {
+                    "value": "batch two"
+                  }
+                }
+              ],
+              "output": [
+                {
+                  "run_id": "<uuid:1>",
+                  "thread_id": "<uuid:2>"
+                },
+                {
+                  "run_id": "<uuid:3>",
+                  "thread_id": "<uuid:4>"
+                }
+              ],
+              "metadata": {
+                "langgraph.runs": [
+                  {
+                    "run_id": "<uuid:1>",
+                    "thread_id": "<uuid:2>"
+                  },
+                  {
+                    "run_id": "<uuid:3>",
+                    "thread_id": "<uuid:4>"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "langgraph.runs.joinStream",
+              "type": "task",
+              "children": [],
+              "output": {
+                "value": "joined stream"
+              },
+              "metadata": {
+                "langgraph.run_id": "<uuid:2>",
+                "langgraph.thread_id": "<uuid:1>"
+              }
+            },
+            {
+              "name": "langgraph.runs.joinStream",
+              "type": "task",
+              "children": [],
+              "metadata": {
+                "langgraph.run_id": "<uuid:2>",
+                "langgraph.thread_id": "<uuid:1>"
+              }
+            }
+          ],
           "metadata": {
             "operation": "background-apis",
             "testRunId": "<run:1>"
@@ -494,7 +642,7 @@
         }
       ],
       "input": {
-        "description": "Verify synchronous LangGraph run APIs",
+        "description": "Verify LangGraph run APIs",
         "prompt": {
           "messages": [
             {
@@ -505,11 +653,11 @@
         }
       },
       "output": {
-        "expected_error_cases": 4,
+        "expected_error_cases": 5,
         "status": "passed"
       },
       "metadata": {
-        "expected_error_cases": 4,
+        "expected_error_cases": 5,
         "instrumentation_mode": "both",
         "module": "esm",
         "scenario": "langgraph-sdk-instrumentation",

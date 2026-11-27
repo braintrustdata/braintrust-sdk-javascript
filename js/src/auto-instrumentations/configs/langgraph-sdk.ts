@@ -7,7 +7,9 @@ export const langGraphSDKConfigs: InstrumentationConfig[] = [
   { versionRange: ">=2.0.0 <3.0.0", filePath: "dist/client" },
 ].flatMap(({ versionRange, filePath }) =>
   ["js", "cjs"].flatMap((extension) =>
-    (["wait", "stream"] as const).map((methodName) => ({
+    (
+      ["wait", "stream", "create", "createBatch", "join", "joinStream"] as const
+    ).map((methodName) => ({
       channelName: langGraphSDKChannels[methodName].channelName,
       module: {
         name: "@langchain/langgraph-sdk",

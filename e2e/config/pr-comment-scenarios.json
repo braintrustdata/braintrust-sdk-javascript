@@ -1079,7 +1079,7 @@
   },
   {
     "scenarioDirName": "langgraph-sdk-instrumentation",
-    "label": "LangGraph Platform SDK Instrumentation",
+    "label": "LangGraph Platform Run and Background Run Tracing",
     "metadataScenario": "langgraph-sdk-instrumentation",
     "variants": [
       {

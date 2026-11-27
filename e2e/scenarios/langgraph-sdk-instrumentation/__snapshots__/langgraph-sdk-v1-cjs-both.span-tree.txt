@@ -1,7 +1,7 @@
 span_tree:
 └── LangGraph SDK 1.9.25 (cjs, both) [task]
     input: {
-      "description": "Verify synchronous LangGraph run APIs",
+      "description": "Verify LangGraph run APIs",
       "prompt": {
         "messages": [
           {
@@ -12,11 +12,11 @@ span_tree:
       }
     }
     output: {
-      "expected_error_cases": 4,
+      "expected_error_cases": 5,
       "status": "passed"
     }
     metadata: {
-      "expected_error_cases": 4,
+      "expected_error_cases": 5,
       "instrumentation_mode": "both",
       "module": "cjs",
       "scenario": "langgraph-sdk-instrumentation",
@@ -28,7 +28,7 @@ span_tree:
       "caller_functionname": "runTracedScenario",
       "caller_lineno": 0
     }
-    ├── Uninstrumented background APIs
+    ├── Background run APIs
     │   metadata: {
     │     "operation": "background-apis",
     │     "testRunId": "<run:1>"
@@ -38,6 +38,121 @@ span_tree:
     │     "caller_functionname": "runOperation",
     │     "caller_lineno": 0
     │   }
+    │   ├── langgraph.runs.create [task]
+    │   │   input: {
+    │   │     "messages": [
+    │   │       {
+    │   │         "content": "Reply with exactly: hello from langgraph",
+    │   │         "role": "user"
+    │   │       }
+    │   │     ]
+    │   │   }
+    │   │   output: {
+    │   │     "run_id": "<uuid:1>",
+    │   │     "thread_id": "<uuid:2>"
+    │   │   }
+    │   │   metadata: {
+    │   │     "langgraph.assistant_id": "agent",
+    │   │     "langgraph.run_id": "<uuid:2>",
+    │   │     "langgraph.thread_id": "<uuid:1>"
+    │   │   }
+    │   ├── langgraph.runs.create [task]
+    │   │   input: {
+    │   │     "value": "joined stream"
+    │   │   }
+    │   │   output: {
+    │   │     "run_id": "<uuid:1>",
+    │   │     "thread_id": "<uuid:2>"
+    │   │   }
+    │   │   metadata: {
+    │   │     "langgraph.assistant_id": "background",
+    │   │     "langgraph.run_id": "<uuid:2>",
+    │   │     "langgraph.thread_id": "<uuid:1>",
+    │   │     "streamMode": [
+    │   │       "values"
+    │   │     ]
+    │   │   }
+    │   ├── langgraph.runs.create [task]
+    │   │   input: {
+    │   │     "value": "cancel"
+    │   │   }
+    │   │   output: {
+    │   │     "run_id": "<uuid:1>",
+    │   │     "thread_id": "<uuid:2>"
+    │   │   }
+    │   │   metadata: {
+    │   │     "langgraph.assistant_id": "background",
+    │   │     "langgraph.run_id": "<uuid:2>",
+    │   │     "langgraph.thread_id": "<uuid:1>",
+    │   │     "streamMode": [
+    │   │       "values"
+    │   │     ]
+    │   │   }
+    │   ├── langgraph.runs.join [task]
+    │   │   output: {
+    │   │     "content": "hello from langgraph",
+    │   │     "role": "assistant"
+    │   │   }
+    │   │   metadata: {
+    │   │     "langgraph.run_id": "<uuid:2>",
+    │   │     "langgraph.thread_id": "<uuid:1>"
+    │   │   }
+    │   ├── langgraph.runs.join [task]
+    │   │   metadata: {
+    │   │     "langgraph.run_id": "<uuid:2>",
+    │   │     "langgraph.thread_id": "<uuid:1>"
+    │   │   }
+    │   │   error: "This operation was aborted"
+    │   ├── langgraph.runs.createBatch [task]
+    │   │   input: [
+    │   │     {
+    │   │       "assistant_id": "background",
+    │   │       "input": {
+    │   │         "value": "batch one"
+    │   │       }
+    │   │     },
+    │   │     {
+    │   │       "assistant_id": "background",
+    │   │       "input": {
+    │   │         "value": "batch two"
+    │   │       }
+    │   │     }
+    │   │   ]
+    │   │   output: [
+    │   │     {
+    │   │       "run_id": "<uuid:1>",
+    │   │       "thread_id": "<uuid:2>"
+    │   │     },
+    │   │     {
+    │   │       "run_id": "<uuid:3>",
+    │   │       "thread_id": "<uuid:4>"
+    │   │     }
+    │   │   ]
+    │   │   metadata: {
+    │   │     "langgraph.runs": [
+    │   │       {
+    │   │         "run_id": "<uuid:1>",
+    │   │         "thread_id": "<uuid:2>"
+    │   │       },
+    │   │       {
+    │   │         "run_id": "<uuid:3>",
+    │   │         "thread_id": "<uuid:4>"
+    │   │       }
+    │   │     ]
+    │   │   }
+    │   ├── langgraph.runs.joinStream [task]
+    │   │   output: {
+    │   │     "value": "joined stream"
+    │   │   }
+    │   │   metadata: {
+    │   │     "langgraph.run_id": "<uuid:2>",
+    │   │     "langgraph.thread_id": "<uuid:1>"
+    │   │   }
+    │   └── langgraph.runs.joinStream [task]
+    │       metadata: {
+    │         "langgraph.run_id": "<uuid:2>",
+    │         "langgraph.thread_id": "<uuid:1>"
+    │       }
     ├── Wait for final result
     │   metadata: {
     │     "operation": "wait",

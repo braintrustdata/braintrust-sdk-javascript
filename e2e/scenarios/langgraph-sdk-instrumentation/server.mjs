@@ -27,6 +27,7 @@ try {
     graphs: {
       agent: `${graphPath}:agent`,
       approval: `${graphPath}:approval`,
+      background: `${graphPath}:background`,
       failing: `${graphPath}:failing`,
     },
   });
