@@ -82,36 +82,56 @@ describe("OpenRouter instrumentation", () => {
     });
 
     it("should parse responses usage with cost details", () => {
-      expect(
-        parseOpenRouterMetricsFromUsage({
-          inputTokens: 11,
-          outputTokens: 7,
-          totalTokens: 18,
-          cost: 0.0021,
-          inputTokensDetails: {
-            cachedTokens: 5,
-          },
-          outputTokensDetails: {
-            reasoningTokens: 2,
-          },
-          costDetails: {
-            upstreamInferenceCost: 0.001,
-            upstreamInferenceInputCost: 0.0004,
-            upstreamInferenceOutputCost: 0.0006,
-          },
-          isByok: true,
-        }),
-      ).toEqual({
+      const metrics = parseOpenRouterMetricsFromUsage({
+        inputTokens: 11,
+        outputTokens: 7,
+        totalTokens: 18,
+        cost: 0.0021,
+        inputTokensDetails: {
+          cachedTokens: 5,
+        },
+        outputTokensDetails: {
+          reasoningTokens: 2,
+        },
+        costDetails: {
+          upstreamInferenceCost: 0.001,
+          upstreamInferenceInputCost: 0.0004,
+          upstreamInferenceOutputCost: 0.0006,
+        },
+        isByok: true,
+      });
+      expect(metrics).toEqual({
         prompt_tokens: 11,
         completion_tokens: 7,
         tokens: 18,
-        cost: 0.0021,
+        estimated_cost: 0.0021,
         prompt_cached_tokens: 5,
         completion_reasoning_tokens: 2,
         cost_upstream_inference_cost: 0.001,
         cost_upstream_inference_input_cost: 0.0004,
         cost_upstream_inference_output_cost: 0.0006,
       });
+      expect(metrics).not.toHaveProperty("cost");
+    });
+
+    it.each([
+      ["NaN", Number.NaN],
+      ["Infinity", Number.POSITIVE_INFINITY],
+      ["-Infinity", Number.NEGATIVE_INFINITY],
+    ])("should omit a non-finite %s cost", (_label, cost) => {
+      const metrics = parseOpenRouterMetricsFromUsage({
+        inputTokens: 11,
+        outputTokens: 7,
+        totalTokens: 18,
+        cost,
+      });
+      expect(metrics).toEqual({
+        prompt_tokens: 11,
+        completion_tokens: 7,
+        tokens: 18,
+      });
+      expect(metrics).not.toHaveProperty("estimated_cost");
+      expect(metrics).not.toHaveProperty("cost");
     });
 
     it("should ignore non-object usage", () => {
@@ -452,7 +472,7 @@ describe("OpenRouter instrumentation", () => {
           prompt_tokens: 9,
           completion_tokens: 4,
           tokens: 13,
-          cost: 0.0012,
+          estimated_cost: 0.0012,
         },
         metadata: {
           id: "resp_123",
@@ -624,7 +644,7 @@ describe("OpenRouter instrumentation", () => {
       expect(callModelSpan?.metrics?.prompt_tokens).toBeUndefined();
       expect(callModelSpan?.metrics?.completion_tokens).toBeUndefined();
       expect(callModelSpan?.metrics?.tokens).toBeUndefined();
-      expect(callModelSpan?.metrics?.cost).toBeUndefined();
+      expect(callModelSpan?.metrics?.estimated_cost).toBeUndefined();
 
       expect(turnSpans).toHaveLength(2);
       expect(turnSpans[0]?.metadata).toMatchObject({
@@ -639,7 +659,7 @@ describe("OpenRouter instrumentation", () => {
         prompt_tokens: 10,
         completion_tokens: 4,
         tokens: 14,
-        cost: 0.01,
+        estimated_cost: 0.01,
       });
       expect(turnSpans[1]?.metadata).toMatchObject({
         provider: TEST_PROVIDER,
@@ -653,7 +673,7 @@ describe("OpenRouter instrumentation", () => {
         prompt_tokens: 12,
         completion_tokens: 3,
         tokens: 15,
-        cost: 0.02,
+        estimated_cost: 0.02,
       });
       expect(
         spans.reduce(
@@ -663,7 +683,7 @@ describe("OpenRouter instrumentation", () => {
       ).toBe(22);
       expect(
         spans.reduce(
-          (sum: number, span: any) => sum + (span.metrics?.cost ?? 0),
+          (sum: number, span: any) => sum + (span.metrics?.estimated_cost ?? 0),
           0,
         ),
       ).toBeCloseTo(0.03);

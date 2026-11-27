@@ -416,6 +416,7 @@ const TOKEN_NAME_MAP: Record<string, string> = {
   completion_tokens: "completion_tokens",
   output_tokens: "completion_tokens",
   total_tokens: "tokens",
+  cost: "estimated_cost",
 };
 
 const TOKEN_DETAIL_PREFIX_MAP: Record<string, string> = {
@@ -446,7 +447,10 @@ function parseOpenRouterMetricsFromUsage(
 
   for (const [name, value] of Object.entries(usage)) {
     if (typeof value === "number") {
-      metrics[TOKEN_NAME_MAP[name] || camelToSnake(name)] = value;
+      const metricName = TOKEN_NAME_MAP[name] || camelToSnake(name);
+      if (metricName !== "estimated_cost" || Number.isFinite(value)) {
+        metrics[metricName] = value;
+      }
       continue;
     }
 

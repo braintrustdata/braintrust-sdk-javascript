@@ -89,10 +89,10 @@
                   "metrics": {
                     "completion_reasoning_tokens": 0,
                     "completion_tokens": 5,
-                    "cost": 0.0000054,
                     "cost_upstream_inference_cost": 0.0000054,
                     "cost_upstream_inference_input_cost": 0.0000034,
                     "cost_upstream_inference_output_cost": 0.000002,
+                    "estimated_cost": 0.0000054,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 34,
                     "tokens": 39
@@ -213,10 +213,10 @@
                   "metrics": {
                     "completion_reasoning_tokens": 0,
                     "completion_tokens": 4,
-                    "cost": 0.0000062,
                     "cost_upstream_inference_cost": 0.0000062,
                     "cost_upstream_inference_input_cost": 0.0000046,
                     "cost_upstream_inference_output_cost": 0.0000016,
+                    "estimated_cost": 0.0000062,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 46,
                     "tokens": 50
