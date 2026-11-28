@@ -1,5 +1,5 @@
 import { expect, test } from "vite-plus/test";
-import { camelToSnakeCase, _urljoin } from "./string_util";
+import { camelToSnakeCase, snakeToTitleCase, _urljoin } from "./string_util";
 
 test("_urljoin", () => {
   expect(_urljoin("/a", "/b", "/c")).toBe("a/b/c");
@@ -30,4 +30,12 @@ test("camelToSnakeCase", () => {
   expect(camelToSnakeCase("MYVARIABLENAME")).toBe(
     "m_y_v_a_r_i_a_b_l_e_n_a_m_e",
   );
+});
+
+test("snakeToTitleCase", () => {
+  expect(snakeToTitleCase("")).toBe("");
+  expect(snakeToTitleCase("hello")).toBe("Hello");
+  expect(snakeToTitleCase("hello_world")).toBe("Hello World");
+  expect(snakeToTitleCase("my_variable_name")).toBe("My Variable Name");
+  expect(snakeToTitleCase("a_b_c_d")).toBe("A B C D");
 });

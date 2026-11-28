@@ -29,7 +29,7 @@ export function snakeToCamelCase(s: string): string {
 }
 
 export function snakeToTitleCase(s: string): string {
-  return capitalize(s, "_").replace("_", " ");
+  return capitalize(s, "_").replace(/_/g, " ");
 }
 
 export function camelToSnakeCase(s: string): string {
