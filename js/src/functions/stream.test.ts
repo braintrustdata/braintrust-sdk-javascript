@@ -164,3 +164,32 @@ test.each([
     expect(emitted.map((chunk) => chunk.data).join("")).toBe(expected);
   },
 );
+
+test("async iterator releases reader lock when stream errors", async () => {
+  const boom = new Error("stream failure");
+  let pulls = 0;
+  const inputStream = new ReadableStream<BraintrustStreamChunk>({
+    pull(controller) {
+      pulls += 1;
+      if (pulls === 1) {
+        controller.enqueue({ type: "text_delta", data: "hello" });
+      } else {
+        controller.error(boom);
+      }
+    },
+  });
+
+  const stream = new BraintrustStream(inputStream);
+  const chunks: BraintrustStreamChunk[] = [];
+
+  await expect(
+    (async () => {
+      for await (const chunk of stream) {
+        chunks.push(chunk);
+      }
+    })(),
+  ).rejects.toThrow("stream failure");
+
+  expect(chunks).toEqual([{ type: "text_delta", data: "hello" }]);
+  expect(stream.toReadableStream().locked).toBe(false);
+});
