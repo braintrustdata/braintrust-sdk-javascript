@@ -7,6 +7,9 @@ import {
 } from "../../span-origin";
 import { getCurrentUnixTimestamp } from "../../util";
 import type {
+  LangGraphBatchArgs,
+  LangGraphJoinArgs,
+  LangGraphJoinStreamArgs,
   LangGraphRunArgs,
   LangGraphStreamEvent,
 } from "../../vendor-sdk-types/langgraph-sdk";
@@ -19,10 +22,34 @@ import { langGraphSDKChannels } from "./langgraph-sdk-interceptors";
 
 export function registerLangGraphSDKInstrumentation(): void {
   langGraphSDKChannels.wait.intercept((target, self, args) =>
-    instrumentRun("wait", args, () => Reflect.apply(target, self, args)),
+    instrumentRun({ operation: "wait", args }, () =>
+      Reflect.apply(target, self, args),
+    ),
   );
   langGraphSDKChannels.stream.intercept((target, self, args) =>
-    instrumentRun("stream", args, () => Reflect.apply(target, self, args)),
+    instrumentRun({ operation: "stream", args }, () =>
+      Reflect.apply(target, self, args),
+    ),
+  );
+  langGraphSDKChannels.create.intercept((target, self, args) =>
+    instrumentRun({ operation: "create", args }, () =>
+      Reflect.apply(target, self, args),
+    ),
+  );
+  langGraphSDKChannels.createBatch.intercept((target, self, args) =>
+    instrumentRun({ operation: "createBatch", args }, () =>
+      Reflect.apply(target, self, args),
+    ),
+  );
+  langGraphSDKChannels.join.intercept((target, self, args) =>
+    instrumentRun({ operation: "join", args }, () =>
+      Reflect.apply(target, self, args),
+    ),
+  );
+  langGraphSDKChannels.joinStream.intercept((target, self, args) =>
+    instrumentRun({ operation: "joinStream", args }, () =>
+      Reflect.apply(target, self, args),
+    ),
   );
 }
 
@@ -210,30 +237,70 @@ function normalizeRunOutput(value: unknown, input: unknown): unknown {
     : result;
 }
 
-function instrumentRun<T>(
-  operation: "wait" | "stream",
-  [threadId, assistantId, options]: LangGraphRunArgs,
-  invoke: () => T,
-): T {
+type RunInvocation =
+  | { operation: "wait" | "stream" | "create"; args: LangGraphRunArgs }
+  | { operation: "createBatch"; args: LangGraphBatchArgs }
+  | { operation: "join"; args: LangGraphJoinArgs }
+  | { operation: "joinStream"; args: LangGraphJoinStreamArgs };
+
+function submissionResult(value: unknown) {
+  if (!isObject(value)) return {};
+  return {
+    ...(typeof value.run_id === "string" ? { run_id: value.run_id } : {}),
+    ...(typeof value.thread_id === "string"
+      ? { thread_id: value.thread_id }
+      : {}),
+  };
+}
+
+function instrumentRun<T>(invocation: RunInvocation, invoke: () => T): T {
   if (isAutoInstrumentationSuppressed()) return invoke();
+  const { operation } = invocation;
   const start = getCurrentUnixTimestamp();
   let span: Span;
+  let runInput: unknown;
   try {
-    // The remote server owns the agent loop. These client task spans do not
-    // invent LLM/tool children or token counts that the server has not exposed.
-    const metadata: Record<string, unknown> = {
-      "langgraph.thread_id": threadId,
-      "langgraph.assistant_id": assistantId,
-    };
-    for (const key of [
-      "streamMode",
-      "streamSubgraphs",
-      "interruptBefore",
-      "interruptAfter",
-      "multitaskStrategy",
-      "durability",
-    ] as const) {
-      if (options?.[key] !== undefined) metadata[key] = options[key];
+    // The remote agent runs asynchronously; submission timings measure only the acknowledgement.
+    const metadata: Record<string, unknown> = {};
+    let input: unknown;
+    if (invocation.operation === "createBatch") {
+      input = invocation.args[0].map(({ assistantId, input }) => ({
+        assistant_id: assistantId,
+        input: normalizeState(input),
+      }));
+    } else if (
+      invocation.operation === "join" ||
+      invocation.operation === "joinStream"
+    ) {
+      const [threadId, runId, options] = invocation.args;
+      metadata["langgraph.thread_id"] = threadId;
+      metadata["langgraph.run_id"] = runId;
+      if (
+        options &&
+        "cancelOnDisconnect" in options &&
+        typeof options.cancelOnDisconnect === "boolean"
+      ) {
+        metadata.cancelOnDisconnect = options.cancelOnDisconnect;
+      }
+    } else {
+      const [threadId, assistantId, options] = invocation.args;
+      metadata["langgraph.thread_id"] = threadId;
+      metadata["langgraph.assistant_id"] = assistantId;
+      for (const key of [
+        "streamMode",
+        "streamSubgraphs",
+        "interruptBefore",
+        "interruptAfter",
+        "multitaskStrategy",
+        "durability",
+      ] as const) {
+        if (options?.[key] !== undefined) metadata[key] = options[key];
+      }
+      runInput = options?.input;
+      input =
+        options?.command === undefined
+          ? normalizeState(runInput)
+          : { input: normalizeState(runInput), command: options.command };
     }
     span = startSpan(
       withSpanInstrumentationName(
@@ -241,13 +308,7 @@ function instrumentRun<T>(
           name: `langgraph.runs.${operation}`,
           spanAttributes: { type: SpanTypeAttribute.TASK },
           event: {
-            input:
-              options?.command === undefined
-                ? normalizeState(options?.input)
-                : {
-                    input: normalizeState(options.input),
-                    command: options.command,
-                  },
+            input,
             metadata,
           },
         },
@@ -266,7 +327,9 @@ function instrumentRun<T>(
   const updates: unknown[] = [];
   const usageByMessage = new Map<string, Record<string, number>>();
   const captureUsage = (id: string, usage: unknown) => {
-    if (!isObject(usage)) return;
+    // A joined run may be read repeatedly or contain earlier turns.
+    if (operation === "join" || operation === "joinStream" || !isObject(usage))
+      return;
     const metrics: Record<string, number> = {};
     for (const [source, destination] of [
       ["input_tokens", "prompt_tokens"],
@@ -291,6 +354,26 @@ function instrumentRun<T>(
     if (ended) return;
     ended = true;
     try {
+      if (error === undefined && operation === "create") {
+        const result = submissionResult(output);
+        span.log({
+          output: result,
+          metadata: {
+            ...(result.run_id === undefined
+              ? {}
+              : { "langgraph.run_id": result.run_id }),
+            ...(result.thread_id === undefined
+              ? {}
+              : { "langgraph.thread_id": result.thread_id }),
+          },
+        });
+        return;
+      }
+      if (error === undefined && operation === "createBatch") {
+        const runs = Array.isArray(output) ? output.map(submissionResult) : [];
+        span.log({ output: runs, metadata: { "langgraph.runs": runs } });
+        return;
+      }
       const metrics: Record<string, number> = {};
       for (const usage of usageByMessage.values()) {
         for (const [key, value] of Object.entries(usage))
@@ -301,7 +384,7 @@ function instrumentRun<T>(
       const finalMessages = [
         ...new Map([...messages, ...messageSnapshots]).values(),
       ];
-      let loggedOutput = normalizeRunOutput(output, options?.input);
+      let loggedOutput = normalizeRunOutput(output, runInput);
       if (loggedOutput === undefined && finalMessages.length)
         loggedOutput = normalizeRunOutput(
           { messages: finalMessages },
@@ -309,7 +392,7 @@ function instrumentRun<T>(
         );
       if (output === undefined && !finalMessages.length && updates.length) {
         const results = updates
-          .map((update) => normalizeRunOutput(update, options?.input))
+          .map((update) => normalizeRunOutput(update, runInput))
           .filter((update) => update !== undefined);
         if (results.length) loggedOutput = { updates: results };
       }
@@ -328,18 +411,19 @@ function instrumentRun<T>(
       });
     } catch (error) {
       debugLogger.error("Error logging LangGraph SDK span:", error);
-    }
-    try {
-      span.end();
-    } catch (error) {
-      debugLogger.error("Error ending LangGraph SDK span:", error);
+    } finally {
+      try {
+        span.end();
+      } catch (error) {
+        debugLogger.error("Error ending LangGraph SDK span:", error);
+      }
     }
   };
   const observeMessages = (value: unknown, streaming: boolean) => {
     if (!isObject(value) || !Array.isArray(value.messages)) return;
     const inputMessages =
-      isObject(options?.input) && Array.isArray(options.input.messages)
-        ? options.input.messages
+      isObject(runInput) && Array.isArray(runInput.messages)
+        ? runInput.messages
         : [];
     for (const message of value.messages) {
       if (
@@ -377,8 +461,14 @@ function instrumentRun<T>(
   const onChunk = ({ event, data }: LangGraphStreamEvent) => {
     if (ended) return;
     if (event === "metadata" && isObject(data)) {
-      if (typeof data.run_id === "string")
-        span.log({ metadata: { "langgraph.run_id": data.run_id } });
+      const { run_id, thread_id } = submissionResult(data);
+      const metadata = {
+        ...(run_id === undefined ? {} : { "langgraph.run_id": run_id }),
+        ...(operation !== "joinStream" || thread_id === undefined
+          ? {}
+          : { "langgraph.thread_id": thread_id }),
+      };
+      if (Object.keys(metadata).length > 0) span.log({ metadata });
     } else if (event === "error") {
       streamError = normalizeRunError(data);
     } else if (event === "values") {
@@ -448,7 +538,7 @@ function instrumentRun<T>(
     finish(error);
     throw error;
   }
-  if (operation === "stream") {
+  if (operation === "stream" || operation === "joinStream") {
     try {
       patchStreamIfNeeded<LangGraphStreamEvent>(result, {
         shouldCollect: (chunk) => {
@@ -478,9 +568,11 @@ function instrumentRun<T>(
       (value) => {
         try {
           output = value;
-          observeMessages(value, false);
-          if (isObject(value) && isObject(value.__error__))
-            streamError = normalizeRunError(value.__error__);
+          if (operation !== "create" && operation !== "createBatch") {
+            observeMessages(value, false);
+            if (isObject(value) && isObject(value.__error__))
+              streamError = normalizeRunError(value.__error__);
+          }
           finish();
         } catch (error) {
           finish(error);

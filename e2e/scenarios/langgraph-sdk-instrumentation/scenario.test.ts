@@ -85,19 +85,15 @@ describe.concurrent("variants", () => {
                   sdk_version: version,
                   module,
                   instrumentation_mode: mode,
-                  expected_error_cases: 4,
+                  expected_error_cases: 5,
                 });
                 expect(root.output).toEqual({
                   status: "passed",
-                  expected_error_cases: 4,
+                  expected_error_cases: 5,
                 });
                 expect(events.every((event) => event.span.ended)).toBe(true);
                 const operationSpecs = [
-                  [
-                    "background",
-                    "Uninstrumented background APIs",
-                    "background-apis",
-                  ],
+                  ["background", "Background run APIs", "background-apis"],
                   ["wait", "Wait for final result", "wait"],
                   [
                     "interruptResume",
@@ -129,23 +125,66 @@ describe.concurrent("variants", () => {
                   (typeof operationSpecs)[number][0],
                   (typeof events)[number]
                 >;
-                expect(
-                  events.filter((event) =>
-                    event.span.parentIds.includes(
-                      operations.background.span.id!,
-                    ),
-                  ),
-                ).toEqual([]);
                 if (mode === "disabled") {
                   expect(instrumented).toHaveLength(0);
                   expect(events).toHaveLength(13);
                   return;
                 }
-                expect(events).toHaveLength(26);
-                expect(instrumented).toHaveLength(13);
+                expect(events).toHaveLength(34);
+                expect(instrumented).toHaveLength(21);
                 expect(
                   instrumented.filter((event) => event.row.error),
-                ).toHaveLength(4);
+                ).toHaveLength(5);
+                const backgroundSpans = (name: string) =>
+                  findChildSpans(
+                    rawEvents,
+                    `langgraph.runs.${name}`,
+                    operations.background.span.id,
+                  );
+                const submissions = backgroundSpans("create");
+                const joins = backgroundSpans("join");
+                const streams = backgroundSpans("joinStream");
+                const batches = backgroundSpans("createBatch");
+                expect(submissions).toHaveLength(3);
+                expect(joins).toHaveLength(2);
+                expect(streams).toHaveLength(2);
+                expect(batches).toHaveLength(1);
+                for (const [submitted, consumed] of [
+                  [submissions[0], joins[0]],
+                  [submissions[1], streams[0]],
+                  [submissions[2], streams[1]],
+                ]) {
+                  const ids = {
+                    "langgraph.thread_id": expect.any(String),
+                    "langgraph.run_id": expect.any(String),
+                  };
+                  expect(submitted.metadata).toMatchObject(ids);
+                  expect(consumed.metadata).toMatchObject(ids);
+                  expect(consumed.metadata?.["langgraph.thread_id"]).toEqual(
+                    submitted.metadata?.["langgraph.thread_id"],
+                  );
+                  expect(consumed.metadata?.["langgraph.run_id"]).toEqual(
+                    submitted.metadata?.["langgraph.run_id"],
+                  );
+                  expect(submitted.output).toEqual({
+                    thread_id: submitted.metadata?.["langgraph.thread_id"],
+                    run_id: submitted.metadata?.["langgraph.run_id"],
+                  });
+                  expect(submitted.metrics).not.toHaveProperty("tokens");
+                }
+                expect(joins[0].output).toEqual({
+                  role: "assistant",
+                  content: "hello from langgraph",
+                });
+                expect(joins[1].row.error).toMatch(/abort|cancel/i);
+                expect(streams[0].output).toEqual({ value: "joined stream" });
+                expect(streams[1].output).toBeUndefined();
+                expect(batches[0].output).toEqual(
+                  Array.from({ length: 2 }, () => ({
+                    thread_id: expect.any(String),
+                    run_id: expect.any(String),
+                  })),
+                );
                 for (const event of instrumented) {
                   expect(event.span.type).toBe("task");
                   expect(event.context?.span_origin).toMatchObject({

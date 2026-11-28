@@ -4,6 +4,7 @@ import {
   START,
   StateGraph,
   MessagesAnnotation,
+  Annotation,
   interrupt,
 } from "@langchain/langgraph";
 
@@ -44,4 +45,14 @@ export const failing = new StateGraph(MessagesAnnotation)
   })
   .addEdge(START, "fail")
   .addEdge("fail", END)
+  .compile();
+
+// Exercise background execution without making additional model requests.
+const backgroundState = Annotation.Root({
+  value: Annotation(),
+});
+export const background = new StateGraph(backgroundState)
+  .addNode("echo", (state) => ({ value: state.value }))
+  .addEdge(START, "echo")
+  .addEdge("echo", END)
   .compile();

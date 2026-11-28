@@ -50,6 +50,14 @@ runMain(async () => {
     const client = wrapped ? braintrust.wrapLangGraphSDK(raw) : raw;
     if (wrapped) assert.equal(braintrust.wrapLangGraphSDK(client), client);
     assert.equal(client.threads, raw.threads);
+    const observerClient = new Client({
+      apiUrl,
+      apiKey: null,
+      callerOptions: { maxRetries: 0 },
+    });
+    const observer = wrapped
+      ? braintrust.wrapLangGraphSDK(observerClient)
+      : observerClient;
     const options = {
       input,
       metadata: { secret: "DO_NOT_CAPTURE" },
@@ -65,18 +73,18 @@ runMain(async () => {
         sdk_version: process.env.LANGGRAPH_SDK_VERSION,
         module: process.env.LANGGRAPH_SDK_MODULE,
         instrumentation_mode: process.env.LANGGRAPH_SDK_MODE,
-        expected_error_cases: 4,
+        expected_error_cases: 5,
       },
       callback: async () => {
         const root = braintrust.currentSpan();
         root.log({
           input: {
-            description: "Verify synchronous LangGraph run APIs",
+            description: "Verify LangGraph run APIs",
             prompt: input,
           },
         });
         await runOperation(
-          "Uninstrumented background APIs",
+          "Background run APIs",
           "background-apis",
           async () => {
             const background = await client.threads.create();
@@ -85,10 +93,56 @@ runMain(async () => {
               "agent",
               options,
             );
-            await client.runs.join(background.thread_id, run.run_id);
+            await observer.runs.join(background.thread_id, run.run_id);
             assert.equal(
               (await client.runs.get(background.thread_id, run.run_id)).status,
               "success",
+            );
+            const submitted = await client.runs.createBatch([
+              { assistantId: "background", input: { value: "batch one" } },
+              { assistantId: "background", input: { value: "batch two" } },
+            ]);
+            assert.equal(submitted.length, 2);
+            for (const { thread_id, run_id } of submitted) {
+              assert.ok(thread_id);
+              assert.ok(run_id);
+            }
+
+            for (const cancel of [false, true]) {
+              const thread = await client.threads.create();
+              const streamRun = await client.runs.create(
+                thread.thread_id,
+                "background",
+                {
+                  input: { value: cancel ? "cancel" : "joined stream" },
+                  streamMode: ["values"],
+                },
+              );
+              const stream = observer.runs.joinStream(
+                thread.thread_id,
+                streamRun.run_id,
+              );
+              assert.equal(stream[Symbol.asyncIterator](), stream);
+              if (cancel) {
+                const first = await stream.next();
+                assert.equal(first.value.event, "metadata");
+                assert.equal((await stream.return()).done, true);
+              } else {
+                const events = [];
+                for await (const event of stream) events.push(event);
+                assert.ok(
+                  events.some(
+                    ({ event, data }) =>
+                      event === "values" && data.value === "joined stream",
+                  ),
+                );
+              }
+            }
+            await assert.rejects(
+              observer.runs.join(background.thread_id, run.run_id, {
+                signal: AbortSignal.abort(),
+              }),
+              /abort|cancel/i,
             );
           },
         );
@@ -230,7 +284,7 @@ runMain(async () => {
             }),
           );
         });
-        root.log({ output: { status: "passed", expected_error_cases: 4 } });
+        root.log({ output: { status: "passed", expected_error_cases: 5 } });
       },
     });
     // Compare logged metrics with the untouched real SDK responses, outside

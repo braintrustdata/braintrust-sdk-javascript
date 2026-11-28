@@ -52,6 +52,85 @@ describe("LangGraph SDK instrumentation", () => {
     ]);
   });
 
+  it("correlates an acknowledged background run with a separate join", async () => {
+    const acknowledgement = Object.assign(
+      Promise.resolve({
+        run_id: "run-1",
+        thread_id: "thread-1",
+        status: "pending",
+        metadata: { secret: "private" },
+      }),
+      { helper: () => "unchanged" },
+    );
+    const created = langGraphSDKChannels.create.invoke(
+      () => acknowledgement,
+      undefined,
+      [null, "agent", { input: "question" }],
+      {},
+    );
+    expect(created).toBe(acknowledgement);
+    expect(created.helper()).toBe("unchanged");
+    await created;
+    await langGraphSDKChannels.join.invoke(
+      async () => ({ answer: "yes" }),
+      {},
+      ["thread-1", "run-1"],
+      {},
+    );
+    const spans = await backgroundLogger.drain();
+    expect(spans).toMatchObject([
+      {
+        input: "question",
+        output: { run_id: "run-1", thread_id: "thread-1" },
+        metadata: {
+          "langgraph.run_id": "run-1",
+          "langgraph.thread_id": "thread-1",
+        },
+      },
+      {
+        output: { answer: "yes" },
+        metadata: {
+          "langgraph.run_id": "run-1",
+          "langgraph.thread_id": "thread-1",
+        },
+      },
+    ]);
+    expect(JSON.stringify(spans)).not.toContain("private");
+    expect(spans[0]).toHaveProperty("output", {
+      run_id: "run-1",
+      thread_id: "thread-1",
+    });
+  });
+
+  it("retains joined-stream identity and finalizes on cancellation", async () => {
+    const controller = new AbortController();
+    const original = (async function* () {
+      yield { event: "metadata", data: { run_id: "run-1" } };
+      yield { event: "values", data: { answer: "unconsumed" } };
+    })();
+    const result = langGraphSDKChannels.joinStream.invoke(
+      (_threadId, _runId, options) => {
+        expect(options).toBe(controller.signal);
+        return original;
+      },
+      undefined,
+      ["thread-1", "run-1", controller.signal],
+      {},
+    );
+    expect(result).toBe(original);
+    await result.next();
+    await result.return(undefined);
+    expect(await backgroundLogger.drain()).toMatchObject([
+      {
+        metadata: {
+          "langgraph.run_id": "run-1",
+          "langgraph.thread_id": "thread-1",
+        },
+        metrics: { end: expect.any(Number) },
+      },
+    ]);
+  });
+
   it("preserves synchronous exceptions and rejected error identity", async () => {
     const error = new Error("original failure");
     expect(() =>

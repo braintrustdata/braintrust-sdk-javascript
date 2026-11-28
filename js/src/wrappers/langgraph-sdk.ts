@@ -6,7 +6,7 @@ import type { LangGraphSDKClient } from "../vendor-sdk-types/langgraph-sdk";
 
 const clients = new WeakMap<LangGraphSDKClient, LangGraphSDKClient>();
 
-/** Trace LangGraph Platform runs that the caller waits for or streams. */
+/** Trace LangGraph Platform run submission and result consumption. */
 export function wrapLangGraphSDK<T>(client: T): T {
   registerInstrumentation();
   const runsClient = isObject(client) ? client.runs : undefined;
@@ -24,6 +24,34 @@ export function wrapLangGraphSDK<T>(client: T): T {
   const runs = new Proxy(sdk.runs, {
     get(target, key) {
       switch (key) {
+        case "create": {
+          const method = target.create;
+          if (typeof method === "function")
+            return (...args: Parameters<typeof method>) =>
+              langGraphSDKChannels.create.invoke(method, target, args, {});
+          return method;
+        }
+        case "createBatch": {
+          const method = target.createBatch;
+          if (typeof method === "function")
+            return (...args: Parameters<typeof method>) =>
+              langGraphSDKChannels.createBatch.invoke(method, target, args, {});
+          return method;
+        }
+        case "join": {
+          const method = target.join;
+          if (typeof method === "function")
+            return (...args: Parameters<typeof method>) =>
+              langGraphSDKChannels.join.invoke(method, target, args, {});
+          return method;
+        }
+        case "joinStream": {
+          const method = target.joinStream;
+          if (typeof method === "function")
+            return (...args: Parameters<typeof method>) =>
+              langGraphSDKChannels.joinStream.invoke(method, target, args, {});
+          return method;
+        }
         case "wait":
           return (...args: Parameters<typeof target.wait>) =>
             langGraphSDKChannels.wait.invoke(target.wait, target, args, {});
